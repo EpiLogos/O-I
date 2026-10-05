@@ -1,0 +1,1474 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:native-chakral_body_constellation",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+  "revision": 1,
+  "title": "Chakral Body — 7 Subtle Centers Constellation",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5",
+    "revision": 1,
+    "title": "Chakral Body — 7 Subtle Centers Constellation",
+    "entity_refs": [
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara",
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna",
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha",
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata",
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura",
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana",
+     "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara",
+    "revision": 1,
+    "title": "Sahasrara (Crown)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.675,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna",
+    "revision": 1,
+    "title": "Ajna (Third Eye)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha",
+    "revision": 1,
+    "title": "Vishuddha (Throat)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.225,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata",
+    "revision": 1,
+    "title": "Anahata (Heart)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura",
+    "revision": 1,
+    "title": "Manipura (Solar Plexus)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.225,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana",
+    "revision": 1,
+    "title": "Svadhisthana (Sacral)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara": {
+    "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara",
+    "revision": 1,
+    "title": "Muladhara (Root)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-chakral_body_constellation.journey.json",
+       "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.675,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5",
+   "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara"
+  },
+  "provenance": [
+   {
+    "ref": "starters/native/native-chakral_body_constellation.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "starters/native/native-chakral_body_constellation.journey.json",
+      "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:native-chakral_body_constellation:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:native-chakral_body_constellation",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Chakral Body — 7 Subtle Centers Constellation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:native-chakral_body_constellation\" data-expression-revision=\"1\"><h1>Chakral Body — 7 Subtle Centers Constellation</h1><p>Frozen reading of expression:return-of-zero:native-chakral_body_constellation at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5\" aria-label=\"Chakral Body — 7 Subtle Centers Constellation\"><h2>Chakral Body — 7 Subtle Centers Constellation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:43.25%;font-size:3.00rem;opacity:1.00\" title=\"Sahasrara (Crown)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:45.50%;font-size:3.00rem;opacity:1.00\" title=\"Ajna (Third Eye)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:47.75%;font-size:3.00rem;opacity:1.00\" title=\"Vishuddha (Throat)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Anahata (Heart)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.25%;font-size:3.00rem;opacity:1.00\" title=\"Manipura (Solar Plexus)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:3.00rem;opacity:1.00\" title=\"Svadhisthana (Sacral)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.75%;font-size:3.00rem;opacity:1.00\" title=\"Muladhara (Root)\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-native-chakral-body-constellation",
+  "world_ref": "expression:return-of-zero:native-chakral_body_constellation",
+  "revision": 1,
+  "title": "Chakral Body — 7 Subtle Centers Constellation",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:native-chakral_body_constellation",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Chakral Body — 7 Subtle Centers Constellation"
+      },
+      "fallback": {
+       "title": "Chakral Body — 7 Subtle Centers Constellation"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:native-chakral_body_constellation",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "starters/native/native-chakral_body_constellation.journey.json",
+            "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:native-chakral_body_constellation:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:native-chakral_body_constellation",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Chakral Body — 7 Subtle Centers Constellation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:native-chakral_body_constellation\" data-expression-revision=\"1\"><h1>Chakral Body — 7 Subtle Centers Constellation</h1><p>Frozen reading of expression:return-of-zero:native-chakral_body_constellation at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5\" aria-label=\"Chakral Body — 7 Subtle Centers Constellation\"><h2>Chakral Body — 7 Subtle Centers Constellation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:43.25%;font-size:3.00rem;opacity:1.00\" title=\"Sahasrara (Crown)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:45.50%;font-size:3.00rem;opacity:1.00\" title=\"Ajna (Third Eye)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:47.75%;font-size:3.00rem;opacity:1.00\" title=\"Vishuddha (Throat)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Anahata (Heart)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.25%;font-size:3.00rem;opacity:1.00\" title=\"Manipura (Solar Plexus)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:3.00rem;opacity:1.00\" title=\"Svadhisthana (Sacral)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.75%;font-size:3.00rem;opacity:1.00\" title=\"Muladhara (Root)\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+        "revision": 1,
+        "title": "Chakral Body — 7 Subtle Centers Constellation",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5",
+          "revision": 1,
+          "title": "Chakral Body — 7 Subtle Centers Constellation",
+          "entity_refs": [
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara",
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna",
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha",
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata",
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura",
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana",
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara",
+          "revision": 1,
+          "title": "Sahasrara (Crown)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.675,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna",
+          "revision": 1,
+          "title": "Ajna (Third Eye)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha",
+          "revision": 1,
+          "title": "Vishuddha (Throat)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.225,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata",
+          "revision": 1,
+          "title": "Anahata (Heart)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura",
+          "revision": 1,
+          "title": "Manipura (Solar Plexus)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.225,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana",
+          "revision": 1,
+          "title": "Svadhisthana (Sacral)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara": {
+          "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara",
+          "revision": 1,
+          "title": "Muladhara (Root)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-chakral_body_constellation.journey.json",
+             "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.675,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5",
+         "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara"
+        },
+        "provenance": [
+         {
+          "ref": "starters/native/native-chakral_body_constellation.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Chakral Body — 7 Subtle Centers Constellation"
+      },
+      "fallback": {
+       "title": "Chakral Body — 7 Subtle Centers Constellation",
+       "text": "Chakral Body — 7 Subtle Centers Constellation: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:native-chakral_body_constellation",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-native-chakral-body-constellation",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:native-chakral_body_constellation",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "starters/native/native-chakral_body_constellation.journey.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:native-chakral_body_constellation"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:native-chakral_body_constellation",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:native-chakral_body_constellation",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:native-chakral_body_constellation:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:native-chakral_body_constellation"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:native-chakral_body_constellation",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-native-chakral-body-constellation:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-native-chakral-body-constellation",
+    "world_ref": "expression:return-of-zero:native-chakral_body_constellation",
+    "revision": 1,
+    "title": "Chakral Body — 7 Subtle Centers Constellation",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:native-chakral_body_constellation",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Chakral Body — 7 Subtle Centers Constellation"
+        },
+        "fallback": {
+         "title": "Chakral Body — 7 Subtle Centers Constellation"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:native-chakral_body_constellation",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "starters/native/native-chakral_body_constellation.journey.json",
+              "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:native-chakral_body_constellation:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:native-chakral_body_constellation",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Chakral Body — 7 Subtle Centers Constellation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:native-chakral_body_constellation\" data-expression-revision=\"1\"><h1>Chakral Body — 7 Subtle Centers Constellation</h1><p>Frozen reading of expression:return-of-zero:native-chakral_body_constellation at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5\" aria-label=\"Chakral Body — 7 Subtle Centers Constellation\"><h2>Chakral Body — 7 Subtle Centers Constellation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:43.25%;font-size:3.00rem;opacity:1.00\" title=\"Sahasrara (Crown)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:45.50%;font-size:3.00rem;opacity:1.00\" title=\"Ajna (Third Eye)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:47.75%;font-size:3.00rem;opacity:1.00\" title=\"Vishuddha (Throat)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Anahata (Heart)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.25%;font-size:3.00rem;opacity:1.00\" title=\"Manipura (Solar Plexus)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:3.00rem;opacity:1.00\" title=\"Svadhisthana (Sacral)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara\" data-subject-ref=\"world:return-of-zero/wiki:native-chakral_body_constellation\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.75%;font-size:3.00rem;opacity:1.00\" title=\"Muladhara (Root)\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+          "revision": 1,
+          "title": "Chakral Body — 7 Subtle Centers Constellation",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5",
+            "revision": 1,
+            "title": "Chakral Body — 7 Subtle Centers Constellation",
+            "entity_refs": [
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara",
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna",
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha",
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata",
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura",
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana",
+             "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara",
+            "revision": 1,
+            "title": "Sahasrara (Crown)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.675,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_ajna",
+            "revision": 1,
+            "title": "Ajna (Third Eye)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_vishuddha",
+            "revision": 1,
+            "title": "Vishuddha (Throat)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.225,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_anahata",
+            "revision": 1,
+            "title": "Anahata (Heart)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_manipura",
+            "revision": 1,
+            "title": "Manipura (Solar Plexus)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.225,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_svadhisthana",
+            "revision": 1,
+            "title": "Svadhisthana (Sacral)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara": {
+            "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_muladhara",
+            "revision": 1,
+            "title": "Muladhara (Root)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-chakral_body_constellation.journey.json",
+               "revision": "f94df52b0486b1cf0a9bdd2001ffed4190919bf4f992a189b590be0dc99fd452",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.675,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5",
+           "entity_ref": "expression:return-of-zero:native-chakral_body_constellation:scene:scene-f244fddb-6f23-4454-a95c-a821203675f5:ent_sahasrara"
+          },
+          "provenance": [
+           {
+            "ref": "starters/native/native-chakral_body_constellation.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Chakral Body — 7 Subtle Centers Constellation"
+        },
+        "fallback": {
+         "title": "Chakral Body — 7 Subtle Centers Constellation",
+         "text": "Chakral Body — 7 Subtle Centers Constellation: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:native-chakral_body_constellation",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-native-chakral-body-constellation",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:native-chakral_body_constellation",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "starters/native/native-chakral_body_constellation.journey.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:native-chakral_body_constellation"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:native-chakral_body_constellation",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:native-chakral_body_constellation",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-native-chakral-body-constellation:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:native-chakral_body_constellation",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Chakral Body — 7 Subtle Centers Constellation",
+  "summary": "a living Expression · 1 scene · 7 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:native-chakral_body_constellation:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:native-chakral_body_constellation",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Anative-chakral_body_constellation"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:native-chakral_body_constellation:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-native-chakral-body-constellation",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:native-chakral_body_constellation",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Chakral Body — 7 Subtle Centers Constellation",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-native-chakral-body-constellation:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-native-chakral-body-constellation:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:native-chakral_body_constellation",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:native-chakral_body_constellation"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -17,542 +17,542 @@ source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571
 Position #0. Entrance: [Concepts](../../../../../section-rooms/arguments/concepts/README.md). Each entry names what the page **implicates** through its written relations and what **reaches** it. The relation word is the one the sentence around the link names; `unnamed` marks a link whose sentence names none. This is a mirror of the written graph, never its substitute.
 Group: `reference-notes` · back to [Concepts C01–C64 and provenance](episteme-concepts.md).
 
-### [0-1 Matheme](../../../../../section-rooms/arguments/concepts/reference-notes/0-1-matheme.md)
+### 0-1 Matheme
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/reference-notes/dimensional-reframing-zero-infinity.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Dimensional Reframing at Zero and Infinity
 
-### [36 Tattvas](../../../../../section-rooms/arguments/concepts/reference-notes/36-tattvas.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [4-2 Techne — Sovereign Commons](../../../../../section-rooms/arguments/concepts/reference-notes/4-2-techne-sovereign-commons.md)
-
-**Implicates:** *unnamed* → [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), [C56 — Compassion / Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Compassion as Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/reference-notes/compassion-sensitivity-origins.md), [Mono-Poly Planetary Intelligence](../../../../../section-rooms/arguments/concepts/reference-notes/mono-poly-planetary-intelligence.md), [SEED Language of Spirit Dialogues](../../../../../section-rooms/arguments/concepts/reference-notes/seed-language-of-spirit-dialogues.md)
-
-### [9-8 Whole Tone](../../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md)
-
-**Implicates:** *unnamed* → [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md), [Pythagorean Comma](../../../../../section-rooms/arguments/concepts/reference-notes/pythagorean-comma.md), [Spanda Equations](../../../../../section-rooms/arguments/concepts/reference-notes/spanda-equations.md)
-
-### [Abhinavagupta](../../../../../section-rooms/arguments/concepts/reference-notes/abhinavagupta.md)
+### 36 Tattvas
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Agency Without Subjectivity](../../../../../section-rooms/arguments/concepts/reference-notes/agency-without-subjectivity.md)
+### 4-2 Techne — Sovereign Commons
+
+**Implicates:** *unnamed* → [42 Techne — Sovereign Commons Architecture](../../../sources/media-technology-philosophy/42-techne/42-techne-2026-sovereign-commons/42-techne-2026-sovereign-commons.md#42-techne-2026-sovereign-commons-q006), [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), [Compassion as Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/compassion-as-sensitivity-to-origins.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Compassion as Sensitivity to Origins, Mono-Poly Planetary Intelligence, SEED Language of Spirit Dialogues
+
+### 9-8 Whole Tone
+
+**Implicates:** *unnamed* → Musical Resolution of the Arche-Topos
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Musical Resolution of the Arche-Topos, Pythagorean Comma, Spanda Equations
+
+### Abhinavagupta
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Agency Without Subjectivity
 
 **Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#^bratton-2026-agentworld-brief-q015) · *unnamed* → [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [C44 — Prompt Thrownness](../../../../../section-rooms/arguments/concepts/C44-Prompt-Thrownness.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Agentic Individuation Crosswalk](../../../../../section-rooms/arguments/concepts/reference-notes/agentic-individuation-crosswalk.md)
+### Agentic Individuation Crosswalk
 
-**Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#^bratton-2026-agentworld-brief-q017), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md#VII. The QL Unit — Jungian / Psyche Register) · *unnamed* → [C44 — Prompt Thrownness](../../../../../section-rooms/arguments/concepts/C44-Prompt-Thrownness.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md)
+**Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#^bratton-2026-agentworld-brief-q017), Core Theorems — Pithy · *unnamed* → [C44 — Prompt Thrownness](../../../../../section-rooms/arguments/concepts/C44-Prompt-Thrownness.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Prompt Thrownness](../../../../../section-rooms/arguments/concepts/reference-notes/prompt-thrownness.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Prompt Thrownness
 
-### [Antaḥkaraṇa](../../../../../section-rooms/arguments/concepts/reference-notes/antahkarana.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Antikythera Mechanism](../../../../../section-rooms/arguments/concepts/reference-notes/antikythera-mechanism.md)
+### Antaḥkaraṇa
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Apoha](../../../../../section-rooms/arguments/concepts/reference-notes/apoha.md)
-
-**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [Softmax as Apoha](../../../../../section-rooms/arguments/concepts/reference-notes/softmax-as-apoha.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Bimba-Pratibimba](../../../../../section-rooms/arguments/concepts/reference-notes/bimba-pratibimba.md)
+### Antikythera Mechanism
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
 
-### [Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed](../../../../../section-rooms/arguments/concepts/reference-notes/bohm-krishnamurti-dialogue-running-true.md)
+### Apoha
 
-**Implicates:** *unnamed* → [Complex Plane](../../../../../section-rooms/arguments/concepts/reference-notes/complex-plane.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [C61 — Symbolon Disclosure Architecture](../../../../../section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md)
+**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), Softmax as Apoha, [Vikalpa / Saṃkalpa](../../../../../section-rooms/arguments/concepts/vikalpa-samkalpa.md)
 
-**Reached from:** *grounds* ← [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Mathematical-Artistic Image Register](../../../../../section-rooms/arguments/concepts/reference-notes/mathematical-artistic-image-register.md), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Bradley-Terry Gauge Problem](../../../../../section-rooms/arguments/concepts/reference-notes/bradley-terry-gauge-problem.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Brahmagupta](../../../../../section-rooms/arguments/concepts/reference-notes/brahmagupta.md)
+### Bimba-Pratibimba
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Chinese Remainder Theorem Z6](../../../../../section-rooms/arguments/concepts/reference-notes/chinese-remainder-theorem-z6.md)
+### Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed
 
-**Implicates:** none written.
+**Implicates:** *unnamed* → Complex Plane, [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [C61 — Symbolon Disclosure Architecture](../../../../../section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture.md), Computational Vimarśa
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Chinese Remainder: Six as Two by Three](../../../../matheme/formal-neighbours/crt-z6.md)
+**Reached from:** *grounds* ← [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md) · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Mathematical-Artistic Image Register, Core Theorems — Pithy
 
-### [Christopher M. Bache — LSD and the Mind of the Universe](../../../../../section-rooms/arguments/concepts/reference-notes/christopher-bache-lsd-and-the-mind-of-the-universe.md)
-
-**Implicates:** *unnamed* → [C30 — Psychoid Number](../../../../../section-rooms/arguments/concepts/C30-Psychoid-Number.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Psychoid Number](../../../../../section-rooms/arguments/concepts/reference-notes/psychoid-number.md)
-
-### [Circumscription Without Circumstance](../../../../../section-rooms/arguments/concepts/reference-notes/circumscription-without-circumstance.md)
+### Bradley-Terry Gauge Problem
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Compassion as Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/reference-notes/compassion-sensitivity-origins.md)
+### Brahmagupta
 
-**Implicates:** *unnamed* → [Taylor — Revision Notes on Trust and F-Blocks (2026)](../../../sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md#5.1 — "Compassion as sensitivity to origins" — RESOLVED), [Logos and Epi-Logos](../../../../../section-rooms/arguments/concepts/reference-notes/logos-epi-logos.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md), [4-2 Techne — Sovereign Commons](../../../../../section-rooms/arguments/concepts/reference-notes/4-2-techne-sovereign-commons.md)
+**Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
 
-### [Complex Plane](../../../../../section-rooms/arguments/concepts/reference-notes/complex-plane.md)
+### Chinese Remainder Theorem Z6
 
-**Implicates:** *unnamed* → [Kauffman Iterants](../../../../../section-rooms/arguments/concepts/reference-notes/kauffman-iterants.md), [§3 · #2 — Mark, Re-entry, and Complex Orientation](../../../../../section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md)
+**Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed](../../../../../section-rooms/arguments/concepts/reference-notes/bohm-krishnamurti-dialogue-running-true.md), [Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/reference-notes/dimensional-reframing-zero-infinity.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Chinese Remainder: Six as Two by Three](../../../../matheme/formal-neighbours/crt-z6.md)
 
-### [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md)
+### Christopher M. Bache — LSD and the Mind of the Universe
 
-**Implicates:** *unnamed* → [Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/vimarsa.md), [A31 — Deferential Intelligence](../../../../../section-rooms/arguments/A31-Deferential-Intelligence.md), [Logos and Epi-Logos](../../../../../section-rooms/arguments/concepts/reference-notes/logos-epi-logos.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [C38 — Bimba–Pratibimba / Bimba Map](../../../../../section-rooms/arguments/concepts/C38-Bimba-Pratibimba-Bimba-Map.md)
+**Implicates:** *unnamed* → [C30 — Psychoid Number](../../../../../section-rooms/arguments/concepts/C30-Psychoid-Number.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
 
-**Reached from:** *unnamed* ← [§0 — Differentiating Mind — Carrier Dispositions and Co-Internality Bridge](../../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/01-DIFFERENTIATING-MIND-CARRIER-DISPOSITIONS.md), [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed](../../../../../section-rooms/arguments/concepts/reference-notes/bohm-krishnamurti-dialogue-running-true.md), [Compassion as Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/reference-notes/compassion-sensitivity-origins.md), [Logos and Epi-Logos](../../../../../section-rooms/arguments/concepts/reference-notes/logos-epi-logos.md), [Prompt Thrownness](../../../../../section-rooms/arguments/concepts/reference-notes/prompt-thrownness.md), [Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/vimarsa.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Psychoid Number
 
-### [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+### Circumscription Without Circumstance
 
-**Implicates:** *unnamed* → [0-1 Matheme](../../../../../section-rooms/arguments/concepts/reference-notes/0-1-matheme.md), [36 Tattvas](../../../../../section-rooms/arguments/concepts/reference-notes/36-tattvas.md), [4-2 Techne — Sovereign Commons](../../../../../section-rooms/arguments/concepts/reference-notes/4-2-techne-sovereign-commons.md), [9-8 Whole Tone](../../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md), [Abhinavagupta](../../../../../section-rooms/arguments/concepts/reference-notes/abhinavagupta.md), [Agency Without Subjectivity](../../../../../section-rooms/arguments/concepts/reference-notes/agency-without-subjectivity.md), [Agentic Individuation Crosswalk](../../../../../section-rooms/arguments/concepts/reference-notes/agentic-individuation-crosswalk.md), [Antaḥkaraṇa](../../../../../section-rooms/arguments/concepts/reference-notes/antahkarana.md), [Antikythera Mechanism](../../../../../section-rooms/arguments/concepts/reference-notes/antikythera-mechanism.md), [Apoha](../../../../../section-rooms/arguments/concepts/reference-notes/apoha.md), [Bimba-Pratibimba](../../../../../section-rooms/arguments/concepts/reference-notes/bimba-pratibimba.md), [The Blind Spot — Frank, Gleiser, Thompson](../../../../../section-rooms/arguments/concepts/reference-notes/blind-spot-frank-gleiser-thompson.md) (+77 more)
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Compassion as Sensitivity to Origins
+
+**Implicates:** *unnamed* → [Taylor — Revision Notes on Trust and F-Blocks (2026)](../../../sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md#5.1 — "Compassion as sensitivity to origins" — RESOLVED), Logos and Epi-Logos, Computational Vimarśa, 4-2 Techne — Sovereign Commons
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Complex Plane
+
+**Implicates:** *unnamed* → Kauffman Iterants, [§3 · #2 — Mark, Re-entry, and Complex Orientation](../../../../../section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed, Dimensional Reframing at Zero and Infinity
+
+### Computational Vimarśa
+
+**Implicates:** *unnamed* → Vimarśa, [A31 — Deferential Intelligence](../../../../../section-rooms/arguments/A31-Deferential-Intelligence.md), Logos and Epi-Logos, [C38 — Bimba–Pratibimba / Bimba Map](../../../../../section-rooms/arguments/concepts/C38-Bimba-Pratibimba-Bimba-Map.md)
+
+**Reached from:** *unnamed* ← §0 — Differentiating Mind — Carrier Dispositions and Co-Internality Bridge, Concept Reference Shelf — Recovered 2026-08-08, Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed, Compassion as Sensitivity to Origins, Logos and Epi-Logos, Prompt Thrownness, Vimarśa
+
+### Concept Reference Shelf — Recovered 2026-08-08
+
+**Implicates:** *unnamed* → 0-1 Matheme, 36 Tattvas, 4-2 Techne — Sovereign Commons, 9-8 Whole Tone, Abhinavagupta, Agency Without Subjectivity, Agentic Individuation Crosswalk, Antaḥkaraṇa, Antikythera Mechanism, Apoha, Bimba-Pratibimba, The Blind Spot — Frank, Gleiser, Thompson (+77 more)
 
 **Reached from:** *unnamed* ← [Concepts](../../../../../section-rooms/arguments/concepts/README.md)
 
-### [Cross-Ratio](../../../../../section-rooms/arguments/concepts/reference-notes/cross-ratio.md)
+### Cross-Ratio
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Cymatics and Standing Waves](../../../../../section-rooms/arguments/concepts/reference-notes/cymatics-standing-waves.md)
+### Cymatics and Standing Waves
 
-**Implicates:** *unnamed* → [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md), [A05 — Prakāśa–Vimarśa](../../../../../section-rooms/arguments/A05-Prakasa-Vimarsa.md), [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md)
+**Implicates:** *unnamed* → Musical Resolution of the Arche-Topos, [A05 — Prakāśa–Vimarśa](../../../../../section-rooms/arguments/A05-Prakasa-Vimarsa.md), [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md)
 
-**Reached from:** *figures* ← [Mathematical-Artistic Image Register](../../../../../section-rooms/arguments/concepts/reference-notes/mathematical-artistic-image-register.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md), [Cymatics and Standing Waves](../../../../matheme/harmonics/cymatics-standing-waves.md)
+**Reached from:** *figures* ← Mathematical-Artistic Image Register · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Musical Resolution of the Arche-Topos, [Cymatics and Standing Waves](../../../../matheme/harmonics/cymatics-standing-waves.md)
 
-### [David Bohm — Implicate Order, Explicate Order, and Holomovement](../../../../../section-rooms/arguments/concepts/reference-notes/david-bohm-implicate-explicate-holomovement.md)
+### David Bohm — Implicate Order, Explicate Order, and Holomovement
 
 **Implicates:** *unnamed* → [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md), [C38 — Bimba–Pratibimba / Bimba Map](../../../../../section-rooms/arguments/concepts/C38-Bimba-Pratibimba-Bimba-Map.md), [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
 
-**Reached from:** *sources* ← [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md) · *unnamed* ← [The Return of Zero — Current Plain-English Full Flow](../../../../../quilt/2026-08-03-PLAIN-ENGLISH-FULL-FLOW.md), [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md)
+**Reached from:** *sources* ← [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md) · *unnamed* ← The Return of Zero — Current Plain-English Full Flow, Concept Reference Shelf — Recovered 2026-08-08, [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), Core Theorems — Pithy
 
-### [Dia-Ballein](../../../../../section-rooms/arguments/concepts/reference-notes/dia-ballein.md)
+### Dia-Ballein
 
 **Implicates:** *unnamed* → [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Vikalpa](../../../../../section-rooms/arguments/concepts/reference-notes/vikalpa.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Vikalpa
 
-### [Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/reference-notes/dimensional-reframing-zero-infinity.md)
+### Dimensional Reframing at Zero and Infinity
 
-**Implicates:** *unnamed* → [Complex Plane](../../../../../section-rooms/arguments/concepts/reference-notes/complex-plane.md), [Surface Classification 4g+2g](../../../../../section-rooms/arguments/concepts/reference-notes/surface-classification-4g-2g.md), [C52 — Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md), [0-1 Matheme](../../../../../section-rooms/arguments/concepts/reference-notes/0-1-matheme.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
+**Implicates:** *unnamed* → Complex Plane, [Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md), Surface Classification 4g+2g, [C52 — Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md), 0-1 Matheme, [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Division Pluralisms](../../../../../section-rooms/arguments/concepts/reference-notes/division-pluralisms.md)
+### Division Pluralisms
 
 **Implicates:** *unnamed* → [C52 — Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md), [§1 · #4 — Zero Keeps One Foot Outside Mathematics](../../../../../section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [EBM Resonance Metric](../../../../../section-rooms/arguments/concepts/reference-notes/ebm-resonance-metric.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [epi-logos-voice](../../../../../section-rooms/arguments/concepts/reference-notes/epi-logos-voice.md)
+### EBM Resonance Metric
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [FDE Catuṣkoṭi](../../../../../section-rooms/arguments/concepts/reference-notes/fde-catuskoti.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [File One Definitional](../../../../../section-rooms/arguments/concepts/reference-notes/file-one-definitional.md)
+### epi-logos-voice
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Formal Limit — Source-Specific Limits and Their Consequences](../../../dossiers/formal-limit.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Four-Valued Logic](../../../../../section-rooms/arguments/concepts/reference-notes/four-valued-logic.md)
+### FDE Catuṣkoṭi
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### File One Definitional
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Formal Limit — Source-Specific Limits and Their Consequences](../../../dossiers/formal-limit.md)
+
+### Four-Valued Logic
 
 **Implicates:** *unnamed* → [§3 · #3 — Projective Completion and Dimensional Reframing](../../../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md), [C52 — Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Gebser Diaphaneity](../../../../../section-rooms/arguments/concepts/reference-notes/gebser-diaphaneity.md)
-
-**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Gerbert Sylvester II](../../../../../section-rooms/arguments/concepts/reference-notes/gerbert-sylvester-ii.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md)
-
-### [Grothendieck Group Loss](../../../../../section-rooms/arguments/concepts/reference-notes/grothendieck-group-loss.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Group Completion and the Conditions of Loss](../../../../matheme/formal-neighbours/grothendieck-group-loss.md)
-
-### [Gödel Incompleteness](../../../../../section-rooms/arguments/concepts/reference-notes/godel-incompleteness.md)
-
-**Implicates:** *sources* → [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · *unnamed* → [Russell — Paradox and Type-Theoretic Closure](../../../../../section-rooms/arguments/concepts/reference-notes/russell-paradox-type-theory.md), [Wittgenstein — Limit, Silence, and Forms of Life](../../../../../section-rooms/arguments/concepts/reference-notes/wittgenstein-limit-silence-forms-of-life.md), [Whitehead Creativity](../../../../../section-rooms/arguments/concepts/reference-notes/whitehead-creativity.md), [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Russell — Paradox and Type-Theoretic Closure](../../../../../section-rooms/arguments/concepts/reference-notes/russell-paradox-type-theory.md)
-
-### [Henri Bergson — Duration and Creative Evolution](../../../../../section-rooms/arguments/concepts/reference-notes/henri-bergson-duration.md)
+### Gebser Diaphaneity
 
 **Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md)
 
-**Reached from:** *compares* ← [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Hole Whole Holy Health](../../../../../section-rooms/arguments/concepts/reference-notes/hole-whole-holy-health.md)
+### Gerbert Sylvester II
 
-**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md)
+**Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Historical branches — Symbol, Account and Trust](../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
 
-### [John R. Van Eenwyk — Archetypes and Strange Attractors](../../../../../section-rooms/arguments/concepts/reference-notes/van-eenwyk-strange-attractors.md)
+### Grothendieck Group Loss
+
+**Implicates:** *unnamed* → [Group Completion and the Conditions of Loss](../../../../matheme/formal-neighbours/grothendieck-group-loss.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Group Completion and the Conditions of Loss](../../../../matheme/formal-neighbours/grothendieck-group-loss.md)
+
+### Gödel Incompleteness
+
+**Implicates:** *sources* → [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · *unnamed* → Russell — Paradox and Type-Theoretic Closure, Wittgenstein — Limit, Silence, and Forms of Life, Whitehead Creativity, [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Russell — Paradox and Type-Theoretic Closure
+
+### Henri Bergson — Duration and Creative Evolution
+
+**Implicates:** *sources* → [Bergson — Time and Free Will (Pogson, 1913 carrier)](../../../sources/process-systems-theory/bergson/bergson-1913-time-free-will-pogson/bergson-1913-time-free-will-pogson.md#bergson-1913-time-free-will-pogson-q001), [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), [Taylor — Symbolon Dynamics, Archetype, Attractor, and Objective Internality (2026)](../../../sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md) · *sources (declared)* → [Bergson — Time and Free Will (Pogson, 1913 carrier)](../../../sources/process-systems-theory/bergson/bergson-1913-time-free-will-pogson/bergson-1913-time-free-will-pogson.md), [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), [Taylor — Symbolon Dynamics, Archetype, Attractor, and Objective Internality (2026)](../../../sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md) · *unnamed* → [Bergson — Time and Free Will (Pogson, 1913 carrier)](../../../sources/process-systems-theory/bergson/bergson-1913-time-free-will-pogson/bergson-1913-time-free-will-pogson.md), [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [C07 — Conditions of Worldhood](../../../../../section-rooms/arguments/concepts/C07-Conditions-of-Worldhood.md), [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md), [C41 — Objective Internality](../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md), [Process, Systems and Science — Historical Branches and Their Returns](../../../histories/traditions-and-disciplines/process-systems-science/DEVELOPMENT-process-systems-science.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md), Core Theorems — Pithy
+
+### Hole Whole Holy Health
+
+**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), Musical Resolution of the Arche-Topos
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Historical branches — Symbol, Account and Trust](../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md)
+
+### John R. Van Eenwyk — Archetypes and Strange Attractors
 
 **Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
 
-**Reached from:** *extends* ← [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md)
 
-### [Jung-Pauli](../../../../../section-rooms/arguments/concepts/reference-notes/jung-pauli.md)
+### Jung-Pauli
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Psychoid Number](../../../../../section-rooms/arguments/concepts/reference-notes/psychoid-number.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Psychoid Number
 
-### [Jungian Quaternity](../../../../../section-rooms/arguments/concepts/reference-notes/jungian-quaternity.md)
+### Jungian Quaternity
 
 **Implicates:** *unnamed* → [§4 · #2 — Complexio, Quaternity, and Senarius](../../../../../section-rooms/05-psychoid-flowering/movements/33-s4-p2-complexio-quaternity-senarius.md)
 
-**Reached from:** *compares* ← [Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms](../../../dossiers/jung-pauli-psychoid.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *compares* ← [Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms](../../../dossiers/jung-pauli-psychoid.md) · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Kaplan Nothing That Is](../../../../../section-rooms/arguments/concepts/reference-notes/kaplan-nothing-that-is.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md)
-
-### [Kauffman Iterants](../../../../../section-rooms/arguments/concepts/reference-notes/kauffman-iterants.md)
+### Kaplan Nothing That Is
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Complex Plane](../../../../../section-rooms/arguments/concepts/reference-notes/complex-plane.md), [Laws of Form](../../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md), [Re-entry](../../../../../section-rooms/arguments/concepts/reference-notes/re-entry.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
 
-### [Khahara](../../../../../section-rooms/arguments/concepts/reference-notes/khahara.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md)
-
-### [Laws of Form](../../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md)
-
-**Implicates:** *unnamed* → [Re-entry](../../../../../section-rooms/arguments/concepts/reference-notes/re-entry.md), [Kauffman Iterants](../../../../../section-rooms/arguments/concepts/reference-notes/kauffman-iterants.md), [Maturana and Varela — Autopoiesis and Enaction](../../../../../section-rooms/arguments/concepts/reference-notes/maturana-varela-autopoiesis-enaction.md)
-
-**Reached from:** *qualifies* ← [Russell — Paradox and Type-Theoretic Closure](../../../../../section-rooms/arguments/concepts/reference-notes/russell-paradox-type-theory.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Re-entry](../../../../../section-rooms/arguments/concepts/reference-notes/re-entry.md)
-
-### [Logos and Epi-Logos](../../../../../section-rooms/arguments/concepts/reference-notes/logos-epi-logos.md)
-
-**Implicates:** *unnamed* → [Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/vimarsa.md), [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md), [C56 — Compassion / Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Compassion as Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/reference-notes/compassion-sensitivity-origins.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md), [Meister Eckhart — Dialectical Apophaticism and the Word](../../../../../section-rooms/arguments/concepts/reference-notes/meister-eckhart-dialectical-apophaticism.md)
-
-### [Mathematical-Artistic Image Register](../../../../../section-rooms/arguments/concepts/reference-notes/mathematical-artistic-image-register.md)
-
-**Implicates:** *figures* → [Cymatics and Standing Waves](../../../../../section-rooms/arguments/concepts/reference-notes/cymatics-standing-waves.md) · *unnamed* → [Nicholas of Cusa — Learned Ignorance, Coincidence, and the Infinite Sphere](../../../../../section-rooms/arguments/concepts/reference-notes/nicholas-of-cusa-learned-ignorance-sphere.md), [Meister Eckhart — Dialectical Apophaticism and the Word](../../../../../section-rooms/arguments/concepts/reference-notes/meister-eckhart-dialectical-apophaticism.md), [Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed](../../../../../section-rooms/arguments/concepts/reference-notes/bohm-krishnamurti-dialogue-running-true.md), [Torus — Circulation, Magnetic Confinement, and Energy](../../../../../section-rooms/arguments/concepts/reference-notes/torus-circulation-magnetic-confinement.md), [C64 — Paradox / Transforming the Containing Field](../../../../../section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field.md), [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [A17 — Toroidal Circulation and the Arche-Topos](../../../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Maturana and Varela — Autopoiesis and Enaction](../../../../../section-rooms/arguments/concepts/reference-notes/maturana-varela-autopoiesis-enaction.md)
+### Kauffman Iterants
 
 **Implicates:** none written.
 
-**Reached from:** *extends* ← [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Laws of Form](../../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Complex Plane, Laws of Form, Re-entry
 
-### [MEF](../../../../../section-rooms/arguments/concepts/reference-notes/mef.md)
+### Khahara
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
+
+### Laws of Form
+
+**Implicates:** *unnamed* → Re-entry, Kauffman Iterants, Maturana and Varela — Autopoiesis and Enaction
+
+**Reached from:** *qualifies* ← Russell — Paradox and Type-Theoretic Closure · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Re-entry
+
+### Logos and Epi-Logos
+
+**Implicates:** *unnamed* → Vimarśa, [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md), Computational Vimarśa, [C56 — Compassion / Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Compassion as Sensitivity to Origins, Computational Vimarśa, Meister Eckhart — Dialectical Apophaticism and the Word
+
+### Mathematical-Artistic Image Register
+
+**Implicates:** *figures* → Cymatics and Standing Waves · *unnamed* → Nicholas of Cusa — Learned Ignorance, Coincidence, and the Infinite Sphere, Meister Eckhart — Dialectical Apophaticism and the Word, Bohm–Krishnamurti Dialogues — Running True and the Observer-Observed, Torus — Circulation, Magnetic Confinement, and Energy, [C64 — Paradox / Transforming the Containing Field](../../../../../section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field.md), [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [A17 — Toroidal Circulation and the Arche-Topos](../../../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Maturana and Varela — Autopoiesis and Enaction
+
+**Implicates:** *sources* → [Maturana and Varela — Autopoiesis and Cognition (1980)](../../../sources/process-systems-theory/maturana/maturana-varela-1980-autopoiesis-cognition/maturana-varela-1980-autopoiesis-cognition.md#maturana-varela-1980-autopoiesis-cognition-q002), [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), [Taylor — Symbolon Dynamics, Archetype, Attractor, and Objective Internality (2026)](../../../sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md) · *sources (declared)* → [Maturana and Varela — Autopoiesis and Cognition (1980)](../../../sources/process-systems-theory/maturana/maturana-varela-1980-autopoiesis-cognition/maturana-varela-1980-autopoiesis-cognition.md), [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), [Taylor — Symbolon Dynamics, Archetype, Attractor, and Objective Internality (2026)](../../../sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md) · *unnamed* → [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md#enacted-world-and-instituted-permission), [C41 — Objective Internality](../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md), [A30 — Objective Co-Internality](../../../../../section-rooms/arguments/A30-Objective-Co-Internality.md), [Maturana and Varela — Autopoiesis and Cognition (1980)](../../../sources/process-systems-theory/maturana/maturana-varela-1980-autopoiesis-cognition/maturana-varela-1980-autopoiesis-cognition.md#maturana-varela-1980-autopoiesis-cognition-q001), [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [C43 — Computational Vimarśa](../../../../../section-rooms/arguments/concepts/C43-Computational-Vimarsa.md), [C42 — Objective Co-Internality](../../../../../section-rooms/arguments/concepts/C42-Objective-Co-Internality.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Laws of Form, [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md)
+
+### MEF
 
 **Implicates:** *unnamed* → [C44 — Prompt Thrownness](../../../../../section-rooms/arguments/concepts/C44-Prompt-Thrownness.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Prompt Thrownness](../../../../../section-rooms/arguments/concepts/reference-notes/prompt-thrownness.md), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Prompt Thrownness, Core Theorems — Pithy
 
-### [Meister Eckhart — Dialectical Apophaticism and the Word](../../../../../section-rooms/arguments/concepts/reference-notes/meister-eckhart-dialectical-apophaticism.md)
+### Meister Eckhart — Dialectical Apophaticism and the Word
 
-**Implicates:** *unnamed* → [C64 — Paradox / Transforming the Containing Field](../../../../../section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field.md), [Logos and Epi-Logos](../../../../../section-rooms/arguments/concepts/reference-notes/logos-epi-logos.md), [Wittgenstein — Limit, Silence, and Forms of Life](../../../../../section-rooms/arguments/concepts/reference-notes/wittgenstein-limit-silence-forms-of-life.md), [C61 — Symbolon Disclosure Architecture](../../../../../section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture.md)
+**Implicates:** *unnamed* → [C64 — Paradox / Transforming the Containing Field](../../../../../section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field.md), Logos and Epi-Logos, Wittgenstein — Limit, Silence, and Forms of Life, [C61 — Symbolon Disclosure Architecture](../../../../../section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Mathematical-Artistic Image Register](../../../../../section-rooms/arguments/concepts/reference-notes/mathematical-artistic-image-register.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Mathematical-Artistic Image Register
 
-### [Metonic Cycle](../../../../../section-rooms/arguments/concepts/reference-notes/metonic-cycle.md)
+### Metonic Cycle
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Metonic Cycle and Antikythera: Maintained Fit](../../../../matheme/harmonics/metonic-antikythera-cycle.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Metonic Cycle and Antikythera: Maintained Fit](../../../../matheme/harmonics/metonic-antikythera-cycle.md)
 
-### [Mono-Poly Planetary Intelligence](../../../../../section-rooms/arguments/concepts/reference-notes/mono-poly-planetary-intelligence.md)
+### Mono-Poly Planetary Intelligence
 
-**Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md) · *unnamed* → [Taylor — Revision Notes on Trust and F-Blocks (2026)](../../../sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md#0. The working thesis — full form, undiluted), [C18 — Apoha](../../../../../section-rooms/arguments/concepts/C18-Apoha.md), [4-2 Techne — Sovereign Commons](../../../../../section-rooms/arguments/concepts/reference-notes/4-2-techne-sovereign-commons.md), [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [C56 — Compassion / Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md), [A32 — Reflective Field / THE MIRROR THAT MOVES FIRST](../../../../../section-rooms/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First.md)
+**Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md) · *unnamed* → [Taylor — Revision Notes on Trust and F-Blocks (2026)](../../../sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md#0. The working thesis — full form, undiluted), [C18 — Apoha](../../../../../section-rooms/arguments/concepts/C18-Apoha.md), 4-2 Techne — Sovereign Commons, [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A26 — Objective Internality — Mind as Worldhood](../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [C56 — Compassion / Sensitivity to Origins](../../../../../section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md), [A32 — Reflective Field / THE MIRROR THAT MOVES FIRST](../../../../../section-rooms/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md)
+### Musical Resolution of the Arche-Topos
 
-**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [Spanda Equations](../../../../../section-rooms/arguments/concepts/reference-notes/spanda-equations.md), [9-8 Whole Tone](../../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md), [Pythagorean Comma](../../../../../section-rooms/arguments/concepts/reference-notes/pythagorean-comma.md), [Cymatics and Standing Waves](../../../../../section-rooms/arguments/concepts/reference-notes/cymatics-standing-waves.md)
+**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), Spanda Equations, 9-8 Whole Tone, Pythagorean Comma, Cymatics and Standing Waves
 
-**Reached from:** *unnamed* ← [9-8 Whole Tone](../../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md), [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Cymatics and Standing Waves](../../../../../section-rooms/arguments/concepts/reference-notes/cymatics-standing-waves.md), [Hole Whole Holy Health](../../../../../section-rooms/arguments/concepts/reference-notes/hole-whole-holy-health.md), [Spanda Equations](../../../../../section-rooms/arguments/concepts/reference-notes/spanda-equations.md), [Torus — Circulation, Magnetic Confinement, and Energy](../../../../../section-rooms/arguments/concepts/reference-notes/torus-circulation-magnetic-confinement.md)
+**Reached from:** *unnamed* ← 9-8 Whole Tone, Concept Reference Shelf — Recovered 2026-08-08, Cymatics and Standing Waves, Hole Whole Holy Health, Spanda Equations, Torus — Circulation, Magnetic Confinement, and Energy
 
-### [Nicholas of Cusa — Learned Ignorance, Coincidence, and the Infinite Sphere](../../../../../section-rooms/arguments/concepts/reference-notes/nicholas-of-cusa-learned-ignorance-sphere.md)
+### Nicholas of Cusa — Learned Ignorance, Coincidence, and the Infinite Sphere
 
 **Implicates:** *unnamed* → [C64 — Paradox / Transforming the Containing Field](../../../../../section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field.md), [C52 — Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md), [C61 — Symbolon Disclosure Architecture](../../../../../section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Mathematical-Artistic Image Register](../../../../../section-rooms/arguments/concepts/reference-notes/mathematical-artistic-image-register.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Mathematical-Artistic Image Register
 
-### [Nirvikalpa](../../../../../section-rooms/arguments/concepts/reference-notes/nirvikalpa.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Nothaft Satanic Ciphers](../../../../../section-rooms/arguments/concepts/reference-notes/nothaft-satanic-ciphers.md)
+### Nirvikalpa
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Nothaft — Medieval Europe's Satanic Ciphers (2020)](../../../sources/history-philosophy-of-science/nothaft/nothaft-2020-satanic-ciphers/nothaft-2020-satanic-ciphers.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Pratyabhijñā](../../../../../section-rooms/arguments/concepts/reference-notes/pratyabhijna.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Projective Line](../../../../../section-rooms/arguments/concepts/reference-notes/projective-line.md)
+### Nothaft Satanic Ciphers
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [The Projective Line](../../../../matheme/topology/projective-line.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Nothaft — Medieval Europe's Satanic Ciphers (2020)](../../../sources/history-philosophy-of-science/nothaft/nothaft-2020-satanic-ciphers/nothaft-2020-satanic-ciphers.md)
 
-### [Prompt Thrownness](../../../../../section-rooms/arguments/concepts/reference-notes/prompt-thrownness.md)
+### Pratyabhijñā
 
-**Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#^bratton-2026-agentworld-brief-q032) · *unnamed* → [MEF](../../../../../section-rooms/arguments/concepts/reference-notes/mef.md), [Agentic Individuation Crosswalk](../../../../../section-rooms/arguments/concepts/reference-notes/agentic-individuation-crosswalk.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md)
+**Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Pros Hen Analogia](../../../../../section-rooms/arguments/concepts/reference-notes/pros-hen-analogia.md)
+### Projective Line
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [The Projective Line](../../../../matheme/topology/projective-line.md)
+
+### Prompt Thrownness
+
+**Implicates:** *sources* → [Bratton — Antikythera Agentworld Brief (2026)](../../../sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#^bratton-2026-agentworld-brief-q032) · *unnamed* → MEF, Agentic Individuation Crosswalk, Computational Vimarśa
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Pros Hen Analogia
 
 **Implicates:** *sources* → [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · *unnamed* → [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md)
 
-**Reached from:** *unnamed* ← [§0/1 — Integral Threshold — Cold Return / Recovery Acceptance](../../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/00-INTEGRAL-THRESHOLD-COLD-RETURN.md), [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← §0/1 — Integral Threshold — Cold Return / Recovery Acceptance, Concept Reference Shelf — Recovered 2026-08-08
 
-### [Psychoid Number](../../../../../section-rooms/arguments/concepts/reference-notes/psychoid-number.md)
+### Psychoid Number
 
-**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [Christopher M. Bache — LSD and the Mind of the Universe](../../../../../section-rooms/arguments/concepts/reference-notes/christopher-bache-lsd-and-the-mind-of-the-universe.md), [Jung-Pauli](../../../../../section-rooms/arguments/concepts/reference-notes/jung-pauli.md), [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md)
+**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), Christopher M. Bache — LSD and the Mind of the Universe, Jung-Pauli, [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Pythagorean Comma](../../../../../section-rooms/arguments/concepts/reference-notes/pythagorean-comma.md)
+### Pythagorean Comma
 
-**Implicates:** *unnamed* → [9-8 Whole Tone](../../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md)
+**Implicates:** *unnamed* → 9-8 Whole Tone
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Musical Resolution of the Arche-Topos
 
-### [Quaternal Logic](../../../../../section-rooms/arguments/concepts/reference-notes/quaternal-logic.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Qubit-Bloch Sphere](../../../../../section-rooms/arguments/concepts/reference-notes/qubit-bloch-sphere.md)
+### Quaternal Logic
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [A Pure Qubit and the Bloch Sphere](../../../../matheme/formal-neighbours/qubit-bloch-sphere.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Re-entry](../../../../../section-rooms/arguments/concepts/reference-notes/re-entry.md)
-
-**Implicates:** *unnamed* → [Laws of Form](../../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md), [Kauffman Iterants](../../../../../section-rooms/arguments/concepts/reference-notes/kauffman-iterants.md), [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Laws of Form](../../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md), [Formal Limit — Source-Specific Limits and Their Consequences](../../../dossiers/formal-limit.md)
-
-### [Riemann Sphere](../../../../../section-rooms/arguments/concepts/reference-notes/riemann-sphere.md)
+### Qubit-Bloch Sphere
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [A Pure Qubit and the Bloch Sphere](../../../../matheme/formal-neighbours/qubit-bloch-sphere.md)
 
-### [Rotman Semiotics of Zero](../../../../../section-rooms/arguments/concepts/reference-notes/rotman-semiotics-of-zero.md)
+### Re-entry
 
-**Implicates:** none written.
+**Implicates:** *unnamed* → Laws of Form, Kauffman Iterants, [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
 
-**Reached from:** *qualifies* ← [Language, Symbol and Dialogue — The Account Answers Back](../../../histories/traditions-and-disciplines/language-symbol-dialogue/DEVELOPMENT.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Laws of Form, [Formal Limit — Source-Specific Limits and Their Consequences](../../../dossiers/formal-limit.md)
 
-### [Russell — Paradox and Type-Theoretic Closure](../../../../../section-rooms/arguments/concepts/reference-notes/russell-paradox-type-theory.md)
-
-**Implicates:** *qualifies* → [Laws of Form](../../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md) · *unnamed* → [Whitehead Creativity](../../../../../section-rooms/arguments/concepts/reference-notes/whitehead-creativity.md), [Gödel Incompleteness](../../../../../section-rooms/arguments/concepts/reference-notes/godel-incompleteness.md), [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Gödel Incompleteness](../../../../../section-rooms/arguments/concepts/reference-notes/godel-incompleteness.md)
-
-### [Salem Codex](../../../../../section-rooms/arguments/concepts/reference-notes/salem-codex.md)
+### Riemann Sphere
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Saṃkalpa](../../../../../section-rooms/arguments/concepts/reference-notes/samkalpa.md)
-
-**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [C18 — Apoha](../../../../../section-rooms/arguments/concepts/C18-Apoha.md), [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [SEED Language of Spirit Dialogues](../../../../../section-rooms/arguments/concepts/reference-notes/seed-language-of-spirit-dialogues.md)
-
-**Implicates:** *unnamed* → [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), [4-2 Techne — Sovereign Commons](../../../../../section-rooms/arguments/concepts/reference-notes/4-2-techne-sovereign-commons.md), [C57 — Agentworld](../../../../../section-rooms/arguments/concepts/C57-Agentworld.md)
-
-**Reached from:** *grounds* ← [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Sheffer Stroke](../../../../../section-rooms/arguments/concepts/reference-notes/sheffer-stroke.md)
+### Rotman Semiotics of Zero
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *qualifies* ← [Language, Symbol and Dialogue — The Account Answers Back](../../../histories/traditions-and-disciplines/language-symbol-dialogue/DEVELOPMENT-language-symbol-dialogue.md) · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md)
 
-### [Softmax as Apoha](../../../../../section-rooms/arguments/concepts/reference-notes/softmax-as-apoha.md)
+### Russell — Paradox and Type-Theoretic Closure
 
-**Implicates:** none written.
+**Implicates:** *qualifies* → Laws of Form · *unnamed* → Whitehead Creativity, Gödel Incompleteness, [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Apoha](../../../../../section-rooms/arguments/concepts/reference-notes/apoha.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Gödel Incompleteness
 
-### [Spanda Equations](../../../../../section-rooms/arguments/concepts/reference-notes/spanda-equations.md)
-
-**Implicates:** *sources* → [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · *unnamed* → [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md), [9-8 Whole Tone](../../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md), [§3 · #1 — The Spanda Equations and 4+2](../../../../../section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md)
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md), [A36′ — Integral Zero of the Hybrid Society](../../../../../section-rooms/arguments/conjugate/A36-prime-Integral-Zero-of-the-Hybrid-Society.md)
-
-### [Surface Classification 4g+2g](../../../../../section-rooms/arguments/concepts/reference-notes/surface-classification-4g-2g.md)
+### Salem Codex
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Dimensional Reframing at Zero and Infinity](../../../../../section-rooms/arguments/concepts/reference-notes/dimensional-reframing-zero-infinity.md), [Torus — Circulation, Magnetic Confinement, and Energy](../../../../../section-rooms/arguments/concepts/reference-notes/torus-circulation-magnetic-confinement.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Zero Reception — The Sign and the Practice That Receives It](../../../dossiers/zero-reception.md), [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
 
-### [Syn-Ballein](../../../../../section-rooms/arguments/concepts/reference-notes/syn-ballein.md)
+### Saṃkalpa
+
+**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [Vikalpa / Saṃkalpa](../../../../../section-rooms/arguments/concepts/vikalpa-samkalpa.md), [C18 — Apoha](../../../../../section-rooms/arguments/concepts/C18-Apoha.md), [A13 — Two Logics of Two — Dia / Syn](../../../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### SEED Language of Spirit Dialogues
+
+**Implicates:** *unnamed* → [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md), [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), 4-2 Techne — Sovereign Commons, [C57 — Agentworld](../../../../../section-rooms/arguments/concepts/C57-Agentworld.md)
+
+**Reached from:** *grounds* ← [Bohm — Enfoldment, Dialogue and the Return of an Account](../../../dossiers/bohm.md) · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Sheffer Stroke
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [The Blind Spot — Frank, Gleiser, Thompson](../../../../../section-rooms/arguments/concepts/reference-notes/blind-spot-frank-gleiser-thompson.md)
+### Softmax as Apoha
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Apoha
+
+### Spanda Equations
+
+**Implicates:** *sources* → [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · *unnamed* → Musical Resolution of the Arche-Topos, 9-8 Whole Tone, [§3 · #1 — The Spanda Equations and 4+2](../../../../../section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md)
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Musical Resolution of the Arche-Topos, [A36′ — Integral Zero of the Hybrid Society](../../../../../section-rooms/arguments/conjugate/A36-prime-Integral-Zero-of-the-Hybrid-Society.md)
+
+### Surface Classification 4g+2g
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Dimensional Reframing at Zero and Infinity, Torus — Circulation, Magnetic Confinement, and Energy
+
+### Syn-Ballein
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### The Blind Spot — Frank, Gleiser, Thompson
 
 **Implicates:** *unnamed* → [Spanda Karikas Arguments April 2026](../../../../mytheme/poetry/spanda-karikas-arguments-april-2026.md)
 
-**Reached from:** *figures* ← [Formal Limit — Source-Specific Limits and Their Consequences](../../../dossiers/formal-limit.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *figures* ← [Formal Limit — Source-Specific Limits and Their Consequences](../../../dossiers/formal-limit.md) · *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Torus — Circulation, Magnetic Confinement, and Energy](../../../../../section-rooms/arguments/concepts/reference-notes/torus-circulation-magnetic-confinement.md)
+### Torus — Circulation, Magnetic Confinement, and Energy
 
-**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [A17 — Toroidal Circulation and the Arche-Topos](../../../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md), [Surface Classification 4g+2g](../../../../../section-rooms/arguments/concepts/reference-notes/surface-classification-4g-2g.md), [Musical Resolution of the Arche-Topos](../../../../../section-rooms/arguments/concepts/reference-notes/musical-resolution-of-arche-topos.md)
+**Implicates:** *unnamed* → [A16 — Arche-Topos as Differential Field](../../../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md), [A17 — Toroidal Circulation and the Arche-Topos](../../../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md), Surface Classification 4g+2g, Musical Resolution of the Arche-Topos
 
-**Reached from:** *extends* ← [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Mathematical-Artistic Image Register](../../../../../section-rooms/arguments/concepts/reference-notes/mathematical-artistic-image-register.md), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Mathematical-Artistic Image Register, [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md), Core Theorems — Pithy
 
-### [Trika](../../../../../section-rooms/arguments/concepts/reference-notes/trika.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Trika Alignment Stack](../../../../../section-rooms/arguments/concepts/reference-notes/trika-alignment-stack.md)
+### Trika
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Trivial Ring](../../../../../section-rooms/arguments/concepts/reference-notes/trivial-ring.md)
+### Trika Alignment Stack
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [The One-Element Ring](../../../../matheme/formal-neighbours/trivial-ring.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Varela — Calculus for Self-Reference](../../../../../section-rooms/arguments/concepts/reference-notes/varela-calculus-self-reference.md)
+### Trivial Ring
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [The One-Element Ring](../../../../matheme/formal-neighbours/trivial-ring.md)
+
+### Varela — Calculus for Self-Reference
 
 **Implicates:** *unnamed* → [§0/1 · #3 — The Formal-Limit Genealogy](../../../../../section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md), [§3 · #2 — Mark, Re-entry, and Complex Orientation](../../../../../section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Vikalpa](../../../../../section-rooms/arguments/concepts/reference-notes/vikalpa.md)
+### Vikalpa
 
-**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [C18 — Apoha](../../../../../section-rooms/arguments/concepts/C18-Apoha.md), [Dia-Ballein](../../../../../section-rooms/arguments/concepts/reference-notes/dia-ballein.md), [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md)
+**Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [Vikalpa / Saṃkalpa](../../../../../section-rooms/arguments/concepts/vikalpa-samkalpa.md), [C18 — Apoha](../../../../../section-rooms/arguments/concepts/C18-Apoha.md), Dia-Ballein, [A09 — Tattvic Differential Field](../../../../../section-rooms/arguments/A09-Tattvic-Differential-Field.md)
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/vimarsa.md)
+### Vimarśa
 
-**Implicates:** *unnamed* → [A05 — Prakāśa–Vimarśa](../../../../../section-rooms/arguments/A05-Prakasa-Vimarsa.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md)
+**Implicates:** *unnamed* → [A05 — Prakāśa–Vimarśa](../../../../../section-rooms/arguments/A05-Prakasa-Vimarsa.md), Computational Vimarśa
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Computational Vimarśa](../../../../../section-rooms/arguments/concepts/reference-notes/computational-vimarsa.md), [Logos and Epi-Logos](../../../../../section-rooms/arguments/concepts/reference-notes/logos-epi-logos.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Computational Vimarśa, Logos and Epi-Logos
 
-### [Von Franz Number and Time](../../../../../section-rooms/arguments/concepts/reference-notes/von-franz-number-and-time.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-
-### [Von Neumann Ordinals](../../../../../section-rooms/arguments/concepts/reference-notes/von-neumann-ordinals.md)
+### Von Franz Number and Time
 
 **Implicates:** none written.
 
-**Reached from:** *returns-to* ← [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
 
-### [Whitehead Creativity](../../../../../section-rooms/arguments/concepts/reference-notes/whitehead-creativity.md)
+### Von Neumann Ordinals
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, [Mathematics — Changed Permissions and Retained Conditions](../../../histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md)
+
+### Whitehead Creativity
 
 **Implicates:** *unnamed* → [A14 — Computational Process Ontology](../../../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), [Taylor and Claude — Derivational Chat Record (2026)](../../../sources/internal-corpus/taylor/chat-logs/taylor-claude-2026-derivational-chat/taylor-claude-2026-derivational-chat.md)
 
-**Reached from:** *returns-to* ← [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md) · *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Gödel Incompleteness](../../../../../section-rooms/arguments/concepts/reference-notes/godel-incompleteness.md), [Russell — Paradox and Type-Theoretic Closure](../../../../../section-rooms/arguments/concepts/reference-notes/russell-paradox-type-theory.md), [Core Theorems — Pithy](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/AUTHORIAL-TEXT.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Gödel Incompleteness, Russell — Paradox and Type-Theoretic Closure, [Process — What an Achieved Form Makes Possible Next](../../../dossiers/process.md), Core Theorems — Pithy
 
-### [Wittgenstein — Limit, Silence, and Forms of Life](../../../../../section-rooms/arguments/concepts/reference-notes/wittgenstein-limit-silence-forms-of-life.md)
-
-**Implicates:** none written.
-
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md), [Gödel Incompleteness](../../../../../section-rooms/arguments/concepts/reference-notes/godel-incompleteness.md), [Meister Eckhart — Dialectical Apophaticism and the Word](../../../../../section-rooms/arguments/concepts/reference-notes/meister-eckhart-dialectical-apophaticism.md)
-
-### [Śiva-Śakti-Object Triad](../../../../../section-rooms/arguments/concepts/reference-notes/siva-sakti-object-triad.md)
+### Wittgenstein — Limit, Silence, and Forms of Life
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08, Gödel Incompleteness, Meister Eckhart — Dialectical Apophaticism and the Word
 
-### [Śuddha-vikalpa](../../../../../section-rooms/arguments/concepts/reference-notes/suddha-vikalpa.md)
+### Śiva-Śakti-Object Triad
 
 **Implicates:** none written.
 
-**Reached from:** *unnamed* ← [Concept Reference Shelf — Recovered 2026-08-08](../../../../../section-rooms/arguments/concepts/reference-notes/README.md)
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08
+
+### Śuddha-vikalpa
+
+**Implicates:** none written.
+
+**Reached from:** *unnamed* ← Concept Reference Shelf — Recovered 2026-08-08

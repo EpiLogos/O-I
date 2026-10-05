@@ -11,7 +11,7 @@ source_relation: "Explicit mathematical construction; argued native comparison"
 
 ## #0 — Define the algebra before its subgroup
 
-The real quaternion algebra has basis `1,i,j,k` with `i²=j²=k²=ijk=−1`. Multiplication gives `ij=k`, `jk=i`, `ki=j`, while reversing the order negates each result. The [core spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) supplies the native phase relation beside which this formal neighbour is admitted.
+The real quaternion algebra has basis `1,i,j,k` with `i²=j²=k²=ijk=−1`. Multiplication gives `ij=k`, `jk=i`, `ki=j`, while reversing the order negates each result. The [native phase relation](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) carries the qualitative poles and their four ordered relations through the positional count; its `0/1` to `1/0` passage reverses the orientation through which the same relation is read. Quaternion multiplication provides the explicit noncommutative comparison developed below. A correspondence between its algebraic action and that native passage requires the particular mapping of their operations.
 
 The algebra is a four-dimensional real vector space with multiplication. Its eight-element multiplicative subgroup `Q8={±1,±i,±j,±k}` is a different object from the whole algebra or the continuous group of unit quaternions.
 
@@ -29,7 +29,7 @@ Direct multiplication reproduces the rules, while matrix associativity supplies 
 
 The set `{±i,±j,±k}` contains six signed imaginary basis units. It is not a subgroup: `i·i=−1` lies outside it. Adjoining ±1 gives Q8. Hence a sixfold correspondence that uses only those imaginary units must record its omitted real units and cannot call the six the whole group.
 
-The eight elements also do not automatically coincide with the native eight determinations. A proposed coordinate mapping must specify which operations correspond and remains Offered until those relations are demonstrated.
+The native eight determinations retain their qualitative sequence beside these eight group elements. A comparative coordinate mapping becomes established through specified operations and demonstration of their corresponding relations.
 
 ## #3 — Let unit quaternions act on three-space
 
@@ -47,4 +47,4 @@ This continuous rotation double cover differs from the torus orientation cover o
 
 The result is an exact noncommutative eight-element group within a continuous algebra, plus a distinct rotation-cover construction. The native phase field can use these as specified formal neighbours without deriving its positional meanings from their cardinalities.
 
-This record returns-to [complex orientation](../ql/complex-orientation.md), [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), and [translations](../mono-poly/translations.md). A valid comparison must preserve the order of products and name which cover it invokes.
+[Complex orientation](../ql/complex-orientation.md) becomes comparable through the stated operations of multiplication and rotation. The [eight native determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) retain their own qualitative offices; [translation](../mono-poly/translations.md) carries the declared correspondence between these objects. Preserving the order of products and the specified cover makes the comparison exact.

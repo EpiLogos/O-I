@@ -10,11 +10,11 @@ type: _md_
 title: "Who decides?"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c800c9d96c20f3f4d258b
-source_id: 191a4797-123c-800c-9d96-c20f3f4d258b
 notion_created: 2025-02-05T18:23:34Z
 notion_edited: 2025-02-05T18:24:38.035Z
 status: sorted
 kind: poem
+source_id: who-decides
 ---
 Every decision is an unfolding,
 All unfolding is without choice.

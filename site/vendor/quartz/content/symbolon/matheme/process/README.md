@@ -12,7 +12,7 @@ What the matheme **DOES**. File 2 of the Binary Explication ([source house](../.
 
 ## Projected structure (the file's own headings)
 
-- **[t1-geometry](t1-geometry.md)** — "AND + OR — The Geometry of Space-Time": the six positions from binary strings; the E→W diametric leap; interval-gluing (0/1 as the generative operation of closed form); the 75% gap; the squared circle `⃞ + 𐀏`.
+- **[t1-geometry](t1-geometry.md)** — "AND + OR — The Geometry of Space-Time": the six positions from binary strings; the E→W diametric leap; interval-gluing (`0/1` as the generative operation of closed form); the 75% gap; the squared circle `⃞ + 𐀏`.
 - **[phase-flip](phase-flip.md)** — `§1/0 — 0/1 = / ≠ 1/0`: the hinge of the file; Spencer-Brown re-entry → oscillation, memory, time; T1→T0 as third-person→first-person, IS→AM.
 - **[t0-onto-logic](t0-onto-logic.md)** — "AND/OR — The Onto-Logic": the slash-form table (`0/0 = %`, `0/1 → 0%`, `1/0 = ?/!`, `1/1 = 100%`); `?/!` at #3; chirality; the primed positions `#0′–#5′`.
 - **[spanda](spanda.md)** — both Spanda equations, with T0 (emanative arc) and T1 (reversionary arc); projects into [[symbolon/matheme/spanda/README.md|Spanda]].

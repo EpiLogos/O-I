@@ -1,0 +1,3670 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-matheme-computation",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+  "revision": 1,
+  "title": "Matheme — Computation",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax",
+    "revision": 1,
+    "title": "softmax and argmax",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge",
+    "revision": 1,
+    "title": "preference gauge and reference policy",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space",
+    "revision": 1,
+    "title": "J-space",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance",
+    "revision": 1,
+    "title": "energy-based inference",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity",
+    "revision": 1,
+    "title": "operational parity",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w",
+     "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main",
+    "revision": 1,
+    "title": "the distribution",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.39,
+      "automation": null
+     },
+     "share": {
+      "value": 3,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three",
+    "revision": 1,
+    "title": "three different outputs",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.633,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field",
+    "revision": 1,
+    "title": "what travels with the cut",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.74,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5367,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main",
+    "revision": 1,
+    "title": "the gauge",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.39,
+      "automation": null
+     },
+     "share": {
+      "value": 3,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo",
+    "revision": 1,
+    "title": "the DPO cancellation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.67,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ",
+    "revision": 1,
+    "title": "the zero is already occupied",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.74,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5967,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1",
+    "revision": 1,
+    "title": "inspect — permitted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -1.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.39,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2",
+    "revision": 1,
+    "title": "edit — permitted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.15,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.305,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3",
+    "revision": 1,
+    "title": "publish — withheld",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.92,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.39,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main",
+    "revision": 1,
+    "title": "the perturbation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.05,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.458,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec",
+    "revision": 1,
+    "title": "the declared dependencies",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.05,
+      "automation": null
+     },
+     "y": {
+      "value": -0.66,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.41,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail",
+    "revision": 1,
+    "title": "the precise failure",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.05,
+      "automation": null
+     },
+     "y": {
+      "value": -1.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.54,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main",
+    "revision": 1,
+    "title": "inference on a fixed landscape",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.36650000000000005,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5385,
+      "automation": null
+     },
+     "share": {
+      "value": 3,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom",
+    "revision": 1,
+    "title": "the domain belongs in the specification",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.685,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test",
+    "revision": 1,
+    "title": "make resonance discriminate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.74,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.54,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0",
+    "revision": 1,
+    "title": "vector E1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 1.26,
+      "automation": null
+     },
+     "y": {
+      "value": 0.6489999999999999,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1",
+    "revision": 1,
+    "title": "vector E2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.75,
+      "automation": null
+     },
+     "y": {
+      "value": 0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2",
+    "revision": 1,
+    "title": "vector E3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.75,
+      "automation": null
+     },
+     "y": {
+      "value": 0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3",
+    "revision": 1,
+    "title": "vector E4",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.75,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4",
+    "revision": 1,
+    "title": "vector E5",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.75,
+      "automation": null
+     },
+     "y": {
+      "value": -0.64,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5",
+    "revision": 1,
+    "title": "vector E6",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 1.208,
+      "automation": null
+     },
+     "y": {
+      "value": -0.98,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.535,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w",
+    "revision": 1,
+    "title": "the worked separation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2519999999999998,
+      "automation": null
+     },
+     "y": {
+      "value": 0.86,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.64,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f",
+    "revision": 1,
+    "title": "failure specified first",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5588000000000004,
+      "automation": null
+     },
+     "y": {
+      "value": -1.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.8095,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax",
+   "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main"
+  },
+  "provenance": [
+   {
+    "ref": "matheme/roz-matheme-computation.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-matheme-computation",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-matheme-computation:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-matheme-computation",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Matheme — Computation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-matheme-computation\" data-expression-revision=\"1\"><h1>Matheme — Computation</h1><p>Frozen reading of expression:return-of-zero:roz-matheme-computation at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax\" aria-label=\"softmax and argmax\"><h2>softmax and argmax</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:4.17rem;opacity:1.00\" title=\"the distribution\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:1.90rem;opacity:1.00\" title=\"three different outputs\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.61rem;opacity:1.00\" title=\"what travels with the cut\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge\" aria-label=\"preference gauge and reference policy\"><h2>preference gauge and reference policy</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:4.17rem;opacity:1.00\" title=\"the gauge\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:2.01rem;opacity:1.00\" title=\"the DPO cancellation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.79rem;opacity:1.00\" title=\"the zero is already occupied\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space\" aria-label=\"J-space\"><h2>J-space</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:38.00%;top:45.80%;font-size:1.17rem;opacity:1.00\" title=\"inspect — permitted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:48.50%;top:45.80%;font-size:0.92rem;opacity:1.00\" title=\"edit — permitted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:59.20%;top:45.80%;font-size:1.17rem;opacity:1.00\" title=\"publish — withheld\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:51.40%;font-size:4.37rem;opacity:1.00\" title=\"the perturbation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:56.60%;font-size:1.23rem;opacity:1.00\" title=\"the declared dependencies\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:60.20%;font-size:1.62rem;opacity:1.00\" title=\"the precise failure\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance\" aria-label=\"energy-based inference\"><h2>energy-based inference</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:53.66%;top:45.80%;font-size:4.62rem;opacity:1.00\" title=\"inference on a fixed landscape\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:2.06rem;opacity:1.00\" title=\"the domain belongs in the specification\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.62rem;opacity:1.00\" title=\"make resonance discriminate\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity\" aria-label=\"operational parity\"><h2>operational parity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:62.60%;top:43.51%;font-size:1.65rem;opacity:1.00\" title=\"vector E1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:46.20%;font-size:1.65rem;opacity:1.00\" title=\"vector E2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:49.60%;font-size:1.65rem;opacity:1.00\" title=\"vector E3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:53.00%;font-size:1.65rem;opacity:1.00\" title=\"vector E4\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:56.40%;font-size:1.65rem;opacity:1.00\" title=\"vector E5\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:62.08%;top:59.80%;font-size:1.60rem;opacity:1.00\" title=\"vector E6\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:47.48%;top:41.40%;font-size:1.92rem;opacity:1.00\" title=\"the worked separation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:44.41%;top:60.60%;font-size:2.43rem;opacity:1.00\" title=\"failure specified first\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-matheme-computation",
+  "world_ref": "expression:return-of-zero:roz-matheme-computation",
+  "revision": 1,
+  "title": "Matheme — Computation",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-matheme-computation",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Matheme — Computation"
+      },
+      "fallback": {
+       "title": "Matheme — Computation"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-matheme-computation",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-matheme-computation",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-matheme-computation:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-matheme-computation",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Matheme — Computation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-matheme-computation\" data-expression-revision=\"1\"><h1>Matheme — Computation</h1><p>Frozen reading of expression:return-of-zero:roz-matheme-computation at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax\" aria-label=\"softmax and argmax\"><h2>softmax and argmax</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:4.17rem;opacity:1.00\" title=\"the distribution\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:1.90rem;opacity:1.00\" title=\"three different outputs\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.61rem;opacity:1.00\" title=\"what travels with the cut\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge\" aria-label=\"preference gauge and reference policy\"><h2>preference gauge and reference policy</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:4.17rem;opacity:1.00\" title=\"the gauge\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:2.01rem;opacity:1.00\" title=\"the DPO cancellation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.79rem;opacity:1.00\" title=\"the zero is already occupied\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space\" aria-label=\"J-space\"><h2>J-space</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:38.00%;top:45.80%;font-size:1.17rem;opacity:1.00\" title=\"inspect — permitted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:48.50%;top:45.80%;font-size:0.92rem;opacity:1.00\" title=\"edit — permitted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:59.20%;top:45.80%;font-size:1.17rem;opacity:1.00\" title=\"publish — withheld\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:51.40%;font-size:4.37rem;opacity:1.00\" title=\"the perturbation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:56.60%;font-size:1.23rem;opacity:1.00\" title=\"the declared dependencies\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:60.20%;font-size:1.62rem;opacity:1.00\" title=\"the precise failure\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance\" aria-label=\"energy-based inference\"><h2>energy-based inference</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:53.66%;top:45.80%;font-size:4.62rem;opacity:1.00\" title=\"inference on a fixed landscape\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:2.06rem;opacity:1.00\" title=\"the domain belongs in the specification\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.62rem;opacity:1.00\" title=\"make resonance discriminate\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity\" aria-label=\"operational parity\"><h2>operational parity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:62.60%;top:43.51%;font-size:1.65rem;opacity:1.00\" title=\"vector E1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:46.20%;font-size:1.65rem;opacity:1.00\" title=\"vector E2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:49.60%;font-size:1.65rem;opacity:1.00\" title=\"vector E3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:53.00%;font-size:1.65rem;opacity:1.00\" title=\"vector E4\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:56.40%;font-size:1.65rem;opacity:1.00\" title=\"vector E5\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:62.08%;top:59.80%;font-size:1.60rem;opacity:1.00\" title=\"vector E6\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:47.48%;top:41.40%;font-size:1.92rem;opacity:1.00\" title=\"the worked separation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:44.41%;top:60.60%;font-size:2.43rem;opacity:1.00\" title=\"failure specified first\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+        "revision": 1,
+        "title": "Matheme — Computation",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax",
+          "revision": 1,
+          "title": "softmax and argmax",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge",
+          "revision": 1,
+          "title": "preference gauge and reference policy",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space",
+          "revision": 1,
+          "title": "J-space",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance",
+          "revision": 1,
+          "title": "energy-based inference",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity",
+          "revision": 1,
+          "title": "operational parity",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w",
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main",
+          "revision": 1,
+          "title": "the distribution",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.39,
+            "automation": null
+           },
+           "share": {
+            "value": 3,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three",
+          "revision": 1,
+          "title": "three different outputs",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.633,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field",
+          "revision": 1,
+          "title": "what travels with the cut",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.74,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5367,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main",
+          "revision": 1,
+          "title": "the gauge",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.39,
+            "automation": null
+           },
+           "share": {
+            "value": 3,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo",
+          "revision": 1,
+          "title": "the DPO cancellation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.67,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ",
+          "revision": 1,
+          "title": "the zero is already occupied",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.74,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5967,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1",
+          "revision": 1,
+          "title": "inspect — permitted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -1.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.39,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2",
+          "revision": 1,
+          "title": "edit — permitted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.15,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.305,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3",
+          "revision": 1,
+          "title": "publish — withheld",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.92,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.39,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main",
+          "revision": 1,
+          "title": "the perturbation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.05,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.458,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec",
+          "revision": 1,
+          "title": "the declared dependencies",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.05,
+            "automation": null
+           },
+           "y": {
+            "value": -0.66,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.41,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail",
+          "revision": 1,
+          "title": "the precise failure",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.05,
+            "automation": null
+           },
+           "y": {
+            "value": -1.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.54,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main",
+          "revision": 1,
+          "title": "inference on a fixed landscape",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.36650000000000005,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5385,
+            "automation": null
+           },
+           "share": {
+            "value": 3,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom",
+          "revision": 1,
+          "title": "the domain belongs in the specification",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.685,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test",
+          "revision": 1,
+          "title": "make resonance discriminate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.74,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.54,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0",
+          "revision": 1,
+          "title": "vector E1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 1.26,
+            "automation": null
+           },
+           "y": {
+            "value": 0.6489999999999999,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1",
+          "revision": 1,
+          "title": "vector E2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.75,
+            "automation": null
+           },
+           "y": {
+            "value": 0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2",
+          "revision": 1,
+          "title": "vector E3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.75,
+            "automation": null
+           },
+           "y": {
+            "value": 0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3",
+          "revision": 1,
+          "title": "vector E4",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.75,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4",
+          "revision": 1,
+          "title": "vector E5",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.75,
+            "automation": null
+           },
+           "y": {
+            "value": -0.64,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5",
+          "revision": 1,
+          "title": "vector E6",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 1.208,
+            "automation": null
+           },
+           "y": {
+            "value": -0.98,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.535,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w",
+          "revision": 1,
+          "title": "the worked separation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2519999999999998,
+            "automation": null
+           },
+           "y": {
+            "value": 0.86,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.64,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f",
+          "revision": 1,
+          "title": "failure specified first",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5588000000000004,
+            "automation": null
+           },
+           "y": {
+            "value": -1.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.8095,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax",
+         "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main"
+        },
+        "provenance": [
+         {
+          "ref": "matheme/roz-matheme-computation.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Matheme — Computation"
+      },
+      "fallback": {
+       "title": "Matheme — Computation",
+       "text": "Matheme — Computation: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-matheme-computation",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-matheme-computation",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-matheme-computation",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-matheme-computation.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-matheme-computation"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-matheme-computation",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-matheme-computation",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-matheme-computation:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-matheme-computation"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-matheme-computation",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-matheme-computation:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-matheme-computation",
+    "world_ref": "expression:return-of-zero:roz-matheme-computation",
+    "revision": 1,
+    "title": "Matheme — Computation",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-matheme-computation",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Matheme — Computation"
+        },
+        "fallback": {
+         "title": "Matheme — Computation"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-matheme-computation",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-matheme-computation",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-matheme-computation:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-matheme-computation",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Matheme — Computation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-matheme-computation\" data-expression-revision=\"1\"><h1>Matheme — Computation</h1><p>Frozen reading of expression:return-of-zero:roz-matheme-computation at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax\" aria-label=\"softmax and argmax\"><h2>softmax and argmax</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:4.17rem;opacity:1.00\" title=\"the distribution\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:1.90rem;opacity:1.00\" title=\"three different outputs\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.61rem;opacity:1.00\" title=\"what travels with the cut\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge\" aria-label=\"preference gauge and reference policy\"><h2>preference gauge and reference policy</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:4.17rem;opacity:1.00\" title=\"the gauge\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:2.01rem;opacity:1.00\" title=\"the DPO cancellation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.79rem;opacity:1.00\" title=\"the zero is already occupied\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space\" aria-label=\"J-space\"><h2>J-space</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:38.00%;top:45.80%;font-size:1.17rem;opacity:1.00\" title=\"inspect — permitted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:48.50%;top:45.80%;font-size:0.92rem;opacity:1.00\" title=\"edit — permitted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:59.20%;top:45.80%;font-size:1.17rem;opacity:1.00\" title=\"publish — withheld\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:51.40%;font-size:4.37rem;opacity:1.00\" title=\"the perturbation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:56.60%;font-size:1.23rem;opacity:1.00\" title=\"the declared dependencies\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:50.50%;top:60.20%;font-size:1.62rem;opacity:1.00\" title=\"the precise failure\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance\" aria-label=\"energy-based inference\"><h2>energy-based inference</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:53.66%;top:45.80%;font-size:4.62rem;opacity:1.00\" title=\"inference on a fixed landscape\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.80%;font-size:2.06rem;opacity:1.00\" title=\"the domain belongs in the specification\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.40%;font-size:1.62rem;opacity:1.00\" title=\"make resonance discriminate\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity\" aria-label=\"operational parity\"><h2>operational parity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:62.60%;top:43.51%;font-size:1.65rem;opacity:1.00\" title=\"vector E1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:46.20%;font-size:1.65rem;opacity:1.00\" title=\"vector E2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:49.60%;font-size:1.65rem;opacity:1.00\" title=\"vector E3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:53.00%;font-size:1.65rem;opacity:1.00\" title=\"vector E4\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:57.50%;top:56.40%;font-size:1.65rem;opacity:1.00\" title=\"vector E5\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:62.08%;top:59.80%;font-size:1.60rem;opacity:1.00\" title=\"vector E6\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:47.48%;top:41.40%;font-size:1.92rem;opacity:1.00\" title=\"the worked separation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-computation\" data-presentation-role=\"thing\" style=\"left:44.41%;top:60.60%;font-size:2.43rem;opacity:1.00\" title=\"failure specified first\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+          "revision": 1,
+          "title": "Matheme — Computation",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax",
+            "revision": 1,
+            "title": "softmax and argmax",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge",
+            "revision": 1,
+            "title": "preference gauge and reference policy",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space",
+            "revision": 1,
+            "title": "J-space",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance",
+            "revision": 1,
+            "title": "energy-based inference",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity",
+            "revision": 1,
+            "title": "operational parity",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w",
+             "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main",
+            "revision": 1,
+            "title": "the distribution",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.39,
+              "automation": null
+             },
+             "share": {
+              "value": 3,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-three",
+            "revision": 1,
+            "title": "three different outputs",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.633,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-field",
+            "revision": 1,
+            "title": "what travels with the cut",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.74,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5367,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-main",
+            "revision": 1,
+            "title": "the gauge",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.39,
+              "automation": null
+             },
+             "share": {
+              "value": 3,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-dpo",
+            "revision": 1,
+            "title": "the DPO cancellation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.67,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-preference-gauge:pg-occ",
+            "revision": 1,
+            "title": "the zero is already occupied",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.74,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5967,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a1",
+            "revision": 1,
+            "title": "inspect — permitted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -1.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.39,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a2",
+            "revision": 1,
+            "title": "edit — permitted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.15,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.305,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-a3",
+            "revision": 1,
+            "title": "publish — withheld",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.92,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.39,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-main",
+            "revision": 1,
+            "title": "the perturbation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.05,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.458,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-spec",
+            "revision": 1,
+            "title": "the declared dependencies",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.05,
+              "automation": null
+             },
+             "y": {
+              "value": -0.66,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.41,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-j-space:js-fail",
+            "revision": 1,
+            "title": "the precise failure",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.05,
+              "automation": null
+             },
+             "y": {
+              "value": -1.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.54,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-main",
+            "revision": 1,
+            "title": "inference on a fixed landscape",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.36650000000000005,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5385,
+              "automation": null
+             },
+             "share": {
+              "value": 3,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-dom",
+            "revision": 1,
+            "title": "the domain belongs in the specification",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.685,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-ebm-resonance:eb-test",
+            "revision": 1,
+            "title": "make resonance discriminate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.74,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.54,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-0",
+            "revision": 1,
+            "title": "vector E1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 1.26,
+              "automation": null
+             },
+             "y": {
+              "value": 0.6489999999999999,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-1",
+            "revision": 1,
+            "title": "vector E2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.75,
+              "automation": null
+             },
+             "y": {
+              "value": 0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-2",
+            "revision": 1,
+            "title": "vector E3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.75,
+              "automation": null
+             },
+             "y": {
+              "value": 0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-3",
+            "revision": 1,
+            "title": "vector E4",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.75,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-4",
+            "revision": 1,
+            "title": "vector E5",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.75,
+              "automation": null
+             },
+             "y": {
+              "value": -0.64,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-5",
+            "revision": 1,
+            "title": "vector E6",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 1.208,
+              "automation": null
+             },
+             "y": {
+              "value": -0.98,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.535,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-w",
+            "revision": 1,
+            "title": "the worked separation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2519999999999998,
+              "automation": null
+             },
+             "y": {
+              "value": 0.86,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.64,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-operational-parity:op-f",
+            "revision": 1,
+            "title": "failure specified first",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-computation.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5588000000000004,
+              "automation": null
+             },
+             "y": {
+              "value": -1.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.8095,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax",
+           "entity_ref": "expression:return-of-zero:roz-matheme-computation:scene:comp-softmax-argmax:sa2-main"
+          },
+          "provenance": [
+           {
+            "ref": "matheme/roz-matheme-computation.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Matheme — Computation"
+        },
+        "fallback": {
+         "title": "Matheme — Computation",
+         "text": "Matheme — Computation: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-matheme-computation",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-matheme-computation",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-matheme-computation",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-matheme-computation",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-matheme-computation.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-matheme-computation"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-matheme-computation",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-matheme-computation",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-matheme-computation:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-matheme-computation",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Matheme — Computation",
+  "summary": "a living Expression · 5 scenes · 23 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-matheme-computation:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-matheme-computation",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-matheme-computation"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-matheme-computation:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-matheme-computation",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-matheme-computation",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Matheme — Computation",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-matheme-computation:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-matheme-computation:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-matheme-computation",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-matheme-computation"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

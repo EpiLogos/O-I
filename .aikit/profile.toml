@@ -5,3 +5,4 @@ enable = [
   "guidance/aikit/living-project-collaboration",
   "guidance/aikit/world-situated-agency",
 ]
+disable = ["skill/personal/central-day-close"]

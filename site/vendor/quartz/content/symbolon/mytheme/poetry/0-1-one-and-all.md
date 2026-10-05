@@ -10,11 +10,11 @@ type: _md_
 title: "0-1, One-and-All"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c80cd8072e56505a73362
-source_id: 18fa4797-123c-80cd-8072-e56505a73362
 notion_created: 2025-02-03T13:47:02Z
 notion_edited: 2025-02-03T13:47:18.979Z
 status: sorted
 kind: poem
+source_id: 0-1-one-and-all
 ---
 The 0 is the One, the 1 is the All!
 Thus the All is none, once and for all.

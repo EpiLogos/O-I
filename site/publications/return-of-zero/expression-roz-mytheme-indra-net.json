@@ -1,0 +1,4372 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-indra-net",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+  "revision": 1,
+  "title": "Indra's jewel net — the whole within each reflection",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net",
+    "revision": 1,
+    "title": "A jewel is chosen within the net",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry",
+    "revision": 1,
+    "title": "Entering the others without leaving this one",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot",
+    "revision": 1,
+    "title": "The ink-dot test",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile",
+    "revision": 1,
+    "title": "The image teaches where its own likeness ends",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native",
+    "revision": 1,
+    "title": "The definite jewel carries its constituting field",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account",
+    "revision": 1,
+    "title": "A reflection becomes answerable for its use",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return",
+    "revision": 1,
+    "title": "Return to the jewel whose brightness depends on the others",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64",
+     "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38",
+    "revision": 1,
+    "title": "Indra's net — the celestial image-world",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.56,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.992,
+      "automation": null
+     },
+     "share": {
+      "value": 2.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39",
+    "revision": 1,
+    "title": "inner spread of jewels",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.83,
+      "automation": null
+     },
+     "share": {
+      "value": 1.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40",
+    "revision": 1,
+    "title": "the southwest jewel — selected",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.52,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41",
+    "revision": 1,
+    "title": "Indra",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.66,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42",
+    "revision": 1,
+    "title": "the selected jewel — held as starting place",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1.5,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43",
+    "revision": 1,
+    "title": "the others present within this one",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.921,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44",
+    "revision": 1,
+    "title": "the net reopened inside its own appearance",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.614,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45",
+    "revision": 1,
+    "title": "the interlocutor's question — how enter all, remaining here?",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.72,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46",
+    "revision": 1,
+    "title": "the marked jewel",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.52,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 2.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47",
+    "revision": 1,
+    "title": "the dot present throughout the reflected field",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.105,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48",
+    "revision": 1,
+    "title": "inner reflection carrying the mark",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.722,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49",
+    "revision": 1,
+    "title": "no one went around marking every jewel",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.56,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50",
+    "revision": 1,
+    "title": "jewel substance — separate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.398,
+      "automation": null
+     },
+     "share": {
+      "value": 1.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51",
+    "revision": 1,
+    "title": "jewel substance — separate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52",
+    "revision": 1,
+    "title": "images entering one another — substances do not",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.678,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53",
+    "revision": 1,
+    "title": "closing verses — Vairocana's activity for beings",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54",
+    "revision": 1,
+    "title": "0 = One = Self-Identity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.209,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55",
+    "revision": 1,
+    "title": "1 = All = Self-Difference",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56",
+    "revision": 1,
+    "title": "(0/1)/(1/0) — the orientations held together",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.58,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57",
+    "revision": 1,
+    "title": "the braid: apoha · dependent arising · saṃkalpa",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.29,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.415,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58",
+    "revision": 1,
+    "title": "Symbol — answers to source",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.209,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59",
+    "revision": 1,
+    "title": "Account — does not replace source",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60",
+    "revision": 1,
+    "title": "Trust — the return route stays active",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.36,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61",
+    "revision": 1,
+    "title": "the dot done at this place — return inspectable, institutions distinct",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.34,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62",
+    "revision": 1,
+    "title": "the southwest jewel — return",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63",
+    "revision": 1,
+    "title": "the net it can no longer leave",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.105,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64",
+    "revision": 1,
+    "title": "the mark that remains particular",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65",
+    "revision": 1,
+    "title": "the source's final qualification — no completed optical picture",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.44,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-indra-net.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-indra-net:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Indra&#39;s jewel net — the whole within each reflection</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-indra-net\" data-expression-revision=\"1\"><h1>Indra&#39;s jewel net — the whole within each reflection</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-indra-net at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net\" aria-label=\"A jewel is chosen within the net\"><h2>A jewel is chosen within the net</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.60%;font-size:2.98rem;opacity:1.00\" title=\"Indra&#39;s net — the celestial image-world\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:2.49rem;opacity:1.00\" title=\"inner spread of jewels\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.20%;font-size:0.90rem;opacity:1.00\" title=\"the southwest jewel — selected\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.20%;top:43.40%;font-size:0.78rem;opacity:1.00\" title=\"Indra\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry\" aria-label=\"Entering the others without leaving this one\"><h2>Entering the others without leaving this one</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:1.02rem;opacity:1.00\" title=\"the selected jewel — held as starting place\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:2.76rem;opacity:1.00\" title=\"the others present within this one\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:1.84rem;opacity:1.00\" title=\"the net reopened inside its own appearance\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:57.20%;top:45.00%;font-size:0.72rem;opacity:1.00\" title=\"the interlocutor&#39;s question — how enter all, remaining here?\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot\" aria-label=\"The ink-dot test\"><h2>The ink-dot test</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.20%;font-size:1.02rem;opacity:1.00\" title=\"the marked jewel\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:3.31rem;opacity:1.00\" title=\"the dot present throughout the reflected field\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:2.17rem;opacity:1.00\" title=\"inner reflection carrying the mark\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.80%;top:44.40%;font-size:0.60rem;opacity:1.00\" title=\"no one went around marking every jewel\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile\" aria-label=\"The image teaches where its own likeness ends\"><h2>The image teaches where its own likeness ends</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.80%;font-size:1.19rem;opacity:1.00\" title=\"jewel substance — separate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:54.50%;top:49.00%;font-size:1.65rem;opacity:1.00\" title=\"jewel substance — separate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.03rem;opacity:1.00\" title=\"images entering one another — substances do not\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.60%;top:54.20%;font-size:0.78rem;opacity:1.00\" title=\"closing verses — Vairocana&#39;s activity for beings\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native\" aria-label=\"The definite jewel carries its constituting field\"><h2>The definite jewel carries its constituting field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.80%;font-size:0.63rem;opacity:1.00\" title=\"0 = One = Self-Identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:55.50%;top:47.20%;font-size:1.20rem;opacity:1.00\" title=\"1 = All = Self-Difference\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.00%;font-size:1.74rem;opacity:1.00\" title=\"(0/1)/(1/0) — the orientations held together\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.90%;font-size:1.24rem;opacity:1.00\" title=\"the braid: apoha · dependent arising · saṃkalpa\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account\" aria-label=\"A reflection becomes answerable for its use\"><h2>A reflection becomes answerable for its use</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:44.00%;top:50.60%;font-size:0.63rem;opacity:1.00\" title=\"Symbol — answers to source\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:48.00%;top:53.00%;font-size:1.02rem;opacity:1.00\" title=\"Account — does not replace source\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:52.00%;top:46.40%;font-size:1.02rem;opacity:1.00\" title=\"Trust — the return route stays active\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.20%;top:53.40%;font-size:0.72rem;opacity:1.00\" title=\"the dot done at this place — return inspectable, institutions distinct\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return\" aria-label=\"Return to the jewel whose brightness depends on the others\"><h2>Return to the jewel whose brightness depends on the others</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:1.08rem;opacity:1.00\" title=\"the southwest jewel — return\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:3.31rem;opacity:1.00\" title=\"the net it can no longer leave\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the mark that remains particular\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.32rem;opacity:1.00\" title=\"the source&#39;s final qualification — no completed optical picture\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-indra-net",
+  "world_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+  "revision": 1,
+  "title": "Indra's jewel net — the whole within each reflection",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Indra's jewel net — the whole within each reflection"
+      },
+      "fallback": {
+       "title": "Indra's jewel net — the whole within each reflection"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-indra-net:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Indra&#39;s jewel net — the whole within each reflection</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-indra-net\" data-expression-revision=\"1\"><h1>Indra&#39;s jewel net — the whole within each reflection</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-indra-net at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net\" aria-label=\"A jewel is chosen within the net\"><h2>A jewel is chosen within the net</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.60%;font-size:2.98rem;opacity:1.00\" title=\"Indra&#39;s net — the celestial image-world\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:2.49rem;opacity:1.00\" title=\"inner spread of jewels\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.20%;font-size:0.90rem;opacity:1.00\" title=\"the southwest jewel — selected\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.20%;top:43.40%;font-size:0.78rem;opacity:1.00\" title=\"Indra\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry\" aria-label=\"Entering the others without leaving this one\"><h2>Entering the others without leaving this one</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:1.02rem;opacity:1.00\" title=\"the selected jewel — held as starting place\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:2.76rem;opacity:1.00\" title=\"the others present within this one\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:1.84rem;opacity:1.00\" title=\"the net reopened inside its own appearance\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:57.20%;top:45.00%;font-size:0.72rem;opacity:1.00\" title=\"the interlocutor&#39;s question — how enter all, remaining here?\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot\" aria-label=\"The ink-dot test\"><h2>The ink-dot test</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.20%;font-size:1.02rem;opacity:1.00\" title=\"the marked jewel\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:3.31rem;opacity:1.00\" title=\"the dot present throughout the reflected field\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:2.17rem;opacity:1.00\" title=\"inner reflection carrying the mark\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.80%;top:44.40%;font-size:0.60rem;opacity:1.00\" title=\"no one went around marking every jewel\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile\" aria-label=\"The image teaches where its own likeness ends\"><h2>The image teaches where its own likeness ends</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.80%;font-size:1.19rem;opacity:1.00\" title=\"jewel substance — separate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:54.50%;top:49.00%;font-size:1.65rem;opacity:1.00\" title=\"jewel substance — separate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.03rem;opacity:1.00\" title=\"images entering one another — substances do not\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.60%;top:54.20%;font-size:0.78rem;opacity:1.00\" title=\"closing verses — Vairocana&#39;s activity for beings\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native\" aria-label=\"The definite jewel carries its constituting field\"><h2>The definite jewel carries its constituting field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.80%;font-size:0.63rem;opacity:1.00\" title=\"0 = One = Self-Identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:55.50%;top:47.20%;font-size:1.20rem;opacity:1.00\" title=\"1 = All = Self-Difference\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.00%;font-size:1.74rem;opacity:1.00\" title=\"(0/1)/(1/0) — the orientations held together\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.90%;font-size:1.24rem;opacity:1.00\" title=\"the braid: apoha · dependent arising · saṃkalpa\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account\" aria-label=\"A reflection becomes answerable for its use\"><h2>A reflection becomes answerable for its use</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:44.00%;top:50.60%;font-size:0.63rem;opacity:1.00\" title=\"Symbol — answers to source\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:48.00%;top:53.00%;font-size:1.02rem;opacity:1.00\" title=\"Account — does not replace source\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:52.00%;top:46.40%;font-size:1.02rem;opacity:1.00\" title=\"Trust — the return route stays active\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.20%;top:53.40%;font-size:0.72rem;opacity:1.00\" title=\"the dot done at this place — return inspectable, institutions distinct\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return\" aria-label=\"Return to the jewel whose brightness depends on the others\"><h2>Return to the jewel whose brightness depends on the others</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:1.08rem;opacity:1.00\" title=\"the southwest jewel — return\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:3.31rem;opacity:1.00\" title=\"the net it can no longer leave\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the mark that remains particular\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.32rem;opacity:1.00\" title=\"the source&#39;s final qualification — no completed optical picture\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+        "revision": 1,
+        "title": "Indra's jewel net — the whole within each reflection",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net",
+          "revision": 1,
+          "title": "A jewel is chosen within the net",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry",
+          "revision": 1,
+          "title": "Entering the others without leaving this one",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot",
+          "revision": 1,
+          "title": "The ink-dot test",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile",
+          "revision": 1,
+          "title": "The image teaches where its own likeness ends",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native",
+          "revision": 1,
+          "title": "The definite jewel carries its constituting field",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account",
+          "revision": 1,
+          "title": "A reflection becomes answerable for its use",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return",
+          "revision": 1,
+          "title": "Return to the jewel whose brightness depends on the others",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64",
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38",
+          "revision": 1,
+          "title": "Indra's net — the celestial image-world",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.56,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.992,
+            "automation": null
+           },
+           "share": {
+            "value": 2.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39",
+          "revision": 1,
+          "title": "inner spread of jewels",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.83,
+            "automation": null
+           },
+           "share": {
+            "value": 1.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40",
+          "revision": 1,
+          "title": "the southwest jewel — selected",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.52,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41",
+          "revision": 1,
+          "title": "Indra",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.66,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42",
+          "revision": 1,
+          "title": "the selected jewel — held as starting place",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1.5,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43",
+          "revision": 1,
+          "title": "the others present within this one",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.921,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44",
+          "revision": 1,
+          "title": "the net reopened inside its own appearance",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.614,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45",
+          "revision": 1,
+          "title": "the interlocutor's question — how enter all, remaining here?",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.72,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46",
+          "revision": 1,
+          "title": "the marked jewel",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.52,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 2.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47",
+          "revision": 1,
+          "title": "the dot present throughout the reflected field",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.105,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48",
+          "revision": 1,
+          "title": "inner reflection carrying the mark",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.722,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49",
+          "revision": 1,
+          "title": "no one went around marking every jewel",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.56,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50",
+          "revision": 1,
+          "title": "jewel substance — separate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.398,
+            "automation": null
+           },
+           "share": {
+            "value": 1.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51",
+          "revision": 1,
+          "title": "jewel substance — separate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52",
+          "revision": 1,
+          "title": "images entering one another — substances do not",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.678,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53",
+          "revision": 1,
+          "title": "closing verses — Vairocana's activity for beings",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54",
+          "revision": 1,
+          "title": "0 = One = Self-Identity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.209,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55",
+          "revision": 1,
+          "title": "1 = All = Self-Difference",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56",
+          "revision": 1,
+          "title": "(0/1)/(1/0) — the orientations held together",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.58,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57",
+          "revision": 1,
+          "title": "the braid: apoha · dependent arising · saṃkalpa",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.29,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.415,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58",
+          "revision": 1,
+          "title": "Symbol — answers to source",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.209,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59",
+          "revision": 1,
+          "title": "Account — does not replace source",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60",
+          "revision": 1,
+          "title": "Trust — the return route stays active",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.36,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61",
+          "revision": 1,
+          "title": "the dot done at this place — return inspectable, institutions distinct",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.34,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62",
+          "revision": 1,
+          "title": "the southwest jewel — return",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63",
+          "revision": 1,
+          "title": "the net it can no longer leave",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.105,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64",
+          "revision": 1,
+          "title": "the mark that remains particular",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65",
+          "revision": 1,
+          "title": "the source's final qualification — no completed optical picture",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.44,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-indra-net.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Indra's jewel net — the whole within each reflection"
+      },
+      "fallback": {
+       "title": "Indra's jewel net — the whole within each reflection",
+       "text": "Indra's jewel net — the whole within each reflection: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-indra-net",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-indra-net"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-indra-net:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-indra-net"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-indra-net:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-indra-net",
+    "world_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+    "revision": 1,
+    "title": "Indra's jewel net — the whole within each reflection",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Indra's jewel net — the whole within each reflection"
+        },
+        "fallback": {
+         "title": "Indra's jewel net — the whole within each reflection"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-indra-net:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Indra&#39;s jewel net — the whole within each reflection</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-indra-net\" data-expression-revision=\"1\"><h1>Indra&#39;s jewel net — the whole within each reflection</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-indra-net at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net\" aria-label=\"A jewel is chosen within the net\"><h2>A jewel is chosen within the net</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.60%;font-size:2.98rem;opacity:1.00\" title=\"Indra&#39;s net — the celestial image-world\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:2.49rem;opacity:1.00\" title=\"inner spread of jewels\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.20%;font-size:0.90rem;opacity:1.00\" title=\"the southwest jewel — selected\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.20%;top:43.40%;font-size:0.78rem;opacity:1.00\" title=\"Indra\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry\" aria-label=\"Entering the others without leaving this one\"><h2>Entering the others without leaving this one</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:1.02rem;opacity:1.00\" title=\"the selected jewel — held as starting place\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:2.76rem;opacity:1.00\" title=\"the others present within this one\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:1.84rem;opacity:1.00\" title=\"the net reopened inside its own appearance\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:57.20%;top:45.00%;font-size:0.72rem;opacity:1.00\" title=\"the interlocutor&#39;s question — how enter all, remaining here?\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot\" aria-label=\"The ink-dot test\"><h2>The ink-dot test</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.20%;font-size:1.02rem;opacity:1.00\" title=\"the marked jewel\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:3.31rem;opacity:1.00\" title=\"the dot present throughout the reflected field\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.80%;font-size:2.17rem;opacity:1.00\" title=\"inner reflection carrying the mark\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.80%;top:44.40%;font-size:0.60rem;opacity:1.00\" title=\"no one went around marking every jewel\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile\" aria-label=\"The image teaches where its own likeness ends\"><h2>The image teaches where its own likeness ends</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.80%;font-size:1.19rem;opacity:1.00\" title=\"jewel substance — separate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:54.50%;top:49.00%;font-size:1.65rem;opacity:1.00\" title=\"jewel substance — separate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.03rem;opacity:1.00\" title=\"images entering one another — substances do not\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.60%;top:54.20%;font-size:0.78rem;opacity:1.00\" title=\"closing verses — Vairocana&#39;s activity for beings\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native\" aria-label=\"The definite jewel carries its constituting field\"><h2>The definite jewel carries its constituting field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.80%;font-size:0.63rem;opacity:1.00\" title=\"0 = One = Self-Identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:55.50%;top:47.20%;font-size:1.20rem;opacity:1.00\" title=\"1 = All = Self-Difference\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.00%;font-size:1.74rem;opacity:1.00\" title=\"(0/1)/(1/0) — the orientations held together\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.90%;font-size:1.24rem;opacity:1.00\" title=\"the braid: apoha · dependent arising · saṃkalpa\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account\" aria-label=\"A reflection becomes answerable for its use\"><h2>A reflection becomes answerable for its use</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:44.00%;top:50.60%;font-size:0.63rem;opacity:1.00\" title=\"Symbol — answers to source\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:48.00%;top:53.00%;font-size:1.02rem;opacity:1.00\" title=\"Account — does not replace source\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:52.00%;top:46.40%;font-size:1.02rem;opacity:1.00\" title=\"Trust — the return route stays active\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.20%;top:53.40%;font-size:0.72rem;opacity:1.00\" title=\"the dot done at this place — return inspectable, institutions distinct\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return\" aria-label=\"Return to the jewel whose brightness depends on the others\"><h2>Return to the jewel whose brightness depends on the others</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:1.08rem;opacity:1.00\" title=\"the southwest jewel — return\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:3.31rem;opacity:1.00\" title=\"the net it can no longer leave\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the mark that remains particular\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-indra-net\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.32rem;opacity:1.00\" title=\"the source&#39;s final qualification — no completed optical picture\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+          "revision": 1,
+          "title": "Indra's jewel net — the whole within each reflection",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net",
+            "revision": 1,
+            "title": "A jewel is chosen within the net",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry",
+            "revision": 1,
+            "title": "Entering the others without leaving this one",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot",
+            "revision": 1,
+            "title": "The ink-dot test",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile",
+            "revision": 1,
+            "title": "The image teaches where its own likeness ends",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native",
+            "revision": 1,
+            "title": "The definite jewel carries its constituting field",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account",
+            "revision": 1,
+            "title": "A reflection becomes answerable for its use",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return",
+            "revision": 1,
+            "title": "Return to the jewel whose brightness depends on the others",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64",
+             "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38",
+            "revision": 1,
+            "title": "Indra's net — the celestial image-world",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.56,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.992,
+              "automation": null
+             },
+             "share": {
+              "value": 2.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e39",
+            "revision": 1,
+            "title": "inner spread of jewels",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.83,
+              "automation": null
+             },
+             "share": {
+              "value": 1.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e40",
+            "revision": 1,
+            "title": "the southwest jewel — selected",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.52,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e41",
+            "revision": 1,
+            "title": "Indra",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.66,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e42",
+            "revision": 1,
+            "title": "the selected jewel — held as starting place",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1.5,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e43",
+            "revision": 1,
+            "title": "the others present within this one",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.921,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e44",
+            "revision": 1,
+            "title": "the net reopened inside its own appearance",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.614,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1-entry:e45",
+            "revision": 1,
+            "title": "the interlocutor's question — how enter all, remaining here?",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.72,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e46",
+            "revision": 1,
+            "title": "the marked jewel",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.52,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 2.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e47",
+            "revision": 1,
+            "title": "the dot present throughout the reflected field",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.105,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e48",
+            "revision": 1,
+            "title": "inner reflection carrying the mark",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.722,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-1b-dot:e49",
+            "revision": 1,
+            "title": "no one went around marking every jewel",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.56,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e50",
+            "revision": 1,
+            "title": "jewel substance — separate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.398,
+              "automation": null
+             },
+             "share": {
+              "value": 1.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e51",
+            "revision": 1,
+            "title": "jewel substance — separate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e52",
+            "revision": 1,
+            "title": "images entering one another — substances do not",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.678,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-2-simile:e53",
+            "revision": 1,
+            "title": "closing verses — Vairocana's activity for beings",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e54",
+            "revision": 1,
+            "title": "0 = One = Self-Identity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.209,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e55",
+            "revision": 1,
+            "title": "1 = All = Self-Difference",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e56",
+            "revision": 1,
+            "title": "(0/1)/(1/0) — the orientations held together",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.58,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-3-native:e57",
+            "revision": 1,
+            "title": "the braid: apoha · dependent arising · saṃkalpa",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.29,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.415,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e58",
+            "revision": 1,
+            "title": "Symbol — answers to source",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.209,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e59",
+            "revision": 1,
+            "title": "Account — does not replace source",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e60",
+            "revision": 1,
+            "title": "Trust — the return route stays active",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.36,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-4-account:e61",
+            "revision": 1,
+            "title": "the dot done at this place — return inspectable, institutions distinct",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.34,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e62",
+            "revision": 1,
+            "title": "the southwest jewel — return",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e63",
+            "revision": 1,
+            "title": "the net it can no longer leave",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.105,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e64",
+            "revision": 1,
+            "title": "the mark that remains particular",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-5-return:e65",
+            "revision": 1,
+            "title": "the source's final qualification — no completed optical picture",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.44,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-indra-net:scene:m-indra-0-net:e38"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-indra-net.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Indra's jewel net — the whole within each reflection"
+        },
+        "fallback": {
+         "title": "Indra's jewel net — the whole within each reflection",
+         "text": "Indra's jewel net — the whole within each reflection: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-indra-net",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-indra-net.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-indra-net"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-indra-net:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Indra's jewel net — the whole within each reflection",
+  "summary": "a living Expression · 7 scenes · 28 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-indra-net:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-indra-net",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-indra-net"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-indra-net:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-indra-net",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-indra-net",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Indra's jewel net — the whole within each reflection",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-indra-net:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-indra-net:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-indra-net",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-indra-net"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

@@ -64,5 +64,5 @@ Specialist critique of modern narratives about medieval numeral reception. The a
 - **Verification:** complete indexed institutional abstract and metadata read 2026-09-08. Direct record and accepted-manuscript download returned HTTP403; the manuscript body was not read. No quotation has been admitted.
 - **Use boundary:** the abstract warrants correction of this house’s former description, not detailed conclusions about every medieval jurisdiction or manuscript.
 
-The [zero-reception dossier](../../../../dossiers/zero-reception.md) **consumes** this correction by distinguishing the history of a sign’s reception from the modern reception of a story about that sign. The [reference note](../../../../../../section-rooms/arguments/concepts/reference-notes/nothaft-satanic-ciphers.md) retains its independently specified source task.
+The [zero-reception dossier](../../../../dossiers/zero-reception.md) **consumes** this correction by distinguishing the history of a sign’s reception from the modern reception of a story about that sign. The reference note retains its independently specified source task.
 

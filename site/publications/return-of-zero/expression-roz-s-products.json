@@ -1,0 +1,3976 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-s-products",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-s-products",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-s-products",
+  "revision": 1,
+  "title": "Return of Zero — S, World and Life: the product field",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s",
+    "revision": 1,
+    "title": "S — World and Life",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s:s-envelope",
+     "expression:return-of-zero:roz-s-products:scene:s:s-prod-0",
+     "expression:return-of-zero:roz-s-products:scene:s:s-prod-1",
+     "expression:return-of-zero:roz-s-products:scene:s:s-prod-2",
+     "expression:return-of-zero:roz-s-products:scene:s:s-prod-3",
+     "expression:return-of-zero:roz-s-products:scene:s:s-prod-4",
+     "expression:return-of-zero:roz-s-products:scene:s:s-prod-5"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s0",
+    "revision": 1,
+    "title": "S0 — Central: meaningful continuity",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s0:s0-e0",
+     "expression:return-of-zero:roz-s-products:scene:s0:s0-e1",
+     "expression:return-of-zero:roz-s-products:scene:s0:s0-e2"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s1",
+    "revision": 1,
+    "title": "S1 — Actuation: living articulation",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s1:s1-e0",
+     "expression:return-of-zero:roz-s-products:scene:s1:s1-e1",
+     "expression:return-of-zero:roz-s-products:scene:s1:s1-e2"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s2",
+    "revision": 1,
+    "title": "S2 — AIKit: potency",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s2:s2-e0",
+     "expression:return-of-zero:roz-s-products:scene:s2:s2-e1",
+     "expression:return-of-zero:roz-s-products:scene:s2:s2-e2"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s3",
+    "revision": 1,
+    "title": "S3 — Software Factory: transformation",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s3:s3-e0",
+     "expression:return-of-zero:roz-s-products:scene:s3:s3-e1",
+     "expression:return-of-zero:roz-s-products:scene:s3:s3-e2"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s4",
+    "revision": 1,
+    "title": "S4 — Workcell: situated existence",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s4:s4-e0",
+     "expression:return-of-zero:roz-s-products:scene:s4:s4-e1",
+     "expression:return-of-zero:roz-s-products:scene:s4:s4-e2"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-s-products:scene:s5",
+    "revision": 1,
+    "title": "S5 — Quaternal Logic: Transcendent Relation",
+    "entity_refs": [
+     "expression:return-of-zero:roz-s-products:scene:s5:s5-e0",
+     "expression:return-of-zero:roz-s-products:scene:s5:s5-e1",
+     "expression:return-of-zero:roz-s-products:scene:s5:s5-e2"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-s-products:scene:s:s-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-envelope",
+    "revision": 1,
+    "title": "World and Life",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.52,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s:s-prod-0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-0",
+    "revision": 1,
+    "title": "S0 office",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14000000000000004,
+      "automation": null
+     },
+     "y": {
+      "value": 0.44,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s:s-prod-1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-1",
+    "revision": 1,
+    "title": "S1 office",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.29301270189221934,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18999999999999997,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s:s-prod-2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-2",
+    "revision": 1,
+    "title": "S2 office",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2930127018922193,
+      "automation": null
+     },
+     "y": {
+      "value": -0.31000000000000005,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s:s-prod-3": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-3",
+    "revision": 1,
+    "title": "S3 office",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.13999999999999993,
+      "automation": null
+     },
+     "y": {
+      "value": -0.56,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s:s-prod-4": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-4",
+    "revision": 1,
+    "title": "S4 office",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5730127018922192,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3100000000000002,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s:s-prod-5": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-5",
+    "revision": 1,
+    "title": "S5 office",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5730127018922193,
+      "automation": null
+     },
+     "y": {
+      "value": 0.19,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s0:s0-e0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e0",
+    "revision": 1,
+    "title": "S0 lens formation 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.34,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s0:s0-e1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e1",
+    "revision": 1,
+    "title": "S0 lens formation 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s0:s0-e2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e2",
+    "revision": 1,
+    "title": "S0 lens formation 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s1:s1-e0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e0",
+    "revision": 1,
+    "title": "S1 lens formation 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.34,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s1:s1-e1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e1",
+    "revision": 1,
+    "title": "S1 lens formation 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s1:s1-e2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e2",
+    "revision": 1,
+    "title": "S1 lens formation 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": 0.56,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s2:s2-e0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e0",
+    "revision": 1,
+    "title": "S2 lens formation 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.34,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s2:s2-e1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e1",
+    "revision": 1,
+    "title": "S2 lens formation 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s2:s2-e2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e2",
+    "revision": 1,
+    "title": "S2 lens formation 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s3:s3-e0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e0",
+    "revision": 1,
+    "title": "S3 lens formation 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.34,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s3:s3-e1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e1",
+    "revision": 1,
+    "title": "S3 lens formation 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s3:s3-e2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e2",
+    "revision": 1,
+    "title": "S3 lens formation 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s4:s4-e0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e0",
+    "revision": 1,
+    "title": "S4 lens formation 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.34,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.46,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s4:s4-e1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e1",
+    "revision": 1,
+    "title": "S4 lens formation 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s4:s4-e2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e2",
+    "revision": 1,
+    "title": "S4 lens formation 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s5:s5-e0": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e0",
+    "revision": 1,
+    "title": "S5 lens formation 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.34,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s5:s5-e1": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e1",
+    "revision": 1,
+    "title": "S5 lens formation 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-s-products:scene:s5:s5-e2": {
+    "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e2",
+    "revision": 1,
+    "title": "S5 lens formation 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": 0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-s-products:scene:s",
+   "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-envelope"
+  },
+  "provenance": [
+   {
+    "ref": "episteme/roz-s-products.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-s-products",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-s-products",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-s-products:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-s-products",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — S, World and Life: the product field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-s-products\" data-expression-revision=\"1\"><h1>Return of Zero — S, World and Life: the product field</h1><p>Frozen reading of expression:return-of-zero:roz-s-products at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s\" aria-label=\"S — World and Life\"><h2>S — World and Life</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:4.56rem;opacity:1.00\" title=\"World and Life\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:45.60%;font-size:0.66rem;opacity:1.00\" title=\"S0 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:47.07%;top:48.10%;font-size:0.66rem;opacity:1.00\" title=\"S1 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:47.07%;top:53.10%;font-size:0.66rem;opacity:1.00\" title=\"S2 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:55.60%;font-size:0.66rem;opacity:1.00\" title=\"S3 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:55.73%;top:53.10%;font-size:0.66rem;opacity:1.00\" title=\"S4 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:55.73%;top:48.10%;font-size:0.66rem;opacity:1.00\" title=\"S5 office\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s0\" aria-label=\"S0 — Central: meaningful continuity\"><h2>S0 — Central: meaningful continuity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S0 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S0 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S0 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s1\" aria-label=\"S1 — Actuation: living articulation\"><h2>S1 — Actuation: living articulation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S1 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S1 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:44.40%;font-size:0.72rem;opacity:1.00\" title=\"S1 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s2\" aria-label=\"S2 — AIKit: potency\"><h2>S2 — AIKit: potency</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.26rem;opacity:1.00\" title=\"S2 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S2 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S2 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s3\" aria-label=\"S3 — Software Factory: transformation\"><h2>S3 — Software Factory: transformation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S3 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.26rem;opacity:1.00\" title=\"S3 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S3 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s4\" aria-label=\"S4 — Workcell: situated existence\"><h2>S4 — Workcell: situated existence</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S4 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.26rem;opacity:1.00\" title=\"S4 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S4 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s5\" aria-label=\"S5 — Quaternal Logic: Transcendent Relation\"><h2>S5 — Quaternal Logic: Transcendent Relation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.50rem;opacity:1.00\" title=\"S5 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.02rem;opacity:1.00\" title=\"S5 lens formation 2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S5 lens formation 3\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-s-products:scene:s"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-s-products",
+  "world_ref": "expression:return-of-zero:roz-s-products",
+  "revision": 1,
+  "title": "Return of Zero — S, World and Life: the product field",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-s-products",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero — S, World and Life: the product field"
+      },
+      "fallback": {
+       "title": "Return of Zero — S, World and Life: the product field"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-s-products",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-s-products",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-s-products",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-s-products:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-s-products",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — S, World and Life: the product field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-s-products\" data-expression-revision=\"1\"><h1>Return of Zero — S, World and Life: the product field</h1><p>Frozen reading of expression:return-of-zero:roz-s-products at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s\" aria-label=\"S — World and Life\"><h2>S — World and Life</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:4.56rem;opacity:1.00\" title=\"World and Life\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:45.60%;font-size:0.66rem;opacity:1.00\" title=\"S0 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:47.07%;top:48.10%;font-size:0.66rem;opacity:1.00\" title=\"S1 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:47.07%;top:53.10%;font-size:0.66rem;opacity:1.00\" title=\"S2 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:55.60%;font-size:0.66rem;opacity:1.00\" title=\"S3 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:55.73%;top:53.10%;font-size:0.66rem;opacity:1.00\" title=\"S4 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:55.73%;top:48.10%;font-size:0.66rem;opacity:1.00\" title=\"S5 office\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s0\" aria-label=\"S0 — Central: meaningful continuity\"><h2>S0 — Central: meaningful continuity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S0 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S0 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S0 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s1\" aria-label=\"S1 — Actuation: living articulation\"><h2>S1 — Actuation: living articulation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S1 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S1 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:44.40%;font-size:0.72rem;opacity:1.00\" title=\"S1 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s2\" aria-label=\"S2 — AIKit: potency\"><h2>S2 — AIKit: potency</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.26rem;opacity:1.00\" title=\"S2 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S2 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S2 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s3\" aria-label=\"S3 — Software Factory: transformation\"><h2>S3 — Software Factory: transformation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S3 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.26rem;opacity:1.00\" title=\"S3 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S3 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s4\" aria-label=\"S4 — Workcell: situated existence\"><h2>S4 — Workcell: situated existence</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S4 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.26rem;opacity:1.00\" title=\"S4 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S4 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s5\" aria-label=\"S5 — Quaternal Logic: Transcendent Relation\"><h2>S5 — Quaternal Logic: Transcendent Relation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.50rem;opacity:1.00\" title=\"S5 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.02rem;opacity:1.00\" title=\"S5 lens formation 2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S5 lens formation 3\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-s-products:scene:s"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-s-products",
+        "revision": 1,
+        "title": "Return of Zero — S, World and Life: the product field",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s",
+          "revision": 1,
+          "title": "S — World and Life",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s:s-envelope",
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-0",
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-1",
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-2",
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-3",
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-4",
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-5"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s0",
+          "revision": 1,
+          "title": "S0 — Central: meaningful continuity",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s0:s0-e0",
+           "expression:return-of-zero:roz-s-products:scene:s0:s0-e1",
+           "expression:return-of-zero:roz-s-products:scene:s0:s0-e2"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s1",
+          "revision": 1,
+          "title": "S1 — Actuation: living articulation",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s1:s1-e0",
+           "expression:return-of-zero:roz-s-products:scene:s1:s1-e1",
+           "expression:return-of-zero:roz-s-products:scene:s1:s1-e2"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s2",
+          "revision": 1,
+          "title": "S2 — AIKit: potency",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s2:s2-e0",
+           "expression:return-of-zero:roz-s-products:scene:s2:s2-e1",
+           "expression:return-of-zero:roz-s-products:scene:s2:s2-e2"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s3",
+          "revision": 1,
+          "title": "S3 — Software Factory: transformation",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s3:s3-e0",
+           "expression:return-of-zero:roz-s-products:scene:s3:s3-e1",
+           "expression:return-of-zero:roz-s-products:scene:s3:s3-e2"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s4",
+          "revision": 1,
+          "title": "S4 — Workcell: situated existence",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s4:s4-e0",
+           "expression:return-of-zero:roz-s-products:scene:s4:s4-e1",
+           "expression:return-of-zero:roz-s-products:scene:s4:s4-e2"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s5",
+          "revision": 1,
+          "title": "S5 — Quaternal Logic: Transcendent Relation",
+          "entity_refs": [
+           "expression:return-of-zero:roz-s-products:scene:s5:s5-e0",
+           "expression:return-of-zero:roz-s-products:scene:s5:s5-e1",
+           "expression:return-of-zero:roz-s-products:scene:s5:s5-e2"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-s-products:scene:s:s-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-envelope",
+          "revision": 1,
+          "title": "World and Life",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.52,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s:s-prod-0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-0",
+          "revision": 1,
+          "title": "S0 office",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14000000000000004,
+            "automation": null
+           },
+           "y": {
+            "value": 0.44,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s:s-prod-1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-1",
+          "revision": 1,
+          "title": "S1 office",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.29301270189221934,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18999999999999997,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s:s-prod-2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-2",
+          "revision": 1,
+          "title": "S2 office",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2930127018922193,
+            "automation": null
+           },
+           "y": {
+            "value": -0.31000000000000005,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s:s-prod-3": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-3",
+          "revision": 1,
+          "title": "S3 office",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.13999999999999993,
+            "automation": null
+           },
+           "y": {
+            "value": -0.56,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s:s-prod-4": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-4",
+          "revision": 1,
+          "title": "S4 office",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5730127018922192,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3100000000000002,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s:s-prod-5": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-5",
+          "revision": 1,
+          "title": "S5 office",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5730127018922193,
+            "automation": null
+           },
+           "y": {
+            "value": 0.19,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s0:s0-e0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e0",
+          "revision": 1,
+          "title": "S0 lens formation 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.34,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s0:s0-e1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e1",
+          "revision": 1,
+          "title": "S0 lens formation 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s0:s0-e2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e2",
+          "revision": 1,
+          "title": "S0 lens formation 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s1:s1-e0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e0",
+          "revision": 1,
+          "title": "S1 lens formation 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.34,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s1:s1-e1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e1",
+          "revision": 1,
+          "title": "S1 lens formation 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s1:s1-e2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e2",
+          "revision": 1,
+          "title": "S1 lens formation 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": 0.56,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s2:s2-e0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e0",
+          "revision": 1,
+          "title": "S2 lens formation 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.34,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s2:s2-e1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e1",
+          "revision": 1,
+          "title": "S2 lens formation 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s2:s2-e2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e2",
+          "revision": 1,
+          "title": "S2 lens formation 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s3:s3-e0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e0",
+          "revision": 1,
+          "title": "S3 lens formation 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.34,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s3:s3-e1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e1",
+          "revision": 1,
+          "title": "S3 lens formation 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s3:s3-e2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e2",
+          "revision": 1,
+          "title": "S3 lens formation 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s4:s4-e0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e0",
+          "revision": 1,
+          "title": "S4 lens formation 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.34,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.46,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s4:s4-e1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e1",
+          "revision": 1,
+          "title": "S4 lens formation 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s4:s4-e2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e2",
+          "revision": 1,
+          "title": "S4 lens formation 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s5:s5-e0": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e0",
+          "revision": 1,
+          "title": "S5 lens formation 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.34,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s5:s5-e1": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e1",
+          "revision": 1,
+          "title": "S5 lens formation 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-s-products:scene:s5:s5-e2": {
+          "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e2",
+          "revision": 1,
+          "title": "S5 lens formation 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": 0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-s-products:scene:s",
+         "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-envelope"
+        },
+        "provenance": [
+         {
+          "ref": "episteme/roz-s-products.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero — S, World and Life: the product field"
+      },
+      "fallback": {
+       "title": "Return of Zero — S, World and Life: the product field",
+       "text": "Return of Zero — S, World and Life: the product field: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-s-products",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-s-products",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-s-products",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-s-products.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-s-products"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-s-products",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-s-products",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-s-products:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-s-products"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-s-products",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-s-products:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-s-products",
+    "world_ref": "expression:return-of-zero:roz-s-products",
+    "revision": 1,
+    "title": "Return of Zero — S, World and Life: the product field",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-s-products",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero — S, World and Life: the product field"
+        },
+        "fallback": {
+         "title": "Return of Zero — S, World and Life: the product field"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-s-products",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-s-products",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-s-products",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-s-products:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-s-products",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — S, World and Life: the product field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-s-products\" data-expression-revision=\"1\"><h1>Return of Zero — S, World and Life: the product field</h1><p>Frozen reading of expression:return-of-zero:roz-s-products at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s\" aria-label=\"S — World and Life\"><h2>S — World and Life</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:4.56rem;opacity:1.00\" title=\"World and Life\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:45.60%;font-size:0.66rem;opacity:1.00\" title=\"S0 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:47.07%;top:48.10%;font-size:0.66rem;opacity:1.00\" title=\"S1 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:47.07%;top:53.10%;font-size:0.66rem;opacity:1.00\" title=\"S2 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.40%;top:55.60%;font-size:0.66rem;opacity:1.00\" title=\"S3 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:55.73%;top:53.10%;font-size:0.66rem;opacity:1.00\" title=\"S4 office\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s:s-prod-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:55.73%;top:48.10%;font-size:0.66rem;opacity:1.00\" title=\"S5 office\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s0\" aria-label=\"S0 — Central: meaningful continuity\"><h2>S0 — Central: meaningful continuity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S0 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S0 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s0:s0-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S0 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s1\" aria-label=\"S1 — Actuation: living articulation\"><h2>S1 — Actuation: living articulation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S1 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S1 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s1:s1-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:44.40%;font-size:0.72rem;opacity:1.00\" title=\"S1 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s2\" aria-label=\"S2 — AIKit: potency\"><h2>S2 — AIKit: potency</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.26rem;opacity:1.00\" title=\"S2 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.38rem;opacity:1.00\" title=\"S2 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s2:s2-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S2 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s3\" aria-label=\"S3 — Software Factory: transformation\"><h2>S3 — Software Factory: transformation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S3 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.26rem;opacity:1.00\" title=\"S3 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s3:s3-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S3 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s4\" aria-label=\"S4 — Workcell: situated existence\"><h2>S4 — Workcell: situated existence</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.38rem;opacity:1.00\" title=\"S4 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.26rem;opacity:1.00\" title=\"S4 lens formation 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s4:s4-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S4 lens formation 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-s-products:scene:s5\" aria-label=\"S5 — Quaternal Logic: Transcendent Relation\"><h2>S5 — Quaternal Logic: Transcendent Relation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e0\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:46.60%;top:47.60%;font-size:1.50rem;opacity:1.00\" title=\"S5 lens formation 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e1\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:56.80%;top:48.20%;font-size:1.02rem;opacity:1.00\" title=\"S5 lens formation 2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-s-products:scene:s5:s5-e2\" data-subject-ref=\"world:return-of-zero/wiki:roz-s-products\" data-presentation-role=\"thing\" style=\"left:51.60%;top:47.60%;font-size:0.87rem;opacity:1.00\" title=\"S5 lens formation 3\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-s-products:scene:s"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-s-products",
+          "revision": 1,
+          "title": "Return of Zero — S, World and Life: the product field",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s",
+            "revision": 1,
+            "title": "S — World and Life",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s:s-envelope",
+             "expression:return-of-zero:roz-s-products:scene:s:s-prod-0",
+             "expression:return-of-zero:roz-s-products:scene:s:s-prod-1",
+             "expression:return-of-zero:roz-s-products:scene:s:s-prod-2",
+             "expression:return-of-zero:roz-s-products:scene:s:s-prod-3",
+             "expression:return-of-zero:roz-s-products:scene:s:s-prod-4",
+             "expression:return-of-zero:roz-s-products:scene:s:s-prod-5"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s0",
+            "revision": 1,
+            "title": "S0 — Central: meaningful continuity",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s0:s0-e0",
+             "expression:return-of-zero:roz-s-products:scene:s0:s0-e1",
+             "expression:return-of-zero:roz-s-products:scene:s0:s0-e2"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s1",
+            "revision": 1,
+            "title": "S1 — Actuation: living articulation",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s1:s1-e0",
+             "expression:return-of-zero:roz-s-products:scene:s1:s1-e1",
+             "expression:return-of-zero:roz-s-products:scene:s1:s1-e2"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s2",
+            "revision": 1,
+            "title": "S2 — AIKit: potency",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s2:s2-e0",
+             "expression:return-of-zero:roz-s-products:scene:s2:s2-e1",
+             "expression:return-of-zero:roz-s-products:scene:s2:s2-e2"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s3",
+            "revision": 1,
+            "title": "S3 — Software Factory: transformation",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s3:s3-e0",
+             "expression:return-of-zero:roz-s-products:scene:s3:s3-e1",
+             "expression:return-of-zero:roz-s-products:scene:s3:s3-e2"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s4",
+            "revision": 1,
+            "title": "S4 — Workcell: situated existence",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s4:s4-e0",
+             "expression:return-of-zero:roz-s-products:scene:s4:s4-e1",
+             "expression:return-of-zero:roz-s-products:scene:s4:s4-e2"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-s-products:scene:s5",
+            "revision": 1,
+            "title": "S5 — Quaternal Logic: Transcendent Relation",
+            "entity_refs": [
+             "expression:return-of-zero:roz-s-products:scene:s5:s5-e0",
+             "expression:return-of-zero:roz-s-products:scene:s5:s5-e1",
+             "expression:return-of-zero:roz-s-products:scene:s5:s5-e2"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-s-products:scene:s:s-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-envelope",
+            "revision": 1,
+            "title": "World and Life",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.52,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-0",
+            "revision": 1,
+            "title": "S0 office",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14000000000000004,
+              "automation": null
+             },
+             "y": {
+              "value": 0.44,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-1",
+            "revision": 1,
+            "title": "S1 office",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.29301270189221934,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18999999999999997,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-2",
+            "revision": 1,
+            "title": "S2 office",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2930127018922193,
+              "automation": null
+             },
+             "y": {
+              "value": -0.31000000000000005,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-3": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-3",
+            "revision": 1,
+            "title": "S3 office",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.13999999999999993,
+              "automation": null
+             },
+             "y": {
+              "value": -0.56,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-4": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-4",
+            "revision": 1,
+            "title": "S4 office",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5730127018922192,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3100000000000002,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s:s-prod-5": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-prod-5",
+            "revision": 1,
+            "title": "S5 office",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5730127018922193,
+              "automation": null
+             },
+             "y": {
+              "value": 0.19,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s0:s0-e0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e0",
+            "revision": 1,
+            "title": "S0 lens formation 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.34,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s0:s0-e1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e1",
+            "revision": 1,
+            "title": "S0 lens formation 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s0:s0-e2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s0:s0-e2",
+            "revision": 1,
+            "title": "S0 lens formation 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s1:s1-e0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e0",
+            "revision": 1,
+            "title": "S1 lens formation 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.34,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s1:s1-e1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e1",
+            "revision": 1,
+            "title": "S1 lens formation 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s1:s1-e2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s1:s1-e2",
+            "revision": 1,
+            "title": "S1 lens formation 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": 0.56,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s2:s2-e0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e0",
+            "revision": 1,
+            "title": "S2 lens formation 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.34,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s2:s2-e1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e1",
+            "revision": 1,
+            "title": "S2 lens formation 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s2:s2-e2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s2:s2-e2",
+            "revision": 1,
+            "title": "S2 lens formation 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s3:s3-e0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e0",
+            "revision": 1,
+            "title": "S3 lens formation 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.34,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s3:s3-e1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e1",
+            "revision": 1,
+            "title": "S3 lens formation 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s3:s3-e2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s3:s3-e2",
+            "revision": 1,
+            "title": "S3 lens formation 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s4:s4-e0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e0",
+            "revision": 1,
+            "title": "S4 lens formation 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.34,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.46,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s4:s4-e1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e1",
+            "revision": 1,
+            "title": "S4 lens formation 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s4:s4-e2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s4:s4-e2",
+            "revision": 1,
+            "title": "S4 lens formation 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s5:s5-e0": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e0",
+            "revision": 1,
+            "title": "S5 lens formation 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.34,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s5:s5-e1": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e1",
+            "revision": 1,
+            "title": "S5 lens formation 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-s-products:scene:s5:s5-e2": {
+            "entity_ref": "expression:return-of-zero:roz-s-products:scene:s5:s5-e2",
+            "revision": 1,
+            "title": "S5 lens formation 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-s-products.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": 0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-s-products:scene:s",
+           "entity_ref": "expression:return-of-zero:roz-s-products:scene:s:s-envelope"
+          },
+          "provenance": [
+           {
+            "ref": "episteme/roz-s-products.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero — S, World and Life: the product field"
+        },
+        "fallback": {
+         "title": "Return of Zero — S, World and Life: the product field",
+         "text": "Return of Zero — S, World and Life: the product field: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-s-products",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-s-products",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-s-products",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-s-products",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-s-products.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-s-products"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-s-products",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-s-products",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-s-products:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-s-products",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero — S, World and Life: the product field",
+  "summary": "a living Expression · 7 scenes · 25 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-s-products:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-s-products",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-s-products"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-s-products:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-s-products",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-s-products",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero — S, World and Life: the product field",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-s-products:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-s-products:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-s-products",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-s-products"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

@@ -14,7 +14,7 @@ This folder is where the notations being defined across the matheme — binary, 
 
 ## Structure
 
-- **[mono](mono.md)** — the one field: what every notation in the system is a notation *of* — the 0/1 and its expressions; the equation as the single subject carried by all four files.
+- **[mono](mono.md)** — the one field: what every notation in the system is a notation *of* — the `0/1` and its expressions; the equation as the single subject carried by all four files.
 - **[poly](poly.md)** — the many notations: the inventory as plurality — each sign's office, each formalism's contact point, each register's dialect, held without collapse into one preferred encoding.
 - **[translations](translations.md)** — the mapped correspondences and their proof boundaries: which reductions are derivations, which are constructions, which are named cross-register recognitions (the record form's three separated claims, applied notation-to-notation).
 

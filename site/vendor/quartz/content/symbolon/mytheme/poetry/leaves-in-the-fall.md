@@ -10,11 +10,11 @@ type: _md_
 title: "Leaves in the Fall"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c80fab8ebf0e978e8200d
-source_id: 18fa4797-123c-80fa-b8eb-f0e978e8200d
 notion_created: 2025-02-03T13:49:02Z
 notion_edited: 2025-02-03T13:49:24.926Z
 status: sorted
 kind: poem
+source_id: leaves-in-the-fall
 ---
 Truly Knowing, everything in Everything
 And from Everything every thing falls,

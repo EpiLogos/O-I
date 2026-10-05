@@ -11,7 +11,7 @@ source_relation: "Extracted native operation; worked construction and argued app
 
 ## #0 — Begin inside the field
 
-A discrimination requires something to distinguish, a criterion and a field within which the distinction matters. Dia names contrast, exclusion, orientation and selection. [C50](../../../section-rooms/arguments/concepts/C50-Dia-Syn.md) gives the productive cut its full office before distinguishing severance. The [core spine, §IV](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) works the change from held polarity to cancellation and appropriation.
+A discrimination requires something to distinguish, a criterion and a field within which the distinction matters. Dia names contrast, exclusion, orientation and selection. [Dia/Syn](../../../section-rooms/arguments/concepts/C50-Dia-Syn.md) gives the productive cut its full office before distinguishing severance. The [core spine, §IV](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) works the change from held polarity to cancellation and appropriation.
 
 The input `(-1)/(+1)` retains zero as an axis of direction. Both poles have determinate signs; neither sign independently produces the axis that makes it positive or negative.
 
@@ -23,7 +23,7 @@ This elementary construction exhibits productive Dia. A distinction acquires loc
 
 ## #2 — Change the operator
 
-The core's arithmetic carriers are three different operations:
+Cancellation and directed appropriation have three distinct arithmetic results:
 
 `(-1)+(+1)=0`,
 
@@ -49,4 +49,4 @@ The [two temporal readings](chronic.md) can each contain productive or severing 
 
 The output is a distinction that can be used and reconsidered without losing its exactness. Its return asks what remains excluded, what changed in the field, and whether another criterion is now warranted. Dia's local edge persists within the gathering that makes another operation possible.
 
-This record returns-to [A13](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md) and [C50](../../../section-rooms/arguments/concepts/C50-Dia-Syn.md). The [Sheffer stroke](../formal-neighbours/sheffer-stroke.md) has a distinct Boolean signature; its functional completeness supplies no automatic proof of the native AND/OR stroke.
+The [two logics of two](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md) retain the pole, its contrast and their generating relation through the cut. [Dia/Syn](../../../section-rooms/arguments/concepts/C50-Dia-Syn.md) joins this local exactness to the gathering through which another selection becomes possible. The [Sheffer stroke](../formal-neighbours/sheffer-stroke.md) has a Boolean truth table whose compositions are functionally complete. Selection and holding in the native AND/OR relation follow their own declared operations.

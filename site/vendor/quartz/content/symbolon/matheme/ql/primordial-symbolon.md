@@ -7,11 +7,11 @@ claim_status: Derived
 source_relation: "Extracted internal derivation"
 ---
 
-# 0/1 ↔ 1/0 — The Native Relational Derivation
+# `0/1` ↔ `1/0` — The Native Relational Derivation
 
 ## #0 — The terms and their relation
 
-Let `0` name the unobjectifiable ground and `1` the determinate articulation. Let `/` name the activity that differentiates and relates their offices. The input is a knowing-act, not two independently supplied numerical magnitudes. [The root 0/1](../../0-1.md) grounds their singular One/polyvalent All reading; the [core theorem spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), §IV, sources the formal unfolding.
+Let `0` name the unobjectifiable ground and `1` the determinate articulation. Let `/` name the activity that differentiates and relates their offices. The input is a knowing-act, not two independently supplied numerical magnitudes. [The root `0/1`](../../0-1.md) grounds their singular One/polyvalent All reading; the [core theorem spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), §IV, sources the formal unfolding.
 
 ## #1 — Reverse the orientation
 
@@ -45,4 +45,4 @@ The primes in File 2 label inverse-phase positions. File 3 also uses primes for 
 
 The result gives QL an exact transmissible operation: terms, orientation, self-relation, pairings, and return are inspectable. The mathematical boundary stays visible alongside the native derivation.
 
-This record returns-to [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) and [Movement18, The Loan Returns](../../../section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md). [The root 1/0](../../1-0.md) gathers the achieved expression's recognitive return.
+This record returns-to [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) and [Movement18, The Loan Returns](../../../section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md). [The root `1/0`](../../1-0.md) gathers the achieved expression's recognitive return.

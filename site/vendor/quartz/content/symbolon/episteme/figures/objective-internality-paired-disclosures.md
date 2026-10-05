@@ -28,7 +28,7 @@ The return prepares six paired disclosures of Objective Internality. Each produc
 - [S4 — Workcell: situated existence](../../../section-rooms/arguments/products/S4-Workcell.md), `mef_pair: [L4 Phenomenological, L1′ Phenomenal]`, `movement: 41`.
 - [S5 — Quaternal Logic: Transcendent Relation](../../../section-rooms/arguments/products/S5-Quaternal-Logic.md), `mef_pair: [L5 Para Vāk, L0′ Archetypal-Numerical]`, `movement: 42`.
 - [A/C root](../../../section-rooms/arguments/conjugate/AC.md), C face: the six product rows "respectively L0×L5′, L1×L4′, L2×L3′, L3×L2′, L4×L1′ and L5×L0′"; S is "the parent field in which genuinely transversal relations live", "not a seventh product".
-- [Central plan §5](../../../../../the-return-of-zero-central-plan.md): "Each product is the subject of its **whole pair**, not one subposition within a lens."
+- Central plan §5: "Each product is the subject of its **whole pair**, not one subposition within a lens."
 - [§5 P1-CANONICAL-ALIGNMENT](../../../section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md): M36 prepares the disclosure through the whole pairs; M37–M42 are the six product movements.
 
 ## Transformations (construction method)

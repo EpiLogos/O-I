@@ -1,0 +1,77 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "",
+    "loop": true,
+    "shared": {
+      "pointer": {
+        "engine.pointerClick": "pulse",
+        "engine.pointerClickRadius": 0.45,
+        "engine.pointerClickStrength": 2.2,
+        "engine.pointerMode": "repel",
+        "field.params.native_interaction__velocityInfluence": 1,
+        "field.params.pointerFalloff": 2,
+        "field.params.pointerRadius": 0.23,
+        "field.params.pointerStrength": 0.8
+      },
+      "toolbelt": [
+        {
+          "id": "shared-0",
+          "key": "timeScale",
+          "scope": "field"
+        },
+        {
+          "id": "shared-1",
+          "key": "recovery",
+          "scope": "field"
+        },
+        {
+          "id": "shared-2",
+          "key": "native_fluid__viscosity",
+          "scope": "field"
+        },
+        {
+          "id": "shared-3",
+          "key": "turbulence",
+          "scope": "field"
+        },
+        {
+          "id": "shared-4",
+          "key": "sequence.transition",
+          "scope": "selected"
+        },
+        {
+          "id": "shared-5",
+          "key": "native_morphProgress",
+          "scope": "field"
+        }
+      ],
+      "values": {}
+    }
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16",
+  "revision": 2,
+  "title": "Untitled Expression / variation",
+  "scenes": [
+    {
+      "scene_ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16:scene:main",
+      "revision": 1,
+      "title": "Main",
+      "entity_refs": [],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {},
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16:scene:main",
+    "entity_ref": null
+  },
+  "provenance": [],
+  "representations": [],
+  "refinements": [],
+  "collections": [],
+  "profiles": []
+}

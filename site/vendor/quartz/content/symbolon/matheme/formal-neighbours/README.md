@@ -31,7 +31,7 @@ Source history and attribution live in [[symbolon/episteme/sources/README.md|Sou
 - [Qubit / Bloch sphere](qubit-bloch-sphere.md)
 - [Noether: symmetry and conservation](noether-symmetry-conservation.md)
 - [Quaternion group Q8](quaternion-q8.md)
-- [∞/dx and calculus](calculus-infinity-dx.md)
+- [`∞/dx` and calculus](calculus-infinity-dx.md)
 - [Chaos, bifurcation and strange attractors](chaos-attractors.md)
 
 Return to [[symbolon/matheme/README.md|Matheme]].

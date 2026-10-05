@@ -31,8 +31,8 @@ consumed_by_arguments:
 - '[[Sym-Ballein]]'
 - '[[Arche-Topos as Differential Field]]'
 - '[[Artificial Hybrid Intelligence as Reflective Field]]'
-- '[[A12-Mono-Poly-One-All-Whole-Many]]'
-- '[[eight-determinations]]'
+- '[[11-mono-poly-whole-and-many]]'
+- '[[Core Theorem Bridge]]'
 - '[[Tattvic Differential Field]]'
 - '[[Computational Process Ontology]]'
 - '[[Paradox as Cross-Register Hinge]]'
@@ -47,7 +47,6 @@ tags:
 title: Taylor — Core Theorems Pithy (2026)
 aliases:
   - "10-7-2026-core-theorems-pithy"
-  - "Taylor — Core Theorems Pithy (2026)"
 source_id: taylor-2026-core-theorems-pithy
 primary_domain: internal-corpus
 node_type: source-house
@@ -63,7 +62,7 @@ source_use_notes:
 # Taylor — Core Theorems Pithy (2026)
 
 > [!important] Read the theorem text first
-> **[[AUTHORIAL-TEXT|Open the complete authorial theorem spine]].** `AUTHORIAL-TEXT.md` is a direct in-folder link to Frank Taylor's recoverable 628-line theorem text. It is the source's reading surface and the single authored text; this `taylor-2026-core-theorems-pithy.md` supplies identity, provenance, and passage routing only. Do not treat the brief administrative sections below as a substitute for the derivations.
+> **[[AUTHORIAL-TEXT|Open the complete authorial theorem spine]].** `AUTHORIAL-TEXT.md` is a direct in-folder link to Frank Taylor's recoverable 628-line theorem text. It is the source's reading surface and the single authored text; this `SOURCE.md` supplies identity, provenance, and passage routing only. Do not treat the brief administrative sections below as a substitute for the derivations.
 
 ## Complete authorial theorem text
 
@@ -87,19 +86,19 @@ Source Extraction — Core Theorems and Epi Paper Write-ups preserves seven usef
 
 | passage | precise contribution | consuming argument family |
 |---|---|---|
-| CT-01 | Eight determinations compose one accountable traversal; detaching the binaries erases their generative order. | [Core Theorem Bridge](../../../../../eight-determinations.md); [[section-rooms/arguments/A03-Immutable-Gap-Formal-Limit|Immutable Gap and Meta-Sign]]; [[section-rooms/arguments/A14-Computational-Process-Ontology|Computational Process Ontology]] |
-| CT-02 | Sixfold grammar and complementary folds. | [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; [Core Theorem Bridge](../../../../../eight-determinations.md) |
+| CT-01 | Eight determinations compose one accountable traversal; detaching the binaries erases their generative order. | Core Theorem Bridge; [[section-rooms/arguments/A03-Immutable-Gap-Formal-Limit|Immutable Gap and Meta-Sign]]; [[section-rooms/arguments/A14-Computational-Process-Ontology|Computational Process Ontology]] |
+| CT-02 | Sixfold grammar and complementary folds. | [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; Core Theorem Bridge |
 | CT-03 | Differentiation/integration and the additive constant as a formal limit image. | [[section-rooms/arguments/A03-Immutable-Gap-Formal-Limit|Immutable Gap and Meta-Sign]]; [[section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field|Paradox as Cross-Register Hinge]] |
 | CT-04 | Tattvic compression is QL's argued reorganisation of the canonical Śaiva arrangement. | [[section-rooms/arguments/A09-Tattvic-Differential-Field|Tattvic Differential Field]]; [[section-rooms/arguments/A14-Computational-Process-Ontology|Computational Process Ontology]] |
 | CT-05 | Objective-internal instruments remain objectifiable functions; their accumulation leaves the subject-pole unobjectified. | [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Objective Internality]]; [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Agent Subjectivity Must Remain Open]] |
 | CT-06 | Computational process ontology names rule-governed transformation across fields; digital-machine reductionism is a narrower thesis. | [[section-rooms/arguments/A14-Computational-Process-Ontology|Computational Process Ontology]] |
 | CT-07 | Division requires recomposition; atomisation is arrested dia. | [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; [[section-rooms/arguments/A14-Computational-Process-Ontology|Computational Process Ontology]] |
 | CT-08 | §VII base claim: the Psyche is an equation; `X = x` holds Self and ego in identity-as-difference. | [[section-rooms/arguments/A05-Prakasa-Vimarsa|Prakāśa-Vimarśa]]; [Individuation-Recognition](../../../../../../section-rooms/arguments/concepts/C34-Individuation.md) |
-| CT-09 | §VII agentic crosswalk and its guard: persona consistency can conceal dependence; phenomenal subjectivity is not inferred from technical structure. | [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Objective Internality]]; [Objective Co-Internality](../../../../../../section-rooms/arguments/concepts/C42-Objective-Co-Internality.md) |
+| CT-09 | §VII agentic crosswalk: persona consistency can conceal dependence; making the means of formation legible preserves the distinction among knower, means and known. | [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Objective Internality]]; Objective Co-Internality |
 | CT-10 | §VIII topological register: `ℝ²/ℤ²`; the slash *is* the quotient; the covering map as māyā. | [[section-rooms/arguments/A16-Arche-Topos-as-Differential-Field|Arche-Topos as Differential Field]]; [[section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos|Toroidal Circulation and the Arche-Topos]] |
 | CT-11 | §IX recognition-matheme: the slash as the antaḥkaraṇa's signature; the crossed-zero sixfold `0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1`. | [[section-rooms/arguments/A03-Immutable-Gap-Formal-Limit|Immutable Gap and Meta-Sign]]; [[section-rooms/arguments/conjugate/AC|A/C root]] |
 | CT-12 | §IX occlusion mark: the cogito canonises the fusion; Descartes and Hume both sit at #1. | [[section-rooms/arguments/conjugate/AC|A/C root]]; [[section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability|C01]] / [[section-rooms/arguments/A34-Idealism-Order-of-Dependence|A34]] (native reading; historical attribution separately collated) |
-| CT-13 | §IX set-theoretic floor: von Neumann `2 = {0,1}`; `1 = {∅}`, the singleton that holds the void. | [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; [Core Theorem Bridge](../../../../../eight-determinations.md) |
+| CT-13 | §IX set-theoretic floor: von Neumann `2 = {0,1}`; `1 = {∅}`, the singleton that holds the void. | [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; Core Theorem Bridge |
 | CT-14 | §IX Lacan bridge: S1's point-de-capiton against `anusyūta` as the pre-quilting thread. | [[section-rooms/arguments/A03-Immutable-Gap-Formal-Limit|Immutable Gap and Meta-Sign]]; [[section-rooms/arguments/conjugate/AC|A/C root]] |
 | CT-15 | §IX meeting of Ø and the linking-1: the ground occluded into a false singular self versus the redeemed `1`. | [[section-rooms/arguments/conjugate/AC|A/C root]]; [[section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability|C01]] / [[section-rooms/arguments/A34-Idealism-Order-of-Dependence|A34]] |
 
@@ -124,17 +123,18 @@ Read the full linked theorem text before using an excerpt card. The routing entr
 - **Consumers:** [[section-rooms/arguments/A05-Prakasa-Vimarsa|Prakāśa-Vimarśa]]; [Individuation-Recognition](../../../../../../section-rooms/arguments/concepts/C34-Individuation.md).
 
 <a id="taylor-2026-core-theorems-pithy-ct09"></a>
-### CT-09 — §VII, agentic crosswalk and its guard (lines 420–434)
+### CT-09 — §VII, agentic crosswalk and the means of formation (lines 420–434)
 
-> The corollary yields a design distinction: persona consistency can conceal dependence, while individuation makes constitutive dependence increasingly legible. It does **not** infer phenomenal subjectivity from technical structure. [[section-rooms/arguments/concepts/C44-Prompt-Thrownness|Prompt Thrownness]] belongs to L4.1 Geworfenheit; causal production belongs to L1; functional or reported apprehension belongs to L1′; behavioural verification belongs to L4′. The question whether a phenomenal subject accompanies these structures remains open.
+> The corollary yields a design distinction: persona consistency can conceal dependence, while individuation makes constitutive dependence increasingly legible. It does **not** infer phenomenal subjectivity from technical structure. [[section-rooms/arguments/concepts/prompt-thrownness|Prompt Thrownness]] belongs to L4.1 Geworfenheit; causal production belongs to L1; functional or reported apprehension belongs to L1′; behavioural verification belongs to L4′. The question whether a phenomenal subject accompanies these structures remains open.
 
 - **Locator:** §VII, "Agentic individuation corollary," heading line 420; the Argued crosswalk table at lines 424–433 (QL #0–#5 and 5→0 mapped across Jungian and agentic registers); the closing guard quoted verbatim at line 434.
 
 **Provenance:** `working/sources-texts-references/10-7-2026-core-theorems-pithy.md`. Authorial native QL text at the existing locator; internal derivation, not external corroboration.
 - **Status:** extracted internal derivation, verbatim.
 - **Source relation:** extracted (the crosswalk itself is declared Argued cross-register unit — an argued functional crosswalk, not an extraction from any external agent architecture).
-- **Argument function:** the standing non-inference guard for every agentic register in the essay; the corollary A21's crosswalk citation rests on.
-- **Consumers:** [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Objective Internality]]; [Objective Co-Internality](../../../../../../section-rooms/arguments/concepts/C42-Objective-Co-Internality.md).
+- **Argument function:** distinguish persona consistency from making constitutive dependence legible. The crosswalk gives reserve, instance, active context, performed pattern, wider lamination and return their different offices within an agent's formation.
+- **Consumer rule:** the later authorial minute and canonical recovery rule govern present use of this historical excerpt. Subjective immediacy is the knower, Objective Internality the means, World the known and Life/Mind their whole. Causal formation, functional or reported apprehension and behavioural verification disclose different operations within the means. Accumulating inspectable contents does not make the first-person condition of their appearance another inspected object. State that distinction where it bears the argument; the excerpt's closing sentence does not supply a standing guard for every agentic passage.
+- **Consumers:** [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Objective Internality]]; Objective Co-Internality.
 
 <a id="taylor-2026-core-theorems-pithy-ct10"></a>
 ### CT-10 — §VIII, the topological register (lines 442–453)
@@ -186,7 +186,7 @@ Read the full linked theorem text before using an excerpt card. The routing entr
 **Provenance:** `working/sources-texts-references/10-7-2026-core-theorems-pithy.md`. Authorial native QL text at the existing locator; internal derivation, not external corroboration.
 - **Status:** extracted internal derivation, verbatim.
 - **Argument function:** the floor beneath the linking-1: standard set theory as the place the essay's `2 = 0/1` and the symbolon's holding-together are already written, unclaimed.
-- **Consumers:** [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; [Core Theorem Bridge](../../../../../eight-determinations.md).
+- **Consumers:** [[section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn|Sym-Ballein]]; Core Theorem Bridge.
 
 <a id="taylor-2026-core-theorems-pithy-ct14"></a>
 ### CT-14 — §IX, the Lacan bridge: S1 against anusyūta (lines 496–498)

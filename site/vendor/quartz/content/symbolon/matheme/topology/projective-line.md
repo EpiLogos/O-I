@@ -13,11 +13,11 @@ source_relation: "Explicit geometric construction; argued native return"
 
 For a field `F`, take nonzero pairs `(x,y)∈F²` and identify `(x,y)` with `(λx,λy)` for every nonzero scalar `λ`. The equivalence classes are the projective line `P¹(F)`, written `[x:y]`. The zero pair is excluded because it determines no one-dimensional direction.
 
-The [admitted projective-line note](../../../section-rooms/arguments/concepts/reference-notes/projective-line.md) places this construction beside the native zero/infinity relation. The [NIST house](../../episteme/sources/mathematics-logic/nist/nist-dlmf-2026-complex-variable/nist-dlmf-2026-complex-variable.md) supplies the complex completion's exact source context; the real construction is explicitly given here rather than attributed to that complex-only passage.
+The legacy projective-line provenance names homogeneous coordinates beside the native zero/infinity relation; its bibliography-seed standing supplies no additional theorem. The [NIST house](../../episteme/sources/mathematics-logic/nist/nist-dlmf-2026-complex-variable/nist-dlmf-2026-complex-variable.md) supplies the complex completion's exact source context; the real construction is explicitly given here rather than attributed to that complex-only passage.
 
 ## #1 — Enter the affine chart
 
-Where `y≠0`, divide both coordinates by `y`: `[x:y]=[x/y:1]`. Each such point has a unique affine coordinate `z=x/y`. For example, `[2:4]=[1:2]` has affine coordinate 1/2.
+Where `y≠0`, divide both coordinates by `y`: `[x:y]=[x/y:1]`. Each such point has a unique affine coordinate `z=x/y`. For example over the real field, `[2:4]=[1:2]` has affine coordinate 1/2. This numeric example requires the displayed denominators to be nonzero; it is not asserted unchanged in characteristic two.
 
 If `y=0`, then `x≠0`, and every such pair represents `[1:0]`. This is the one additional point, conventionally ∞. It is a projective class, not an ordinary field value obtained by dividing 1 by 0.
 
@@ -37,10 +37,10 @@ The word “line” refers to projective dimension over the chosen field. The re
 
 The [core's](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) `0/1` and `1/0` retain a defined/undefined seam in ordinary arithmetic. Homogeneous coordinates show one exact way to make the endpoint of a particular map representable by changing the object and chart.
 
-The construction does not remove that arithmetic seam. It states where the old affine coordinate ceases to apply and supplies another coordinate for the larger space. The native reading of dimensional reframing is Argued through this exact change of representation.
+The construction does not remove that arithmetic seam. It states where the old affine coordinate ceases to apply and supplies another coordinate for the larger space. In the native dimensional reframing, an account retains the determined relation while changing the representation through which it becomes available. This coordinate change gives that reading its exact local operation.
 
 ## #5→0 — Return with the chart transition
 
 The result is a space covered by two charts, with reciprocal transition on their overlap. Zero and infinity can be exchanged by a well-defined projective transformation while ordinary field division keeps its restrictions.
 
-This record returns-to [Movement28](../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md), [projective completion](projective-completion.md) and [division pluralisms](../formal-neighbours/division-pluralisms.md). The completed representation remains accountable to the equivalence relation and field from which it was constructed.
+[Dimensional reframing](../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md) receives a changed object and a specified transition, rather than a value manufactured inside unchanged field division. [Projective completion](projective-completion.md) develops the changed representation; [division pluralisms](../formal-neighbours/division-pluralisms.md) compares different permitted algebraic operations. A returned coordinate remains answerable to its field, equivalence class and chart: a correction to any of these changes what that coordinate can represent.

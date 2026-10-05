@@ -26,7 +26,7 @@ The restriction belongs to the operation. Distributivity and additive cancellati
 
 Zero divided by zero fails differently. Every field element solves `0x = 0`, so that equation selects no unique quotient. Lack of a solution and lack of uniqueness are distinct obstructions. Neither is repaired by writing a fraction bar.
 
-The familiar cancellation example isolates the same restriction:
+Over the real field, the familiar cancellation example isolates the same restriction:
 
 $$
 6\cdot0=17\cdot0=0.
@@ -78,7 +78,7 @@ x^{-1},&x\ne0,\\
 D(a,b):=a\,\iota(b).
 $$
 
-This **zero-totalised inverse** is fully specified. It gives `D(6,2)=3`, `D(6,0)=0` and `D(0,0)=0`. The latter results are values of the new operation `D`. For `b=0`, they are not solutions licensed by the ordinary quotient definition: `0·D(6,0)=0 ≠ 6`.
+This **zero-totalised inverse** is fully specified over any field. Over the real field, it gives `D(6,2)=3`, `D(6,0)=0` and `D(0,0)=0`. The latter results are values of the new operation `D`. For `b=0`, they are not solutions licensed by the ordinary quotient definition: `0·D(6,0)=0 ≠ 6`.
 
 The lost unconditional law is visible:
 
@@ -114,12 +114,12 @@ $$
 
 still fails when the result is `[0:0]`. For example, infinity divided by infinity would produce `[1:0]/[1:0]=[0:0]`; zero divided by zero does likewise. Adjoining a point therefore does not automatically totalise every binary arithmetic operation.
 
-[C52, Dimensional Reframing](../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md), compares this change of containing space. The zero-totalised construction fixes zero under its inverse; the projective reciprocal exchanges zero with infinity. Both are exactly defined, and their different results disclose the different tasks they perform.
+[Dimensional reframing](../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md) compares the actual change of containing space. The zero-totalised construction fixes zero under its inverse; the projective reciprocal exchanges zero with infinity. The different defined results disclose the tasks performed by these constructions.
 
 ## #5→0 — Carry the rule back with the result
 
-[A15, Ratio and the Account](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md), grounds the demand made explicit here: retain the criterion under which the relation was reckoned. A denominator can be an invertible field element, a retained exceptional mark, a parameter awaiting evaluation, or a projective coordinate. Moving among those offices requires specifying the change of operation.
+[Reckoning a ratio](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) carries the criterion under which its relation holds. A denominator can be an invertible field element, a retained exceptional mark, a parameter awaiting evaluation, or a projective coordinate. Moving among these offices specifies a change of operation, so that the resulting account retains its domain and permissions.
 
-[A11, The Two Ones](../../../section-rooms/arguments/A11-The-Two-Ones-0-One-1-All.md), grounds the native `0/1` relation of singular One and polyvalent All. [A18's eight determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) extend that relation through question, polarity, pattern, person and horizon into `1/0` return. The slash carries those authorial operations before any particular algebra refracts them. The projective swap can compare inverse orientation; it does not give the QL return its ontological meaning. [A03, Formal Limit](../../../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md), receives the exact common pressure: an attempted operation can expose the conditions of the account and make their revision necessary.
+The [native two Ones](../../../section-rooms/arguments/A11-The-Two-Ones-0-One-1-All.md) give `0/1` its relation of singular One and polyvalent All. The [eight determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) carry this relation through question, polarity, pattern, person and horizon into `1/0` return. The slash carries those authorial operations before a particular algebra refracts them. The projective swap supplies its specified inverse orientation; the native return retains its ontological ground. Through [the determining-field limit](../../../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md), an attempted operation exposes conditions of the account that its result requires one to state and, where warranted, revise.
 
-The historical rules return-to [§1 · #1, Śūnya Becomes Operational](../../../section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md). The distinct mathematical constructions return-to [§1 · #4, Zero Keeps One Foot Outside Mathematics](../../../section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md) with their domains and failures visible. [A10, Advent of Zero](../../../section-rooms/arguments/A10-Advent-of-Zero.md), retains the history of those changed permissions; [A36, Integral Zero](../../../section-rooms/arguments/A36-Advent-of-Integral-Zero.md), extends the return of exact sign as Symbol. What returns is a more articulate relation, carrying the laws under which each of its determinations holds.
+The [historical entry of operative zero](../../../section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md) retains addition, multiplication and exceptional denominators in their distinct translated source offices. [Changing a mathematical container](../../../section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md) carries the distinct constructions with their domains and failures visible. The [advent of zero](../../../section-rooms/arguments/A10-Advent-of-Zero.md) retains the history of these changed permissions; through [Integral recognition](../../../section-rooms/arguments/A36-Advent-of-Integral-Zero.md), the exact sign returns as Symbol within the whole relation. The resulting account carries the laws under which each determination holds.

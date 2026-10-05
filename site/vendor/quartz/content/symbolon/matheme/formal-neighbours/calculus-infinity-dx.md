@@ -11,7 +11,7 @@ source_relation: "Explicit mathematical proof; argued native comparison"
 
 ## #0 — Define the local operation
 
-For a differentiable real function `F` on an interval, `F′(x)=lim_{h→0}[F(x+h)−F(x)]/h` where the limit exists. The [OpenStax source house](../../episteme/sources/mathematics-logic/strang/strang-herman-2016-openstax-calculus-v1/strang-herman-2016-openstax-calculus-v1.md) gives the interval-qualified antiderivative theorem. The native [∞/dx determination](../../infinity-dx.md) has its own position in the eightfold and receives this exact technical neighbour.
+For a differentiable real function `F` on an interval, `F′(x)=lim_{h→0}[F(x+h)−F(x)]/h` where the limit exists. The [interval-qualified antiderivative theorem](../../episteme/sources/mathematics-logic/strang/strang-herman-2016-openstax-calculus-v1/strang-herman-2016-openstax-calculus-v1.md) states the freedom retained when one reconstructs a function from its derivative. Through the native [horizon and differential](../../infinity-dx.md), exact local change remains related to the field which further determination can articulate.
 
 ## #1 — Exhibit the family
 
@@ -41,4 +41,4 @@ In ordinary differential notation, `dF=F′(x)dx` expresses the linear different
 
 The result is a local rate together with the family it permits and the extra condition needed to select a member. The technical statement remains exact; the authorial reading asks how a local determination returns through what its operation leaves open.
 
-This record returns-to [Movement25](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md), [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), and [X/x](../ql/x-x.md). The finite calculation carries the native determination without replacing it or claiming that every form of inexhaustibility is an integration constant.
+The [eight-determination account](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md) carries the local calculation through its native horizon. The [whole traversal](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) retains determining capacity beside the particular [instance](../ql/x-x.md); a further value selects a member of the mathematical family while the native horizon keeps its broader office. Different forms of inexhaustibility retain their own operations beside this exact integration constant.

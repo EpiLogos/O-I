@@ -15,7 +15,7 @@ tags: [epi-logos/antykathera-essay, argument-map/live, argument-map/section, arg
 # §3 · #0 — Eight Determinations
 
 <!-- reader-navigation -->
-Movement 25 of 48 · [This room](../ROOM.md) · [← Previous](../../03-two-logics/movements/24-s2-p5-zero-changes-role.md) · [Next →](26-s3-p1-spanda-4-2.md)
+Movement 25 of 48 · [This room](../ROOM-04-mathematical-substrate.md) · [← Previous](../../03-two-logics/movements/24-s2-p5-zero-changes-role.md) · [Next →](26-s3-p1-spanda-4-2.md)
 <!-- /reader-navigation -->
 
 ## Movement thesis
@@ -26,7 +26,7 @@ The ground–mark relation unfolds as eight determinations. Each states an opera
 |---|---:|---|---|
 | **Parent relation** | `−/−` | Bare relationality before the field has been divided into named terms: two present marks held in one expression, the capacity for relation prior to a determinate contrast. It is the unnamed parent of the six, not an additional position among them. | The relation has a condition that cannot appear as one more product of the relation. |
 | **#0 Ground** | `0/1` | **Awareness / phenomenon; conscious circumstance.** “I am here; something appears; the appearing is known.” `0` names the open, unobjectifiable fact of awareness; `1` the appearing mark; `/` the relation by which the real becomes readable without being exhausted by its readability. Appearing is in awareness, and awareness is encountered only through appearing; the relation precedes any picture of two completed substances separated by a wall. | The ground is immanent to every mark without becoming another positive mark or a hidden object behind it. |
-| **#1 Definition** | `?/!` | **Questioning / asserting; ratio, reckoning, mark.** To ask “what is this?” already asserts that something has appeared stably enough to call for account; to assert “this is” keeps open the question of whether the account runs true. Definition is therefore double: openness to determination and determinative speech. It marks while [remaining answerable to what called for the mark](../../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md#symbol-answers-to-source). | Every assertion bears the unsettled question that makes it accountable; every genuine question already takes a provisional mark. |
+| **#1 Definition** | `?/!` | **Questioning / asserting; ratio, reckoning, mark.** To ask “what is this?” already asserts that something has appeared stably enough to call for account; to assert “this is” keeps open the question of whether the account runs true. Definition is therefore double: openness to determination and determinative speech. It marks while [remaining answerable to what called for the mark](../../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md#symbol-answers-to-source). | Every assertion bears the unsettled question that makes it accountable; every genuine question already takes a provisional mark. |
 | **#2 Dynamis** | `−/+` | **Withdrawal / extension; force, polarity, Spanda-seed.** The relation becomes energetic: one side functions as reserve, contraction, withholding; the other as issue, release, presentation. The positive is the void’s own self-relation appearing as extension. The poles form a sustained pulse whose moments remain co-present — breath gathers and releases; attention contracts around a word and opens into sense. | The two poles remain one differentiating movement: distinction has force without becoming a war of independent substances. |
 | **#3 Pattern** | `X/x` | **Determining-capacity / determinate instance; recurrence.** Capital `X` is the presiding capacity, type, or anything-by-which something can be read; lower-case `x` is its temporal local face. The same letter, in two cases, prevents the instance from being severed from the capacity it manifests. The small `x` also retains multiplication: an instance can recur, compound, and yield “another one of those.” Pattern is where force becomes recognisable as kind, rhythm, memory, and thought. | The local instance makes the general legible but neither contains nor exhausts it. |
 | **#4 Context** | `AM/IS` | **First-person presence / third-person sayability; the personed copula.** `AM` is lived “I am”; `IS` is what can be stated as “it is”; the slash is the second-person relation through which they meet. Context is the lived *where* of this encounter — world, body, concern, speech, memory, task — not a neutral container. It is total because nothing appears outside some horizon, and incidental because that horizon does not ordinarily stand forth as one more object. | Knower, means, and known remain one appearing-act without becoming interchangeable: *pramātṛ / pramāṇa / prameya*. |
@@ -39,13 +39,13 @@ The table fixes the actual order of determination within the native theorem. The
 
 The six also have internal grammar. **Being** joins Ground and Definition: a field is present and can be called to account. **Becoming** joins Dynamis and Pattern: force becomes intelligible as recurrence, while recurrence stays alive only as force capable of further instance. **Knowing/unKnowing** joins Context and Realisation: lived predication becomes honest only when its horizon exceeds every situated claim. Across this forward harmonic grouping run the complementary folds: **Essence** (`0+5`) pairs conscious circumstance with unbounded differential depth; **Constitution** (`1+4`) pairs answerable definition with the world in which someone asks and asserts; **Text-Texture** (`2+3`) pairs the felt weave of force with its readable pattern. The six positions are thus neither a linear ladder nor a flat catalogue.
 
-## Mathematical force and proof boundary
+## Calculus — exact local information and the unrecovered constant
 
-Calculus supplies an exact local example of **information lost under an operation and restored only as a family of possibilities**. If `F′(x)=f(x)`, then every `F(x)+C` has the same derivative. Differentiation therefore does not preserve the additive constant; indefinite integration returns the family `F(x)+C`, not the unique originating function without an additional condition.
+Calculus gives the Realisation turn a precise local image. If `F′(x)=f(x)`, then every `F(x)+C` has the same derivative. Differentiation yields exact local change while dropping the additive constant; indefinite integration returns a family rather than selecting the originating member without a further condition.
 
-The identity is standard mathematics. The essay's further reading is **Argued**: `C` can serve as a formal analogue for provenance that local differential information alone does not determine. It is not literally “provenance” in calculus, and it does not prove that mathematical zero stands outside every calculation. What it establishes exactly is narrower and more useful: a local operation can be perfectly exact while underdetermining a wider state from which that local information could have arisen. The psychological and metaphysical comparison begins there, with its additional burden stated rather than smuggled into the theorem.
+The philosophical force lies exactly there. **Local exactness can be complete as local exactness while still underdetermining the wider state from which it arose.** The constant is not “provenance” by definition; it is the mathematical operation through which the essay makes provenance thinkable without sacrificing exactness. The further condition needed to select one member of the family is what lets the formal example pass into the wider problem of determination and ground.
 
-Jung’s quaternity and the four functions enter only after the native derivation. Thinking, feeling, sensation, and intuition articulate four ways a psyche determines a field; introversion and extroversion provide the two orientations. Four functions plus two attitudes yield a psychologically concrete `4+2`, while the eight determinations show the more extended relational articulation. Psychology witnesses the architecture; it does not manufacture it. The correspondence is Argued; the traversal itself is Derived within the theorem field.
+Jung’s quaternity and four functions enter at another register. Thinking, feeling, sensation and intuition articulate four ways a psyche determines a field; introversion and extroversion supply two orientations. Four functions plus two attitudes make a psychologically concrete `4+2`, while the eight determinations articulate the more general traversal through which force, pattern, person and horizon belong to one self-relating field. The psychological comparison gives the architecture a lived refraction after the theorem has already generated its own order.
 
 ## QL placement
 
@@ -61,14 +61,20 @@ The movement carries Trika into quaternary form as an authorial relation. *Pram�
 
 Historically, this is the formal completion sought by the zero–subject braid in the essay's own construction. The mental-rational subject stands within the `#1` line as an apparently self-grounding term and lets its unowned condition fall into the external `−1`; QL's `0/1` keeps the ground–mark relation explicit, `X/x` prevents the particular from severing itself from determining capacity, and `AM/IS` turns the three-perspective triangle into contextual `360°`. The Gebser relation remains a historical/philosophical comparison, not the source of this native geometry.
 
-## Drafting payload
+## Four joints carried forward
 
-Give the table once as a contemplative QL plate. In prose, dwell on four movements: `0/1` establishes the seam; the `#3→#4`, `180°→360°` turn makes perspective answerable to context in the native geometry; `X/x` prepares the Jungian comparison; and `∞/dx` can be placed beside calculus as an exact local example of how precise differential information can leave a wider originating state underdetermined.
+Four joints now carry the movement into the rest of the mathematical substrate.
+
+`0/1` establishes the seam of ground and manifestation.  
+`X/x` gives determining capacity a recurrent local face.  
+The `#3→#4`, `180°→360°` turn changes perspective into contextual holding.  
+`∞/dx` gives exact local difference an explicit relation to the horizon it cannot enclose.
+
+These are not highlights extracted from a catalogue. They are the joints through which the one traversal becomes available to the Spanda equations, the senarius, the harmonic reading and the later psychic return.
 
 ## Transition
 
-The language-field comparison **returns-to** [E1’s native-field return](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md#native-field-return) within the full eight determinations: `/ = −/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0`. Encounter, naming, counting and personed address refract operations within that body; they supply neither eight replacement primitives nor a lexical derivation of Taylor’s `X/x`. The parent and inverse return retain the complete field in their respective orientations.
+The language-field comparison **returns-to** [E1’s native-field return](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md#native-field-return) within the full eight determinations: `/ = −/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0`. Encounter, naming, counting and personed address refract operations within that body; they supply neither eight replacement primitives nor a lexical derivation of Taylor’s `X/x`. The parent and inverse return retain the complete field in their respective orientations.
 
 The determinations require a compact generator. The two Spanda equations develop the horizontal `3:3`, vertical `4:2`, the senarius, and a harmonic ratio-reading in [[26-s3-p1-spanda-4-2|§3 · #1 — The Spanda Equations and 4+2]]. Their ordinary arithmetic identities and QL-specific operators must remain distinguished there.
 
-The [authored P1 route for M25](../P1-CANONICAL-ALIGNMENT.md#p1-m25) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

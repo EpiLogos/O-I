@@ -123,4 +123,4 @@ Coupling preserves interacting identities through mutual modification. A resulti
 
 **Attribution distinction · printed 70–71 / PDF 50.** Stafford Beer's preface advances a social extension while acknowledging the authors' disagreement. It is not their joint conclusion.
 
-This house **sources** the [process dossier](../../../../dossiers/process.md) and **historicises** the [process-science development](../../../../histories/traditions-and-disciplines/process-systems-science/DEVELOPMENT.md). Biological organization, technical operation and phenomenality retain distinct tests.
+This house **sources** the [process dossier](../../../../dossiers/process.md) and **historicises** the [process-science development](../../../../histories/traditions-and-disciplines/process-systems-science/DEVELOPMENT-process-systems-science.md). Biological organization, technical operation and phenomenality retain distinct tests.

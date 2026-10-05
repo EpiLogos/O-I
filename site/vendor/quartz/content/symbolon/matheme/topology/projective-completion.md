@@ -37,10 +37,10 @@ One-point compactification of the complex plane and projective completion of the
 
 A changed chart can make a previously unavailable coordinate finite without making every operation globally defined. Reciprocal extends on a projective line; a general binary quotient still has indeterminate cases. A chosen completion has its own topology, transformations and exclusions.
 
-The native interpretation reads this as an account learning to state the limits of its representation and move through them without discarding the achieved determination. The proof of a projective intersection does not independently prove an ontology of unobjectifiable ground. The relation is Argued through the explicit representational change.
+The native interpretation reads this as an account learning to state the limits of its representation and move through them without discarding the achieved determination. The proof of a projective intersection does not independently prove an ontology of unobjectifiable ground. The native relation retains the achieved determination while changing the representation through which its limit can be crossed. Its local warrant is this explicit representational change.
 
 ## #5→0 — Return with both descriptions available
 
 The result holds the affine failure and projective success together: the lines do not meet in the original plane, and their completed representatives meet at the named ideal point. Neither statement cancels the other because their spaces differ.
 
-This record returns-to [Movement28](../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md), [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), and [translations](../mono-poly/translations.md). The exact construction remains recoverable beneath the native movement it makes available.
+[Dimensional reframing](../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md) receives the parallel lines under both descriptions, so the enlarged relation does not overwrite their affine nonintersection. [The eight determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) place that changing representation within the native field; [translations](../mono-poly/translations.md) carry an achieved determination with the laws of its source and receiving space available. A subsequent comparison can therefore correct the chosen completion or translation without losing the construction already earned.

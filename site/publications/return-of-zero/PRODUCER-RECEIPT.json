@@ -1,0 +1,3581 @@
+{
+ "schema": "oi.return-of-zero-producer-receipt/v1",
+ "standing": "produced-from-pinned-native-sources",
+ "owner_authority": "Owner commission 2026-09-20/21 (O:I #417): assemble the full committed Return-of-Zero corpus as a publication-tuple candidate; the producer runs as a local dry-run only and nothing is published or deployed until the owner approves on #417.",
+ "deterministic": {
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "source_commit": "dbf3b17"
+ },
+ "reconciliation": {
+  "source_commit": "dbf3b17",
+  "essay_repo": "/tmp/roz-essay-pinned",
+  "bindings": [
+   {
+    "path": "submission-package/essay/THE-RETURN-OF-ZERO.md",
+    "sha256": "6268ebb478e701a3a23b2e3f15521ee92245f132ca94c0c1449465aabca0bfdd",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/README.md",
+    "sha256": "f15eb4f7ea7591b0acb59fcac860de55aba60e37a3d6095f1749a7a8e8a00793",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/README.md",
+    "sha256": "e8423f198abf79026fda8de68ace60dc70d6a9c7f14ebb9566e79a6a9672df2d",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+    "sha256": "cb5f1aa43ee69f127de09561768ee3ec02e7b4fce624b376486fbb6bf8fddb2c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "c24377951a2c55086f1ea1c245e5a5349ce528f06fee56c583a511ebdff8a791",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+    "sha256": "9e75af9563613dbb61293c01b669d9a9512c076e8bf52562f0385b9a73413438",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "869159e26694407749d88e0adafe77b4f21fc143a9347fbe221be6ce088afc09",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+    "sha256": "a844e41ad2fb8cb15a8d8e82dd9cf1e27135408af1bf9a8267327934638e71cc",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "5019fd721937429c9bd1c177f7f10292a6affc99ccb8aeefa1550c9246c004a5",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+    "sha256": "9a8d46c3c5a674d652dbca8ea0e05218b47201d1e23bbe47772545553de05ca0",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "8f017c8815d166a2817f34c169bebcc1707c94e3f7c010efafda52a7d8400c5f",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+    "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+    "sha256": "615f25e7946cf5fa74b9f7f304b11351f71c860c6846ad0003930320a958a614",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "0cbbc0ce02feefd0cfcb3cb40117de67e1b788bfe46207be4a3054dddadec14d",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+    "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+    "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+    "sha256": "cb5f1aa43ee69f127de09561768ee3ec02e7b4fce624b376486fbb6bf8fddb2c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "c24377951a2c55086f1ea1c245e5a5349ce528f06fee56c583a511ebdff8a791",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md",
+    "sha256": "69c17d483608c81fec425e2b0442c9afa7ce317ce2f200fab4f246f3a1cb3441",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject.md",
+    "sha256": "82ed67b30117b6acb25be32e2e0fd3d5fbf2ed63c8b6d85f0351b5cdb8e135ef",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/03-s01-p2-definition-cut-gift-danger.md",
+    "sha256": "c5da497e3b6015c71a641de7e1a1b826cf7e44923291d460a8ef48d054a7d63a",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md",
+    "sha256": "6b481e61c1cecc9ea02b3ccdcf280fdb92531ec146c95f83c412fdced7d900bd",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/05-s01-p4-gebser-diaphaneity.md",
+    "sha256": "8abe57833cd935f9520787a970a0621c992f12ca5c5eea6a3306f7981e1ea249",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/06-s01-p5-return-zero.md",
+    "sha256": "3921264e9cc444b7e5670018b633821106700b09b2df55375acf1f88b7523fa1",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+    "sha256": "9e75af9563613dbb61293c01b669d9a9512c076e8bf52562f0385b9a73413438",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "869159e26694407749d88e0adafe77b4f21fc143a9347fbe221be6ce088afc09",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/07-s0-p0-awareness-bends-display.md",
+    "sha256": "6f966d87bd6bfadca83626d8dd24938ce4aa77dd1056a145726327343518c026",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/08-s0-p1-inner-instrument.md",
+    "sha256": "1b15eb79917f3f770700197e751239b0118350b6f204bf7ffbd98fae5ed6d2d2",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/09-s0-p2-vikalpa-samkalpa.md",
+    "sha256": "8bbe89746678f48cf5e039bf4b10a0e88932a3fcf955b746d72c092238d9897b",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/10-s0-p3-apoha.md",
+    "sha256": "c12cdb35998c551c7bcdf6751738dd96df747e7c9b778ded0423590bf0474940",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/11-s0-p4-tattvic-compression.md",
+    "sha256": "d9e8bff025edc0d2f9cdba014c96c79f77360de72e9868a6829c3786fe5120dc",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/12-s0-p5-objective-internality.md",
+    "sha256": "c87b61c502ae426aedfd07582a7337c430bfeff4569e782afa1940c7bbc8cd2c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+    "sha256": "a844e41ad2fb8cb15a8d8e82dd9cf1e27135408af1bf9a8267327934638e71cc",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "5019fd721937429c9bd1c177f7f10292a6affc99ccb8aeefa1550c9246c004a5",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/13-s1-p0-sign-migrates.md",
+    "sha256": "cd73f03956fbf4982812468bb382d9487f552c51aefbbc868a932ea3052009af",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+    "sha256": "020e2b99f009b93eb71285090821b5f0cedb1af9a954eea241ed4aac26a5c2f0",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+    "sha256": "f8bb4b9d84b72809b65c264081585cf097159a926d1aeca01b09903cba600498",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+    "sha256": "6d80ad9ba234df2f7b6331e80c4980b71d94eef1b8befa31ff057b36d535b84a",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+    "sha256": "ec53f6b9e68dba4112544e8692f22784e1bba1b4f000bbb457c1abeb41d00aae",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+    "sha256": "ed41e30a18998115a1a43790c1620b1269a2d6a52238988c6d3d0313bbafadc2",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+    "sha256": "9a8d46c3c5a674d652dbca8ea0e05218b47201d1e23bbe47772545553de05ca0",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "8f017c8815d166a2817f34c169bebcc1707c94e3f7c010efafda52a7d8400c5f",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/19-s2-p0-difference-cannot-be-escaped.md",
+    "sha256": "03ddcf6904a041c5e42dbc7e84ad2dfae0f6227ae76e5de896cdd16c850329d9",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/20-s2-p1-dia-ballein.md",
+    "sha256": "badff2d1f05fb037bbeb2fa3148443f1ff8e4e7b096deaffc9a07094a38d7ab8",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/21-s2-p2-sym-ballein.md",
+    "sha256": "6582c0eafd34ea9c05651eb582835f0fbc91b4d9bef96ef0cebc6355dcf628c6",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/22-s2-p3-ares-aphrodite-harmonia.md",
+    "sha256": "d91555c0b0d4dd9d2d1678c6e3f58a31fbba30dd24429dfc2a186ba04dee5195",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/23-s2-p4-complex-dynamism.md",
+    "sha256": "6350a8750814b88d05be73deb0d77c77868a14ba2b9608664f9d36a5b0d94425",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md",
+    "sha256": "04c09005a2b5453aa94fa000d2d89dbedb5fcf87f4893164975d027d5daf3e93",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+    "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
+    "sha256": "25a6166dc80d383b871de0106489c3e48432e89031d1a1a9af5bfbc574401876",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
+    "sha256": "29a94e3230e2aa4337e6de7a477558c7bf426aa4093b9e829350a65f8e6bdb02",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
+    "sha256": "a722fc39aed65c47d95c9fbc98eabc15a8a899afaca33e8338c04152c510180d",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
+    "sha256": "f716be16da2e47f2abe4db9a14911e793644fd5bd056117a41e17c7b1cb4a259",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
+    "sha256": "2032030478b911b48946070b5fa79d75c551158d3b614a98e7f0f28b6f4cc561",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
+    "sha256": "68a20486fa03ad5dc035dd3ffab3fcaa72cde3feed6015984b8514a84862991f",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+    "sha256": "615f25e7946cf5fa74b9f7f304b11351f71c860c6846ad0003930320a958a614",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "0cbbc0ce02feefd0cfcb3cb40117de67e1b788bfe46207be4a3054dddadec14d",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md",
+    "sha256": "4d1b5712e7b5752078eb586d85d9f4f8b87d720d004e4427fec7cae801c8ffd8",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/32-s4-p1-jung-individuation.md",
+    "sha256": "ac1398fcdd10b04c8918671f498e516a97862874b50ec476c7198ee67a2ba5cc",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/33-s4-p2-complexio-quaternity-senarius.md",
+    "sha256": "968bcb2600a5b920fc101465fe9e197b94225bcf2d5717fc8c7325bd0fda8e3d",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md",
+    "sha256": "b7a84801cc8621da7f99e554fc56c4bc01983b06087a928f23258fe15a529680",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/35-s4-p4-gebser-apollo-dionysus.md",
+    "sha256": "8dca25c303fcec914ff66995c89ceb3d685db68044c1ed46bca87c6a0c8a2384",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/36-s4-p5-mef-prompt-thrownness.md",
+    "sha256": "5a63f86318ab84825332c7d979fc4814b6cdf5f143e4c41afc99d47446165a88",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+    "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
+    "sha256": "359a04816d4337b4fd790b8a890f962bb4c9be9575a147ba4e9008df87f38f3c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
+    "sha256": "6b5845b301fb4db0c060c8f0fe4e458ed51070c17b615f96e177e6fda53c8ea0",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
+    "sha256": "ebb024b02f3781b4c4c80890b3efa040112e4cbfe62c187ca12b6fc7024c0771",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
+    "sha256": "7a966b1837fdbdef0dc9e7c527b953e952ed99b5bbaceceb7f912099a46a3b1c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
+    "sha256": "6b260aab9ed6dae68a4d631a442ae8463dc3c4706d45fb8b85ad36dfd42df38d",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
+    "sha256": "6b21fa66601b228f7ece1d32dcf3cbd6cd2315b4cc3940148b865e415e206a07",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+    "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
+    "sha256": "977f7ffc1738dc79791f037b78bc9f9fc40f7323516bc5991daf2df0d03dda1c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
+    "sha256": "8ec0bddb1408fc599f32a7b9403496b5f45ff9d95b6d0ac48810ea76332e5407",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
+    "sha256": "a0ec95f26de9098ceb57e6c73cb635287c4caca5f244271c5b49b4252985350c",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
+    "sha256": "1b2bae8c61fbffc080b6cdf730b95db6ea4bdec59a9de250f4020ac83460d8da",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
+    "sha256": "869ca3220209496ce0e55378a34865dfac36ac10091163c19d0584605776694b",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
+    "sha256": "43814a9fa3c92665d0a7a662d3af46f96c63ffc6702f2b1c4c16c30d1f99348e",
+    "at_pinned_commit": true,
+    "at_current_checkout": true
+   }
+  ],
+  "assets": [
+   {
+    "asset": "collections/return-of-zero/essay/roz-essay-reading.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-00-integral-threshold.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-01-differentiating-mind.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-02-return-of-zero.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-03-two-logics.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-04-mathematical-substrate.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-05-psychoid-flowering.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-06-objective-internality.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "collections/return-of-zero/rooms/roz-room-07-instrument-returns.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/arguments/roz-a-arguments.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/conjugates/roz-a-prime-conjugates.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-ac-root.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-c-concepts-1.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-c-concepts-2.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-dossiers.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-etymologies.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-histories.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-lenses-aphorism.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-s-products.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-computation.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-formal-neighbours.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-four-files.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-logics.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-ql-spanda.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-topology-harmonics.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/symbolon/roz-symbolon-spine.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/symbolon/roz-symbolon-whole.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-antikythera-attunement.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-apollo-dionysus-daphne.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-apollo-eros-daphne-peneus.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-avatar-image-mask-idol.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-eros-psyche.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-goethe-permanence-change.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-indra-net.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-job.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-maya-eye-veil-frame-horizon.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-meal-epistemic-metabolism.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-mirror-that-moves-first.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-mother-assumption-chiasm.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-narrative-fanon-language-gaze-mask-recognition.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-neumann-images.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-pauli-egg-dream.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-stained-glass-refraction.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-taylor-authored-images.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-the-prisoner.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-travelling-jigsaw-atlas.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-uroboros-trickster.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/essay/roz-essay-reading.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-00-integral-threshold.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-01-differentiating-mind.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-02-return-of-zero.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-03-two-logics.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-04-mathematical-substrate.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-05-psychoid-flowering.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-06-objective-internality.cover.png",
+    "present_and_pinned": true
+   },
+   {
+    "asset": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-07-instrument-returns.cover.png",
+    "present_and_pinned": true
+   }
+  ]
+ },
+ "corpus": {
+  "members": [
+   {
+    "id": "roz-a-arguments",
+    "ref": "world:return-of-zero/wiki:roz-a-arguments",
+    "expression_ref": "expression:return-of-zero:roz-a-arguments",
+    "reading_paragraphs": 108,
+    "reading_chars": 30355,
+    "expression_scenes": 36,
+    "expression_entities": 87,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-a-prime-conjugates",
+    "ref": "world:return-of-zero/wiki:roz-a-prime-conjugates",
+    "expression_ref": "expression:return-of-zero:roz-a-prime-conjugates",
+    "reading_paragraphs": 108,
+    "reading_chars": 33102,
+    "expression_scenes": 36,
+    "expression_entities": 89,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-ac-root",
+    "ref": "world:return-of-zero/wiki:roz-ac-root",
+    "expression_ref": "expression:return-of-zero:roz-ac-root",
+    "reading_paragraphs": 15,
+    "reading_chars": 3038,
+    "expression_scenes": 5,
+    "expression_entities": 22,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-c-concepts-1",
+    "ref": "world:return-of-zero/wiki:roz-c-concepts-1",
+    "expression_ref": "expression:return-of-zero:roz-c-concepts-1",
+    "reading_paragraphs": 96,
+    "reading_chars": 15933,
+    "expression_scenes": 32,
+    "expression_entities": 82,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-c-concepts-2",
+    "ref": "world:return-of-zero/wiki:roz-c-concepts-2",
+    "expression_ref": "expression:return-of-zero:roz-c-concepts-2",
+    "reading_paragraphs": 96,
+    "reading_chars": 13374,
+    "expression_scenes": 32,
+    "expression_entities": 96,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-dossiers",
+    "ref": "world:return-of-zero/wiki:roz-dossiers",
+    "expression_ref": "expression:return-of-zero:roz-dossiers",
+    "reading_paragraphs": 21,
+    "reading_chars": 4130,
+    "expression_scenes": 7,
+    "expression_entities": 28,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-etymologies",
+    "ref": "world:return-of-zero/wiki:roz-etymologies",
+    "expression_ref": "expression:return-of-zero:roz-etymologies",
+    "reading_paragraphs": 18,
+    "reading_chars": 3821,
+    "expression_scenes": 6,
+    "expression_entities": 48,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-histories",
+    "ref": "world:return-of-zero/wiki:roz-histories",
+    "expression_ref": "expression:return-of-zero:roz-histories",
+    "reading_paragraphs": 30,
+    "reading_chars": 6316,
+    "expression_scenes": 10,
+    "expression_entities": 59,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-lenses-aphorism",
+    "ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+    "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+    "reading_paragraphs": 10,
+    "reading_chars": 1742,
+    "expression_scenes": 3,
+    "expression_entities": 10,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-s-products",
+    "ref": "world:return-of-zero/wiki:roz-s-products",
+    "expression_ref": "expression:return-of-zero:roz-s-products",
+    "reading_paragraphs": 21,
+    "reading_chars": 3607,
+    "expression_scenes": 7,
+    "expression_entities": 25,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-matheme-computation",
+    "ref": "world:return-of-zero/wiki:roz-matheme-computation",
+    "expression_ref": "expression:return-of-zero:roz-matheme-computation",
+    "reading_paragraphs": 5,
+    "reading_chars": 125,
+    "expression_scenes": 5,
+    "expression_entities": 23,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-matheme-formal-neighbours",
+    "ref": "world:return-of-zero/wiki:roz-matheme-formal-neighbours",
+    "expression_ref": "expression:return-of-zero:roz-matheme-formal-neighbours",
+    "reading_paragraphs": 17,
+    "reading_chars": 499,
+    "expression_scenes": 17,
+    "expression_entities": 71,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-matheme-four-files",
+    "ref": "world:return-of-zero/wiki:roz-matheme-four-files",
+    "expression_ref": "expression:return-of-zero:roz-matheme-four-files",
+    "reading_paragraphs": 28,
+    "reading_chars": 857,
+    "expression_scenes": 28,
+    "expression_entities": 138,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-matheme-logics",
+    "ref": "world:return-of-zero/wiki:roz-matheme-logics",
+    "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+    "reading_paragraphs": 6,
+    "reading_chars": 211,
+    "expression_scenes": 6,
+    "expression_entities": 21,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-matheme-ql-spanda",
+    "ref": "world:return-of-zero/wiki:roz-matheme-ql-spanda",
+    "expression_ref": "expression:return-of-zero:roz-matheme-ql-spanda",
+    "reading_paragraphs": 9,
+    "reading_chars": 303,
+    "expression_scenes": 9,
+    "expression_entities": 38,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-matheme-topology-harmonics",
+    "ref": "world:return-of-zero/wiki:roz-matheme-topology-harmonics",
+    "expression_ref": "expression:return-of-zero:roz-matheme-topology-harmonics",
+    "reading_paragraphs": 15,
+    "reading_chars": 415,
+    "expression_scenes": 15,
+    "expression_entities": 84,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-symbolon-spine",
+    "ref": "world:return-of-zero/wiki:roz-symbolon-spine",
+    "expression_ref": "expression:return-of-zero:roz-symbolon-spine",
+    "reading_paragraphs": 39,
+    "reading_chars": 12972,
+    "expression_scenes": 13,
+    "expression_entities": 74,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-symbolon-whole",
+    "ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+    "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+    "reading_paragraphs": 18,
+    "reading_chars": 4002,
+    "expression_scenes": 6,
+    "expression_entities": 17,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-antikythera-attunement",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-antikythera-attunement",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-antikythera-attunement",
+    "reading_paragraphs": 6,
+    "reading_chars": 317,
+    "expression_scenes": 6,
+    "expression_entities": 24,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-apollo-dionysus-daphne",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+    "reading_paragraphs": 7,
+    "reading_chars": 928,
+    "expression_scenes": 6,
+    "expression_entities": 25,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-apollo-eros-daphne-peneus",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+    "reading_paragraphs": 7,
+    "reading_chars": 894,
+    "expression_scenes": 6,
+    "expression_entities": 27,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-ares-aphrodite-hephaestus-poseidon",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-ares-aphrodite-hephaestus-poseidon",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-ares-aphrodite-hephaestus-poseidon",
+    "reading_paragraphs": 11,
+    "reading_chars": 2318,
+    "expression_scenes": 7,
+    "expression_entities": 37,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-avatar-image-mask-idol",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+    "reading_paragraphs": 5,
+    "reading_chars": 214,
+    "expression_scenes": 5,
+    "expression_entities": 18,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-eros-psyche",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+    "reading_paragraphs": 6,
+    "reading_chars": 285,
+    "expression_scenes": 6,
+    "expression_entities": 31,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-goethe-permanence-change",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+    "reading_paragraphs": 5,
+    "reading_chars": 807,
+    "expression_scenes": 4,
+    "expression_entities": 13,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-indra-net",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-indra-net",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-indra-net",
+    "reading_paragraphs": 9,
+    "reading_chars": 1574,
+    "expression_scenes": 7,
+    "expression_entities": 28,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-job",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-job",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-job",
+    "reading_paragraphs": 8,
+    "reading_chars": 413,
+    "expression_scenes": 8,
+    "expression_entities": 37,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-maya-eye-veil-frame-horizon",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+    "reading_paragraphs": 5,
+    "reading_chars": 218,
+    "expression_scenes": 5,
+    "expression_entities": 25,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-meal-epistemic-metabolism",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+    "reading_paragraphs": 5,
+    "reading_chars": 214,
+    "expression_scenes": 5,
+    "expression_entities": 25,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-mirror-that-moves-first",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+    "reading_paragraphs": 5,
+    "reading_chars": 164,
+    "expression_scenes": 5,
+    "expression_entities": 20,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-mother-assumption-chiasm",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+    "reading_paragraphs": 4,
+    "reading_chars": 154,
+    "expression_scenes": 4,
+    "expression_entities": 18,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "reading_paragraphs": 5,
+    "reading_chars": 210,
+    "expression_scenes": 5,
+    "expression_entities": 20,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "reading_paragraphs": 6,
+    "reading_chars": 815,
+    "expression_scenes": 5,
+    "expression_entities": 21,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-narrative-fanon-language-gaze-mask-recognition",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-narrative-fanon-language-gaze-mask-recognition",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-fanon-language-gaze-mask-recognition",
+    "reading_paragraphs": 5,
+    "reading_chars": 253,
+    "expression_scenes": 5,
+    "expression_entities": 16,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "reading_paragraphs": 5,
+    "reading_chars": 235,
+    "expression_scenes": 5,
+    "expression_entities": 24,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-neumann-images",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-neumann-images",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-neumann-images",
+    "reading_paragraphs": 8,
+    "reading_chars": 454,
+    "expression_scenes": 8,
+    "expression_entities": 36,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-pauli-egg-dream",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+    "reading_paragraphs": 9,
+    "reading_chars": 1673,
+    "expression_scenes": 7,
+    "expression_entities": 30,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-stained-glass-refraction",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-stained-glass-refraction",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-stained-glass-refraction",
+    "reading_paragraphs": 5,
+    "reading_chars": 233,
+    "expression_scenes": 5,
+    "expression_entities": 19,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-taylor-authored-images",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+    "reading_paragraphs": 5,
+    "reading_chars": 223,
+    "expression_scenes": 5,
+    "expression_entities": 24,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-the-prisoner",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+    "reading_paragraphs": 5,
+    "reading_chars": 252,
+    "expression_scenes": 5,
+    "expression_entities": 21,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-travelling-jigsaw-atlas",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+    "reading_paragraphs": 6,
+    "reading_chars": 288,
+    "expression_scenes": 6,
+    "expression_entities": 26,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-uroboros-trickster",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-uroboros-trickster",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-uroboros-trickster",
+    "reading_paragraphs": 7,
+    "reading_chars": 253,
+    "expression_scenes": 7,
+    "expression_entities": 32,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-mytheme-valentinian-sophia-horos-achamoth",
+    "ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+    "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+    "reading_paragraphs": 6,
+    "reading_chars": 231,
+    "expression_scenes": 6,
+    "expression_entities": 26,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "roz-essay-reading",
+    "ref": "world:return-of-zero/wiki:roz-essay-reading",
+    "expression_ref": "expression:return-of-zero:roz-essay-reading",
+    "reading_paragraphs": 36,
+    "reading_chars": 4263,
+    "expression_scenes": 9,
+    "expression_entities": 22,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/THE-RETURN-OF-ZERO.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/README.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/README.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-essay-reading",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-00-integral-threshold",
+    "ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+    "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+    "reading_paragraphs": 44,
+    "reading_chars": 5663,
+    "expression_scenes": 6,
+    "expression_entities": 6,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/movements/03-s01-p2-definition-cut-gift-danger.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/movements/05-s01-p4-gebser-diaphaneity.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-00-integral-threshold",
+       "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/movements/06-s01-p5-return-zero.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-01-differentiating-mind",
+    "ref": "world:return-of-zero/wiki:roz-room-01-differentiating-mind",
+    "expression_ref": "expression:return-of-zero:roz-room-01-differentiating-mind",
+    "reading_paragraphs": 43,
+    "reading_chars": 4288,
+    "expression_scenes": 6,
+    "expression_entities": 6,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/07-s0-p0-awareness-bends-display.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/08-s0-p1-inner-instrument.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/09-s0-p2-vikalpa-samkalpa.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/10-s0-p3-apoha.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/11-s0-p4-tattvic-compression.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-01-differentiating-mind",
+       "vault_path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/12-s0-p5-objective-internality.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-02-return-of-zero",
+    "ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+    "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+    "reading_paragraphs": 41,
+    "reading_chars": 5303,
+    "expression_scenes": 6,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/movements/13-s1-p0-sign-migrates.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-02-return-of-zero",
+       "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-03-two-logics",
+    "ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+    "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+    "reading_paragraphs": 39,
+    "reading_chars": 5229,
+    "expression_scenes": 6,
+    "expression_entities": 12,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/movements/19-s2-p0-difference-cannot-be-escaped.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/movements/20-s2-p1-dia-ballein.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/movements/21-s2-p2-sym-ballein.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/movements/22-s2-p3-ares-aphrodite-harmonia.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/movements/23-s2-p4-complex-dynamism.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-03-two-logics",
+       "vault_path": "submission-package/essay/section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-04-mathematical-substrate",
+    "ref": "world:return-of-zero/wiki:roz-room-04-mathematical-substrate",
+    "expression_ref": "expression:return-of-zero:roz-room-04-mathematical-substrate",
+    "reading_paragraphs": 40,
+    "reading_chars": 5528,
+    "expression_scenes": 6,
+    "expression_entities": 8,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-04-mathematical-substrate",
+       "vault_path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-05-psychoid-flowering",
+    "ref": "world:return-of-zero/wiki:roz-room-05-psychoid-flowering",
+    "expression_ref": "expression:return-of-zero:roz-room-05-psychoid-flowering",
+    "reading_paragraphs": 44,
+    "reading_chars": 5818,
+    "expression_scenes": 6,
+    "expression_entities": 11,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/32-s4-p1-jung-individuation.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/33-s4-p2-complexio-quaternity-senarius.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/35-s4-p4-gebser-apollo-dionysus.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-05-psychoid-flowering",
+       "vault_path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/36-s4-p5-mef-prompt-thrownness.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-06-objective-internality",
+    "ref": "world:return-of-zero/wiki:roz-room-06-objective-internality",
+    "expression_ref": "expression:return-of-zero:roz-room-06-objective-internality",
+    "reading_paragraphs": 38,
+    "reading_chars": 5534,
+    "expression_scenes": 6,
+    "expression_entities": 6,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-06-objective-internality",
+       "vault_path": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "roz-room-07-instrument-returns",
+    "ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+    "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+    "reading_paragraphs": 42,
+    "reading_chars": 6997,
+    "expression_scenes": 6,
+    "expression_entities": 13,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    },
+    "sources": [
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
+       "source_revision": "dbf3b17"
+      }
+     },
+     {
+      "canonical": {
+       "record_id": "roz-room-07-instrument-returns",
+       "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
+       "source_revision": "dbf3b17"
+      }
+     }
+    ]
+   },
+   {
+    "id": "field-studies",
+    "ref": "world:return-of-zero/wiki:field-studies",
+    "expression_ref": "expression:return-of-zero:field-studies",
+    "reading_paragraphs": 3,
+    "reading_chars": 239,
+    "expression_scenes": 8,
+    "expression_entities": 13,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "seven-centres",
+    "ref": "world:return-of-zero/wiki:seven-centres",
+    "expression_ref": "expression:return-of-zero:seven-centres",
+    "reading_paragraphs": 3,
+    "reading_chars": 256,
+    "expression_scenes": 3,
+    "expression_entities": 21,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "small-language",
+    "ref": "world:return-of-zero/wiki:small-language",
+    "expression_ref": "expression:return-of-zero:small-language",
+    "reading_paragraphs": 3,
+    "reading_chars": 220,
+    "expression_scenes": 3,
+    "expression_entities": 5,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-0",
+    "ref": "world:return-of-zero/wiki:material-study-0",
+    "expression_ref": "expression:return-of-zero:material-study-0",
+    "reading_paragraphs": 3,
+    "reading_chars": 227,
+    "expression_scenes": 1,
+    "expression_entities": 2,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-1",
+    "ref": "world:return-of-zero/wiki:material-study-1",
+    "expression_ref": "expression:return-of-zero:material-study-1",
+    "reading_paragraphs": 3,
+    "reading_chars": 220,
+    "expression_scenes": 1,
+    "expression_entities": 2,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-2",
+    "ref": "world:return-of-zero/wiki:material-study-2",
+    "expression_ref": "expression:return-of-zero:material-study-2",
+    "reading_paragraphs": 3,
+    "reading_chars": 208,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-3",
+    "ref": "world:return-of-zero/wiki:material-study-3",
+    "expression_ref": "expression:return-of-zero:material-study-3",
+    "reading_paragraphs": 3,
+    "reading_chars": 224,
+    "expression_scenes": 1,
+    "expression_entities": 2,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-4",
+    "ref": "world:return-of-zero/wiki:material-study-4",
+    "expression_ref": "expression:return-of-zero:material-study-4",
+    "reading_paragraphs": 3,
+    "reading_chars": 218,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-5",
+    "ref": "world:return-of-zero/wiki:material-study-5",
+    "expression_ref": "expression:return-of-zero:material-study-5",
+    "reading_paragraphs": 3,
+    "reading_chars": 221,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-6",
+    "ref": "world:return-of-zero/wiki:material-study-6",
+    "expression_ref": "expression:return-of-zero:material-study-6",
+    "reading_paragraphs": 3,
+    "reading_chars": 215,
+    "expression_scenes": 1,
+    "expression_entities": 2,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "material-study-7",
+    "ref": "world:return-of-zero/wiki:material-study-7",
+    "expression_ref": "expression:return-of-zero:material-study-7",
+    "reading_paragraphs": 3,
+    "reading_chars": 232,
+    "expression_scenes": 1,
+    "expression_entities": 2,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "composition-single_glyph",
+    "ref": "world:return-of-zero/wiki:composition-single_glyph",
+    "expression_ref": "expression:return-of-zero:composition-single_glyph",
+    "reading_paragraphs": 3,
+    "reading_chars": 241,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "composition-chakra_body",
+    "ref": "world:return-of-zero/wiki:composition-chakra_body",
+    "expression_ref": "expression:return-of-zero:composition-chakra_body",
+    "reading_paragraphs": 3,
+    "reading_chars": 284,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "composition-kundalini_focus",
+    "ref": "world:return-of-zero/wiki:composition-kundalini_focus",
+    "expression_ref": "expression:return-of-zero:composition-kundalini_focus",
+    "reading_paragraphs": 3,
+    "reading_chars": 307,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "composition-cymatic_plate",
+    "ref": "world:return-of-zero/wiki:composition-cymatic_plate",
+    "expression_ref": "expression:return-of-zero:composition-cymatic_plate",
+    "reading_paragraphs": 3,
+    "reading_chars": 293,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "composition-chakra_cymatic",
+    "ref": "world:return-of-zero/wiki:composition-chakra_cymatic",
+    "expression_ref": "expression:return-of-zero:composition-chakra_cymatic",
+    "reading_paragraphs": 3,
+    "reading_chars": 318,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-toroidal_hopf_conjugate",
+    "ref": "world:return-of-zero/wiki:native-toroidal_hopf_conjugate",
+    "expression_ref": "expression:return-of-zero:native-toroidal_hopf_conjugate",
+    "reading_paragraphs": 3,
+    "reading_chars": 340,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-reference_oi",
+    "ref": "world:return-of-zero/wiki:native-reference_oi",
+    "expression_ref": "expression:return-of-zero:native-reference_oi",
+    "reading_paragraphs": 3,
+    "reading_chars": 277,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-binary_star_orbit",
+    "ref": "world:return-of-zero/wiki:native-binary_star_orbit",
+    "expression_ref": "expression:return-of-zero:native-binary_star_orbit",
+    "reading_paragraphs": 3,
+    "reading_chars": 322,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-chaotic_strange_attractor",
+    "ref": "world:return-of-zero/wiki:native-chaotic_strange_attractor",
+    "expression_ref": "expression:return-of-zero:native-chaotic_strange_attractor",
+    "reading_paragraphs": 3,
+    "reading_chars": 310,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-nbody_lemniscate",
+    "ref": "world:return-of-zero/wiki:native-nbody_lemniscate",
+    "expression_ref": "expression:return-of-zero:native-nbody_lemniscate",
+    "reading_paragraphs": 3,
+    "reading_chars": 301,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-explosive_antigravity",
+    "ref": "world:return-of-zero/wiki:native-explosive_antigravity",
+    "expression_ref": "expression:return-of-zero:native-explosive_antigravity",
+    "reading_paragraphs": 3,
+    "reading_chars": 330,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-halftone_matrix",
+    "ref": "world:return-of-zero/wiki:native-halftone_matrix",
+    "expression_ref": "expression:return-of-zero:native-halftone_matrix",
+    "reading_paragraphs": 3,
+    "reading_chars": 281,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-risograph_spray",
+    "ref": "world:return-of-zero/wiki:native-risograph_spray",
+    "expression_ref": "expression:return-of-zero:native-risograph_spray",
+    "reading_paragraphs": 3,
+    "reading_chars": 264,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-square_dither",
+    "ref": "world:return-of-zero/wiki:native-square_dither",
+    "expression_ref": "expression:return-of-zero:native-square_dither",
+    "reading_paragraphs": 3,
+    "reading_chars": 253,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-chain_polygons",
+    "ref": "world:return-of-zero/wiki:native-chain_polygons",
+    "expression_ref": "expression:return-of-zero:native-chain_polygons",
+    "reading_paragraphs": 3,
+    "reading_chars": 291,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-chain_zodiac",
+    "ref": "world:return-of-zero/wiki:native-chain_zodiac",
+    "expression_ref": "expression:return-of-zero:native-chain_zodiac",
+    "reading_paragraphs": 3,
+    "reading_chars": 283,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-cyberpunk_chroma",
+    "ref": "world:return-of-zero/wiki:native-cyberpunk_chroma",
+    "expression_ref": "expression:return-of-zero:native-cyberpunk_chroma",
+    "reading_paragraphs": 3,
+    "reading_chars": 289,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-aurora_borealis_spectral",
+    "ref": "world:return-of-zero/wiki:native-aurora_borealis_spectral",
+    "expression_ref": "expression:return-of-zero:native-aurora_borealis_spectral",
+    "reading_paragraphs": 3,
+    "reading_chars": 301,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-solar_plasma_thermal",
+    "ref": "world:return-of-zero/wiki:native-solar_plasma_thermal",
+    "expression_ref": "expression:return-of-zero:native-solar_plasma_thermal",
+    "reading_paragraphs": 3,
+    "reading_chars": 303,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-editorial_parchment_stipple",
+    "ref": "world:return-of-zero/wiki:native-editorial_parchment_stipple",
+    "expression_ref": "expression:return-of-zero:native-editorial_parchment_stipple",
+    "reading_paragraphs": 3,
+    "reading_chars": 307,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-chakral_body_constellation",
+    "ref": "world:return-of-zero/wiki:native-chakral_body_constellation",
+    "expression_ref": "expression:return-of-zero:native-chakral_body_constellation",
+    "reading_paragraphs": 3,
+    "reading_chars": 353,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-kundalini_spinal_ascent",
+    "ref": "world:return-of-zero/wiki:native-kundalini_spinal_ascent",
+    "expression_ref": "expression:return-of-zero:native-kundalini_spinal_ascent",
+    "reading_paragraphs": 3,
+    "reading_chars": 348,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-cymatic_chladni_harmonics",
+    "ref": "world:return-of-zero/wiki:native-cymatic_chladni_harmonics",
+    "expression_ref": "expression:return-of-zero:native-cymatic_chladni_harmonics",
+    "reading_paragraphs": 3,
+    "reading_chars": 365,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "native-cymatic_volumetric_3d",
+    "ref": "world:return-of-zero/wiki:native-cymatic_volumetric_3d",
+    "expression_ref": "expression:return-of-zero:native-cymatic_volumetric_3d",
+    "reading_paragraphs": 3,
+    "reading_chars": 330,
+    "expression_scenes": 1,
+    "expression_entities": 7,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "source-mask-mono",
+    "ref": "world:return-of-zero/wiki:source-mask-mono",
+    "expression_ref": "expression:return-of-zero:source-mask-mono",
+    "reading_paragraphs": 3,
+    "reading_chars": 265,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "source-mask-neon",
+    "ref": "world:return-of-zero/wiki:source-mask-neon",
+    "expression_ref": "expression:return-of-zero:source-mask-neon",
+    "reading_paragraphs": 3,
+    "reading_chars": 261,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "source-mask-cutout",
+    "ref": "world:return-of-zero/wiki:source-mask-cutout",
+    "expression_ref": "expression:return-of-zero:source-mask-cutout",
+    "reading_paragraphs": 3,
+    "reading_chars": 274,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "source-mask-ascii",
+    "ref": "world:return-of-zero/wiki:source-mask-ascii",
+    "expression_ref": "expression:return-of-zero:source-mask-ascii",
+    "reading_paragraphs": 3,
+    "reading_chars": 290,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   },
+   {
+    "id": "source-laminate-head",
+    "ref": "world:return-of-zero/wiki:source-laminate-head",
+    "expression_ref": "expression:return-of-zero:source-laminate-head",
+    "reading_paragraphs": 3,
+    "reading_chars": 336,
+    "expression_scenes": 1,
+    "expression_entities": 1,
+    "omissions": {
+     "readings": 0,
+     "actions": 0,
+     "scenes": [],
+     "entities": [],
+     "parameters": [],
+     "representations": [],
+     "sources": {
+      "withheld": [],
+      "protected": [],
+      "unavailable": []
+     },
+     "provenance": []
+    }
+   }
+  ],
+  "envelope": {
+   "title": "Return of Zero — the published reading",
+   "exported_at": "2026-09-21T11:09:04.290Z",
+   "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b17"
+   }
+  }
+ },
+ "outputs": [
+  "world-publication.json",
+  "expression-roz-a-arguments.json",
+  "expression-roz-a-prime-conjugates.json",
+  "expression-roz-ac-root.json",
+  "expression-roz-c-concepts-1.json",
+  "expression-roz-c-concepts-2.json",
+  "expression-roz-dossiers.json",
+  "expression-roz-etymologies.json",
+  "expression-roz-histories.json",
+  "expression-roz-lenses-aphorism.json",
+  "expression-roz-s-products.json",
+  "expression-roz-matheme-computation.json",
+  "expression-roz-matheme-formal-neighbours.json",
+  "expression-roz-matheme-four-files.json",
+  "expression-roz-matheme-logics.json",
+  "expression-roz-matheme-ql-spanda.json",
+  "expression-roz-matheme-topology-harmonics.json",
+  "expression-roz-symbolon-spine.json",
+  "expression-roz-symbolon-whole.json",
+  "expression-roz-mytheme-antikythera-attunement.json",
+  "expression-roz-mytheme-apollo-dionysus-daphne.json",
+  "expression-roz-mytheme-apollo-eros-daphne-peneus.json",
+  "expression-roz-mytheme-ares-aphrodite-hephaestus-poseidon.json",
+  "expression-roz-mytheme-avatar-image-mask-idol.json",
+  "expression-roz-mytheme-eros-psyche.json",
+  "expression-roz-mytheme-goethe-permanence-change.json",
+  "expression-roz-mytheme-indra-net.json",
+  "expression-roz-mytheme-job.json",
+  "expression-roz-mytheme-maya-eye-veil-frame-horizon.json",
+  "expression-roz-mytheme-meal-epistemic-metabolism.json",
+  "expression-roz-mytheme-mirror-that-moves-first.json",
+  "expression-roz-mytheme-mother-assumption-chiasm.json",
+  "expression-roz-mytheme-myth-attica-athena-poseidon-cecrops.json",
+  "expression-roz-mytheme-myth-hypostasis-archons-norea-sophia.json",
+  "expression-roz-mytheme-narrative-fanon-language-gaze-mask-recognition.json",
+  "expression-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.json",
+  "expression-roz-mytheme-neumann-images.json",
+  "expression-roz-mytheme-pauli-egg-dream.json",
+  "expression-roz-mytheme-stained-glass-refraction.json",
+  "expression-roz-mytheme-taylor-authored-images.json",
+  "expression-roz-mytheme-the-prisoner.json",
+  "expression-roz-mytheme-travelling-jigsaw-atlas.json",
+  "expression-roz-mytheme-uroboros-trickster.json",
+  "expression-roz-mytheme-valentinian-sophia-horos-achamoth.json",
+  "expression-roz-essay-reading.json",
+  "expression-roz-room-00-integral-threshold.json",
+  "expression-roz-room-01-differentiating-mind.json",
+  "expression-roz-room-02-return-of-zero.json",
+  "expression-roz-room-03-two-logics.json",
+  "expression-roz-room-04-mathematical-substrate.json",
+  "expression-roz-room-05-psychoid-flowering.json",
+  "expression-roz-room-06-objective-internality.json",
+  "expression-roz-room-07-instrument-returns.json",
+  "expression-field-studies.json",
+  "expression-seven-centres.json",
+  "expression-small-language.json",
+  "expression-material-study-0.json",
+  "expression-material-study-1.json",
+  "expression-material-study-2.json",
+  "expression-material-study-3.json",
+  "expression-material-study-4.json",
+  "expression-material-study-5.json",
+  "expression-material-study-6.json",
+  "expression-material-study-7.json",
+  "expression-composition-single_glyph.json",
+  "expression-composition-chakra_body.json",
+  "expression-composition-kundalini_focus.json",
+  "expression-composition-cymatic_plate.json",
+  "expression-composition-chakra_cymatic.json",
+  "expression-native-toroidal_hopf_conjugate.json",
+  "expression-native-reference_oi.json",
+  "expression-native-binary_star_orbit.json",
+  "expression-native-chaotic_strange_attractor.json",
+  "expression-native-nbody_lemniscate.json",
+  "expression-native-explosive_antigravity.json",
+  "expression-native-halftone_matrix.json",
+  "expression-native-risograph_spray.json",
+  "expression-native-square_dither.json",
+  "expression-native-chain_polygons.json",
+  "expression-native-chain_zodiac.json",
+  "expression-native-cyberpunk_chroma.json",
+  "expression-native-aurora_borealis_spectral.json",
+  "expression-native-solar_plasma_thermal.json",
+  "expression-native-editorial_parchment_stipple.json",
+  "expression-native-chakral_body_constellation.json",
+  "expression-native-kundalini_spinal_ascent.json",
+  "expression-native-cymatic_chladni_harmonics.json",
+  "expression-native-cymatic_volumetric_3d.json",
+  "expression-source-mask-mono.json",
+  "expression-source-mask-neon.json",
+  "expression-source-mask-cutout.json",
+  "expression-source-mask-ascii.json",
+  "expression-source-laminate-head.json"
+ ]
+}

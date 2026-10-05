@@ -10,11 +10,11 @@ type: _md_
 title: "Undercover"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c8054bdede7bc2405263b
-source_id: 18fa4797-123c-8054-bded-e7bc2405263b
 notion_created: 2025-02-03T14:07:17Z
 notion_edited: 2025-02-03T14:07:23.314Z
 status: sorted
 kind: poem
+source_id: undercover
 ---
 I've always known I'm undercover,
 Always known new covers come.

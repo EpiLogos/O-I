@@ -11,7 +11,7 @@ source_relation: "Explicit mathematical construction; argued native comparison"
 
 ## #0 — Distinguish the dynamical objects
 
-A state-space contains possible states; an evolution rule generates trajectories from initial conditions. An attractor is an invariant attracting set under the stated dynamics, and its basin consists of initial conditions tending toward it. The [Daza source house](../../episteme/sources/mathematics-logic/daza/daza-et-al-2016-basin-entropy/daza-et-al-2016-basin-entropy.md) supplies the basin definition and its system-dependent scope.
+A state-space contains possible states; an evolution rule generates trajectories from initial conditions. An attractor is an invariant attracting set under the stated dynamics, and its basin consists of initial conditions tending toward it. [Daza and colleagues’ definition](../../episteme/sources/mathematics-logic/daza/daza-et-al-2016-basin-entropy/daza-et-al-2016-basin-entropy.md) retains the system-dependent scope of this relation.
 
 [Symbolon Dynamics](../../episteme/sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md) coordinates ordering field and lived trajectory as an Argued psychic and technical relation. The worked model below exhibits a basin change; it does not claim that every attractor is chaotic.
 
@@ -37,7 +37,7 @@ This is sensitivity of the eventual basin assignment near a boundary. It is not 
 
 ## #4 — Return the mathematical distinction to the psychic field
 
-The [Van Eenwyk house](../../episteme/sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors.md) supports a named psychological engagement with complexes, symbolic transformation and attractor language; its copied encounter quotations remain distinct from verified passage cards. The native `X/x` relation precedes that refraction.
+[Van Eenwyk’s psychological engagement](../../episteme/sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors.md) compares complexes, symbolic transformation and attractor language. Exact clinical passages and copied encounter quotations retain their separate verification question. The native `X/x` relation gives formative capacity and its actual manifestation their prior office through which that psychological comparison is read.
 
 An atlas gives local descriptions and transition maps; an attractor concerns long-term evolution. A psychic image can illuminate both only by stating the different operations. Likewise a technical J-space needs a representation, evolution and metric before basin terminology becomes measurable. Daza's basin definition alone is not a general bifurcation theorem or a theory of individuation.
 
@@ -45,4 +45,4 @@ An atlas gives local descriptions and transition maps; an attractor concerns lon
 
 The result records a parameter, an evolution rule, two attracting states and a boundary whose change is explicitly derived. A new trajectory can be understood within the changed field rather than being mistaken for a novel instance of an unchanged rule.
 
-This record returns-to [chronic](../dia-syn/chronic.md), [X/x](../ql/x-x.md), and [Movement42](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md). The experimental E4 programme must supply baseline, perturbation and failure conditions before claiming a technical or psychic correspondence beyond this exact model.
+[Chronic return](../dia-syn/chronic.md) carries the changed conditions into the next occurrence; [determining capacity and its instance](../ql/x-x.md) retain the relation through which a different trajectory becomes possible. The [research programme](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md) receives the particular model with baseline, perturbation and failure conditions still required for any technical or psychic correspondence. Its exact basin change supplies the mathematical comparison rather than an already measured relation among those further fields.

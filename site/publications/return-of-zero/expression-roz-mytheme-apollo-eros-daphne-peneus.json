@@ -1,0 +1,4219 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-apollo-eros-daphne-peneus",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+  "revision": 1,
+  "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python",
+    "revision": 1,
+    "title": "Python, the games, and the boast",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows",
+    "revision": 1,
+    "title": "Two contrary arrows; Daphne's wish granted",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit",
+    "revision": 1,
+    "title": "The pursuit: speech fails, speed decides",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree",
+    "revision": 1,
+    "title": "The transformation — and the wood that shrank",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel",
+    "revision": 1,
+    "title": "The laurel's public office",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return",
+    "revision": 1,
+    "title": "Appropriation after withdrawal",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172",
+     "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147",
+    "revision": 1,
+    "title": "Python — terror spread across the mountainside",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.51,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148",
+    "revision": 1,
+    "title": "Apollo — the bow formerly used on deer and goats",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.4,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149",
+    "revision": 1,
+    "title": "Pythian games — oak leaves, no laurel yet",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150",
+    "revision": 1,
+    "title": "Cupid bending his bow",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.72,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151",
+    "revision": 1,
+    "title": "golden arrow — excites love",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152",
+    "revision": 1,
+    "title": "leaden arrow — drives love away",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153",
+    "revision": 1,
+    "title": "Apollo — pierced to the marrow",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.162,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154",
+    "revision": 1,
+    "title": "Daphne — wandering woods; the fillet in her hair; refusing suitors",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155",
+    "revision": 1,
+    "title": "Peneus — yields the request for perpetual virginity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156",
+    "revision": 1,
+    "title": "Apollo — hope; breath reaching her hair",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.4,
+      "automation": null
+     },
+     "y": {
+      "value": -0.09,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.289,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157",
+    "revision": 1,
+    "title": "Daphne — fear; exhausted, denied rest",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.42,
+      "automation": null
+     },
+     "y": {
+      "value": 0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158",
+    "revision": 1,
+    "title": "his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter's son; prophecy, song, healing",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.125,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159",
+    "revision": 1,
+    "title": "the failed self-cure — another arrow has wounded him more surely",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.05,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160",
+    "revision": 1,
+    "title": "Gallic hound and hare — hunter seeks prey, hare seeks safety",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.21,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161",
+    "revision": 1,
+    "title": "Daphne — pursued → tree",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162",
+    "revision": 1,
+    "title": "the beating heart under the fresh bark",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.08,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.098,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163",
+    "revision": 1,
+    "title": "\"even the wood shrank from his kisses\" (1.556)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164",
+    "revision": 1,
+    "title": "Peneus' waters — the addressed rescue",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.66,
+      "automation": null
+     },
+     "y": {
+      "value": -0.34,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165",
+    "revision": 1,
+    "title": "her radiance remaining in the changed form",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.56,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.18,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166",
+    "revision": 1,
+    "title": "the laurel — Apollo's tree: hair, lyre, quiver",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4435,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167",
+    "revision": 1,
+    "title": "triumphal processions and the Capitol",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.45,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168",
+    "revision": 1,
+    "title": "Augustus's doorposts — flanking the civic oak",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.19,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2975,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169",
+    "revision": 1,
+    "title": "the seeming nod of assent — retained with the recoil, neither cancelling the other",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.52,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170",
+    "revision": 1,
+    "title": "the emblem travelling into public life",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.7365,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171",
+    "revision": 1,
+    "title": "the tree that resisted — heart, recoil — inside the emblem's history",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.17,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172",
+    "revision": 1,
+    "title": "A20 image/valuation/possession — the ratified return",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173",
+    "revision": 1,
+    "title": "A27 self and other — another can appear in my world without becoming mine to complete",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Apollo · Eros/Cupid · Daphne · Peneus</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus\" data-expression-revision=\"1\"><h1>Apollo · Eros/Cupid · Daphne · Peneus</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python\" aria-label=\"Python, the games, and the boast\"><h2>Python, the games, and the boast</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.40%;font-size:1.53rem;opacity:1.00\" title=\"Python — terror spread across the mountainside\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.02rem;opacity:1.00\" title=\"Apollo — the bow formerly used on deer and goats\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:53.50%;font-size:2.70rem;opacity:1.00\" title=\"Pythian games — oak leaves, no laurel yet\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:57.20%;top:50.20%;font-size:0.87rem;opacity:1.00\" title=\"Cupid bending his bow\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows\" aria-label=\"Two contrary arrows; Daphne&#39;s wish granted\"><h2>Two contrary arrows; Daphne&#39;s wish granted</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:45.80%;font-size:0.72rem;opacity:1.00\" title=\"golden arrow — excites love\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:53.00%;font-size:0.72rem;opacity:1.00\" title=\"leaden arrow — drives love away\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"Apollo — pierced to the marrow\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.20%;font-size:1.08rem;opacity:1.00\" title=\"Daphne — wandering woods; the fillet in her hair; refusing suitors\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:49.50%;font-size:1.20rem;opacity:1.00\" title=\"Peneus — yields the request for perpetual virginity\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit\" aria-label=\"The pursuit: speech fails, speed decides\"><h2>The pursuit: speech fails, speed decides</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:46.00%;top:50.90%;font-size:0.87rem;opacity:1.00\" title=\"Apollo — hope; breath reaching her hair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:54.20%;top:49.50%;font-size:1.02rem;opacity:1.00\" title=\"Daphne — fear; exhausted, denied rest\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.60%;font-size:0.60rem;opacity:1.00\" title=\"his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter&#39;s son; prophecy, song, healing\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:49.50%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"the failed self-cure — another arrow has wounded him more surely\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.60%;top:54.20%;font-size:0.63rem;opacity:1.00\" title=\"Gallic hound and hare — hunter seeks prey, hare seeks safety\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree\" aria-label=\"The transformation — and the wood that shrank\"><h2>The transformation — and the wood that shrank</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"Daphne — pursued → tree\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.60rem;opacity:1.00\" title=\"the beating heart under the fresh bark\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"&quot;even the wood shrank from his kisses&quot; (1.556)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:43.40%;top:53.40%;font-size:1.26rem;opacity:1.00\" title=\"Peneus&#39; waters — the addressed rescue\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:43.80%;top:44.40%;font-size:0.60rem;opacity:1.00\" title=\"her radiance remaining in the changed form\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel\" aria-label=\"The laurel&#39;s public office\"><h2>The laurel&#39;s public office</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:1.33rem;opacity:1.00\" title=\"the laurel — Apollo&#39;s tree: hair, lyre, quiver\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:50.50%;font-size:1.35rem;opacity:1.00\" title=\"triumphal processions and the Capitol\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.00%;top:51.90%;font-size:0.89rem;opacity:1.00\" title=\"Augustus&#39;s doorposts — flanking the civic oak\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.20%;font-size:0.60rem;opacity:1.00\" title=\"the seeming nod of assent — retained with the recoil, neither cancelling the other\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return\" aria-label=\"Appropriation after withdrawal\"><h2>Appropriation after withdrawal</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.21rem;opacity:1.00\" title=\"the emblem travelling into public life\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.40%;font-size:0.60rem;opacity:1.00\" title=\"the tree that resisted — heart, recoil — inside the emblem&#39;s history\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"A20 image/valuation/possession — the ratified return\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A27 self and other — another can appear in my world without becoming mine to complete\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-apollo-eros-daphne-peneus",
+  "world_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+  "revision": 1,
+  "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Apollo · Eros/Cupid · Daphne · Peneus"
+      },
+      "fallback": {
+       "title": "Apollo · Eros/Cupid · Daphne · Peneus"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Apollo · Eros/Cupid · Daphne · Peneus</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus\" data-expression-revision=\"1\"><h1>Apollo · Eros/Cupid · Daphne · Peneus</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python\" aria-label=\"Python, the games, and the boast\"><h2>Python, the games, and the boast</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.40%;font-size:1.53rem;opacity:1.00\" title=\"Python — terror spread across the mountainside\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.02rem;opacity:1.00\" title=\"Apollo — the bow formerly used on deer and goats\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:53.50%;font-size:2.70rem;opacity:1.00\" title=\"Pythian games — oak leaves, no laurel yet\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:57.20%;top:50.20%;font-size:0.87rem;opacity:1.00\" title=\"Cupid bending his bow\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows\" aria-label=\"Two contrary arrows; Daphne&#39;s wish granted\"><h2>Two contrary arrows; Daphne&#39;s wish granted</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:45.80%;font-size:0.72rem;opacity:1.00\" title=\"golden arrow — excites love\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:53.00%;font-size:0.72rem;opacity:1.00\" title=\"leaden arrow — drives love away\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"Apollo — pierced to the marrow\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.20%;font-size:1.08rem;opacity:1.00\" title=\"Daphne — wandering woods; the fillet in her hair; refusing suitors\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:49.50%;font-size:1.20rem;opacity:1.00\" title=\"Peneus — yields the request for perpetual virginity\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit\" aria-label=\"The pursuit: speech fails, speed decides\"><h2>The pursuit: speech fails, speed decides</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:46.00%;top:50.90%;font-size:0.87rem;opacity:1.00\" title=\"Apollo — hope; breath reaching her hair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:54.20%;top:49.50%;font-size:1.02rem;opacity:1.00\" title=\"Daphne — fear; exhausted, denied rest\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.60%;font-size:0.60rem;opacity:1.00\" title=\"his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter&#39;s son; prophecy, song, healing\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:49.50%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"the failed self-cure — another arrow has wounded him more surely\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.60%;top:54.20%;font-size:0.63rem;opacity:1.00\" title=\"Gallic hound and hare — hunter seeks prey, hare seeks safety\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree\" aria-label=\"The transformation — and the wood that shrank\"><h2>The transformation — and the wood that shrank</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"Daphne — pursued → tree\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.60rem;opacity:1.00\" title=\"the beating heart under the fresh bark\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"&quot;even the wood shrank from his kisses&quot; (1.556)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:43.40%;top:53.40%;font-size:1.26rem;opacity:1.00\" title=\"Peneus&#39; waters — the addressed rescue\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:43.80%;top:44.40%;font-size:0.60rem;opacity:1.00\" title=\"her radiance remaining in the changed form\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel\" aria-label=\"The laurel&#39;s public office\"><h2>The laurel&#39;s public office</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:1.33rem;opacity:1.00\" title=\"the laurel — Apollo&#39;s tree: hair, lyre, quiver\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:50.50%;font-size:1.35rem;opacity:1.00\" title=\"triumphal processions and the Capitol\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.00%;top:51.90%;font-size:0.89rem;opacity:1.00\" title=\"Augustus&#39;s doorposts — flanking the civic oak\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.20%;font-size:0.60rem;opacity:1.00\" title=\"the seeming nod of assent — retained with the recoil, neither cancelling the other\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return\" aria-label=\"Appropriation after withdrawal\"><h2>Appropriation after withdrawal</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.21rem;opacity:1.00\" title=\"the emblem travelling into public life\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.40%;font-size:0.60rem;opacity:1.00\" title=\"the tree that resisted — heart, recoil — inside the emblem&#39;s history\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"A20 image/valuation/possession — the ratified return\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A27 self and other — another can appear in my world without becoming mine to complete\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+        "revision": 1,
+        "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python",
+          "revision": 1,
+          "title": "Python, the games, and the boast",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows",
+          "revision": 1,
+          "title": "Two contrary arrows; Daphne's wish granted",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit",
+          "revision": 1,
+          "title": "The pursuit: speech fails, speed decides",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree",
+          "revision": 1,
+          "title": "The transformation — and the wood that shrank",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel",
+          "revision": 1,
+          "title": "The laurel's public office",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return",
+          "revision": 1,
+          "title": "Appropriation after withdrawal",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172",
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147",
+          "revision": 1,
+          "title": "Python — terror spread across the mountainside",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.51,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148",
+          "revision": 1,
+          "title": "Apollo — the bow formerly used on deer and goats",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.4,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149",
+          "revision": 1,
+          "title": "Pythian games — oak leaves, no laurel yet",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150",
+          "revision": 1,
+          "title": "Cupid bending his bow",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.72,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151",
+          "revision": 1,
+          "title": "golden arrow — excites love",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152",
+          "revision": 1,
+          "title": "leaden arrow — drives love away",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153",
+          "revision": 1,
+          "title": "Apollo — pierced to the marrow",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.162,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154",
+          "revision": 1,
+          "title": "Daphne — wandering woods; the fillet in her hair; refusing suitors",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155",
+          "revision": 1,
+          "title": "Peneus — yields the request for perpetual virginity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156",
+          "revision": 1,
+          "title": "Apollo — hope; breath reaching her hair",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.4,
+            "automation": null
+           },
+           "y": {
+            "value": -0.09,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.289,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157",
+          "revision": 1,
+          "title": "Daphne — fear; exhausted, denied rest",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.42,
+            "automation": null
+           },
+           "y": {
+            "value": 0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158",
+          "revision": 1,
+          "title": "his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter's son; prophecy, song, healing",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.125,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159",
+          "revision": 1,
+          "title": "the failed self-cure — another arrow has wounded him more surely",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.05,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160",
+          "revision": 1,
+          "title": "Gallic hound and hare — hunter seeks prey, hare seeks safety",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.21,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161",
+          "revision": 1,
+          "title": "Daphne — pursued → tree",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162",
+          "revision": 1,
+          "title": "the beating heart under the fresh bark",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.08,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.098,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163",
+          "revision": 1,
+          "title": "\"even the wood shrank from his kisses\" (1.556)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164",
+          "revision": 1,
+          "title": "Peneus' waters — the addressed rescue",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.66,
+            "automation": null
+           },
+           "y": {
+            "value": -0.34,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165",
+          "revision": 1,
+          "title": "her radiance remaining in the changed form",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.56,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.18,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166",
+          "revision": 1,
+          "title": "the laurel — Apollo's tree: hair, lyre, quiver",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4435,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167",
+          "revision": 1,
+          "title": "triumphal processions and the Capitol",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.45,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168",
+          "revision": 1,
+          "title": "Augustus's doorposts — flanking the civic oak",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.19,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2975,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169",
+          "revision": 1,
+          "title": "the seeming nod of assent — retained with the recoil, neither cancelling the other",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.52,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170",
+          "revision": 1,
+          "title": "the emblem travelling into public life",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.7365,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171",
+          "revision": 1,
+          "title": "the tree that resisted — heart, recoil — inside the emblem's history",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.17,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172",
+          "revision": 1,
+          "title": "A20 image/valuation/possession — the ratified return",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173",
+          "revision": 1,
+          "title": "A27 self and other — another can appear in my world without becoming mine to complete",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Apollo · Eros/Cupid · Daphne · Peneus"
+      },
+      "fallback": {
+       "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+       "text": "Apollo · Eros/Cupid · Daphne · Peneus: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-apollo-eros-daphne-peneus",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-eros-daphne-peneus:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-apollo-eros-daphne-peneus",
+    "world_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+    "revision": 1,
+    "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Apollo · Eros/Cupid · Daphne · Peneus"
+        },
+        "fallback": {
+         "title": "Apollo · Eros/Cupid · Daphne · Peneus"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Apollo · Eros/Cupid · Daphne · Peneus</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus\" data-expression-revision=\"1\"><h1>Apollo · Eros/Cupid · Daphne · Peneus</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python\" aria-label=\"Python, the games, and the boast\"><h2>Python, the games, and the boast</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.40%;font-size:1.53rem;opacity:1.00\" title=\"Python — terror spread across the mountainside\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.02rem;opacity:1.00\" title=\"Apollo — the bow formerly used on deer and goats\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:53.50%;font-size:2.70rem;opacity:1.00\" title=\"Pythian games — oak leaves, no laurel yet\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:57.20%;top:50.20%;font-size:0.87rem;opacity:1.00\" title=\"Cupid bending his bow\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows\" aria-label=\"Two contrary arrows; Daphne&#39;s wish granted\"><h2>Two contrary arrows; Daphne&#39;s wish granted</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:45.80%;font-size:0.72rem;opacity:1.00\" title=\"golden arrow — excites love\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:53.00%;top:53.00%;font-size:0.72rem;opacity:1.00\" title=\"leaden arrow — drives love away\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"Apollo — pierced to the marrow\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.20%;font-size:1.08rem;opacity:1.00\" title=\"Daphne — wandering woods; the fillet in her hair; refusing suitors\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:49.50%;font-size:1.20rem;opacity:1.00\" title=\"Peneus — yields the request for perpetual virginity\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit\" aria-label=\"The pursuit: speech fails, speed decides\"><h2>The pursuit: speech fails, speed decides</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:46.00%;top:50.90%;font-size:0.87rem;opacity:1.00\" title=\"Apollo — hope; breath reaching her hair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:54.20%;top:49.50%;font-size:1.02rem;opacity:1.00\" title=\"Daphne — fear; exhausted, denied rest\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.60%;font-size:0.60rem;opacity:1.00\" title=\"his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter&#39;s son; prophecy, song, healing\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:49.50%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"the failed self-cure — another arrow has wounded him more surely\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.60%;top:54.20%;font-size:0.63rem;opacity:1.00\" title=\"Gallic hound and hare — hunter seeks prey, hare seeks safety\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree\" aria-label=\"The transformation — and the wood that shrank\"><h2>The transformation — and the wood that shrank</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"Daphne — pursued → tree\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.60rem;opacity:1.00\" title=\"the beating heart under the fresh bark\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"&quot;even the wood shrank from his kisses&quot; (1.556)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:43.40%;top:53.40%;font-size:1.26rem;opacity:1.00\" title=\"Peneus&#39; waters — the addressed rescue\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:43.80%;top:44.40%;font-size:0.60rem;opacity:1.00\" title=\"her radiance remaining in the changed form\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel\" aria-label=\"The laurel&#39;s public office\"><h2>The laurel&#39;s public office</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:1.33rem;opacity:1.00\" title=\"the laurel — Apollo&#39;s tree: hair, lyre, quiver\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.20%;top:50.50%;font-size:1.35rem;opacity:1.00\" title=\"triumphal processions and the Capitol\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.00%;top:51.90%;font-size:0.89rem;opacity:1.00\" title=\"Augustus&#39;s doorposts — flanking the civic oak\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.20%;font-size:0.60rem;opacity:1.00\" title=\"the seeming nod of assent — retained with the recoil, neither cancelling the other\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return\" aria-label=\"Appropriation after withdrawal\"><h2>Appropriation after withdrawal</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.21rem;opacity:1.00\" title=\"the emblem travelling into public life\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.40%;font-size:0.60rem;opacity:1.00\" title=\"the tree that resisted — heart, recoil — inside the emblem&#39;s history\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"A20 image/valuation/possession — the ratified return\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A27 self and other — another can appear in my world without becoming mine to complete\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+          "revision": 1,
+          "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python",
+            "revision": 1,
+            "title": "Python, the games, and the boast",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows",
+            "revision": 1,
+            "title": "Two contrary arrows; Daphne's wish granted",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit",
+            "revision": 1,
+            "title": "The pursuit: speech fails, speed decides",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree",
+            "revision": 1,
+            "title": "The transformation — and the wood that shrank",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel",
+            "revision": 1,
+            "title": "The laurel's public office",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return",
+            "revision": 1,
+            "title": "Appropriation after withdrawal",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172",
+             "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147",
+            "revision": 1,
+            "title": "Python — terror spread across the mountainside",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.51,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e148",
+            "revision": 1,
+            "title": "Apollo — the bow formerly used on deer and goats",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.4,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e149",
+            "revision": 1,
+            "title": "Pythian games — oak leaves, no laurel yet",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e150",
+            "revision": 1,
+            "title": "Cupid bending his bow",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.72,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e151",
+            "revision": 1,
+            "title": "golden arrow — excites love",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e152",
+            "revision": 1,
+            "title": "leaden arrow — drives love away",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e153",
+            "revision": 1,
+            "title": "Apollo — pierced to the marrow",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.162,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e154",
+            "revision": 1,
+            "title": "Daphne — wandering woods; the fillet in her hair; refusing suitors",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-1-arrows:e155",
+            "revision": 1,
+            "title": "Peneus — yields the request for perpetual virginity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e156",
+            "revision": 1,
+            "title": "Apollo — hope; breath reaching her hair",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.4,
+              "automation": null
+             },
+             "y": {
+              "value": -0.09,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.289,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e157",
+            "revision": 1,
+            "title": "Daphne — fear; exhausted, denied rest",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.42,
+              "automation": null
+             },
+             "y": {
+              "value": 0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e158",
+            "revision": 1,
+            "title": "his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter's son; prophecy, song, healing",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.125,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e159",
+            "revision": 1,
+            "title": "the failed self-cure — another arrow has wounded him more surely",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.05,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-2-pursuit:e160",
+            "revision": 1,
+            "title": "Gallic hound and hare — hunter seeks prey, hare seeks safety",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.21,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e161",
+            "revision": 1,
+            "title": "Daphne — pursued → tree",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e162",
+            "revision": 1,
+            "title": "the beating heart under the fresh bark",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.08,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.098,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e163",
+            "revision": 1,
+            "title": "\"even the wood shrank from his kisses\" (1.556)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e164",
+            "revision": 1,
+            "title": "Peneus' waters — the addressed rescue",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.66,
+              "automation": null
+             },
+             "y": {
+              "value": -0.34,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-3-tree:e165",
+            "revision": 1,
+            "title": "her radiance remaining in the changed form",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.56,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.18,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e166",
+            "revision": 1,
+            "title": "the laurel — Apollo's tree: hair, lyre, quiver",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4435,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e167",
+            "revision": 1,
+            "title": "triumphal processions and the Capitol",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.45,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e168",
+            "revision": 1,
+            "title": "Augustus's doorposts — flanking the civic oak",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.19,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2975,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-4-laurel:e169",
+            "revision": 1,
+            "title": "the seeming nod of assent — retained with the recoil, neither cancelling the other",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.52,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e170",
+            "revision": 1,
+            "title": "the emblem travelling into public life",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.7365,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e171",
+            "revision": 1,
+            "title": "the tree that resisted — heart, recoil — inside the emblem's history",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.17,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e172",
+            "revision": 1,
+            "title": "A20 image/valuation/possession — the ratified return",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-5-return:e173",
+            "revision": 1,
+            "title": "A27 self and other — another can appear in my world without becoming mine to complete",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:scene:m-ovid-0-python:e147"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Apollo · Eros/Cupid · Daphne · Peneus"
+        },
+        "fallback": {
+         "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+         "text": "Apollo · Eros/Cupid · Daphne · Peneus: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-apollo-eros-daphne-peneus",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-apollo-eros-daphne-peneus.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-apollo-eros-daphne-peneus"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-eros-daphne-peneus:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Apollo · Eros/Cupid · Daphne · Peneus",
+  "summary": "a living Expression · 6 scenes · 27 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-apollo-eros-daphne-peneus"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-apollo-eros-daphne-peneus",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-apollo-eros-daphne-peneus",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Apollo · Eros/Cupid · Daphne · Peneus",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-eros-daphne-peneus:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-eros-daphne-peneus:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-apollo-eros-daphne-peneus",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-apollo-eros-daphne-peneus"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

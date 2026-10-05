@@ -5,7 +5,7 @@ page_type: navigation-audit
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -18,45 +18,45 @@ Generated findings about the written navigation of the publication body. A findi
 
 ## Reader links and workspace lookup
 
-Visible, independently resolved links reach 952 of 956 pages. All 288 admitted records are checked: 0 missing and 0 unreachable.
+Visible, independently resolved links reach 967 of 998 pages. All 288 admitted records are checked: 0 missing and 0 unreachable.
 
-This conservative reader check validates file-relative Markdown, vault-path or unique-filename wikilinks, and heading anchors. Title/alias-only links are portability debt, not proof of failure in Obsidian. Frontmatter and code do not count as reader routes. [Full reader findings](reader-audit.json) retain every location and unresolved destination.
+This conservative reader check validates file-relative Markdown, vault-path or unique-filename wikilinks, and heading anchors. Title/alias-only links are portability debt, not proof of failure in Obsidian. Frontmatter and code do not count as reader routes. The workspace report `reader-audit.json` retains every location and unresolved destination; it is not part of the public reading edition.
 
-Workspace lookup reaches 956 of 956 pages. The tables below describe that larger graph, including metadata relations and resolver fallbacks; its depths are graph hops, not a certified reader click count.
+Workspace lookup reaches 971 of 998 pages. The tables below describe that larger graph, including metadata relations and resolver fallbacks; its depths are graph hops, not a certified reader click count.
 
 | Depth (clicks) | Pages |
 |---|---|
 | 0 | 1 |
 | 1 | 63 |
-| 2 | 584 |
-| 3 | 237 |
-| 4 | 71 |
+| 2 | 611 |
+| 3 | 221 |
+| 4 | 75 |
 
 ## By class
 
 | Class | Pages | Links | Named | Unnamed | Orphans | No return | Unreachable |
 |---|---|---|---|---|---|---|---|
 | The sovereign essay | 1 | 8 | 0 | 8 | 0 | 0 | 0 |
-| The rooms — waypoints, alignments, reading routes | 20 | 867 | 84 | 783 | 0 | 0 | 0 |
-| The 48 movements | 48 | 472 | 198 | 274 | 0 | 0 | 0 |
-| Symbolon — the twelvefold root | 14 | 200 | 144 | 56 | 0 | 0 | 0 |
-| Matheme — exact operations | 100 | 862 | 401 | 461 | 0 | 15 | 0 |
-| Mytheme — whole lived images | 148 | 971 | 448 | 523 | 0 | 117 | 0 |
-| Episteme — the register root | 1 | 25 | 4 | 21 | 0 | 0 | 0 |
-| Arguments A01–A36 | 37 | 1128 | 644 | 484 | 0 | 0 | 0 |
-| Conjugate arguments A01′–A36′ | 38 | 670 | 214 | 456 | 0 | 0 | 0 |
-| Concepts C01–C64 and provenance | 157 | 1216 | 605 | 611 | 0 | 72 | 0 |
-| Product field S / S0–S5 | 8 | 100 | 24 | 76 | 0 | 2 | 0 |
-| Episteme · Etymology whole-fields | 25 | 625 | 453 | 172 | 0 | 6 | 0 |
-| Episteme · Histories | 21 | 660 | 429 | 231 | 0 | 3 | 0 |
-| Episteme · Source houses | 201 | 1061 | 188 | 873 | 0 | 78 | 0 |
-| Episteme · Dossiers | 8 | 205 | 179 | 26 | 0 | 1 | 0 |
+| The rooms — waypoints, alignments, reading routes | 20 | 872 | 88 | 784 | 0 | 0 | 0 |
+| The 48 movements | 48 | 421 | 147 | 274 | 0 | 0 | 0 |
+| Symbolon — the twelvefold root | 14 | 186 | 65 | 121 | 0 | 2 | 0 |
+| Matheme — exact operations | 101 | 857 | 233 | 624 | 0 | 16 | 0 |
+| Mytheme — whole lived images | 148 | 968 | 246 | 722 | 0 | 118 | 0 |
+| Episteme — the register root | 1 | 23 | 4 | 19 | 0 | 0 | 0 |
+| Arguments A01–A36 | 37 | 1044 | 113 | 931 | 0 | 0 | 0 |
+| Conjugate arguments A01′–A36′ | 38 | 539 | 59 | 480 | 0 | 0 | 0 |
+| Concepts C01–C64 and provenance | 179 | 1456 | 192 | 1264 | 1 | 64 | 1 |
+| Product field S / S0–S5 | 8 | 79 | 13 | 66 | 0 | 2 | 0 |
+| Episteme · Etymology whole-fields | 25 | 583 | 102 | 481 | 0 | 6 | 0 |
+| Episteme · Histories | 21 | 652 | 324 | 328 | 0 | 3 | 0 |
+| Episteme · Source houses | 219 | 1162 | 187 | 975 | 0 | 92 | 0 |
+| Episteme · Dossiers | 8 | 203 | 118 | 85 | 0 | 1 | 0 |
 | Episteme · Lenses | 13 | 76 | 15 | 61 | 0 | 13 | 0 |
-| Episteme · Maps and curated paths | 5 | 118 | 7 | 111 | 0 | 1 | 0 |
+| Episteme · Maps and curated paths | 5 | 129 | 7 | 122 | 0 | 1 | 0 |
 | Episteme · Atlas | 1 | 30 | 1 | 29 | 0 | 1 | 0 |
-| Episteme · Aphorisms | 26 | 65 | 10 | 55 | 0 | 25 | 0 |
+| Episteme · Aphorisms | 26 | 64 | 1 | 63 | 1 | 25 | 25 |
 | Episteme · Figures | 5 | 38 | 0 | 38 | 0 | 1 | 0 |
-| Supporting quilt ledgers (non-canonical) | 79 | 664 | 51 | 613 | 0 | 43 | 0 |
+| Supporting quilt ledgers (non-canonical) | 80 | 689 | 59 | 630 | 1 | 45 | 1 |
 
 ## Curated paths
 
@@ -65,7 +65,7 @@ Workspace lookup reaches 956 of 956 pages. The tables below describe that larger
 | [Mono–Poly and the Two Ones — Transverse Thread](../mono-poly-two-ones.md) | mono-poly-two-ones | transverse | 16 | 18 |
 | [Return of Zero — Braided Traversal](../return-of-zero-braided-traversal.md) | — | spine | 48 | 0 |
 | [Trust, Faith, and the Formal Limit — Transverse Thread](../trust-faith-formal-limit.md) | trust-faith-formal-limit | transverse | 8 | 9 |
-| [The Advent of Zero, Subject, and Integral Logic — Transverse Thread](../zero-subject-advent.md) | zero-subject-advent | transverse | 12 | 16 |
+| [The Advent of Zero, Subject, and Integral Logic — Transverse Thread](../zero-subject-advent.md) | zero-subject-advent | transverse | 13 | 16 |
 
 ## Links leaving the publication body
 
@@ -73,148 +73,153 @@ Targets outside `submission-package/essay/` resolve in the repository but not in
 
 | Target root | Links | Most linked |
 |---|---|---|
-| `working/sources-texts-references` | 86 | `working/sources-texts-references/QL-Essay-Rewrite.md` (48); `working/sources-texts-references/10-7-2026-core-theorems-pithy.md` (14); `working/sources-texts-references/The Nothing That Is - Robert Kaplan.md` (13) |
-| `working/_to_delete` | 83 | `working/_to_delete/2026-09-25-retire/loose-concepts/zero.md` (23); `working/_to_delete/2026-09-25-retire/harmonisation-2026-08-18-objective-internality-capstone/CAPSTONE-DECISIONS.md` (20); `working/_to_delete/2026-09-25-retire/loose-concepts/the-slash.md` (12) |
-| `the-return-of-zero-central-plan.md` | 75 | `the-return-of-zero-central-plan.md` (75) |
-| `submission-package/essay` | 7 | `submission-package/essay/symbolon/episteme/maps/navigation/MOC.md` (5); `submission-package/essay/symbolon/episteme/maps/navigation/AUDIT.md` (2) |
-| `submission-package/epi-logos` | 3 | `submission-package/epi-logos/resources/canon/ql-musical-derivation-v3.md` (2); `submission-package/epi-logos/resources/mef-12-lenses-sublens-reference.md` (1) |
-| `working/antykathera-resources` | 2 | `working/antykathera-resources/Antikythera Agentworld Brief.md` (1); `working/antykathera-resources/antykathera-site-copy.md` (1) |
+| `working/sources-texts-references` | 122 | `working/sources-texts-references/QL-Essay-Rewrite.md` (49); `working/sources-texts-references/10-7-2026-core-theorems-pithy.md` (22); `working/sources-texts-references/The Nothing That Is - Robert Kaplan.md` (13) |
+| `the-return-of-zero-central-plan.md` | 80 | `the-return-of-zero-central-plan.md` (80) |
+| `working/_to_delete` | 59 | `working/_to_delete/2026-09-25-retire/harmonisation-2026-08-18-objective-internality-capstone/CAPSTONE-DECISIONS.md` (20); `working/_to_delete/2026-09-25-retire/lenses-register/foucault.md` (11); `working/_to_delete/2026-09-25-retire/lenses-register/baudrillard.md` (9) |
+| `working/s01-hardening-2026-10-01` | 31 | `working/s01-hardening-2026-10-01/M05-REWRITE.md` (10); `working/s01-hardening-2026-10-01/M04-REWRITE.md` (8); `working/s01-hardening-2026-10-01/M06-REWRITE.md` (7) |
+| `working/antykathera-resources` | 14 | `working/antykathera-resources/Antikythera Agentworld Brief.md` (13); `working/antykathera-resources/antykathera-site-copy.md` (1) |
+| `submission-package/essay` | 8 | `submission-package/essay/symbolon/episteme/maps/navigation/MOC.md` (6); `submission-package/essay/symbolon/episteme/maps/navigation/AUDIT.md` (2) |
+| `submission-package/epi-logos` | 4 | `submission-package/epi-logos/resources/mef-12-lenses-sublens-reference.md` (2); `submission-package/epi-logos/resources/canon/ql-musical-derivation-v3.md` (2) |
+| `.wayfinder/maps` | 3 | `.wayfinder/maps/t20-t21-world-registers.md` (2); `.wayfinder/maps/final-whole-argument-quilt.md` (1) |
+| `working/p2-enrichment` | 3 | `working/p2-enrichment/receipts/T22-current-migration-preservation-proof.md` (1); `working/p2-enrichment/receipts/T21-dossier-oi-technical-responsibility-development.md` (1); `working/p2-enrichment/receipts/T20-valentinian-source-acquisition.md` (1) |
+| `working/canonical-argument-recovery-2026-09-25` | 2 | `working/canonical-argument-recovery-2026-09-25/ENCOUNTER-COINTERNALITY-DISPLACED-DEBTS.md` (2) |
 | `WRITING-PROTOCOL.md` | 1 | `WRITING-PROTOCOL.md` (1) |
-| `.wayfinder/maps` | 1 | `.wayfinder/maps/final-whole-argument-quilt.md` (1) |
 | `.wayfinder/tickets` | 1 | `.wayfinder/tickets/026-post-section-quilting-review.md` (1) |
+| `docs/CANONICAL-ARGUMENT-RECOVERY-PROTOCOL.md` | 1 | `docs/CANONICAL-ARGUMENT-RECOVERY-PROTOCOL.md` (1) |
 
 ## Unresolved targets
 
-- **Supporting quilt ledgers (non-canonical):** `§2 ·` (14); `§3 ·` (12); `§4 ·` (12); `Colebrooke — Brahmagupta and Bhāskara` (8); `Dyczkowski — Doctrine of Vibration` (7); `submission-package/essay/section-rooms/arguments/18-trust-faith-formal-limit` (6); `Pind — Dignāga on Anyāpoha` (5); `The Copula Derivation Chain` (4); `submission-package/essay/section-rooms/arguments/02-objective-internality` (3); `submission-package/essay/section-rooms/arguments/08-deferential-intelligence` (3); `submission-package/essay/symbolon/episteme/sources/indian-philosophy/dyczkowski/dyczkowski-2000-doctrine-vibration/SOURCE` (3); `submission-package/essay/symbolon/episteme/sources/indian-philosophy/nagarjuna/nagarjuna-garfield-1995-fundamental-wisdom/SOURCE` (3)
-- **Concepts C01–C64 and provenance:** `Mono-Poly Trust` (4); `Core Theorem Bridge` (3); `Hephaestus and the Net` (1); `Return of Zero — Scholarly Source Bank Protocol` (1); `Return of Zero Source Bank Index` (1); `Source Consumption Matrix` (1); `Legacy Reference-Node Deprecation Manifest` (1)
+- **Supporting quilt ledgers (non-canonical):** `§2 ·` (14); `§3 ·` (12); `§4 ·` (12); `Colebrooke — Brahmagupta and Bhāskara` (8); `Dyczkowski — Doctrine of Vibration` (7); `submission-package/essay/section-rooms/arguments/18-trust-faith-formal-limit` (6); `Pind — Dignāga on Anyāpoha` (5); `The Copula Derivation Chain` (4); `Agent Subjectivity Must Remain Open` (4); `submission-package/essay/section-rooms/arguments/02-objective-internality` (3); `submission-package/essay/section-rooms/arguments/08-deferential-intelligence` (3); `submission-package/essay/symbolon/episteme/sources/indian-philosophy/dyczkowski/dyczkowski-2000-doctrine-vibration/SOURCE` (3)
+- **Arguments A01–A36:** `../../../../working/legacy/section-rooms-arguments/02-objective-internality.md` (2); `../../../../working/legacy/section-rooms-arguments/20-advent-zero-subject-integral-logic.md` (1); `../../../../working/legacy/section-rooms-arguments/06-computational-vimarsa-ahi.md` (1)
+- **Concepts C01–C64 and provenance:** `12-core-theorem-bridge` (7); `03-two-logics-and-sym-ballein` (6); `09-prakasa-vimarsa\` (6); `14-computational-process-ontology` (5); `02-objective-internality` (5); `13-tattvic-differential-field\` (5); `Agent Subjectivity Must Remain Open` (5); `11-mono-poly-whole-and-many` (4); `13-tattvic-differential-field` (4); `04-arche-topos-topology-music` (4); `Mono-Poly Trust` (4); `03-two-logics-and-sym-ballein\` (3)
 - **Conjugate arguments A01′–A36′:** `bare wikilinks` (1)
-- **Episteme · Source houses:** `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/03-two-logics-and-sym-ballein` (2); `Antykathera-Essay-Work/submission-package/epi-logos/resources/essay-okf/arguments/19-two-ones-mono-poly-matheme` (1); `Antykathera-Essay-Work/submission-package/epi-logos/resources/essay-okf/arguments/03-two-logics-and-sym-ballein` (1); `Dreamcode` (1); `Antykathera Essay Work` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/17-toroidal-circulation-arche-topos` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/19-two-ones-mono-poly-matheme` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/20-advent-zero-subject-integral-logic` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/04-arche-topos-topology-music` (1)
+- **Episteme · Etymology whole-fields:** `../../../../../working/legacy/section-rooms-arguments/03-two-logics-and-sym-ballein.md` (4); `../../../../../working/legacy/section-rooms-arguments/19-two-ones-mono-poly-matheme.md` (2); `../../../../../working/legacy/section-rooms-arguments/18-trust-faith-formal-limit.md` (2); `../../../../../working/legacy/section-rooms-arguments/12-core-theorem-bridge.md` (1)
+- **Episteme · Source houses:** `../../../../../../../../working/legacy/section-rooms-arguments/12-core-theorem-bridge.md` (4); `Agent Subjectivity Must Remain Open` (3); `02-objective-internality` (2); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/03-two-logics-and-sym-ballein` (2); `14-computational-process-ontology` (1); `Antykathera-Essay-Work/submission-package/epi-logos/resources/essay-okf/arguments/19-two-ones-mono-poly-matheme` (1); `Antykathera-Essay-Work/submission-package/epi-logos/resources/essay-okf/arguments/03-two-logics-and-sym-ballein` (1); `Dreamcode` (1); `Antykathera Essay Work` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/17-toroidal-circulation-arche-topos` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/19-two-ones-mono-poly-matheme` (1); `Antykathera-Essay-Work/submission-package/essay/section-rooms/arguments/20-advent-zero-subject-integral-logic` (1)
+- **Mytheme — whole lived images:** `../../../../../../../working/legacy/section-rooms-arguments/21-prisoner-politics-of-the-count.md` (1)
 
 ## Orphans — no written inbound relation
 
-None.
+- Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality
+- [Concept Map](../../../../section-rooms/arguments/concepts/index.md)
+- [Aphorisms](../../aphorisms/README.md)
 
 ## No written route back into the essay
 
 Pages outside the rooms with no link to the manuscript, a room surface, or a canonical Argument.
 
-- [The Return of Zero — Parallel Harmonised Quilt](../../../../quilt/2026-08-02-PARALLEL-HARMONISED-QUILT.md)
-- [Quilt](../../../../quilt/README.md)
-- [Concept Reharmonisation Proposal — Pass 2 — Epi-Logos, Sym-Ballein, Compassion within the Bounded 64](../../../../quilt/conjugate-field-proposals/CONCEPT-REHARMONISATION-PROPOSAL.md)
-- [Eros of Logos — Sym-Ballein as Love — Canonical Argument Candidacy](../../../../quilt/conjugate-field-proposals/EROS-OF-LOGOS-A-CANDIDACY.md)
-- [The Copula Derivation Chain: Name, Count, Account, Economy](../../../../quilt/copula-derivation-chain-and-resource-pools.md)
-- [Agentworld / Co-Internality / Agentic Commons — Native 021 Addendum](../../../../quilt/final-argument-quilt-2026-08-23/AGENTWORLD-COINTERNALITY-AND-COMMONS-SEAM.md)
-- [Native 021 — Antikythera / Agentworld Primary-Brief Deep Recovery](../../../../quilt/final-argument-quilt-2026-08-23/ANTIKYTHERA-BRIEF-DEEP-RECOVERY.md)
-- [#39 Recensus — 36 Arguments / 64 Concepts / Etymology](../../../../quilt/final-argument-quilt-2026-08-23/ARGUMENT-CONCEPT-ETYMOLOGY-RECENSUS.md)
-- [#39 Canonical Rebuild Manifest](../../../../quilt/final-argument-quilt-2026-08-23/CANONICAL-REBUILD-MANIFEST.md)
-- [Covenant, Arbitration, and Mediating Offices — King · Priest · Politician](../../../../quilt/final-argument-quilt-2026-08-23/COVENANT-ARBITRATION-AND-MEDIATING-OFFICES-SEAM.md)
-- [T06D — Developmental Quilt Ledger](../../../../quilt/final-argument-quilt-2026-08-23/DEVELOPMENTAL-QUILT-LEDGER.md)
-- [#39 Eight-Determination Transverse Matrix](../../../../quilt/final-argument-quilt-2026-08-23/EIGHT-DETERMINATION-TRANSVERSE-MATRIX.md)
-- [Native 027 — Essential / Supporting / Radial Disposition](../../../../quilt/final-argument-quilt-2026-08-23/ESSENTIAL-SUPPORTING-RADIAL-DISPOSITION.md)
-- [Etymological Archaeology Tree Seams — Roots, Trunk, Branches, Leaves](../../../../quilt/final-argument-quilt-2026-08-23/ETYMOLOGICAL-ARCHAEOLOGY-TREE-SEAMS.md)
-- [#39 Lexical Constellation and Relational Operators](../../../../quilt/final-argument-quilt-2026-08-23/LEXICAL-CONSTELLATION-AND-RELATIONAL-OPERATORS.md)
-- [Mytheme Whole-Story Amplification Law](../../../../quilt/final-argument-quilt-2026-08-23/MYTHEME-WHOLE-STORY-AMPLIFICATION-LAW.md)
-- [Native 020 — Cold Return Against #41 Acceptance](../../../../quilt/final-argument-quilt-2026-08-23/NATIVE-020-COLD-RETURN.md)
-- [Native 020 — Deep-Seam Reconciliation](../../../../quilt/final-argument-quilt-2026-08-23/NATIVE-020-DEEP-SEAM-RECONCILIATION.md)
-- [#39 Ought-Be Argument Architecture](../../../../quilt/final-argument-quilt-2026-08-23/OUGHT-BE-ARGUMENT-ARCHITECTURE.md)
-- [#39 Ought-Be Concept Architecture](../../../../quilt/final-argument-quilt-2026-08-23/OUGHT-BE-CONCEPT-ARCHITECTURE.md)
-- [#39 Ought-Be Etymology Architecture](../../../../quilt/final-argument-quilt-2026-08-23/OUGHT-BE-ETYMOLOGY-ARCHITECTURE.md)
-- [Pre-#39 Quilt Topology and Numbering Ledger](../../../../quilt/final-argument-quilt-2026-08-23/PRE-39-QUILT-TOPOLOGY-AND-NUMBERING-LEDGER.md)
-- [Relational Form Growth Grammar — Conjugacy, Generated Slash, and Recursive Fullness](../../../../quilt/final-argument-quilt-2026-08-23/RELATIONAL-FORM-GROWTH-GRAMMAR.md)
-- [Native 027 — Root Web Relation Map](../../../../quilt/final-argument-quilt-2026-08-23/ROOT-WEB-RELATION-MAP.md)
-- [T09 Canonical Crosswalk and Disposition Ledger](../../../../quilt/final-argument-quilt-2026-08-23/T09-CANONICAL-CROSSWALK-AND-DISPOSITION-LEDGER.md)
-- [Intake 002 — Harmonic Genesis · `3:3 / 3:1` · `4:2` · `64/72` · Seasonality](../../../../quilt/final-argument-quilt-2026-08-23/THREAD-INTAKE-002-HARMONIC-SEASONAL-DERIVATION.md)
-- [Thread Intake 002 — Symbolon, Psychoid Number, and Executable Technical Intelligence](../../../../quilt/final-argument-quilt-2026-08-23/THREAD-INTAKE-002-SYMBOLON-PSYCHOID-NUMBER-TECHNICAL-INTELLIGENCE.md)
-- [Thread Intake Consumption and Disposition](../../../../quilt/final-argument-quilt-2026-08-23/THREAD-INTAKE-CONSUMPTION-AND-DISPOSITION.md)
-- [Thread Intake — Whole Relational Units](../../../../quilt/final-argument-quilt-2026-08-23/THREAD-INTAKE-WHOLE-RELATIONAL-UNITS.md)
-- [§0/1 — Integral Threshold — Inherited Region Recovery](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/00-INTEGRAL-THRESHOLD.md)
-- [§2 — Two Logics — Source / Evidence Debts](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/03-TWO-LOGICS-SOURCE-DEBTS.md)
-- [§3 — Mathematical Substrate — Source / Evidence Debts](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/04-MATHEMATICAL-SUBSTRATE-SOURCE-DEBTS.md)
-- [§4 — Psychoid Flowering — Source / Evidence Debts](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/05-PSYCHOID-FLOWERING-SOURCE-DEBTS.md)
-- [§5 — Objective Internality — O:I as Later Technical Refraction](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/06-OBJECTIVE-INTERNALITY-OI-REFRACTION.md)
-- [§5 — Objective Internality — Source / Evidence Debts](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/06-OBJECTIVE-INTERNALITY-SOURCE-DEBTS.md)
-- [Inherited Etymology / Word-Field Recovery](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/ETYMOLOGY-FIELD.md)
-- [Inherited Corpus Recovery × Quilt × Capstone](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/INDEX.md)
-- [Native 025 — Inherited Corpus Recovery Acceptance](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/NATIVE-025-RECOVERY-ACCEPTANCE.md)
-- [Quilt / Capstone → Inherited Corpus Crosswalk](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/QUILT-CAPSTONE-TO-INHERITED-CORPUS-CROSSWALK.md)
-- [Symbolon / Matheme / Mytheme / Episteme — Recovered Cross-Register Field](../../../../quilt/final-argument-quilt-2026-08-23/inherited-corpus-crosswalk/SYMBOLON-MATHEME-MYTHEME-EPISTEME-FIELD.md)
-- [Retained input — MEF paired-lens product reading](../../../../quilt/pre-manuscript-refinement-inputs/MEF-PRODUCT-READING.md)
-- [Retained input — Gebser, relational Logos and artificial interiority](../../../../quilt/pre-manuscript-refinement-inputs/RELATIONAL-LOGOS-EXPLORATION.md)
-- [QL Expression Grammar](../../../../quilt/ql-expression-grammar.md)
+- Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality
+- The Return of Zero — Parallel Harmonised Quilt
+- Quilt
+- Concept Reharmonisation Proposal — Pass 2 — Epi-Logos, Sym-Ballein, Compassion within the Bounded 64
+- Eros of Logos — Sym-Ballein as Love — Canonical Argument Candidacy
+- The Copula Derivation Chain: Name, Count, Account, Economy
+- Agentworld / Co-Internality / Agentic Commons — Native 021 Addendum
+- Native 021 — Antikythera / Agentworld Primary-Brief Deep Recovery
+- #39 Recensus — 36 Arguments / 64 Concepts / Etymology
+- #39 Canonical Rebuild Manifest
+- Covenant, Arbitration, and Mediating Offices — King · Priest · Politician
+- T06D — Developmental Quilt Ledger
+- #39 Eight-Determination Transverse Matrix
+- Native 027 — Essential / Supporting / Radial Disposition
+- Etymological Archaeology Tree Seams — Roots, Trunk, Branches, Leaves
+- #39 Lexical Constellation and Relational Operators
+- Mytheme Whole-Story Amplification Law
+- Native 020 — Cold Return Against #41 Acceptance
+- Native 020 — Deep-Seam Reconciliation
+- #39 Ought-Be Argument Architecture
+- #39 Ought-Be Concept Architecture
+- #39 Ought-Be Etymology Architecture
+- Pre-#39 Quilt Topology and Numbering Ledger
+- Relational Form Growth Grammar — Conjugacy, Generated Slash, and Recursive Fullness
+- Native 027 — Root Web Relation Map
+- T09 Canonical Crosswalk and Disposition Ledger
+- Intake 002 — Harmonic Genesis · `3:3 / 3:1` · `4:2` · `64/72` · Seasonality
+- Thread Intake 002 — Symbolon, Psychoid Number, and Executable Technical Intelligence
+- Thread Intake Consumption and Disposition
+- Thread Intake — Whole Relational Units
+- §0/1 — Integral Threshold — Inherited Region Recovery
+- §2 — Two Logics — Source / Evidence Debts
+- §3 — Mathematical Substrate — Source / Evidence Debts
+- §4 — Psychoid Flowering — Carrier Dispositions
+- §4 — Psychoid Flowering — Source / Evidence Debts
+- §5 — Objective Internality — O:I as Later Technical Refraction
+- §5 — Objective Internality — Source / Evidence Debts
+- Inherited Etymology / Word-Field Recovery
+- Inherited Corpus Recovery × Quilt × Capstone
+- Native 025 — Inherited Corpus Recovery Acceptance
+- Quilt / Capstone → Inherited Corpus Crosswalk
+- Symbolon / Matheme / Mytheme / Episteme — Recovered Cross-Register Field
+- Retained input — MEF paired-lens product reading
+- Retained input — Gebser, relational Logos and artificial interiority
+- QL Expression Grammar
 - [C24 — Fusion](../../../../section-rooms/arguments/concepts/C24-Fusion.md)
 - [C25 — Counterfeit Gathering](../../../../section-rooms/arguments/concepts/C25-Counterfeit-Gathering.md)
-- [C26 — Monoisation / Counter-Generation](../../../../section-rooms/arguments/concepts/C26-Monoisation-Counter-Generation.md)
-- [C27 — Protected Account / Occupied Zero / Source-Claim](../../../../section-rooms/arguments/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim.md)
 - [C28 — Covenant / Primary Arbitration](../../../../section-rooms/arguments/concepts/C28-Covenant-Primary-Arbitration.md)
 - [C33 — Image / Valuation](../../../../section-rooms/arguments/concepts/C33-Image-Valuation.md)
-- [C34 — Individuation](../../../../section-rooms/arguments/concepts/C34-Individuation.md)
-- [C35 — Selfing / Self / Subjectivity / Self-Thing](../../../../section-rooms/arguments/concepts/C35-Selfing-Self-Subjectivity-Self-Thing.md)
-- [C36 — Complexio Oppositorum](../../../../section-rooms/arguments/concepts/C36-Complexio-Oppositorum.md)
-- [C49 — The Two Ones — 0 = One, 1 = All](../../../../section-rooms/arguments/concepts/C49-The-Two-Ones-0-One-1-All.md)
-- [C50 — Dia / Syn](../../../../section-rooms/arguments/concepts/C50-Dia-Syn.md)
-- [C51 — Logos / Epi-Logos](../../../../section-rooms/arguments/concepts/C51-Logos-Epi-Logos.md)
-- [C52 — Dimensional Reframing at Zero and Infinity](../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md)
-- [C61 — Symbolon Disclosure Architecture](../../../../section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture.md)
-- [C64 — Paradox / Transforming the Containing Field](../../../../section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field.md)
-- [0-1 Matheme](../../../../section-rooms/arguments/concepts/reference-notes/0-1-matheme.md)
-- [36 Tattvas](../../../../section-rooms/arguments/concepts/reference-notes/36-tattvas.md)
-- [9-8 Whole Tone](../../../../section-rooms/arguments/concepts/reference-notes/9-8-whole-tone.md)
-- [Concept Reference Shelf — Recovered 2026-08-08](../../../../section-rooms/arguments/concepts/reference-notes/README.md)
-- [Abhinavagupta](../../../../section-rooms/arguments/concepts/reference-notes/abhinavagupta.md)
-- [Antaḥkaraṇa](../../../../section-rooms/arguments/concepts/reference-notes/antahkarana.md)
-- [Antikythera Mechanism](../../../../section-rooms/arguments/concepts/reference-notes/antikythera-mechanism.md)
-- [Bimba-Pratibimba](../../../../section-rooms/arguments/concepts/reference-notes/bimba-pratibimba.md)
-- [The Blind Spot — Frank, Gleiser, Thompson](../../../../section-rooms/arguments/concepts/reference-notes/blind-spot-frank-gleiser-thompson.md)
-- [Bradley-Terry Gauge Problem](../../../../section-rooms/arguments/concepts/reference-notes/bradley-terry-gauge-problem.md)
-- [Brahmagupta](../../../../section-rooms/arguments/concepts/reference-notes/brahmagupta.md)
-- [Chinese Remainder Theorem Z6](../../../../section-rooms/arguments/concepts/reference-notes/chinese-remainder-theorem-z6.md)
-- [Circumscription Without Circumstance](../../../../section-rooms/arguments/concepts/reference-notes/circumscription-without-circumstance.md)
-- [Compassion as Sensitivity to Origins](../../../../section-rooms/arguments/concepts/reference-notes/compassion-sensitivity-origins.md)
-- [Cross-Ratio](../../../../section-rooms/arguments/concepts/reference-notes/cross-ratio.md)
-- [EBM Resonance Metric](../../../../section-rooms/arguments/concepts/reference-notes/ebm-resonance-metric.md)
-- [epi-logos-voice](../../../../section-rooms/arguments/concepts/reference-notes/epi-logos-voice.md)
-- [FDE Catuṣkoṭi](../../../../section-rooms/arguments/concepts/reference-notes/fde-catuskoti.md)
-- [File One Definitional](../../../../section-rooms/arguments/concepts/reference-notes/file-one-definitional.md)
-- [Gerbert Sylvester II](../../../../section-rooms/arguments/concepts/reference-notes/gerbert-sylvester-ii.md)
-- [Gödel Incompleteness](../../../../section-rooms/arguments/concepts/reference-notes/godel-incompleteness.md)
-- [Grothendieck Group Loss](../../../../section-rooms/arguments/concepts/reference-notes/grothendieck-group-loss.md)
-- [Jung-Pauli](../../../../section-rooms/arguments/concepts/reference-notes/jung-pauli.md)
-- [Kaplan Nothing That Is](../../../../section-rooms/arguments/concepts/reference-notes/kaplan-nothing-that-is.md)
-- [Kauffman Iterants](../../../../section-rooms/arguments/concepts/reference-notes/kauffman-iterants.md)
-- [Khahara](../../../../section-rooms/arguments/concepts/reference-notes/khahara.md)
-- [Laws of Form](../../../../section-rooms/arguments/concepts/reference-notes/laws-of-form.md)
-- [Maturana and Varela — Autopoiesis and Enaction](../../../../section-rooms/arguments/concepts/reference-notes/maturana-varela-autopoiesis-enaction.md)
-- [MEF](../../../../section-rooms/arguments/concepts/reference-notes/mef.md)
-- [Meister Eckhart — Dialectical Apophaticism and the Word](../../../../section-rooms/arguments/concepts/reference-notes/meister-eckhart-dialectical-apophaticism.md)
-- [Metonic Cycle](../../../../section-rooms/arguments/concepts/reference-notes/metonic-cycle.md)
-- [Nicholas of Cusa — Learned Ignorance, Coincidence, and the Infinite Sphere](../../../../section-rooms/arguments/concepts/reference-notes/nicholas-of-cusa-learned-ignorance-sphere.md)
-- [Nirvikalpa](../../../../section-rooms/arguments/concepts/reference-notes/nirvikalpa.md)
-- [Nothaft Satanic Ciphers](../../../../section-rooms/arguments/concepts/reference-notes/nothaft-satanic-ciphers.md)
-- [Pratyabhijñā](../../../../section-rooms/arguments/concepts/reference-notes/pratyabhijna.md)
-- [Projective Line](../../../../section-rooms/arguments/concepts/reference-notes/projective-line.md)
-- [Prompt Thrownness](../../../../section-rooms/arguments/concepts/reference-notes/prompt-thrownness.md)
-- [Pythagorean Comma](../../../../section-rooms/arguments/concepts/reference-notes/pythagorean-comma.md)
-- [Quaternal Logic](../../../../section-rooms/arguments/concepts/reference-notes/quaternal-logic.md)
-- [Qubit-Bloch Sphere](../../../../section-rooms/arguments/concepts/reference-notes/qubit-bloch-sphere.md)
-- [Re-entry](../../../../section-rooms/arguments/concepts/reference-notes/re-entry.md)
-- [Riemann Sphere](../../../../section-rooms/arguments/concepts/reference-notes/riemann-sphere.md)
-- [Rotman Semiotics of Zero](../../../../section-rooms/arguments/concepts/reference-notes/rotman-semiotics-of-zero.md)
-- [Russell — Paradox and Type-Theoretic Closure](../../../../section-rooms/arguments/concepts/reference-notes/russell-paradox-type-theory.md)
-- [Salem Codex](../../../../section-rooms/arguments/concepts/reference-notes/salem-codex.md)
-- [Sheffer Stroke](../../../../section-rooms/arguments/concepts/reference-notes/sheffer-stroke.md)
-- [Śiva-Śakti-Object Triad](../../../../section-rooms/arguments/concepts/reference-notes/siva-sakti-object-triad.md)
-- [Softmax as Apoha](../../../../section-rooms/arguments/concepts/reference-notes/softmax-as-apoha.md)
-- [Śuddha-vikalpa](../../../../section-rooms/arguments/concepts/reference-notes/suddha-vikalpa.md)
-- [Surface Classification 4g+2g](../../../../section-rooms/arguments/concepts/reference-notes/surface-classification-4g-2g.md)
-- [Syn-Ballein](../../../../section-rooms/arguments/concepts/reference-notes/syn-ballein.md)
-- [Trika Alignment Stack](../../../../section-rooms/arguments/concepts/reference-notes/trika-alignment-stack.md)
-- [Trika](../../../../section-rooms/arguments/concepts/reference-notes/trika.md)
-- [Trivial Ring](../../../../section-rooms/arguments/concepts/reference-notes/trivial-ring.md)
-- [Von Franz Number and Time](../../../../section-rooms/arguments/concepts/reference-notes/von-franz-number-and-time.md)
-- [Von Neumann Ordinals](../../../../section-rooms/arguments/concepts/reference-notes/von-neumann-ordinals.md)
-- [Wittgenstein — Limit, Silence, and Forms of Life](../../../../section-rooms/arguments/concepts/reference-notes/wittgenstein-limit-silence-forms-of-life.md)
+- [C37 — World-Picture → World-Atlas](../../../../section-rooms/arguments/concepts/C37-World-Picture-to-World-Atlas.md)
+- [C39 — Meta-Epistemic Framework](../../../../section-rooms/arguments/concepts/C39-Meta-Epistemic-Framework.md)
+- [C47 — Deferential Intelligence](../../../../section-rooms/arguments/concepts/C47-Deferential-Intelligence.md)
+- [Prompt Thrownness](../../../../section-rooms/arguments/concepts/prompt-thrownness.md)
+- 0-1 Matheme
+- 36 Tattvas
+- 9-8 Whole Tone
+- Concept Reference Shelf — Recovered 2026-08-08
+- Abhinavagupta
+- Antaḥkaraṇa
+- Antikythera Mechanism
+- Bimba-Pratibimba
+- The Blind Spot — Frank, Gleiser, Thompson
+- Bradley-Terry Gauge Problem
+- Brahmagupta
+- Chinese Remainder Theorem Z6
+- Circumscription Without Circumstance
+- Compassion as Sensitivity to Origins
+- Cross-Ratio
+- EBM Resonance Metric
+- epi-logos-voice
+- FDE Catuṣkoṭi
+- File One Definitional
+- Gerbert Sylvester II
+- Gödel Incompleteness
+- Grothendieck Group Loss
+- Jung-Pauli
+- Kaplan Nothing That Is
+- Kauffman Iterants
+- Khahara
+- Laws of Form
+- MEF
+- Meister Eckhart — Dialectical Apophaticism and the Word
+- Metonic Cycle
+- Nicholas of Cusa — Learned Ignorance, Coincidence, and the Infinite Sphere
+- Nirvikalpa
+- Nothaft Satanic Ciphers
+- Pratyabhijñā
+- Projective Line
+- Prompt Thrownness
+- Pythagorean Comma
+- Quaternal Logic
+- Qubit-Bloch Sphere
+- Re-entry
+- Riemann Sphere
+- Rotman Semiotics of Zero
+- Russell — Paradox and Type-Theoretic Closure
+- Salem Codex
+- Sheffer Stroke
+- Śiva-Śakti-Object Triad
+- Softmax as Apoha
+- Śuddha-vikalpa
+- Surface Classification 4g+2g
+- Syn-Ballein
+- Trika Alignment Stack
+- Trika
+- Trivial Ring
+- Von Franz Number and Time
+- Von Neumann Ordinals
+- Wittgenstein — Limit, Silence, and Forms of Life
 - [S0 — Central: meaningful continuity](../../../../section-rooms/arguments/products/S0-Central.md)
 - [S2 — AIKit: potency](../../../../section-rooms/arguments/products/S2-AIKit.md)
+- [Symbolon — The Return of Zero](../../../README.md)
+- [Eight Determinations — The Complete Traversal](../../../eight-determinations.md)
 - [Aphorisms](../../aphorisms/README.md)
 - [A1 — Hero (REWRITTEN rev-8 — heart voice)](../../aphorisms/site-a1-hero.md)
 - [A2 — The Heart (LIVE)](../../aphorisms/site-a2-the-heart.md)
@@ -244,14 +249,14 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 - [Dossiers](../../dossiers/README.md)
 - [Relational Form Growth — T09 Canonical Integration](../../etymologies/RELATIONAL-FORM-GROWTH.md)
 - [T09 A ↔ C ↔ E Reciprocity Index](../../etymologies/T09-A-C-E-RECIPROCITY-INDEX.md)
-- [Arbitration, Hybris, Regard, and Anamnesis — The Measure Returns to Its Ground](../../etymologies/arbitration-hybris-regard-anamnesis/HISTORY.md)
-- [Genesis, Paradigm, Project and Epi-Logos — The Pattern of Disclosure Returns](../../etymologies/genesis-paradigm-project-epilogos/HISTORY.md)
-- [Fides / Topos / Logos / Nomos / Natio / Credere — Historical Branches](../../etymologies/trust-place-logos-nomos-natio-credere/HISTORICAL-BRANCHES.md)
-- [Fides, Topos, Logos, Nomos, Natio, Credere — Trust Becoming a World](../../etymologies/trust-place-logos-nomos-natio-credere/HISTORY.md)
+- [Arbitration, Hybris, Regard, and Anamnesis — The Measure Returns to Its Ground](../../etymologies/arbitration-hybris-regard-anamnesis/HISTORY-arbitration-hybris-regard-anamnesis.md)
+- [Genesis, Paradigm, Project and Epi-Logos — The Pattern of Disclosure Returns](../../etymologies/genesis-paradigm-project-epilogos/HISTORY-genesis-paradigm-project-epilogos.md)
+- [Fides / Topos / Logos / Nomos / Natio / Credere — Historical Branches](../../etymologies/trust-place-logos-nomos-natio-credere/HISTORICAL-BRANCHES-trust-place-logos-nomos-natio-credere.md)
+- [Fides, Topos, Logos, Nomos, Natio, Credere — Trust Becoming a World](../../etymologies/trust-place-logos-nomos-natio-credere/HISTORY-trust-place-logos-nomos-natio-credere.md)
 - [Episteme Figures](../../figures/README.md)
 - [Histories — Streams of the Logos in Time](../../histories/README.md)
-- [Language, Law, Nation, and Centralisation — The Historical Tree of Topos, Logos, Nomos, Natio](../../histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md)
-- [Technology, Politics and Institutions — Formation, Delegation and Return](../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md)
+- [Language, Law, Nation, and Centralisation — The Historical Tree of Topos, Logos, Nomos, Natio](../../histories/places-and-peoples/language-law-nation-centralisation/HISTORY-language-law-nation-centralisation.md)
+- [Technology, Politics and Institutions — Formation, Delegation and Return](../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md)
 - [MEF Lens L0′ — Archetypal-Numerical](../../lenses/L0-prime-archetypal-numerical.md)
 - [MEF Lens L0 — Quaternal](../../lenses/L0-quaternal.md)
 - [MEF Lens L1 — Causal](../../lenses/L1-causal.md)
@@ -270,15 +275,14 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 - [Return of Zero Source Bank](../../sources/README.md)
 - [Return of Zero — Canonical Source Index](../../sources/SOURCE-INDEX.md)
 - [Author — Title (Year)](../../sources/SOURCE-TEMPLATE.md)
-- [Kripke 1981 Naming And Necessity Notes](../../sources/analytic-philosophy/kripke/kripke-1981-naming-and-necessity/kripke-1981-naming-and-necessity-NOTES.md)
-- [Saul A. Kripke — Naming and Necessity (1980)](../../sources/analytic-philosophy/kripke/kripke-1981-naming-and-necessity/kripke-1981-naming-and-necessity.md)
+- [Chalmers — Facing Up to the Problem of Consciousness (1995)](../../sources/analytic-philosophy/chalmers/chalmers-1995-facing-up-consciousness/chalmers-1995-facing-up-consciousness.md)
+- Kripke 1981 Naming And Necessity Notes
 - [The Book of Job — KJV, eBible eng-kjv2006 digital witness (2026-08-19)](../../sources/biblical-studies/anonymous/biblical-job-kjv-ebible-eng-kjv2006/biblical-job-kjv-ebible-eng-kjv2006.md)
 - [Hebrew Bible — Mechon Mamre Hebrew and JPS 1917 English, selected passages](../../sources/biblical-studies/anonymous/hebrew-bible-mechon-mamre-jps1917/hebrew-bible-mechon-mamre-jps1917.md)
 - [Brown–Driver–Briggs — Hebrew lexicon, SPR entries (Bible Hub)](../../sources/biblical-studies/brown-driver-briggs/bdb-hebrew-english-lexicon-online/bdb-hebrew-english-lexicon-online.md)
 - [Hypostasis of the Archons — Bentley Layton online translation](../../sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md)
 - [Ephesians — SBL-hosted reverse-interlinear witness](../../sources/biblical-studies/pauline-corpus/ephesians-sbl-reverse-interlinear/ephesians-sbl-reverse-interlinear.md)
-- [Chung Yuan Chang Tao A New Way Of Thinking 2014 Notes](../../sources/chinese-philosophy/chung-yuan-chang/chung-yuan-chang-tao-a-new-way-of-thinking-2014/chung-yuan-chang-tao-a-new-way-of-thinking-2014-NOTES.md)
-- [Chang Chung-yuan — Tao: A New Way of Thinking (2014)](../../sources/chinese-philosophy/chung-yuan-chang/chung-yuan-chang-tao-a-new-way-of-thinking-2014/chung-yuan-chang-tao-a-new-way-of-thinking-2014.md)
+- Chung Yuan Chang Tao A New Way Of Thinking 2014 Notes
 - [Analects — received Chinese text and James Legge translation](../../sources/chinese-philosophy/confucius/analects-ctext-legge/analects-ctext-legge.md)
 - [Laozi — Tao Teh King, translated by James Legge](../../sources/chinese-philosophy/laozi/laozi-legge-tao-teh-king/laozi-legge-tao-teh-king.md)
 - [Acropolis Museum — The Erechtheion](../../sources/classical-philology/acropolis-museum/acropolis-museum-erechtheion/acropolis-museum-erechtheion.md)
@@ -298,6 +302,9 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 - [Aristotle — Nicomachean Ethics (W. D. Ross translation)](../../sources/classical-premodern-philosophy/aristotle/aristotle-nicomachean-ethics-ross/aristotle-nicomachean-ethics-ross.md)
 - [Aristotle — Politics (Benjamin Jowett translation)](../../sources/classical-premodern-philosophy/aristotle/aristotle-politics-jowett/aristotle-politics-jowett.md)
 - [Irenaeus — Against Heresies Book I (Roberts–Rambaut, ANF 1885)](../../sources/classical-premodern-philosophy/irenaeus/irenaeus-1885-against-heresies-book-1/irenaeus-1885-against-heresies-book-1.md)
+- [Plato — Phaedrus (Jowett translation)](../../sources/classical-premodern-philosophy/plato/plato-jowett-phaedrus/plato-jowett-phaedrus.md)
+- [Bai et al. — Constitutional AI (2022)](../../sources/computer-science-ml/bai/bai-2022-constitutional-ai/bai-2022-constitutional-ai.md)
+- [Bengio et al. — A Neural Probabilistic Language Model (2003)](../../sources/computer-science-ml/bengio/bengio-2003-neural-probabilistic-language-model/bengio-2003-neural-probabilistic-language-model.md)
 - [O:I — Responsibility, Source, Projection and Contribution (selected 2026 evidence)](../../sources/computer-science-ml/oi/oi-2026-responsibility-source-projection/oi-2026-responsibility-source-projection.md)
 - [Performative Prediction](../../sources/computer-science-ml/perdomo/perdomo-et-al-2020-performative-prediction/perdomo-et-al-2020-performative-prediction.md)
 - [Eastern Corpus Program — Return of Zero](../../sources/eastern-corpus-program.md)
@@ -311,8 +318,8 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 - [The Symbolon in Modern Media](../../sources/internal-corpus/taylor/chat-logs/taylor-chatgpt-2026-symbolon-in-media/taylor-chatgpt-2026-symbolon-in-media.md)
 - [Pax Machina and the Body Without Organs](../../sources/internal-corpus/taylor/chat-logs/taylor-gemini-2026-pax-machina-body-without-organs/taylor-gemini-2026-pax-machina-body-without-organs.md)
 - [Skenfrith, the Marches, and the History of Power](../../sources/internal-corpus/taylor/chat-logs/taylor-gemini-2026-skenfrith-castle-power-history/taylor-gemini-2026-skenfrith-castle-power-history.md)
+- [6174 as QL: The Complete Mapping](../../sources/internal-corpus/taylor/taylor-2026-6174-ql-complete-mapping/taylor-2026-6174-ql-complete-mapping.md)
 - [Taylor — Personal Poetry Corpus (2026)](../../sources/internal-corpus/taylor/taylor-2026-personal-poetry-corpus/taylor-2026-personal-poetry-corpus.md)
-- [Taylor — Symbolon Dynamics, Archetype, Attractor, and Objective Internality (2026)](../../sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md)
 - [ATILF — TLFi, regard](../../sources/language-literary-studies/atilf/atilf-tlfi-regard/atilf-tlfi-regard.md)
 - [Merriam-Webster.com Dictionary — selected E1 and E4 entries](../../sources/language-literary-studies/merriam-webster/merriam-webster-online-dictionary/merriam-webster-online-dictionary.md)
 - [Sheffer — A Set of Five Independent Postulates (1913)](../../sources/mathematics-logic/sheffer/sheffer-1913-five-postulates/sheffer-1913-five-postulates.md)
@@ -326,24 +333,37 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 - [François I — Ordonnance de Villers-Cotterêts (1539)](../../sources/political-theory-institutions/francois-i/francois-i-1539-villers-cotterets/francois-i-1539-villers-cotterets.md)
 - [The Reich Citizenship Law (15 September 1935) and First Regulation (14 November 1935)](../../sources/political-theory-institutions/german-reich/reich-1935-citizenship-law-first-regulation/reich-1935-citizenship-law-first-regulation.md)
 - [Grégoire — L’unité de langue (4 June 1794)](../../sources/political-theory-institutions/gregoire/gregoire-1794-unite-de-langue/gregoire-1794-unite-de-langue.md)
+- [Testimony to the Task Force on the Declassification of Federal Secrets](../../sources/political-theory-institutions/kinzer/kinzer-2026-mkultra-house-testimony/kinzer-2026-mkultra-house-testimony.md)
 - [CIA Intends to Release Records on Cold War Spymaster](../../sources/political-theory-institutions/national-archives/nara-2000-gehlen-disclosure/nara-2000-gehlen-disclosure.md)
+- [December 19, 2025 Letter to Congress on Epstein Files Production](../../sources/political-theory-institutions/united-states-doj/doj-2025-epstein-production-letter/doj-2025-epstein-production-letter.md)
 - [Interim Exploitation of German and Austrian Specialists under Project Paperclip — FRUS1946V, document448](../../sources/political-theory-institutions/united-states-government/us-1946-paperclip-policy-frus448/us-1946-paperclip-policy-frus448.md)
+- [Project MKULTRA, the CIA’s Program of Research in Behavioral Modification](../../sources/political-theory-institutions/united-states-senate/senate-1977-project-mkultra-hearing/senate-1977-project-mkultra-hearing.md)
+- [Leak Exposes Members of Peter Thiel’s Secretive ‘Dialog’ Society](../../sources/political-theory-institutions/wired/wired-2026-dialog-exposed/wired-2026-dialog-exposed.md)
+- [How the Peter Thiel-Linked Dialog Club Secretly Ranks Its Members](../../sources/political-theory-institutions/wired/wired-2026-dialog-rankings/wired-2026-dialog-rankings.md)
 - [Bergson — Time and Free Will (Pogson, 1913 carrier)](../../sources/process-systems-theory/bergson/bergson-1913-time-free-will-pogson/bergson-1913-time-free-will-pogson.md)
 - [On Dialogue — undated circulated handout](../../sources/process-systems-theory/bohm/bohm-on-dialogue-undated-handout/bohm-on-dialogue-undated-handout.md)
 - [Physics and Beyond: David Joseph Bohm](../../sources/process-systems-theory/bohm/bohm-physics-and-beyond-interview/bohm-physics-and-beyond-interview.md)
 - [Postmodern Science and a Postmodern World](../../sources/process-systems-theory/bohm/bohm-postmodern-science-postmodern-world/bohm-postmodern-science-postmodern-world.md)
 - [Jung — Psychologische Typen (1921 German)](../../sources/psychology/jung/jung-1921-psychologische-typen/jung-1921-psychologische-typen.md)
-- [Neumann — The Origins and History of Consciousness — reading notes](../../sources/psychology/neumann/neumann-1954-origins-history-consciousness/neumann-1954-origins-history-consciousness-NOTES.md)
-- [Van Eenwyk 1997 Archetypes Strange Attractors Notes](../../sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors-NOTES.md)
+- [Jung — The Spirit in Man, Art, and Literature, CW 15 (consulted carrier)](../../sources/psychology/jung/jung-1971-spirit-man-art-literature-cw15/jung-1971-spirit-man-art-literature-cw15.md)
+- [Jung — The Structure and Dynamics of the Psyche, CW 8 (consulted carrier)](../../sources/psychology/jung/jung-1975-structure-dynamics-psyche-cw8/jung-1975-structure-dynamics-psyche-cw8.md)
+- [Jung — Psychological Types, CW 6 (consulted carrier)](../../sources/psychology/jung/jung-1976-psychological-types-cw6/jung-1976-psychological-types-cw6.md)
+- [Jung — The Symbolic Life: Miscellaneous Writings, CW 18 (consulted carrier)](../../sources/psychology/jung/jung-1976-symbolic-life-cw18/jung-1976-symbolic-life-cw18.md)
+- [Jung — Mysterium Coniunctionis, CW 14 (consulted carrier)](../../sources/psychology/jung/jung-1977-mysterium-coniunctionis-cw14/jung-1977-mysterium-coniunctionis-cw14.md)
+- [Jung — Psychology and Alchemy, CW 12 (consulted carrier)](../../sources/psychology/jung/jung-1980-psychology-alchemy-cw12/jung-1980-psychology-alchemy-cw12.md)
+- [Jung — Alchemical Studies, CW 13 (consulted carrier)](../../sources/psychology/jung/jung-1983-alchemical-studies-cw13/jung-1983-alchemical-studies-cw13.md)
+- [Jung — The Archetypes and the Collective Unconscious, CW 9, part 1 (consulted carrier)](../../sources/psychology/jung/jung-cw9i-hull-routledge-second-edition/jung-cw9i-hull-routledge-second-edition.md)
+- Neumann — The Origins and History of Consciousness — reading notes
+- Van Eenwyk 1997 Archetypes Strange Attractors Notes
 - [Marie-Louise von Franz — Number and Time](../../sources/psychology/von-franz/von-franz-1974-number-time/von-franz-1974-number-time.md)
-- [Watson 1998 Resonance Of Emptiness Notes](../../sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness-NOTES.md)
-- [Gay Watson — The Resonance of Emptiness (1998)](../../sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md)
+- Watson 1998 Resonance Of Emptiness Notes
 - [Al-Bukhārī — Ṣaḥīḥ, selected Names report](../../sources/religion-theology/al-bukhari/bukhari-sahih-sunnah-online/bukhari-sahih-sunnah-online.md)
 - [Augustine — City of God](../../sources/religion-theology/augustine/augustine-city-god-dods-digital/augustine-city-god-dods-digital.md)
 - [Qur’an — selected passages in the Quranic Arabic Corpus](../../sources/religion-theology/quran/quran-arberry-corpus-selected/quran-arberry-corpus-selected.md)
 - [Reri — Ptolemaic funerary papyrus, EA75044,4](../../sources/religion-theology/reri/reri-ptolemaic-funerary-papyrus/reri-ptolemaic-funerary-papyrus.md)
 - [Research Intake Inbox — Return of Zero](../../sources/research-intake-inbox.md)
 - [Source Intake Queue](../../sources/source-intake-queue.md)
+- [Matheme](../../../matheme/README.md)
 - [Computation](../../../matheme/computation/README.md)
 - [Definition — the 0](../../../matheme/definition/README.md)
 - [Dia/Syn — the two logics of two](../../../matheme/dia-syn/README.md)
@@ -356,9 +376,10 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 - [Music — the 0/1 returned](../../../matheme/music/README.md)
 - [Process — the /](../../../matheme/process/README.md)
 - [QL](../../../matheme/ql/README.md)
-- [Quilt — the 1](../../../matheme/quilt/README.md)
+- Quilt — the 1
 - [Spanda](../../../matheme/spanda/README.md)
 - [Topology](../../../matheme/topology/README.md)
+- [Mytheme](../../../mytheme/README.md)
 - [Shared archetypal structuration](../../../mytheme/archetypal-ground/README.md)
 - [Art](../../../mytheme/art/README.md)
 - [Mytheme atlas](../../../mytheme/atlas/README.md)
@@ -479,52 +500,78 @@ Pages outside the rooms with no link to the manuscript, a room surface, or a can
 
 ## Unreachable from the reading root
 
-None.
+- Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality
+- [Concept Map](../../../../section-rooms/arguments/concepts/index.md)
+- [Aphorisms](../../aphorisms/README.md)
+- [A1 — Hero (REWRITTEN rev-8 — heart voice)](../../aphorisms/site-a1-hero.md)
+- [A2 — The Heart (LIVE)](../../aphorisms/site-a2-the-heart.md)
+- [A3 — What Is Epi-Logos For? (LIVE)](../../aphorisms/site-a3-what-is-epi-logos-for.md)
+- [A4 — The Question (RESHAPED rev-8 — paragraphs 2 and 3)](../../aphorisms/site-a4-the-question.md)
+- [A5 — Install section (LIVE)](../../aphorisms/site-a5-install.md)
+- [A6 — Portal / Doorway close (LIVE)](../../aphorisms/site-a6-portal-doorway-close.md)
+- [B1 — Intro station](../../aphorisms/site-b1-intro-station.md)
+- [B2 — M5-0 · The Cosmology ⇄ Gnostic Library](../../aphorisms/site-b2-m5-0-cosmology-gnostic-library.md)
+- [B3 — M5-1 · The Thesis ⇄ Canon Studio](../../aphorisms/site-b3-m5-1-thesis-canon-studio.md)
+- [B4 — M5-2 · The Stack ⇄ Backend Studio](../../aphorisms/site-b4-m5-2-stack-backend-studio.md)
+- [B5 — M5-3 · The Instrument ⇄ Theia Workshop](../../aphorisms/site-b5-m5-3-instrument-theia-workshop.md)
+- [B6 — M5-4 · The Agents ⇄ Agentic Control Room](../../aphorisms/site-b6-m5-4-agents-agentic-control-room.md)
+- [B7 — M5-5 · The Cycle ⇄ Logos Atelier](../../aphorisms/site-b7-m5-5-cycle-logos-atelier.md)
+- [B8 — Self Across Traditions](../../aphorisms/site-b8-self-across-traditions.md)
+- [B9 — Blank station + Return](../../aphorisms/site-b9-blank-station-return.md)
+- [C1 — Page intro (LIVE — the four existing paragraphs, unchanged)](../../aphorisms/site-c1-grammar-page-intro.md)
+- [C2 — What QL Is (REWRITTEN rev-7; derivation paragraph DEEPENED rev-10 — PROPOSED)](../../aphorisms/site-c2-what-ql-is.md)
+- [C3 — The Giving (NEW — glyph, not table)](../../aphorisms/site-c3-the-giving.md)
+- [C4 — The Positions in depth: prospective and retrospective](../../aphorisms/site-c4-positions-in-depth.md)
+- [C5 — The Lenses: MEF in full](../../aphorisms/site-c5-the-lenses.md)
+- [C6 — The Harmonics (REBUILT — collapsed preamble per your note)](../../aphorisms/site-c6-the-harmonics.md)
+- [C7 — Orchestration note (REWRITTEN — canon now consistent)](../../aphorisms/site-c7-orchestration-note.md)
+- [C8 — Closing (LIVE)](../../aphorisms/site-c8-closing.md)
+- [Site Content Passages — Compiled from (F) Blocks: June 15–21, 2026](../../aphorisms/site-content-passages-june-15-21.md)
 
 ## Unnamed-link samples by class
 
-- **The rooms — waypoints, alignments, reading routes:** `- **If you are new, start with the rooms.** Read [The Question Before the Mechanism] (section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mec`
-- **The rooms — waypoints, alignments, reading routes:** `The [48-movement path] (symbolon/episteme/maps/return-of-zero-braided-traversal.md) keeps your place across all eight stations`
-- **The rooms — waypoints, alignments, reading routes:** `The [manuscript] (THE-RETURN-OF-ZERO.md) is the continuous prose when you want the long reading`
-- **The sovereign essay:** `*[Section room] (section-rooms/00-integral-threshold/ROOM.md)*`
-- **The sovereign essay:** `*[Section room] (section-rooms/01-differentiating-mind/ROOM.md)*`
-- **The sovereign essay:** `*[Section room] (section-rooms/02-return-of-zero/ROOM.md)*`
-- **Supporting quilt ledgers (non-canonical):** `/ [[symbolon/episteme/etymologies/encounter-region-name-count/HISTORY/Encounter, Region, Countenance, and Count — The With-Field Becomes an Account]] / Living p`
-- **Supporting quilt ledgers (non-canonical):** `/ [[symbolon/episteme/etymologies/apportionment-and-economy/HISTORY/Apportionment, Naming, Number, and Oikonomia]] / A whole becomes political through the way p`
-- **Supporting quilt ledgers (non-canonical):** `/ [[symbolon/episteme/etymologies/homology-and-analogy/HISTORY/Homologia, Analogia, and the Discipline of Comparison]] / Cross-register likeness is disciplined `
-- **The 48 movements:** `Movement 01 of 48 · [This room] (../ROOM.md) · [Reading entrance] (../../../README.md) · [Next →] (02-s01-p1-define-subject.md)`
-- **The 48 movements:** `Movement 01 of 48 · [This room] (../ROOM.md) · [Reading entrance] (../../../README.md) · [Next →] (02-s01-p1-define-subject.md)`
-- **The 48 movements:** `Movement 01 of 48 · [This room] (../ROOM.md) · [Reading entrance] (../../../README.md) · [Next →] (02-s01-p1-define-subject.md)`
+- **The rooms — waypoints, alignments, reading routes:** `[§0/1 — The Integral Threshold] (section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md) is the opening section being completed for the essay submissi`
+- **The rooms — waypoints, alignments, reading routes:** `- **Read the opening section.** Begin with [The Question Before the Mechanism] (section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism`
+- **The rooms — waypoints, alignments, reading routes:** `- **Follow the longer essay.** The [manuscript] (THE-RETURN-OF-ZERO.md) offers continuous prose`
+- **The sovereign essay:** `*[Section room] (section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md)*`
+- **The sovereign essay:** `*[Section room] (section-rooms/01-differentiating-mind/ROOM-01-differentiating-mind.md)*`
+- **The sovereign essay:** `*[Section room] (section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md)*`
+- **Supporting quilt ledgers (non-canonical):** `/ [[symbolon/episteme/etymologies/encounter-region-name-count/HISTORY-encounter-region-name-count]] / Living protected learning surface`
+- **Supporting quilt ledgers (non-canonical):** `/ [[symbolon/episteme/etymologies/apportionment-and-economy/HISTORY-apportionment-and-economy]] / A whole becomes political through the way powers, shares, debt`
+- **Supporting quilt ledgers (non-canonical):** `/ [[symbolon/episteme/etymologies/homology-and-analogy/HISTORY-homology-and-analogy]] / Cross-register likeness is disciplined by naming the kind of relation be`
+- **The 48 movements:** `Movement 01 of 48 · [This room] (../ROOM-00-integral-threshold.md) · [Reading entrance] (../../../README.md) · [Next →] (02-s01-p1-define-subject.md)`
+- **The 48 movements:** `Movement 01 of 48 · [This room] (../ROOM-00-integral-threshold.md) · [Reading entrance] (../../../README.md) · [Next →] (02-s01-p1-define-subject.md)`
+- **The 48 movements:** `Movement 01 of 48 · [This room] (../ROOM-00-integral-threshold.md) · [Reading entrance] (../../../README.md) · [Next →] (02-s01-p1-define-subject.md)`
 - **Arguments A01–A36:** `[Argument field] (README.md) · [Other face: A01′ — Faithful Definition of the Agent] (conjugate/A01-prime-Faithful-Definition-of-the-Agent.md) · [Shared A/C root]`
 - **Arguments A01–A36:** `[Argument field] (README.md) · [Other face: A01′ — Faithful Definition of the Agent] (conjugate/A01-prime-Faithful-Definition-of-the-Agent.md) · [Shared A/C root]`
 - **Arguments A01–A36:** `[Argument field] (README.md) · [Other face: A01′ — Faithful Definition of the Agent] (conjugate/A01-prime-Faithful-Definition-of-the-Agent.md) · [Shared A/C root]`
-- **Concepts C01–C64 and provenance:** `[A09 — Tattvic Differential Field] (../A09-Tattvic-Differential-Field.md) supplies a distinct Indian account of consciousness's capacity to differentiate itself `
-- **Concepts C01–C64 and provenance:** `[A09 — Tattvic Differential Field] (../A09-Tattvic-Differential-Field.md) supplies a distinct Indian account of consciousness's capacity to differentiate itself `
-- **Concepts C01–C64 and provenance:** `[S1 / Actuation] (../products/S1-Actuation.md) concerns the experience or report as living articulation`
+- **Concepts C01–C64 and provenance:** `To [define the Subject faithfully] (../A01-Subject-God-and-Faithful-Definition.md) is to distinguish the presence to which something is given from the something `
+- **Concepts C01–C64 and provenance:** `An account [determines through a cut] (C03-Determination.md): it selects, excludes and relates`
+- **Concepts C01–C64 and provenance:** `Its [fidelity] (C02-Faithful-Definition.md) keeps that selection answerable to the person or appearing it concerns.`
 - **Conjugate arguments A01′–A36′:** `[Argument field] (../README.md) · [Other face: A01 — Subject, God and Faithful Definition] (../A01-Subject-God-and-Faithful-Definition.md) · [Shared A/C root] (AC.`
 - **Conjugate arguments A01′–A36′:** `[Argument field] (../README.md) · [Other face: A01 — Subject, God and Faithful Definition] (../A01-Subject-God-and-Faithful-Definition.md) · [Shared A/C root] (AC.`
 - **Conjugate arguments A01′–A36′:** `[Argument field] (../README.md) · [Other face: A01 — Subject, God and Faithful Definition] (../A01-Subject-God-and-Faithful-Definition.md) · [Shared A/C root] (AC.`
 - **Product field S / S0–S5:** `[S — World and Life] (S-World-and-Life.md) holds the governing relation: Subjective Immediacy is the knower, Objective Internality the means, World the known, an`
 - **Product field S / S0–S5:** `/ [S0] (S0-Central.md) / **Central — meaningful continuity** / L0 Quaternal × L5′ Divine Logos / [M37 — Central] (../../06-objective-internality/movements/37-s5-p`
 - **Product field S / S0–S5:** `/ [S0] (S0-Central.md) / **Central — meaningful continuity** / L0 Quaternal × L5′ Divine Logos / [M37 — Central] (../../06-objective-internality/movements/37-s5-p`
-- **Symbolon — the twelvefold root:** `[A02, the copula] (../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md), grounds the identity that survives this difference`
-- **Symbolon — the twelvefold root:** `[A27, Self and Other] (../section-rooms/arguments/A27-Self-and-Other-Unity-without-Possession.md), qualifies the consequence`
-- **Symbolon — the twelvefold root:** `[A01, Faithful Definition] (../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md), qualifies the distinction between #4 and #5`
-- **Episteme — the register root:** `**Where you are:** [Reading root] (../../README.md) › [Symbolon] (../README.md) › Episteme`
-- **Episteme — the register root:** `**Where you are:** [Reading root] (../../README.md) › [Symbolon] (../README.md) › Episteme`
-- **Episteme — the register root:** `It sits inside the [symbolon] (../README.md) beside [Matheme] (../matheme/README.md) and [Mytheme] (../mytheme/README.md), and beside the [rooms] (../../section-roo`
+- **Symbolon — the twelvefold root:** `[Compassion's vocation] (../section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md) extends this relation into conduct`
+- **Symbolon — the twelvefold root:** `[Determining capacity becomes legible through its particular face] (X-x.md)`
+- **Symbolon — the twelvefold root:** `[Identity survives the change of person] (../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md) through a personal circuit: *I = Is*, *Who I`
+- **Episteme — the register root:** `**Where you are:** [Reading root] (../../README.md) › [#1 Symbolon] (../README.md) › '#4' Episteme`
+- **Episteme — the register root:** `**Where you are:** [Reading root] (../../README.md) › [#1 Symbolon] (../README.md) › '#4' Episteme`
+- **Episteme — the register root:** `- [Arguments A01–A36] (../../section-rooms/arguments/README.md) — the canonical semantic Argument identities`
 - **Episteme · Aphorisms:** `**Where you are:** [Reading root] (../../../README.md) › [#1 Symbolon] (../../README.md) › [#4 Episteme] (../README.md) › Aphorisms`
 - **Episteme · Aphorisms:** `**Where you are:** [Reading root] (../../../README.md) › [#1 Symbolon] (../../README.md) › [#4 Episteme] (../README.md) › Aphorisms`
 - **Episteme · Aphorisms:** `**Where you are:** [Reading root] (../../../README.md) › [#1 Symbolon] (../../README.md) › [#4 Episteme] (../README.md) › Aphorisms`
 - **Episteme · Atlas:** `The [Mytheme geography] (../../mytheme/atlas/geography/README.md) and [Mytheme temporality] (../../mytheme/atlas/temporality/README.md) routes expose the correspo`
 - **Episteme · Atlas:** `The [Mytheme geography] (../../mytheme/atlas/geography/README.md) and [Mytheme temporality] (../../mytheme/atlas/temporality/README.md) routes expose the correspo`
-- **Episteme · Atlas:** `/ [ancient philosophy] (../histories/traditions-and-disciplines/ancient-philosophy/DEVELOPMENT.md) · [learning history] (../histories/traditions-and-disciplines/a`
+- **Episteme · Atlas:** `/ [ancient philosophy] (../histories/traditions-and-disciplines/ancient-philosophy/DEVELOPMENT-ancient-philosophy.md) · [learning history] (../histories/tradition`
 - **Episteme · Dossiers:** `Return to [Episteme] (../README.md).`
 - **Episteme · Dossiers:** `This completes the particular image retained by the [Bohm reference] (../../../section-rooms/arguments/concepts/reference-notes/david-bohm-implicate-explicate-ho`
 - **Episteme · Dossiers:** `The [re-entry note] (../../../section-rooms/arguments/concepts/reference-notes/re-entry.md) retains the authorial chain distinction → re-entry → oscillation → fr`
-- **Episteme · Etymology whole-fields:** `**Where you are:** [Reading root] (../../../README.md) › [Symbolon] (../../README.md) › [Episteme] (../README.md) › Etymologies`
-- **Episteme · Etymology whole-fields:** `**Where you are:** [Reading root] (../../../README.md) › [Symbolon] (../../README.md) › [Episteme] (../README.md) › Etymologies`
-- **Episteme · Etymology whole-fields:** `**Where you are:** [Reading root] (../../../README.md) › [Symbolon] (../../README.md) › [Episteme] (../README.md) › Etymologies`
+- **Episteme · Etymology whole-fields:** `**Third intake (authorially commissioned 2026-09-15):** the T25 Objective Internality refinement opened [Genesis / Paradigm / Project / Epi-Logos] (genesis-parad`
+- **Episteme · Etymology whole-fields:** `This is the etymological analogue of the whole-Mytheme law in '[[working/final-argument-quilt-2026-08-23/MYTHEME-AND-DEEP-SOURCE-SEAMS/Native 020]]': later arch`
+- **Episteme · Etymology whole-fields:** `'[[working/final-argument-quilt-2026-08-23/ETYMOLOGICAL-ARCHAEOLOGY-TREE-SEAMS/Etymological Archaeology Tree Seams]]' carries the live root→trunk→branch→leaf in`
 - **Episteme · Figures:** `Formal derivations belong in [Matheme diagrams] (../../matheme/diagrams/README.md)`
 - **Episteme · Figures:** `Composed imaginal arguments belong in [Mytheme plates] (../../mytheme/plates/README.md).`
 - **Episteme · Figures:** `Return to [Episteme] (../README.md).`
@@ -537,12 +584,12 @@ None.
 - **Episteme · Maps and curated paths:** `**Where you are:** [Reading root] (../../../README.md) › [#4 Episteme] (../README.md) › Maps`
 - **Episteme · Maps and curated paths:** `**Where you are:** [Reading root] (../../../README.md) › [#4 Episteme] (../README.md) › Maps`
 - **Episteme · Maps and curated paths:** `/ [Return of Zero — Braided Traversal] (return-of-zero-braided-traversal.md) / The linear spine itself: all 48 movements in writing order, with the day spine and`
-- **Episteme · Source houses:** `[Open section room] (../../../section-rooms/00-integral-threshold/ROOM.md)`
+- **Episteme · Source houses:** `[Open section room] (../../../section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md)`
 - **Episteme · Source houses:** `- [Bratton — Antikythera Agentworld Brief (2026)] (media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md) — 'bratton`
 - **Episteme · Source houses:** `- [Frank, Gleiser, and Thompson — The Blind Spot (2024)] (history-philosophy-of-science/frank/frank-gleiser-thompson-2024-blind-spot/frank-gleiser-thompson-2024-`
-- **Matheme — exact operations:** `**Where you are:** [Reading root] (../../README.md) › [Symbolon] (../README.md) › Matheme`
-- **Matheme — exact operations:** `**Where you are:** [Reading root] (../../README.md) › [Symbolon] (../README.md) › Matheme`
-- **Matheme — exact operations:** `It sits inside the [symbolon] (../README.md) beside [Mytheme] (../mytheme/README.md) and [Episteme] (../episteme/README.md), and beside the [rooms] (../../section-r`
-- **Mytheme — whole lived images:** `**Where you are:** [Reading root] (../../README.md) › [Symbolon] (../README.md) › Mytheme`
-- **Mytheme — whole lived images:** `**Where you are:** [Reading root] (../../README.md) › [Symbolon] (../README.md) › Mytheme`
-- **Mytheme — whole lived images:** `It sits inside the [symbolon] (../README.md) beside [Matheme] (../matheme/README.md) and [Episteme] (../episteme/README.md), and beside the [rooms] (../../section-r`
+- **Matheme — exact operations:** `- [[symbolon/matheme/definition/README.md/Definition]] — the 0: what the matheme IS`
+- **Matheme — exact operations:** `- [[symbolon/matheme/process/README.md/Process]] — the /: what the matheme DOES`
+- **Matheme — exact operations:** `- [[symbolon/matheme/quilt/README.md/Quilt]] — the 1: what the matheme MEANS`
+- **Mytheme — whole lived images:** `**Where you are:** [Reading root] (../../README.md) › [#1 Symbolon] (../README.md) › '#3' Mytheme`
+- **Mytheme — whole lived images:** `**Where you are:** [Reading root] (../../README.md) › [#1 Symbolon] (../README.md) › '#3' Mytheme`
+- **Mytheme — whole lived images:** `In the Vāk layering of the registers this is **madhyamā**: the formed visual and narrative operations built through the visionary logic that [Matheme] (../mathem`

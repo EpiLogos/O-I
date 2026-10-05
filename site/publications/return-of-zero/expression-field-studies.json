@@ -1,0 +1,2413 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:field-studies",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:field-studies",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:field-studies",
+  "revision": 1,
+  "title": "Field studies",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-0",
+    "revision": 1,
+    "title": "Ink",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-0:opening-o",
+     "expression:return-of-zero:field-studies:scene:study-0:opening-i"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-1",
+    "revision": 1,
+    "title": "Print",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-1:opening-o",
+     "expression:return-of-zero:field-studies:scene:study-1:opening-i"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-2",
+    "revision": 1,
+    "title": "Gather",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-2:opening-o"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-3",
+    "revision": 1,
+    "title": "Between",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-3:opening-o",
+     "expression:return-of-zero:field-studies:scene:study-3:opening-i"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-4",
+    "revision": 1,
+    "title": "Language",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-4:opening-o"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-5",
+    "revision": 1,
+    "title": "Weather",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-5:opening-o"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-6",
+    "revision": 1,
+    "title": "Quiet",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-6:opening-o",
+     "expression:return-of-zero:field-studies:scene:study-6:opening-i"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:field-studies:scene:study-7",
+    "revision": 1,
+    "title": "Nocturne",
+    "entity_refs": [
+     "expression:return-of-zero:field-studies:scene:study-7:opening-o",
+     "expression:return-of-zero:field-studies:scene:study-7:opening-i"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:field-studies:scene:study-0:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-o",
+    "revision": 1,
+    "title": "O — opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.22,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.53,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-0:opening-i": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-i",
+    "revision": 1,
+    "title": "I — interval",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": 0.015,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.95,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-1:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-1:opening-o",
+    "revision": 1,
+    "title": "O — opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.22,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.53,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-1:opening-i": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-1:opening-i",
+    "revision": 1,
+    "title": "I — interval",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": 0.015,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.95,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-2:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-2:opening-o",
+    "revision": 1,
+    "title": "Gathering ring",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.62,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-3:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-3:opening-o",
+    "revision": 1,
+    "title": "O — opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.14,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.53,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-3:opening-i": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-3:opening-i",
+    "revision": 1,
+    "title": "I — interval",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.4,
+      "automation": null
+     },
+     "y": {
+      "value": 0.015,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.95,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-4:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-4:opening-o",
+    "revision": 1,
+    "title": "Ampersand",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.1,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.375,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-5:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-5:opening-o",
+    "revision": 1,
+    "title": "Atmosphere",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 3.05,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-6:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-6:opening-o",
+    "revision": 1,
+    "title": "O — opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.35,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-6:opening-i": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-6:opening-i",
+    "revision": 1,
+    "title": "I — interval",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.84,
+      "automation": null
+     },
+     "y": {
+      "value": 0.015,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.95,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-7:opening-o": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-7:opening-o",
+    "revision": 1,
+    "title": "O — opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.22,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.53,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:field-studies:scene:study-7:opening-i": {
+    "entity_ref": "expression:return-of-zero:field-studies:scene:study-7:opening-i",
+    "revision": 1,
+    "title": "I — interval",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:field-studies",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "featured/field-studies.journey.json",
+       "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": 0.015,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.95,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:field-studies:scene:study-0",
+   "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-o"
+  },
+  "provenance": [
+   {
+    "ref": "featured/field-studies.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:field-studies",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:field-studies",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "featured/field-studies.journey.json",
+      "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:field-studies:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:field-studies",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Field studies</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:field-studies\" data-expression-revision=\"1\"><h1>Field studies</h1><p>Frozen reading of expression:return-of-zero:field-studies at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-0\" aria-label=\"Ink\"><h2>Ink</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-0:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-0:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-1\" aria-label=\"Print\"><h2>Print</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-1:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-1:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-2\" aria-label=\"Gather\"><h2>Gather</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-2:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:4.86rem;opacity:1.00\" title=\"Gathering ring\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-3\" aria-label=\"Between\"><h2>Between</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-3:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:48.60%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-3:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:54.00%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-4\" aria-label=\"Language\"><h2>Language</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-4:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:51.00%;top:49.70%;font-size:4.13rem;opacity:1.00\" title=\"Ampersand\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-5\" aria-label=\"Weather\"><h2>Weather</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-5:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.70%;font-size:9.15rem;opacity:1.00\" title=\"Atmosphere\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-6\" aria-label=\"Quiet\"><h2>Quiet</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-6:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:52.00%;top:49.70%;font-size:4.05rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-6:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:58.40%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-7\" aria-label=\"Nocturne\"><h2>Nocturne</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-7:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-7:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:field-studies:scene:study-0"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-field-studies",
+  "world_ref": "expression:return-of-zero:field-studies",
+  "revision": 1,
+  "title": "Field studies",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:field-studies",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Field studies"
+      },
+      "fallback": {
+       "title": "Field studies"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:field-studies",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:field-studies",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:field-studies",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:field-studies",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "featured/field-studies.journey.json",
+            "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:field-studies:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:field-studies",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Field studies</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:field-studies\" data-expression-revision=\"1\"><h1>Field studies</h1><p>Frozen reading of expression:return-of-zero:field-studies at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-0\" aria-label=\"Ink\"><h2>Ink</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-0:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-0:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-1\" aria-label=\"Print\"><h2>Print</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-1:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-1:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-2\" aria-label=\"Gather\"><h2>Gather</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-2:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:4.86rem;opacity:1.00\" title=\"Gathering ring\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-3\" aria-label=\"Between\"><h2>Between</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-3:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:48.60%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-3:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:54.00%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-4\" aria-label=\"Language\"><h2>Language</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-4:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:51.00%;top:49.70%;font-size:4.13rem;opacity:1.00\" title=\"Ampersand\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-5\" aria-label=\"Weather\"><h2>Weather</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-5:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.70%;font-size:9.15rem;opacity:1.00\" title=\"Atmosphere\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-6\" aria-label=\"Quiet\"><h2>Quiet</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-6:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:52.00%;top:49.70%;font-size:4.05rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-6:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:58.40%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-7\" aria-label=\"Nocturne\"><h2>Nocturne</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-7:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-7:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:field-studies:scene:study-0"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:field-studies",
+        "revision": 1,
+        "title": "Field studies",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-0",
+          "revision": 1,
+          "title": "Ink",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-0:opening-o",
+           "expression:return-of-zero:field-studies:scene:study-0:opening-i"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-1",
+          "revision": 1,
+          "title": "Print",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-1:opening-o",
+           "expression:return-of-zero:field-studies:scene:study-1:opening-i"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-2",
+          "revision": 1,
+          "title": "Gather",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-2:opening-o"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-3",
+          "revision": 1,
+          "title": "Between",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-3:opening-o",
+           "expression:return-of-zero:field-studies:scene:study-3:opening-i"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-4",
+          "revision": 1,
+          "title": "Language",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-4:opening-o"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-5",
+          "revision": 1,
+          "title": "Weather",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-5:opening-o"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-6",
+          "revision": 1,
+          "title": "Quiet",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-6:opening-o",
+           "expression:return-of-zero:field-studies:scene:study-6:opening-i"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-7",
+          "revision": 1,
+          "title": "Nocturne",
+          "entity_refs": [
+           "expression:return-of-zero:field-studies:scene:study-7:opening-o",
+           "expression:return-of-zero:field-studies:scene:study-7:opening-i"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:field-studies:scene:study-0:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-o",
+          "revision": 1,
+          "title": "O — opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.22,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.53,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-0:opening-i": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-i",
+          "revision": 1,
+          "title": "I — interval",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": 0.015,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.95,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-1:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-1:opening-o",
+          "revision": 1,
+          "title": "O — opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.22,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.53,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-1:opening-i": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-1:opening-i",
+          "revision": 1,
+          "title": "I — interval",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": 0.015,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.95,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-2:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-2:opening-o",
+          "revision": 1,
+          "title": "Gathering ring",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.62,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-3:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-3:opening-o",
+          "revision": 1,
+          "title": "O — opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.14,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.53,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-3:opening-i": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-3:opening-i",
+          "revision": 1,
+          "title": "I — interval",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.4,
+            "automation": null
+           },
+           "y": {
+            "value": 0.015,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.95,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-4:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-4:opening-o",
+          "revision": 1,
+          "title": "Ampersand",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.1,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.375,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-5:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-5:opening-o",
+          "revision": 1,
+          "title": "Atmosphere",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 3.05,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-6:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-6:opening-o",
+          "revision": 1,
+          "title": "O — opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.35,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-6:opening-i": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-6:opening-i",
+          "revision": 1,
+          "title": "I — interval",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.84,
+            "automation": null
+           },
+           "y": {
+            "value": 0.015,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.95,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-7:opening-o": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-7:opening-o",
+          "revision": 1,
+          "title": "O — opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.22,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.53,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:field-studies:scene:study-7:opening-i": {
+          "entity_ref": "expression:return-of-zero:field-studies:scene:study-7:opening-i",
+          "revision": 1,
+          "title": "I — interval",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:field-studies",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "featured/field-studies.journey.json",
+             "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": 0.015,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.95,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:field-studies:scene:study-0",
+         "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-o"
+        },
+        "provenance": [
+         {
+          "ref": "featured/field-studies.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Field studies"
+      },
+      "fallback": {
+       "title": "Field studies",
+       "text": "Field studies: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:field-studies",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-field-studies",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:field-studies",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:field-studies",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "featured/field-studies.journey.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:field-studies"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:field-studies",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:field-studies",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:field-studies:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:field-studies"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:field-studies",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-field-studies:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-field-studies",
+    "world_ref": "expression:return-of-zero:field-studies",
+    "revision": 1,
+    "title": "Field studies",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:field-studies",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Field studies"
+        },
+        "fallback": {
+         "title": "Field studies"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:field-studies",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:field-studies",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:field-studies",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:field-studies",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "featured/field-studies.journey.json",
+              "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:field-studies:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:field-studies",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Field studies</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:field-studies\" data-expression-revision=\"1\"><h1>Field studies</h1><p>Frozen reading of expression:return-of-zero:field-studies at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-0\" aria-label=\"Ink\"><h2>Ink</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-0:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-0:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-1\" aria-label=\"Print\"><h2>Print</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-1:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-1:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-2\" aria-label=\"Gather\"><h2>Gather</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-2:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:4.86rem;opacity:1.00\" title=\"Gathering ring\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-3\" aria-label=\"Between\"><h2>Between</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-3:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:48.60%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-3:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:54.00%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-4\" aria-label=\"Language\"><h2>Language</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-4:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:51.00%;top:49.70%;font-size:4.13rem;opacity:1.00\" title=\"Ampersand\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-5\" aria-label=\"Weather\"><h2>Weather</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-5:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.70%;font-size:9.15rem;opacity:1.00\" title=\"Atmosphere\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-6\" aria-label=\"Quiet\"><h2>Quiet</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-6:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:52.00%;top:49.70%;font-size:4.05rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-6:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:58.40%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:field-studies:scene:study-7\" aria-label=\"Nocturne\"><h2>Nocturne</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-7:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:field-studies:scene:study-7:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:field-studies\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:field-studies:scene:study-0"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:field-studies",
+          "revision": 1,
+          "title": "Field studies",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-0",
+            "revision": 1,
+            "title": "Ink",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-0:opening-o",
+             "expression:return-of-zero:field-studies:scene:study-0:opening-i"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-1",
+            "revision": 1,
+            "title": "Print",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-1:opening-o",
+             "expression:return-of-zero:field-studies:scene:study-1:opening-i"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-2",
+            "revision": 1,
+            "title": "Gather",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-2:opening-o"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-3",
+            "revision": 1,
+            "title": "Between",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-3:opening-o",
+             "expression:return-of-zero:field-studies:scene:study-3:opening-i"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-4",
+            "revision": 1,
+            "title": "Language",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-4:opening-o"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-5",
+            "revision": 1,
+            "title": "Weather",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-5:opening-o"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-6",
+            "revision": 1,
+            "title": "Quiet",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-6:opening-o",
+             "expression:return-of-zero:field-studies:scene:study-6:opening-i"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:field-studies:scene:study-7",
+            "revision": 1,
+            "title": "Nocturne",
+            "entity_refs": [
+             "expression:return-of-zero:field-studies:scene:study-7:opening-o",
+             "expression:return-of-zero:field-studies:scene:study-7:opening-i"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:field-studies:scene:study-0:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-o",
+            "revision": 1,
+            "title": "O — opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.22,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.53,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-0:opening-i": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-i",
+            "revision": 1,
+            "title": "I — interval",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": 0.015,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.95,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-1:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-1:opening-o",
+            "revision": 1,
+            "title": "O — opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.22,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.53,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-1:opening-i": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-1:opening-i",
+            "revision": 1,
+            "title": "I — interval",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": 0.015,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.95,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-2:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-2:opening-o",
+            "revision": 1,
+            "title": "Gathering ring",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.62,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-3:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-3:opening-o",
+            "revision": 1,
+            "title": "O — opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.14,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.53,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-3:opening-i": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-3:opening-i",
+            "revision": 1,
+            "title": "I — interval",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.4,
+              "automation": null
+             },
+             "y": {
+              "value": 0.015,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.95,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-4:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-4:opening-o",
+            "revision": 1,
+            "title": "Ampersand",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.1,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.375,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-5:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-5:opening-o",
+            "revision": 1,
+            "title": "Atmosphere",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 3.05,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-6:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-6:opening-o",
+            "revision": 1,
+            "title": "O — opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.35,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-6:opening-i": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-6:opening-i",
+            "revision": 1,
+            "title": "I — interval",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.84,
+              "automation": null
+             },
+             "y": {
+              "value": 0.015,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.95,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-7:opening-o": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-7:opening-o",
+            "revision": 1,
+            "title": "O — opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.22,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.53,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:field-studies:scene:study-7:opening-i": {
+            "entity_ref": "expression:return-of-zero:field-studies:scene:study-7:opening-i",
+            "revision": 1,
+            "title": "I — interval",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:field-studies",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "featured/field-studies.journey.json",
+               "revision": "8bb3c2273faf0a3dfce5b11d2c2ce3a10935038dce5af658ee5ccce355b3b94b",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": 0.015,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.95,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:field-studies:scene:study-0",
+           "entity_ref": "expression:return-of-zero:field-studies:scene:study-0:opening-o"
+          },
+          "provenance": [
+           {
+            "ref": "featured/field-studies.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Field studies"
+        },
+        "fallback": {
+         "title": "Field studies",
+         "text": "Field studies: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:field-studies",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-field-studies",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:field-studies",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:field-studies",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "featured/field-studies.journey.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:field-studies"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:field-studies",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:field-studies",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-field-studies:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:field-studies",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Field studies",
+  "summary": "a living Expression · 8 scenes · 13 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:field-studies:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:field-studies",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Afield-studies"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:field-studies:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-field-studies",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:field-studies",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Field studies",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-field-studies:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-field-studies:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:field-studies",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:field-studies"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

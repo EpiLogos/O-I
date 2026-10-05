@@ -96,4 +96,4 @@ A real essence involves the specific relations through which an actuality has it
 
 **Verification:** The bounded reading and consulted-carrier scope are recorded in this source house. This heading repair adds no new source-verification claim.
 
-The bounded reading covered printed 19–26 and 59–61; it is not a claim of complete book reading. The source **sources** the [process dossier](../../../../dossiers/process.md) and **historicises** the [process-science development](../../../../histories/traditions-and-disciplines/process-systems-science/DEVELOPMENT.md). Those targets are under active development; their native QL reformulation retains its own derivation.
+The bounded reading covered printed 19–26 and 59–61; it is not a claim of complete book reading. The source **sources** the [process dossier](../../../../dossiers/process.md) and **historicises** the [process-science development](../../../../histories/traditions-and-disciplines/process-systems-science/DEVELOPMENT-process-systems-science.md). Those targets are under active development; their native QL reformulation retains its own derivation.

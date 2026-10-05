@@ -17,9 +17,9 @@ source_ids:
 
 ## #0 — A configuration selects its tones
 
-The [lens anchors](lens-anchors.md) **define** where the field is heard from; a context-frame, **CF**, configures relations within that field. File 4's [“The Diatonic CF Grammar, Major/Minor, and the 84-Fold Field”](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) **sources** a seven-step selection which gives the diatonic scale its musical body.
+The [lens anchors](lens-anchors.md) determine where the field is heard from; a context-frame, **CF**, configures relations within that field. The [musical frame sequence](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) makes a seven-step selection which gives the diatonic scale its musical body.
 
-The [musical-v3 house](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md), §I-4, **sources** the frames’ distinct operations. Their number is not a count of seven QL positions: CF5 enters a nested sixfold, CF6 bridges its return, and CF7 closes the encompassing passage. The selected musical position is also distinct from the position inside a frame’s notation.
+The [seven frames](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md), §I-4, have distinct operations. Their number is not a count of seven QL positions: CF5 enters a nested sixfold, CF6 bridges its return, and CF7 closes the encompassing passage. The selected musical position is also distinct from the position inside a frame’s notation.
 
 | CF | Native expression | Configurational operation |
 |---|---|---|
@@ -35,7 +35,7 @@ The source reads CF1–CF4 as the articulation of `0/1` and CF5–CF7 as the ret
 
 ## #1 — The major selection at Lens 0
 
-Use the chromatic C-reference map `p(k,ε)=2k+ε mod12`, where `ε=0` is Name/bimba and `ε=1` is Power/pratibimba. The candidate assigns the frames these musical selections:
+Use the chromatic C-reference map `p(k,ε)=2k+ε mod12`, where `ε=0` is Name/bimba and `ε=1` is Power/pratibimba. Each frame selects a positioned tone and the face through which it sounds:
 
 | Degree / frame | Selected position | Face | Note | Content |
 |---|---|---|---|---|
@@ -59,7 +59,7 @@ The unselected inner positions are `1′,3,4`, giving D♯, F♯, G♯; the unse
 
 ## #2 — The tetrachords carry exact return
 
-The [foundational ratios](foundational-ratios.md) **derive** the pure-ratio architecture:
+The [foundational ratio operations](foundational-ratios.md) compose the two fourths through their completing whole-tone:
 
 $$
 \frac43\cdot\frac98\cdot\frac43=\frac21.
@@ -80,7 +80,7 @@ $$
 
 The seven successive ratios are consequently `9/8,9/8,256/243,9/8,9/8,9/8,256/243`. Their product is exactly two. The tempered pitch-class selection above has the same ordered interval types under different frequency values; its semitones are `2^(1/12)`, not the pure leimma.
 
-The two small steps also perform different positional crossings. E→F keeps position 2 and exchanges its face. B→C in the next octave changes `5′→0`: both position and face change. The source coordinates their two crossings with its Klein return. The note sequence establishes those two face changes; a topological double-cover claim requires the additional construction kept in [A17](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md), which **qualifies** that coordination. Write the closing C as “C in the next octave” here: musical register return must not be confused with conjugate pitch C♯ at position `0′`.
+The two small steps perform different positional crossings. E→F keeps position 2 and exchanges its face. B→C in the next octave changes `5′→0`: both position and face change. Taylor coordinates these crossings with Klein return, whose [orientation-reversing construction](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md) supplies the topological office. The note sequence establishes the face changes; a double-cover claim requires that additional construction. Write the closing C as “C in the next octave” here: musical register return must not be confused with conjugate pitch C♯ at position `0′`.
 
 ## #3 — Parallel minor and modal rotation
 
@@ -142,6 +142,10 @@ $$
 =4'+2'=(5'\rightarrow0')=\frac01.
 $$
 
-The chain’s primes mark inverse-phase positions. Primes on the selected musical positions mark File 3’s conjugate Night face. An octave repeat is a further distinction of register, explicitly named in this record. These offices allow the complete return to remain readable.
+The chain’s primes mark inverse-phase positions. Primes on the selected musical positions mark File 3’s conjugate Night face. An octave repeat is a further distinction of sounding register. These offices allow the complete return to remain readable.
 
-The record **returns-to** [A15](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) through exact selections whose criterion is exposed, and [§3 · #4, Musical Resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) **embodies** their interval return. The CF grammar gives the achieved field several ways to become home. Its authorial epistemic interpretation remains attached to the actual configuration; its current ql-mef implementation remains unrecovered, so these are the housed candidate’s selections with the stated corrections.
+[Accountable musical reckoning](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) exposes the criterion of each exact selection. [Musical resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) receives its interval return. The CF grammar gives the achieved field several ways to become home: a lens retains a mode of knowing while a changed grounding changes how its selected relations can be heard.
+## Source and implementation standing
+
+The authorial epistemic interpretation remains attached to the actual configuration; its current ql-mef implementation remains unrecovered, so these are the housed candidate’s selections with the stated corrections.
+

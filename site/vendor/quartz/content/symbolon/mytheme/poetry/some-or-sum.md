@@ -10,11 +10,11 @@ type: _md_
 title: "Some or Sum"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c80679f10f7b6db4500ff
-source_id: 191a4797-123c-8067-9f10-f7b6db4500ff
 notion_created: 2025-02-05T20:38:03Z
 notion_edited: 2025-02-05T20:38:31.032Z
 status: sorted
 kind: poem
+source_id: some-or-sum
 ---
 So stark a contrast as this
 Serves to hold back all the notions of knowing

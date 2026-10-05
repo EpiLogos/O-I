@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -21,25 +21,25 @@ Group: `biblical-studies` · back to [Episteme · Source houses](episteme-source
 
 `lexicon`
 
-**Implicates:** *compares* → [Whole Field — Symbol / Account / Trust](../../../etymologies/symbol-account-and-trust/WHOLE-FIELD.md)
+**Implicates:** *compares* → [Whole Field — Symbol / Account / Trust](../../../etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md)
 
-**Reached from:** *sources* ← [Historical branches — Symbol, Account and Trust](../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
+**Reached from:** *sources* ← [Historical branches — Symbol, Account and Trust](../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
 
 ### [Ephesians — SBL-hosted reverse-interlinear witness](../../../sources/biblical-studies/pauline-corpus/ephesians-sbl-reverse-interlinear/ephesians-sbl-reverse-interlinear.md)
 
 `scriptural-text`
 
-**Implicates:** *sources* → [Apportionment / Economy — Historical Branches](../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES.md) · *qualifies* → [Whole Field — Apportionment / Economy](../../../etymologies/apportionment-and-economy/WHOLE-FIELD.md)
+**Implicates:** *sources* → [Apportionment / Economy — Historical Branches](../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES-apportionment-and-economy.md) · *qualifies* → [Whole Field — Apportionment / Economy](../../../etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md)
 
-**Reached from:** *historicises* ← [Apportionment / Economy — Historical Branches](../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
+**Reached from:** *sources* ← [Apportionment / Economy — Historical Branches](../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES-apportionment-and-economy.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
 
 ### [Hebrew Bible — Mechon Mamre Hebrew and JPS 1917 English, selected passages](../../../sources/biblical-studies/anonymous/hebrew-bible-mechon-mamre-jps1917/hebrew-bible-mechon-mamre-jps1917.md)
 
 `primary-text-translation`
 
-**Implicates:** *compares* → [Whole Field — Symbol / Account / Trust](../../../etymologies/symbol-account-and-trust/WHOLE-FIELD.md)
+**Implicates:** *compares* → [Whole Field — Symbol / Account / Trust](../../../etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md)
 
-**Reached from:** *sources* ← [Historical branches — Symbol, Account and Trust](../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
+**Reached from:** *sources* ← [Historical branches — Symbol, Account and Trust](../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
 
 ### [Hypostasis of the Archons — Bentley Layton online translation](../../../sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md)
 
@@ -47,7 +47,7 @@ Group: `biblical-studies` · back to [Episteme · Source houses](episteme-source
 
 **Implicates:** *unnamed* → [The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above](../../../../mytheme/worlds/late-antique-gnostic/hypostasis-archons-norea-sophia/WHOLE.md#25-adam-eve-and-the-rulers-attempt-to-possess-life)
 
-**Reached from:** *sources* ← [The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above](../../../../mytheme/worlds/late-antique-gnostic/hypostasis-archons-norea-sophia/WHOLE.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md), [The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above](../../../../mytheme/worlds/late-antique-gnostic/hypostasis-archons-norea-sophia/WHOLE.md)
+**Reached from:** *sources* ← [The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above](../../../../mytheme/worlds/late-antique-gnostic/hypostasis-archons-norea-sophia/WHOLE.md) · *unnamed* ← [Return of Zero — Passage Locator Ledger](../../../sources/PASSAGE-LEDGER.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
 
 ### [The Book of Job — KJV, eBible eng-kjv2006 digital witness (2026-08-19)](../../../sources/biblical-studies/anonymous/biblical-job-kjv-ebible-eng-kjv2006/biblical-job-kjv-ebible-eng-kjv2006.md)
 

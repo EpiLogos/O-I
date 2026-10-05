@@ -1,0 +1,2989 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-mother-assumption-chiasm",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+  "revision": 1,
+  "title": "Mother, Assumption and chiasm",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope",
+    "revision": 1,
+    "title": "The encounter at Skenfrith",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm",
+    "revision": 1,
+    "title": "The incarnation–Assumption chiasm",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings",
+    "revision": 1,
+    "title": "Wheels, wings and the eagle's signed power",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return",
+    "revision": 1,
+    "title": "The completed constellation returns",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371",
+     "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355",
+    "revision": 1,
+    "title": "Mary lifted — the Assumption image of the cope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.209,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356",
+    "revision": 1,
+    "title": "the perceived rabbits / identified angels — ambiguity with an exact place",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1955,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357",
+    "revision": 1,
+    "title": "two wheels — changing orientation, whole form persisting",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358",
+    "revision": 1,
+    "title": "six wings — the seraphic forms; the proposed 6+6′",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359",
+    "revision": 1,
+    "title": "the eagle with two heads — one body, opposed orientations",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.33,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360",
+    "revision": 1,
+    "title": "receiving → bearing → received",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361",
+    "revision": 1,
+    "title": "the chiasm — 1–2–3 articulated in 4–5–0's field; 4–5–0 recognised in 1–2–3's",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362",
+    "revision": 1,
+    "title": "Jung's attributed movement — Sophia's remembrance; Mary appointed Sophia's embodiment (CW11 §§609–628, 746–757)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363",
+    "revision": 1,
+    "title": "Jung's own worry — protections that separate Mary from ordinary humanity (§§626–627)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364",
+    "revision": 1,
+    "title": "the wheel sequence — a first orientation, its inverse, their explicit relation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.245,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365",
+    "revision": 1,
+    "title": "the six wings — one sixfold and its primed counterpart, each retaining (1,2,3):(4,5,0)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.255,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366",
+    "revision": 1,
+    "title": "the rejected vertical pairings — 2↔5 and 3↔0 corrected; only 1↔4 of the proposal holds",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367",
+    "revision": 1,
+    "title": "(-1)/(+1) — the eagle's retained form; cancellation and appropriation refused",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.38,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368",
+    "revision": 1,
+    "title": "3:1 = 3:3 — the one recognised as the unitive condition of the three",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1725,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369",
+    "revision": 1,
+    "title": "the body persisting on return — recognition opens the one rather than evacuating it",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.29,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.17,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370",
+    "revision": 1,
+    "title": "A25/A29 — bearing a consequential office without owning the field; the completed product returning consequence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371",
+    "revision": 1,
+    "title": "A35/A36 — the return toward the body, history and work that made the form possible",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372",
+    "revision": 1,
+    "title": "the Name/Power series — an articulated name borne, sustained, brought into life",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-mother-assumption-chiasm.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Mother, Assumption and chiasm</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm\" data-expression-revision=\"1\"><h1>Mother, Assumption and chiasm</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-mother-assumption-chiasm at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope\" aria-label=\"The encounter at Skenfrith\"><h2>The encounter at Skenfrith</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.10%;font-size:0.63rem;opacity:1.00\" title=\"Mary lifted — the Assumption image of the cope\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"the perceived rabbits / identified angels — ambiguity with an exact place\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:47.00%;font-size:1.65rem;opacity:1.00\" title=\"two wheels — changing orientation, whole form persisting\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.90rem;opacity:1.00\" title=\"six wings — the seraphic forms; the proposed 6+6′\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.99rem;opacity:1.00\" title=\"the eagle with two heads — one body, opposed orientations\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm\" aria-label=\"The incarnation–Assumption chiasm\"><h2>The incarnation–Assumption chiasm</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"receiving → bearing → received\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.90rem;opacity:1.00\" title=\"the chiasm — 1–2–3 articulated in 4–5–0&#39;s field; 4–5–0 recognised in 1–2–3&#39;s\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.81rem;opacity:1.00\" title=\"Jung&#39;s attributed movement — Sophia&#39;s remembrance; Mary appointed Sophia&#39;s embodiment (CW11 §§609–628, 746–757)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"Jung&#39;s own worry — protections that separate Mary from ordinary humanity (§§626–627)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings\" aria-label=\"Wheels, wings and the eagle&#39;s signed power\"><h2>Wheels, wings and the eagle&#39;s signed power</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:0.73rem;opacity:1.00\" title=\"the wheel sequence — a first orientation, its inverse, their explicit relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:0.77rem;opacity:1.00\" title=\"the six wings — one sixfold and its primed counterpart, each retaining (1,2,3):(4,5,0)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the rejected vertical pairings — 2↔5 and 3↔0 corrected; only 1↔4 of the proposal holds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:1.14rem;opacity:1.00\" title=\"(-1)/(+1) — the eagle&#39;s retained form; cancellation and appropriation refused\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return\" aria-label=\"The completed constellation returns\"><h2>The completed constellation returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"3:1 = 3:3 — the one recognised as the unitive condition of the three\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"the body persisting on return — recognition opens the one rather than evacuating it\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A25/A29 — bearing a consequential office without owning the field; the completed product returning consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A35/A36 — the return toward the body, history and work that made the form possible\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.80%;font-size:0.72rem;opacity:1.00\" title=\"the Name/Power series — an articulated name borne, sustained, brought into life\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-mother-assumption-chiasm",
+  "world_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+  "revision": 1,
+  "title": "Mother, Assumption and chiasm",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Mother, Assumption and chiasm"
+      },
+      "fallback": {
+       "title": "Mother, Assumption and chiasm"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Mother, Assumption and chiasm</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm\" data-expression-revision=\"1\"><h1>Mother, Assumption and chiasm</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-mother-assumption-chiasm at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope\" aria-label=\"The encounter at Skenfrith\"><h2>The encounter at Skenfrith</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.10%;font-size:0.63rem;opacity:1.00\" title=\"Mary lifted — the Assumption image of the cope\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"the perceived rabbits / identified angels — ambiguity with an exact place\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:47.00%;font-size:1.65rem;opacity:1.00\" title=\"two wheels — changing orientation, whole form persisting\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.90rem;opacity:1.00\" title=\"six wings — the seraphic forms; the proposed 6+6′\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.99rem;opacity:1.00\" title=\"the eagle with two heads — one body, opposed orientations\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm\" aria-label=\"The incarnation–Assumption chiasm\"><h2>The incarnation–Assumption chiasm</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"receiving → bearing → received\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.90rem;opacity:1.00\" title=\"the chiasm — 1–2–3 articulated in 4–5–0&#39;s field; 4–5–0 recognised in 1–2–3&#39;s\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.81rem;opacity:1.00\" title=\"Jung&#39;s attributed movement — Sophia&#39;s remembrance; Mary appointed Sophia&#39;s embodiment (CW11 §§609–628, 746–757)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"Jung&#39;s own worry — protections that separate Mary from ordinary humanity (§§626–627)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings\" aria-label=\"Wheels, wings and the eagle&#39;s signed power\"><h2>Wheels, wings and the eagle&#39;s signed power</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:0.73rem;opacity:1.00\" title=\"the wheel sequence — a first orientation, its inverse, their explicit relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:0.77rem;opacity:1.00\" title=\"the six wings — one sixfold and its primed counterpart, each retaining (1,2,3):(4,5,0)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the rejected vertical pairings — 2↔5 and 3↔0 corrected; only 1↔4 of the proposal holds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:1.14rem;opacity:1.00\" title=\"(-1)/(+1) — the eagle&#39;s retained form; cancellation and appropriation refused\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return\" aria-label=\"The completed constellation returns\"><h2>The completed constellation returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"3:1 = 3:3 — the one recognised as the unitive condition of the three\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"the body persisting on return — recognition opens the one rather than evacuating it\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A25/A29 — bearing a consequential office without owning the field; the completed product returning consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A35/A36 — the return toward the body, history and work that made the form possible\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.80%;font-size:0.72rem;opacity:1.00\" title=\"the Name/Power series — an articulated name borne, sustained, brought into life\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+        "revision": 1,
+        "title": "Mother, Assumption and chiasm",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope",
+          "revision": 1,
+          "title": "The encounter at Skenfrith",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm",
+          "revision": 1,
+          "title": "The incarnation–Assumption chiasm",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings",
+          "revision": 1,
+          "title": "Wheels, wings and the eagle's signed power",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return",
+          "revision": 1,
+          "title": "The completed constellation returns",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371",
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355",
+          "revision": 1,
+          "title": "Mary lifted — the Assumption image of the cope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.209,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356",
+          "revision": 1,
+          "title": "the perceived rabbits / identified angels — ambiguity with an exact place",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1955,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357",
+          "revision": 1,
+          "title": "two wheels — changing orientation, whole form persisting",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358",
+          "revision": 1,
+          "title": "six wings — the seraphic forms; the proposed 6+6′",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359",
+          "revision": 1,
+          "title": "the eagle with two heads — one body, opposed orientations",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.33,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360",
+          "revision": 1,
+          "title": "receiving → bearing → received",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361",
+          "revision": 1,
+          "title": "the chiasm — 1–2–3 articulated in 4–5–0's field; 4–5–0 recognised in 1–2–3's",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362",
+          "revision": 1,
+          "title": "Jung's attributed movement — Sophia's remembrance; Mary appointed Sophia's embodiment (CW11 §§609–628, 746–757)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363",
+          "revision": 1,
+          "title": "Jung's own worry — protections that separate Mary from ordinary humanity (§§626–627)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364",
+          "revision": 1,
+          "title": "the wheel sequence — a first orientation, its inverse, their explicit relation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.245,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365",
+          "revision": 1,
+          "title": "the six wings — one sixfold and its primed counterpart, each retaining (1,2,3):(4,5,0)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.255,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366",
+          "revision": 1,
+          "title": "the rejected vertical pairings — 2↔5 and 3↔0 corrected; only 1↔4 of the proposal holds",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367",
+          "revision": 1,
+          "title": "(-1)/(+1) — the eagle's retained form; cancellation and appropriation refused",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.38,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368",
+          "revision": 1,
+          "title": "3:1 = 3:3 — the one recognised as the unitive condition of the three",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1725,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369",
+          "revision": 1,
+          "title": "the body persisting on return — recognition opens the one rather than evacuating it",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.29,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.17,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370",
+          "revision": 1,
+          "title": "A25/A29 — bearing a consequential office without owning the field; the completed product returning consequence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371",
+          "revision": 1,
+          "title": "A35/A36 — the return toward the body, history and work that made the form possible",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372",
+          "revision": 1,
+          "title": "the Name/Power series — an articulated name borne, sustained, brought into life",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-mother-assumption-chiasm.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Mother, Assumption and chiasm"
+      },
+      "fallback": {
+       "title": "Mother, Assumption and chiasm",
+       "text": "Mother, Assumption and chiasm: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-mother-assumption-chiasm",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-mother-assumption-chiasm:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-mother-assumption-chiasm:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-mother-assumption-chiasm",
+    "world_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+    "revision": 1,
+    "title": "Mother, Assumption and chiasm",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Mother, Assumption and chiasm"
+        },
+        "fallback": {
+         "title": "Mother, Assumption and chiasm"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Mother, Assumption and chiasm</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm\" data-expression-revision=\"1\"><h1>Mother, Assumption and chiasm</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-mother-assumption-chiasm at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope\" aria-label=\"The encounter at Skenfrith\"><h2>The encounter at Skenfrith</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.10%;font-size:0.63rem;opacity:1.00\" title=\"Mary lifted — the Assumption image of the cope\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"the perceived rabbits / identified angels — ambiguity with an exact place\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:47.00%;font-size:1.65rem;opacity:1.00\" title=\"two wheels — changing orientation, whole form persisting\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.90rem;opacity:1.00\" title=\"six wings — the seraphic forms; the proposed 6+6′\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.99rem;opacity:1.00\" title=\"the eagle with two heads — one body, opposed orientations\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm\" aria-label=\"The incarnation–Assumption chiasm\"><h2>The incarnation–Assumption chiasm</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"receiving → bearing → received\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.90rem;opacity:1.00\" title=\"the chiasm — 1–2–3 articulated in 4–5–0&#39;s field; 4–5–0 recognised in 1–2–3&#39;s\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.81rem;opacity:1.00\" title=\"Jung&#39;s attributed movement — Sophia&#39;s remembrance; Mary appointed Sophia&#39;s embodiment (CW11 §§609–628, 746–757)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"Jung&#39;s own worry — protections that separate Mary from ordinary humanity (§§626–627)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings\" aria-label=\"Wheels, wings and the eagle&#39;s signed power\"><h2>Wheels, wings and the eagle&#39;s signed power</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:0.73rem;opacity:1.00\" title=\"the wheel sequence — a first orientation, its inverse, their explicit relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:0.77rem;opacity:1.00\" title=\"the six wings — one sixfold and its primed counterpart, each retaining (1,2,3):(4,5,0)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the rejected vertical pairings — 2↔5 and 3↔0 corrected; only 1↔4 of the proposal holds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:1.14rem;opacity:1.00\" title=\"(-1)/(+1) — the eagle&#39;s retained form; cancellation and appropriation refused\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return\" aria-label=\"The completed constellation returns\"><h2>The completed constellation returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"3:1 = 3:3 — the one recognised as the unitive condition of the three\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"the body persisting on return — recognition opens the one rather than evacuating it\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A25/A29 — bearing a consequential office without owning the field; the completed product returning consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"A35/A36 — the return toward the body, history and work that made the form possible\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.80%;font-size:0.72rem;opacity:1.00\" title=\"the Name/Power series — an articulated name borne, sustained, brought into life\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+          "revision": 1,
+          "title": "Mother, Assumption and chiasm",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope",
+            "revision": 1,
+            "title": "The encounter at Skenfrith",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm",
+            "revision": 1,
+            "title": "The incarnation–Assumption chiasm",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings",
+            "revision": 1,
+            "title": "Wheels, wings and the eagle's signed power",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return",
+            "revision": 1,
+            "title": "The completed constellation returns",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371",
+             "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355",
+            "revision": 1,
+            "title": "Mary lifted — the Assumption image of the cope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.209,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e356",
+            "revision": 1,
+            "title": "the perceived rabbits / identified angels — ambiguity with an exact place",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1955,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e357",
+            "revision": 1,
+            "title": "two wheels — changing orientation, whole form persisting",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e358",
+            "revision": 1,
+            "title": "six wings — the seraphic forms; the proposed 6+6′",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e359",
+            "revision": 1,
+            "title": "the eagle with two heads — one body, opposed orientations",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.33,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e360",
+            "revision": 1,
+            "title": "receiving → bearing → received",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e361",
+            "revision": 1,
+            "title": "the chiasm — 1–2–3 articulated in 4–5–0's field; 4–5–0 recognised in 1–2–3's",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e362",
+            "revision": 1,
+            "title": "Jung's attributed movement — Sophia's remembrance; Mary appointed Sophia's embodiment (CW11 §§609–628, 746–757)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-1-chiasm:e363",
+            "revision": 1,
+            "title": "Jung's own worry — protections that separate Mary from ordinary humanity (§§626–627)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e364",
+            "revision": 1,
+            "title": "the wheel sequence — a first orientation, its inverse, their explicit relation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.245,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e365",
+            "revision": 1,
+            "title": "the six wings — one sixfold and its primed counterpart, each retaining (1,2,3):(4,5,0)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.255,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e366",
+            "revision": 1,
+            "title": "the rejected vertical pairings — 2↔5 and 3↔0 corrected; only 1↔4 of the proposal holds",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-3-wings:e367",
+            "revision": 1,
+            "title": "(-1)/(+1) — the eagle's retained form; cancellation and appropriation refused",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.38,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e368",
+            "revision": 1,
+            "title": "3:1 = 3:3 — the one recognised as the unitive condition of the three",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1725,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e369",
+            "revision": 1,
+            "title": "the body persisting on return — recognition opens the one rather than evacuating it",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.29,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.17,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e370",
+            "revision": 1,
+            "title": "A25/A29 — bearing a consequential office without owning the field; the completed product returning consequence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e371",
+            "revision": 1,
+            "title": "A35/A36 — the return toward the body, history and work that made the form possible",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-5-return:e372",
+            "revision": 1,
+            "title": "the Name/Power series — an articulated name borne, sustained, brought into life",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm:scene:m-mot-0-cope:e355"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-mother-assumption-chiasm.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Mother, Assumption and chiasm"
+        },
+        "fallback": {
+         "title": "Mother, Assumption and chiasm",
+         "text": "Mother, Assumption and chiasm: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-mother-assumption-chiasm",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-mother-assumption-chiasm.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-mother-assumption-chiasm"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-mother-assumption-chiasm:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Mother, Assumption and chiasm",
+  "summary": "a living Expression · 4 scenes · 18 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-mother-assumption-chiasm:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-mother-assumption-chiasm"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-mother-assumption-chiasm:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-mother-assumption-chiasm",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-mother-assumption-chiasm",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Mother, Assumption and chiasm",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-mother-assumption-chiasm:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-mother-assumption-chiasm:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-mother-assumption-chiasm",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-mother-assumption-chiasm"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

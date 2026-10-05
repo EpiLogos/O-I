@@ -14,7 +14,7 @@ tags: [epi-logos/antykathera-essay, argument-map/live, argument-map/section, arg
 # §1 · #2 — The Empty Set Generates One
 
 <!-- reader-navigation -->
-Movement 15 of 48 · [This room](../ROOM.md) · [← Previous](14-s1-p1-sunya-operational.md) · [Next →](16-s1-p3-crossed-zero.md)
+Movement 15 of 48 · [This room](../ROOM-02-return-of-zero.md) · [← Previous](14-s1-p1-sunya-operational.md) · [Next →](16-s1-p3-crossed-zero.md)
 <!-- /reader-navigation -->
 
 ## Movement thesis
@@ -54,4 +54,3 @@ The authorial reading can therefore say: **mathematics gives a concrete case in 
 
 The next movement asks how the wider relation can be carried as a sign without pretending that a mathematical empty set, a graphic zero and the unobjectifiable Subject are the same object: [[16-s1-p3-crossed-zero|§1 · #3 — The Crossed Zero]].
 
-The [authored P1 route for M15](../P1-CANONICAL-ALIGNMENT.md#p1-m15) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

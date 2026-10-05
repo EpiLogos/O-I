@@ -2,7 +2,7 @@
 source_id: 07-instrument-returns-p1-canonical-alignment
 ---
 
-# P1 Canonical Alignment — §5→0 Instrument Returns
+# P1 Canonical Alignment — `§5→0` Instrument Returns
 
 **Wave:** T14 / #15.  
 **Movements:** 43–48.  
@@ -11,7 +11,7 @@ source_id: 07-instrument-returns-p1-canonical-alignment
 
 ## Section burden after T25 R3 fold-back
 
-§5→0 is the earned vocational, political, ontological and Symbolon return **from the restored six-product paradigm**, not a second technical architecture section. It preserves Objective Co-Internality, the Antikythera attunement image, commons/trust, Idealism, artificial-subjectivity openness and **THE MIRROR THAT MOVES FIRST** while preventing any technical reflective field, product suite, commons or planetary coordination layer from being promoted into a super-subject or counterfeit source.
+`§5→0` is the earned vocational, political, ontological and Symbolon return **from the restored six-product paradigm**, not a second technical architecture section. It preserves Objective Co-Internality, the Antikythera attunement image, commons/trust, Idealism, artificial-subjectivity openness and **THE MIRROR THAT MOVES FIRST** while preventing any technical reflective field, product suite, commons or planetary coordination layer from being promoted into a super-subject or counterfeit source.
 
 The section inherits one decisive distinction from §5: **Objective Internality is paradigmatic existence as lived/enacted mediation; the six O:I products are one deliberately constructed paradigm within that general capacity.** Epi-Logos is earned only where the paradigm's achieved articulation can return to enactment, receive encounter and change the conditions of a later act. Expression can make that articulation perceptible; computational Vimarśa can revise a local determination; neither by itself establishes the stronger paradigm return.
 

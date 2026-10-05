@@ -10,13 +10,11 @@ import * as Plugin from "./quartz/plugins"
  */
 const config: QuartzConfig = {
   configuration: {
-    pageTitle: "The Return of Zero",
+    pageTitle: "Confronting the Limit",
     pageTitleSuffix: "",
     enableSPA: true,
     enablePopovers: true,
-    analytics: {
-      provider: null,
-    },
+    analytics: null,
     locale: "en-US",
     baseUrl: "oi.epi-logos.org/essay",
     ignorePatterns: ["private", "templates", ".obsidian"],

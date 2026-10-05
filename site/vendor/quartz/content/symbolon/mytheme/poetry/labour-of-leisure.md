@@ -10,11 +10,11 @@ type: _md_
 title: "Labour of Leisure"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c80ef980df6dbe3aafa31
-source_id: 191a4797-123c-80ef-980d-f6dbe3aafa31
 notion_created: 2025-02-05T18:53:05Z
 notion_edited: 2025-02-05T18:53:22.891Z
 status: sorted
 kind: poem
+source_id: labour-of-leisure
 ---
 Completion meets perfection
 When we know

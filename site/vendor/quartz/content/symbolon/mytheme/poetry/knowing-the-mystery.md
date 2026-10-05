@@ -10,11 +10,11 @@ type: _md_
 title: "Knowing, the Mystery"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c809f8ec4e93c709d2665
-source_id: 18fa4797-123c-809f-8ec4-e93c709d2665
 notion_created: 2025-02-03T13:07:47Z
 notion_edited: 2025-02-03T13:08:00.315Z
 status: sorted
 kind: poem
+source_id: knowing-the-mystery
 ---
 There is worldly knowledge
 and there is knowing the mystery of the world;

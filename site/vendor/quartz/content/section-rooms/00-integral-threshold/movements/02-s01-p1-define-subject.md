@@ -13,7 +13,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, sta
 # §0/1 · #1 — Define the Subject Without Making It an Object
 
 <!-- reader-navigation -->
-Movement 02 of 48 · [This room](../ROOM.md) · [← Previous](01-s01-p0-question-before-mechanism.md) · [Next →](03-s01-p2-definition-cut-gift-danger.md)
+Movement 02 of 48 · [This room](../ROOM-00-integral-threshold.md) · [← Previous](01-s01-p0-question-before-mechanism.md) · [Next →](03-s01-p2-definition-cut-gift-danger.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -32,6 +32,5 @@ The later essay will name these offices more directly as **Subjective Immediacy 
 [the Prisoner whole](../../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md#prisoner-asymmetric-count) **figures** this limit in the opening exchange: a question about the source of the numbering receives the speaker's assigned number as its answer. The first-person refusal keeps the source-question distinct from the predicate through which the person has been identified. The narrative return does not substitute a concealed Number One for the non-objectifiable Subject.
 
 ## Anchor and transition
-**Relational anchor:** knower — means — known; the later slash will carry the work presently done by *pramāṇa*, but no QL notation is required yet. **Source path:** [[symbolon/episteme/sources/history-philosophy-of-science/frank/frank-gleiser-thompson-2024-blind-spot/frank-gleiser-thompson-2024-blind-spot.md|The Blind Spot — Frank, Gleiser, Thompson]]. Definition itself becomes the next object of scrutiny in [[03-s01-p2-definition-cut-gift-danger|§0/1 · #2 — Definition as Cut, Gift, and Danger]].
+**Relational anchor:** knower — means — known; the later slash will carry the work presently done by *pramāṇa*, but no QL notation is required yet. **Source path:** [[symbolon/episteme/sources/history-philosophy-of-science/frank/frank-gleiser-thompson-2024-blind-spot/frank-gleiser-thompson-2024-blind-spot|The Blind Spot — Frank, Gleiser, Thompson]]. Definition itself becomes the next object of scrutiny in [[03-s01-p2-definition-cut-gift-danger|§0/1 · #2 — Definition as Cut, Gift, and Danger]].
 
-The [authored P1 route for M02](../P1-CANONICAL-ALIGNMENT.md#p1-m02) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

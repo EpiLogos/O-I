@@ -15,7 +15,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5 · #3 — Software Factory — Transformation
 
 <!-- reader-navigation -->
-Movement 40 of 48 · [This room](../ROOM.md) · [← Previous](39-s5-p2-j-space.md) · [Next →](41-s5-p4-bimba-energy-fields.md)
+Movement 40 of 48 · [This room](../ROOM-06-objective-internality.md) · [← Previous](39-s5-p2-j-space.md) · [Next →](41-s5-p4-bimba-energy-fields.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -26,7 +26,7 @@ Movement 40 of 48 · [This room](../ROOM.md) · [← Previous](39-s5-p2-j-space.
 
 The whole pair is **L3 Processual × L2′ Alchemical-Elemental**. Processual gives Concrescent desire, Actual occasion, Ingression, Eternal objects, Community integration and Satisfaction/Perishing: something wants to become; possible forms enter an actual occasion; the result enters a wider community; completion passes into inherited condition. Alchemical-Elemental gives Aether, Earth, Water, Air, Fire and Salt: open field, matter and resistance, flow, mediation, energetic transformation and precipitated form. Development therefore has both process and substance.
 
-The old preference/hidden-zero material becomes one deep case inside this office. A preference score is a conditioned measure: dataset, comparison set, evaluator, reference policy and institution participate in the developmental criterion. Making those conditions visible matters because a system can optimise perfectly inside the wrong frame. A changed score, a changed criterion and a changed commission are progressively deeper transformations and must remain distinguishable.
+Preference and the hidden zero become one deep case inside transformation. A preference score is a conditioned measure: dataset, comparison set, evaluator, reference policy and institution participate in the developmental criterion. Making those conditions visible matters because a system can optimise perfectly inside a frame whose criterion is itself what the encounter has called into question. A changed score, changed criterion and changed commission are progressively different depths of transformation.
 
 That is why **Gate** and **Recognition** perform different work. A Gate decides whether a candidate meets a stated condition. Recognition asks what the encounter means for the conditions themselves. A failing test can reveal an implementation defect, a bad design or a mistaken task; a passing test can coexist with a human encounter showing that the whole undertaking has been misframed. Transformation becomes reflective where the return reaches the level that actually needs to change.
 
@@ -42,4 +42,4 @@ A/C gives this movement its technical body through Project and Run identity; Art
 
 Transformation precipitates a new condition, but every transformation occurs somewhere and meets material resistance. The next movement therefore turns to [Workcell — Situated Existence](41-s5-p4-bimba-energy-fields.md).
 
-**Owning product:** [S3 — Software Factory](../../arguments/products/S3-Software-Factory.md). **Whole field:** [S — World and Life](../../arguments/products/S-World-and-Life.md). The [authored P1 route for M40](../P1-CANONICAL-ALIGNMENT.md#p1-m40) carries the explicit S and A/C alignment.
+[Software Factory](../../arguments/products/S3-Software-Factory.md) gives this movement its technical body within the wider [World and Life](../../arguments/products/S-World-and-Life.md) field. Transformation becomes developmental when evidence and encounter can alter the condition from which the next project begins.

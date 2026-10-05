@@ -13,7 +13,7 @@ source_relation: "Extracted internal derivation"
 
 The input is lived `0/1`, received through the already explicated slash `/ = ( = =/≠ ≠ )`. The operation is to derive the qualitative relations through which this knowing-act becomes accountable. The sixfold count alone does not supply those meanings.
 
-The [Binary Explication house](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §5, sources the line-by-line development through its poem. The [core-theorems spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), §II(c), curates the determination sequence. The [root spine-index](../../eight-determinations.md) gathers their twelvefold setting.
+In [Taylor's Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §5, the poem makes one knowing-act unfold through ground, questioning, force, recurrence, personed context and horizon. The [core theorem](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), §II(c), holds their ordered sequence; the [twelvefold setting](../../eight-determinations.md) gives each its conjugate face.
 
 ## #1 — Ground becomes answerable
 
@@ -47,6 +47,6 @@ The forward harmonics pair Ground/Definition as Being, Dynamis/Pattern as Becomi
 
 ## #5→0 — The foundation is recognised through finding
 
-The poem's closing movement says that the foundation of mind remains unfound by the mental. Every act of finding already operates through the condition it seeks to make into an object. [1/0](../../1-0.md) returns the achieved articulation through this recognition. File 1 closes on its short definitional chain; process and music carry the full inverse-phase circuit.
+The poem's closing movement says that the foundation of mind remains unfound by the mental. Every act of finding already operates through the condition it seeks to make into an object. [1/0](../../1-0.md) returns the achieved articulation through this recognition. The short definitional chain recognises this achieved relation; process and music unfold the inverse-phase circuit through their further transformations.
 
-The [Catuṣkoṭi crossing](catuskoti-crossing.md) extends how these relations change from descriptions into lived recognition. This projection returns-to [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) and [Movement25](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md), retaining every determination's exact place in the whole.
+The [Catuṣkoṭi crossing](catuskoti-crossing.md) lets these relations pass from descriptions into lived recognition. The [eightfold relation](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) and its [ordered traversal](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md) retain every determination's exact place: the account can become more articulate without turning its condition into one more content.

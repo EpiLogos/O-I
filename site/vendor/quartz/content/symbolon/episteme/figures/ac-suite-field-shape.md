@@ -22,7 +22,7 @@ The canonical A/C suite is one shared field — 36 Arguments, 36 conjugate faces
 ## Declared data (inputs)
 
 - [A/C root](../../../section-rooms/arguments/conjugate/AC.md), Declared field: "Hangs beneath it: A01–A36 …, A01′–A36′ … and C01–C64. With this root they constitute the inherited **137-record shared suite**"; and the root's constitution: "`A/C` is the full `0/1` field", "the prime creates a face, not a second node".
-- [Central plan](../../../../../the-return-of-zero-central-plan.md): "the existing 36 A, 36 A′, 64 C and A/C"; the seven product records (S + S0–S5) add to it — "**144 shared records once materialised**", "admitted separately, not counted into existence by this sentence".
+- Central plan: "the existing 36 A, 36 A′, 64 C and A/C"; the seven product records (S + S0–S5) add to it — "**144 shared records once materialised**", "admitted separately, not counted into existence by this sentence".
 - [Rooms README](../../../section-rooms/README.md): "There are eight rooms. Each holds six movements. Together they are the 48-step reading"; "Each room's `P1-CANONICAL-ALIGNMENT.md` records which of these a movement may draw on."
 - **Directory census, verified 2026-09-25:** `arguments/A*.md` = 36; `arguments/conjugate/A*prime*.md` = 36; canonical `arguments/concepts/C##-*.md` = 64; `AC.md` = 1; movement files = 48; `P1-CANONICAL-ALIGNMENT.md` = 8; product records = 7.
 - Example route surface: [§5 P1-CANONICAL-ALIGNMENT](../../../section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md) — per-movement routes naming S subjects, A/A′ owners and C owners.
@@ -52,7 +52,7 @@ A re-render must preserve: (a) the census identity 36 + 36 + 64 + 1 = 137 with t
 - [A/C root](../../../section-rooms/arguments/conjugate/AC.md) — the 137-record declaration and the root's dual-form constitution
 - [Arguments field](../../../section-rooms/arguments/README.md) · [Conjugate field](../../../section-rooms/arguments/conjugate/README.md) · [Concepts CANONICAL-INDEX](../../../section-rooms/arguments/concepts/CANONICAL-INDEX.md) · [Products](../../../section-rooms/arguments/products/README.md)
 - The eight alignments: `section-rooms/{00-integral-threshold,…,07-instrument-returns}/P1-CANONICAL-ALIGNMENT.md` (e.g. [§5](../../../section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md))
-- [Rooms README](../../../section-rooms/README.md) — the 8 × 6 = 48 structure; [Central plan](../../../../../the-return-of-zero-central-plan.md) — the census sentence and the 144-once-materialised rule
+- [Rooms README](../../../section-rooms/README.md) — the 8 × 6 = 48 structure; Central plan — the census sentence and the 144-once-materialised rule
 
 ## Caption
 

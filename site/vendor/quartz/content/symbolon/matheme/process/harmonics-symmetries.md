@@ -21,7 +21,7 @@ The Process pass has counted and placed the six, read them through the slash, an
 
 In the native field, `0` names the singular One, `1` the polyvalent All, and `/` their relating activity. Here position indices `#0` through `#5` locate the six determinations; they are not numerical values of those determinations. Pair notation such as `{0,1}` below names two positions. It must remain distinct from the native orientation `0/1`. The source applies these positional groupings in each phase: `{0,1}` and `{0′,1′}` name corresponding pairs, while the prime records the inverse phase rather than adding positions to the six.
 
-The [Binary Explication's §4′ passage](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) **sources** the local maps. The [curated core spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) **defines** their place in the eight-determination field: parent relation, six qualitative determinations, and return-switch. [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) **grounds** the traversal that keeps each pairing answerable to the whole.
+In the [Binary Explication's §4′ passage](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), the local maps organise the same positions in different ways. The [complete determination field](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) holds their place in the eight-determination sequence: parent relation, six qualitative determinations, and return-switch. [The eight determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) retain the whole in which each pairing takes its particular place.
 
 ## #1 — Adjacent pairs give Being, Becoming and Knowing
 
@@ -37,7 +37,7 @@ The sums are `0+1=1`, `2+3=5`, `4+5=9`. Their successive differences are both fo
 
 Being joins the field's presence with its ability to be called to account. The source's bare `−` and doubled `−−` give the first relation its self-registering form. The curated determination field develops it as Ground and Definition: what appears is present, and that presence can be questioned and asserted.
 
-Becoming joins the mixed forms `−+` and `+−`, expression and inverse. Differentiation becomes a repeatable pattern, and the pattern remains capable of further instance. [A12](../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md) **grounds** the whole/many movement through which the pair remains active. Its two directions give the passage from Being into Knowing its operative middle.
+Becoming joins the mixed forms `−+` and `+−`, expression and inverse. Differentiation becomes a repeatable pattern, and the pattern remains capable of further instance. [The whole/many relation](../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md) lets a whole differentiate into instances while each instance retains its relation to that whole. Its two directions give the passage from Being into Knowing its operative middle.
 
 Knowing/unKnowing joins Context and Realisation. In the source's Number-Word reading, the counted `11` and the bare `1` carry distinct offices: explicit determination and compressed wholeness. The gathered word makes the account available as one, while its return preserves the horizon that every particular account leaves open. Its achieved simplicity carries a history of articulation.
 
@@ -53,7 +53,7 @@ The second grouping pairs each index `j` with `5−j`:
 
 Essence holds ground and achievement together. Both implicate poles bear the whole field internally, so the return can be read against what made the passage possible. Constitution joins the indeterminate capacity for proportion with a definite world in which an account is made. Text-Texture holds expression and inverse as a relation that endures through its changes of direction.
 
-The core gives these folds their qualitative articulation. Conscious circumstance meets unbounded differential depth in Essence; answerable definition meets lived context in Constitution; energetic force meets readable pattern in Text-Texture. [A02](../../../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md) **grounds** the identity-through-difference carried by these returns.
+The core gives these folds their qualitative articulation. Conscious circumstance meets unbounded differential depth in Essence; answerable definition meets lived context in Constitution; energetic force meets readable pattern in Text-Texture. [Identification through difference](../../../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md) retains the identified quality together with the distinct relations through which it is disclosed.
 
 The two partitions share exactly one pair: `{2,3}` is both Becoming and Text-Texture/Duration. Their other pairs differ. Being `{0,1}` shares #0 with Essence `{0,5}` but reaches #1 instead of #5. Knowing `{4,5}` meets the same folds from the opposite end. The common pair gives the field a crossing; the differing pairs keep the whole from becoming one repeated description.
 
@@ -71,7 +71,7 @@ An intersection table makes every contact explicit. Each entry counts the positi
 
 Every row and column accounts for two positions. The middle pair coincides in full; the outer harmonics each divide across Essence and Constitution. This is the source's two-triad `3:3` of harmonics and symmetries: two distinct maps of one sixfold, not a new list of six occupied stations.
 
-The source also distributes knower, means and known through the harmonics. In its Śaiva-register mapping, Being carries *pramātṛ*, the knower's capacity; Becoming carries *pramāṇa*, the means or relating activity; Knowing carries *prameya*, the known in achieved determinacy. [A05](../../../section-rooms/arguments/A05-Prakasa-Vimarsa.md) **compares** the manifestation/self-apprehension relation through this register. The mapping is an Argued cross-reading in the native corpus; it does not make the index sums an independent proof of historical doctrine.
+The source also distributes knower, means and known through the harmonics. In its Śaiva-register mapping, Being carries *pramātṛ*, the knower's capacity; Becoming carries *pramāṇa*, the means or relating activity; Knowing carries *prameya*, the known in achieved determinacy. [Manifestation and self-apprehension](../../../section-rooms/arguments/A05-Prakasa-Vimarsa.md) lets manifestation take up its own appearing in self-apprehension. The native mapping reads that relation across this register; it does not make the index sums an independent proof of historical doctrine.
 
 ## #4 — Perspective unfolds, then recognises its own field
 
@@ -90,7 +90,7 @@ The primary division is `1–2–3 / 4–5–0`. The first three count perspecti
 
 The source calls the sequential pass body and the recognitive return mind. These names distinguish how the passage is carried: perspectives are taken in sequence, then held through one recognitive act. The mind/body reading is inherited from the subject operation. The harmonic knower/means/known distribution also remains distinct: its three terms occupy pairs across the full field, while the person sequence gives I/you/it individual positions.
 
-The `4:2` split places #1–#4 among the explicates and #0/#5 as implicate poles. The subject return begins at #4. Their crossing is therefore exact: #4 is simultaneously the last explicate and the first operation of `4–5–0`. Its `AM/IS` determination holds the circumstances through which first-, second- and third-person offices can meet. [A06](../../../section-rooms/arguments/A06-Vak.md) **extends** the second-person address within this contextual relation; #4 supplies no fourth pronoun.
+The `4:2` split places #1–#4 among the explicates and #0/#5 as implicate poles. The subject return begins at #4. Their crossing is therefore exact: #4 is simultaneously the last explicate and the first operation of `4–5–0`. Its `AM/IS` determination holds the circumstances through which first-, second- and third-person offices can meet. [Formative speech](../../../section-rooms/arguments/A06-Vak.md) carries the second-person address within this contextual relation; #4 supplies no fourth pronoun.
 
 The source's arithmetic checks preserve their own grain: `(3/4)·4=3`, `(3/2)·4=6`, and `3+6=9`. They yield the named counts under the stated multiplications. The person offices above supply what those counts mean within the native traversal.
 
@@ -100,9 +100,9 @@ The source names the dependence of Being, Becoming and Knowing “Borromean”. 
 
 This is the native dependency operation. Its Borromean name does not supply an embedding, crossing diagram or link invariant. The claim developed here is the mutual condition of the three harmonics, not a new proof that the positional sets constitute a particular topological link. The slash carries their holding as an active relation. In the source's Eros reading, care keeps the differentiated terms answerable to one another.
 
-The final movement permits determinate life within this whole. The source's freedom to take a particular form follows from a whole that can differentiate and recognise itself through that form. Its `%` and `100%` name capacity and achieved unity in the native account; they do not measure the amount of awareness in a person. The lived recognition remains Argued, preserving the particular instance through the return.
+The final movement permits determinate life within this whole. The source's freedom to take a particular form follows from a whole that can differentiate and recognise itself through that form. Its `%` and `100%` name capacity and achieved unity in the native account; they do not measure the amount of awareness in a person. The first-person recognition preserves the particular instance through the return; its occurrence is not certified by a positional count.
 
-The [Process contract](README.md) **defines** the containing circuit:
+The full [Process circuit](README.md) carries these complementary maps through inversion and renewed relation:
 
 $$
 0/1=4+2=5\to0=1/0=4'+2'=5'\to0'=0/1.
@@ -110,4 +110,4 @@ $$
 
 Here `§4′` and the primed positions name File Two's inverse phase. File Three's Night-pass primes have their separate office. Definition/Quilt retain the short `0/1=4+2=5→0=0/1` vantage. The maps gathered here make the full Process return readable through multiple exact relations.
 
-The page **returns-to** [Movement 25](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md) and [Matheme](../README.md). [A36](../../../section-rooms/arguments/A36-Advent-of-Integral-Zero.md) **extends** the return in which an exact account retains the whole activity it articulates. Harmonic, fold and perspective remain available together, each carrying work the others cannot perform on its behalf.
+[The eight-determination field](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md) receives the harmonic, fold and perspective maps together, each preserving the operation the others cannot perform on its behalf. [Matheme](../README.md) gathers their crossing without merging their addresses; [Integral Zero](../../../section-rooms/arguments/A36-Advent-of-Integral-Zero.md) carries the exact account with the whole activity it articulates still present. A further traversal can take up a particular grouping while the other relations remain available.

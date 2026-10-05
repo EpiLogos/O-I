@@ -13,17 +13,17 @@ source_relation: "Extracted internal derivation"
 
 ## #0 — The relation has taken a direction
 
-A question gathers attention around what has appeared. An answer commits that attention to a determination. Both acts change the field: something is held back while something is brought forward. [?/!](question-assertion.md) grounds this passage from an appearance that calls for account to an account capable of making a difference. `−/+` gives that difference its energetic expression.
+A question gathers attention around what has appeared. An answer commits that attention to a determination. Both acts change the field: something is held back while something is brought forward. [The question's appearance calls for an account](question-assertion.md), and the account can make a difference. `−/+` gives that difference its energetic expression.
 
 The signs name **withdrawal and extension**, **reserve and issue**. Their relation already operates in an ordinary act of attention. To hear a word, attention contracts around its sound; to understand it, attention opens into the sense it carries. The contraction lets this word become distinct, and the opening lets its distinction belong to more than itself.
 
 ## #1 — The positive is the reserve's own issue
 
-The parent [−/−](the-slash.md) begins with two unassigned marks distinguished by their relation. Taylor's [Binary Explication](episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §4, follows that relation into self-relation. The first mark is read as withdrawal: the side that withholds itself from determinate presentation. Across the slash, withdrawal occurs again, now as the act by which reserve gives itself a face. Negation's self-relation makes affirmation available.
+The parent [−/−](the-slash.md) begins with two unassigned marks distinguished by their relation. Read dynamically, the first mark is withdrawal: the side that withholds itself from determinate presentation. Across the slash, withdrawal occurs again as the act by which reserve gives itself a face. Negation's self-relation makes affirmation available. [Binary Explication](episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) develops the full process.
 
-This is the derivational pressure behind `−/+`. The appearing face belongs to the reserve that issues it. The positive consequently carries its origin through the difference by which it appears. “The void voids itself” names this native operation: determination arises through the unmarked's own self-limitation. Its force is established in the relation before the familiar algebraic rule about double negation supplies a comparison.
+This is the derivational pressure behind `−/+`. The appearing face belongs to the reserve that issues it. The positive consequently carries its origin through the difference by which it appears. “The void voids itself” names the operation: determination arises through the unmarked's own self-limitation. The familiar algebraic rule about double negation is a later comparison with a movement already generated inside the relation.
 
-[0/1](0-1.md) grounds the conscious circumstance this relation articulates. Reserve cannot be inspected as a second appearance hidden behind the first. It is active in the capacity of the field to become determinate and to become otherwise.
+In [the conscious circumstance](0-1.md), reserve is active in the capacity of the field to become determinate and to become otherwise. It cannot be inspected as a second appearance hidden behind the first.
 
 ## #2 — A journey that remains resident
 
@@ -47,7 +47,7 @@ $$
 
 Addition cancels the signed contributions. Subtraction measures the whole span from one chosen pole. In the essay's argued reading of a claim to total jurisdiction, that span can be appropriated as though the measuring pole had supplied the relation by itself. The arithmetic results remain exact; the claim of ownership is a further operation whose consequence must be shown in its own setting.
 
-[A13, Two Logics of Two](../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), defines these productive and collapsed accountings. The distinction matters within the root: `−/+` sustains a tension through which movement remains possible. Cancellation ends that particular opposition; appropriation fixes its whole measure to one orientation. Neither operation can simply be substituted for the living polarity without changing what the record carries.
+[Held polarity, cancellation and appropriation](../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md) give these accountings their distinct consequences. `−/+` sustains a tension through which movement remains possible. Cancellation ends that particular opposition; appropriation fixes its whole measure to one orientation. Substituting either for the living polarity changes the relation it sustains.
 
 ## #4 — Force becomes recognisable
 
@@ -55,12 +55,12 @@ A pulse becomes a pattern when its difference can recur. The recurrence makes it
 
 Within the sixfold, these two determinations form the **Becoming harmonic**. `−/+` supplies the movement through which a pattern lives; `X/x` supplies the recognisable relation through which movement can be taken up again. Their complementary pairing as Text–Texture retains both the felt force and its readable articulation. The force does not disappear when it acquires a name, and the name has to remain responsive to what its recurrence does.
 
-[The matheme's process register](matheme/process/README.md) extends the signs into four positional dynamics, `−−`, `−+`, `+−`, and `++`. That formal development has its own exact table and direction of traversal. The root gathers the relation those dynamics articulate: reserve and issue remain distinguishable within one self-relating movement.
+[The four positional dynamics](matheme/process/README.md), `−−`, `−+`, `+−`, and `++`, make withdrawal and extension available in ordered combinations. Their exact table and direction of traversal retain which operation is occurring at each position. Reserve and issue remain distinguishable within one self-relating movement.
 
 ## #5→0 — What the issue returns
 
 An achieved form enters the conditions of what can happen next. A spoken thought becomes something another thought can inherit; an action changes the situation to which further action must answer. Return therefore carries the consequence of issuing. The next reserve includes a world already altered by the previous determination.
 
-[A18](../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) grounds this passage within the whole eightfold. The root returns-to [§3 · #0, Eight Determinations](../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md), where force passes into recurrence, personed context, horizon, and recognition. [The spine-index](eight-determinations.md) gathers those distinct operations, and [1/0](1-0.md) returns their achieved expression to its ground.
+Within [the whole eightfold](../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), [force passes into recurrence, personed context, horizon, and recognition](../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md). [Those distinct operations](eight-determinations.md) retain what the issue has made possible while [their achieved expression turns towards its ground](1-0.md). A new reserve can therefore receive the consequence of the former issue without confusing that consequence with the entire capacity to issue.
 
 The issue has real consequences because it differs from its reserve. It can return because that difference continues to belong to the relation that produced it.

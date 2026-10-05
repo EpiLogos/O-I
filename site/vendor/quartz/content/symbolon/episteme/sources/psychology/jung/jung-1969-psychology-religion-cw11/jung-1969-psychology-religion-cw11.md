@@ -151,3 +151,111 @@ The passage maps below retain primary-text control at numbered-paragraph level. 
 ### Whole consumers and distinct returns
 
 [Mother, Assumption and chiasm](../../../../../mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md#mother-body-received) **consumes** the Sophia, Mary, completeness and conscious-individuation sequences. [Job’s separate Jung reception](../../../../../mytheme/worlds/biblical/job/WHOLE.md#job-jung-second-whole) **consumes** the selected witness/self-reflection movement. Their Taylor-authored operations retain their own provenance. These selected passages improve the source footing of those comparisons without certifying every assertion in Jung’s broader reading of Job or the independent historical doctrines to which he refers.
+
+## Current §0/1 locator collation — 2026-10-04
+
+The actual user-local carrier and selected passage contexts were reopened. These additions preserve the existing source identity, passage IDs and historical reading. **Standing is locator-verified only; no new book quotation is admitted while rights provenance is unregistered.** Current working §0/1 consumers remain draft consumers.
+
+<a id="jung-1969-psychology-religion-cw11-p007"></a>
+### jung-1969-psychology-religion-cw11-p007 — Immediate psychic knowledge
+
+**Locator:** ¶¶16,18; user-local PDF page 23.
+
+**Located operation:** The psychic mode of immediate knowledge and the absence of an external Archimedean point are located.
+
+**Context and use boundary:** ¶17 intervenes with practical examples of imagined conditions having real effects. This does not establish the physical world's non-existence.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1973 second printing of the 1969 second edition PDF; SHA-256 `bbea07152cf7ff6e588b51fa90bdbf39f171657ea202b511df4493654257861d`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M02 note `s01-jung-psyche`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1969-psychology-religion-cw11-p008"></a>
+### jung-1969-psychology-religion-cw11-p008 — The psychologically dominant god
+
+**Locator:** ¶137; user-local PDF page 75.
+
+**Located operation:** The strongest psychological value and a god losing effective power are located in the mandala/religion discussion.
+
+**Context and use boundary:** The referent is a psychic fact and religious relation; the essay's ontological God/Subject identity is separately argued.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1973 second printing of the 1969 second edition PDF; SHA-256 `bbea07152cf7ff6e588b51fa90bdbf39f171657ea202b511df4493654257861d`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M02 note `s01-jung-god`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1969-psychology-religion-cw11-p009"></a>
+### jung-1969-psychology-religion-cw11-p009 — Numinosity
+
+**Locator:** ¶6; user-local PDF pages 19–20.
+
+**Located operation:** Numinosum is discussed as an effect not produced by arbitrary will.
+
+**Context and use boundary:** This locates Jung's Otto-derived description, not an independent verification of Otto or a proof of divine agency.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1973 second printing of the 1969 second edition PDF; SHA-256 `bbea07152cf7ff6e588b51fa90bdbf39f171657ea202b511df4493654257861d`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M04 note `s01-numinous`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1969-psychology-religion-cw11-p010"></a>
+### jung-1969-psychology-religion-cw11-p010 — Fourfold judgment
+
+**Locator:** ¶246; user-local PDF page 140.
+
+**Located operation:** Quaternity, four orientation functions and completeness are located together.
+
+**Context and use boundary:** The account is Jung's. Its references to Pythagoras, Buddhism and Schopenhauer remain mediated historical witnesses.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1973 second printing of the 1969 second edition PDF; SHA-256 `bbea07152cf7ff6e588b51fa90bdbf39f171657ea202b511df4493654257861d`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M06 note `s01-jung-quaternity`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+**Existing q001 refinement:** its Sophia/Logos/Śakti comparison is specifically at ¶610, digital PDF page 317. This narrows its already recovered ¶¶609–613 locator; the original card and its source-specific/paraphrase standing are retained.
+
+<a id="jung-1969-psychology-religion-cw11-p011"></a>
+### jung-1969-psychology-religion-cw11-p011 — Shadow and conscious embodiment
+
+**Locator:** ¶131; user-local PDF page 71.
+
+**Located operation:** The shadow, its relation to conscious embodiment, and the opportunity of correction are located together.
+
+**Context and use boundary:** The surrounding discussion distinguishes suppression from repression. The passage does not license labelling every other person’s conduct an unconscious shadow.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual user-local carrier already identified in this house; SHA-256 `bbea07152cf7ff6e588b51fa90bdbf39f171657ea202b511df4493654257861d`; selected paragraph and adjacent page context read with pypdf extraction by s01-apparatus, 2026-10-04. Rights provenance remains unregistered; no new quotation transcription is admitted.
+
+**Relation:** source-specific locator support; the essay’s philosophical continuation remains authorial.
+
+**Consumer:** Current working M05 note `s01-jung-shadow`; authorial text is preserved.
+
+<a id="jung-1969-psychology-religion-cw11-p012"></a>
+### jung-1969-psychology-religion-cw11-p012 — Death and transformation of a God-image
+
+**Locator:** ¶¶144–148; user-local PDF pages 80–82; psychological image/proof qualifier at ¶102, PDF page 58.
+
+**Located operation:** Finite definition, withdrawal of projections, the Christian archetype and loss of living faith occur in a connected sequence.
+
+**Context and use boundary:** The source treats a psychological relation and does not prove an ontological God from a psychic image. Its discussion of Christ is an archetypal interpretation; authorial God/Subject identity remains separate.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual user-local carrier already identified in this house; SHA-256 `bbea07152cf7ff6e588b51fa90bdbf39f171657ea202b511df4493654257861d`; selected paragraph and adjacent page context read with pypdf extraction by s01-apparatus, 2026-10-04. Rights provenance remains unregistered; no new quotation transcription is admitted.
+
+**Relation:** source-specific locator support; the essay’s philosophical continuation remains authorial.
+
+**Consumer:** Current working M04 note `s01-god-image`; authorial text is preserved.

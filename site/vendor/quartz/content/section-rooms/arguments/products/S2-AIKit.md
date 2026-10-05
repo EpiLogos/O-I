@@ -4,12 +4,11 @@ record_id: S2
 record_type: product
 register: episteme
 claim_status: Argued
-source_relation: Reconstituted from the authorised authorial minute, retained paired-lens reading, A/C primitive constitution and existing Objective Internality field after loss of the original transfer payload
+source_relation: "Argued from A/C, Objective Internality and the paired product-lens relation"
 source_ids:
   - taylor-2026-oi-product-field-commission
   - taylor-2026-core-theorems-pithy
   - taylor-2026-mef-twelve-lenses
-refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 product_parent: S
 movement: 39
 mef_pair:
@@ -26,6 +25,7 @@ concept_relations:
   - C41
   - C44
   - C45
+refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 ---
 # S2 — AIKit: potency
 
@@ -35,15 +35,17 @@ concept_relations:
 
 For a human the same structure appears as skill, language, memory, attention, bodily ability, social access, permission, opportunity and confidence. For an artificial actor it appears through models, skills, methods, tools, context sources, interfaces, communication channels and execution possibilities. In each case potency concerns not only *what is there* but *what can become active from here*.
 
-Objective Internality gives potency its proper scale. The horizon belongs to the means of a Life: what its present world makes possible, relevant and reachable. It is not Subjective Immediacy and it is not World in itself. A richer horizon changes the kinds of differentiation and action available without thereby telling us who or what experiences that horizon phenomenally.
+Objective Internality gives potency its proper scale. The horizon belongs to the means of a Life: what its present world makes possible, relevant and reachable. Profile, source, skill, capability, permission and context therefore matter because they alter the field from which action can arise. Learning a method, receiving access to a source or encountering a previously unknown possibility changes that horizon before any particular power is activated. Potency has changed because another act can now become available from here.
 
 ## #1 — L2 Logical: capacity includes absence, ambiguity and silence
 
 The Logical lens gives **Tetralemmaic ground · IS · IS-NOT · BOTH · NEITHER · SILENCE**. A useful capability field therefore cannot be reduced to the set of things currently present.
 
-**IS** names what is presently available as an operative determination. **IS-NOT** names what is excluded or unavailable under the current conditions. **BOTH** keeps co-presence where two capacities, interpretations or scopes genuinely apply together. **NEITHER** holds a case that current distinctions do not yet decide. **SILENCE** is not mere null data: it preserves the possibility that the right operation is not yet articulation.
+Each determination answers a question within a stated scope. **IS** affirms the relation being asked about; **IS-NOT** denies that relation under the same conditions. Asking whether a capability exists differs from asking whether it is available here or operative in this act. A positive answer to the first question therefore gives no automatic answer to either of the others.
 
-The tetralemmaic ground prevents one state from pretending to exhaust possibility. A tool can exist globally and be absent from this session. A source can be reachable but not authoritative. Two skills can both be relevant without being interchangeable. A question can exceed the present capability grammar altogether. This is why the distinctions `exists ≠ available ≠ relevant ≠ permitted ≠ selected ≠ operative` belong to the philosophy rather than only to an implementation detail.
+**BOTH** receives genuinely coexisting contradictory determinations under the same question and conditions, retaining the grounds through which each has standing. The contradictory relation remains active rather than being settled by selecting one determination for convenience. A different situation must also remain explicit: if a capability is available to one participant and unavailable to another, both determinations belong to the field, but erasing the participant would manufacture a contradiction. Contextual plurality and genuine contradiction therefore make different demands upon the inquiry. **NEITHER** receives what neither offered determination adequately articulates: the capability may belong to a kind the present distinction cannot yet describe. **SILENCE** preserves a further positive possibility: articulation itself may be premature or unfitting, so the inquiry remains open without manufacturing a determination.
+
+The tetralemmaic ground prevents one state from pretending to exhaust possibility. A tool can exist globally and be absent from this session. A source can be reachable but not authoritative. Two skills can both be relevant without being interchangeable. A question can exceed the present capability grammar altogether. The distinctions `exists ≠ available ≠ relevant ≠ permitted ≠ selected ≠ operative` therefore concern different relations of one capacity to a Life and situation; they are not names for the five tetralemmaic determinations.
 
 The positive force of refusal also lives here. `IS-NOT` is not failure by default. A denied capability can preserve another participant’s authority, a safety boundary, a source’s terms or the integrity of a project. A potency field that counts only successful activation has already confused power with use.
 
@@ -51,7 +53,7 @@ The positive force of refusal also lives here. `IS-NOT` is not failure by defaul
 
 The Chronological pair gives **Spirit · Spring · Summer · Autumn · Winter · Life/Aufhebung**. Potency is developmental because a Life is never a frozen set of capacities.
 
-A power can first be latent as **Spirit**, enter emergence in **Spring**, become readily operative in **Summer**, pass into evaluation and harvesting in **Autumn**, recede or become unavailable in **Winter**, and be retained or transformed within a new whole as **Life/Aufhebung**. The point is not to force every capability through a seasonal schedule. The pair makes temporality internal to what capacity means.
+**Spirit** names the self-moving totality, the living historical process within which powers arise and change. A particular power can emerge in **Spring**, become readily operative in **Summer**, pass into evaluation and harvesting in **Autumn**, and recede or become unavailable in **Winter**. **Life/Aufhebung** receives this passage into a changed whole: a form can be relinquished while its attained capacity or lesson is preserved and raised into another relation. These moments belong to the temporal whole; they do not force every capability through a seasonal schedule. The pair makes temporality internal to what capacity means.
 
 A skill learned yesterday changes today’s horizon. A permission revoked after an encounter changes what can now be done. A once-central method can become dormant without ceasing to exist. A tool can return in a new context with a different significance. The history of a capacity is therefore part of its fitness and meaning.
 
@@ -59,9 +61,11 @@ This temporal reading also guards against treating novelty as pure addition. Dev
 
 ## #3 — Scope, context and the difference between possession and disclosure
 
-A/C gives AIKit the local constitution **S2/P0–P5**. **P0** identifies Profile, Scope, Resource, ProjectBinding and source identity. **P1** gives Context, ContextSource, Surface, Projection and Wiki forms. **P2** carries Capability, Skill, Method, SkillSet, ActionSet and Procedure. **P3** is ContextResolution and the change-horizon through which dependencies, impacts and routes become relevant. **P4** composes Component, HarnessComposition, SessionSpace, WorldInhabitation and KnowledgeApplication. **P5** returns Trust, Familiarity, FitnessObservation, UsageSignal, provenance and SemanticRevision.
+AIKit's local sixfold begins from profile, scope, resource and binding; takes form as context, source, surface and projection; gathers capability, skill, method and procedure as potency; resolves and generates through dependencies, impacts and knowledge routes; becomes situated in harness composition, session-space and world-inhabitation; and returns through trust, familiarity, fitness observation, usage signal and semantic revision. The six turns articulate one horizon of potency rather than functioning as public matrix addresses.
 
 This sequence makes one philosophical distinction especially clear: **possession is not disclosure**. A Life may contain a capacity that its present situation does not disclose as relevant. Conversely, a context can make an apparent capacity salient before its fitness is known. AIKit’s work is to make the relation among capacity, context and actual use explicit enough to be judged rather than assumed.
+
+A source-reading tool gives a constructed instance of the whole movement. It exists in the wider repertoire but enters this situation only when the needed interface is available. The commission makes it relevant; the source's access conditions determine permission; the actor selects it among available methods. Selection still leaves activation to be tested: a missing dependency can prevent the read. That resistance returns to the horizon. Another permitted method may become fitting, or preparation may make the selected method usable in the next act. The capacity has persisted throughout, while its availability, selection and fitness have changed. The Logical lens distinguishes these relations at each moment; the Chronological lens receives their emergence, maturity, withdrawal and transformed return through time.
 
 A profile is therefore not the Life’s essence. A scope is not a metaphysical boundary. A resolved context is one situated disclosure of what matters here. Context resolution has succeeded only when it preserves enough provenance to answer why these capacities, sources and methods entered the present field rather than another.
 
@@ -80,7 +84,3 @@ The most important event in a capability system is not activation but **returned
 A capability horizon becomes intelligent when encounter can reorganise it. This is the return from use to possibility. The field no longer says merely, “these are the things available”; it says, “this is what this Life can now fittingly bring to bear, given what has happened.”
 
 AIKit therefore returns to [S — World and Life](S-World-and-Life.md) as Objective Internality’s aspect of **potency**. It receives meaningful ground from Central; enters actuality through Actuation; becomes developmental material in Factory; depends on Workcell’s concrete situation; and is articulated by QL’s relational distinctions. None of these neighbours can be collapsed into capacity itself.
-
-### Standing
-
-This body reconstitutes the authorised R2 philosophical office from the retained authorial minute, paired-lens reading and canonical A/C S2 constitution. It does not claim byte identity with the lost transfer. Its exact relations, technical evidence and prose balance remain open to the independent R5 review and T26 ratification.

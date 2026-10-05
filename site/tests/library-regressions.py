@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright, expect
 BASE=os.environ.get('LIBRARY_BASE_URL','http://127.0.0.1:4173/')
 OUT=Path('evidence/library');OUT.mkdir(exist_ok=True,parents=True)
 with sync_playwright() as p:
- browser=p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
+ browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None,args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
  context=browser.new_context(viewport={'width':1440,'height':900},reduced_motion='reduce')
  page=context.new_page();page.goto(BASE+'#/library/central')
  expect(page.locator('.native-stage>canvas')).to_have_attribute('data-rendered','true',timeout=30000)
@@ -34,16 +34,17 @@ with sync_playwright() as p:
  for card in page.locator('.expression-card').all():card.scroll_into_view_if_needed();page.wait_for_timeout(30)
  page.evaluate('scrollTo(0,0)');page.wait_for_timeout(100)
  page.screenshot(path=str(OUT/'library-complete-covers.png'),full_page=True)
- # The current authored home has two usable doors. Check its real content,
- # responsive geometry and exact destinations rather than obsolete media.
+ # The original hero and developed landing retain the real publication routes.
  page.goto(BASE)
- expect(page.locator('.entrance')).to_be_visible()
- expect(page.locator('.entrance__door')).to_have_count(2)
- expect(page.locator('.entrance__door[href="./essay/"]')).to_be_visible()
- page.locator('.entrance__door[href="#/library?published=1"]').click()
+ expect(page.locator('.pl')).to_be_visible()
+ expect(page.locator('.office-grid .office-tile')).to_have_count(6)
+ expect(page.locator('.sn__reading a[href="./essay/"]')).to_be_visible()
+ expect(page.locator('.sec__reading a[href="./essay/"]')).to_have_count(1)
+ expect(page.locator('a[href^="#/library"]')).to_have_count(0)
+ page.goto(BASE+'#/library?published=1')
  expect(page.locator('.native-public-library')).to_be_visible()
  assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
- checks=['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named','Current home opens the native published Library and exposes its exact essay door']
+ checks=['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named','Original hero and landing expose the full essay; the published Library keeps its own address']
  (OUT/'regressions.json').write_text(json.dumps({'passed':len(checks),'failed':0,'checks':checks,'standing':'Controlled browser/pixel evidence, not owner visual acceptance'},indent=2))
  browser.close()
 print('PASS 4 returned-reality regressions')

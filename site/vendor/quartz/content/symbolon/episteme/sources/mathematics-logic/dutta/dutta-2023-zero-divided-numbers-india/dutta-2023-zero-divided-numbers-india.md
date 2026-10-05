@@ -8,7 +8,7 @@ citation_style: chicago-notes-bibliography-18
 metadata_status: verified
 edition_status: web-edition
 citation_status: citation-ready
-quote_status: no-excerpts
+quote_status: paraphrase-only
 chicago_ready: true
 author:
 - Amartya Kumar Dutta
@@ -22,7 +22,7 @@ accessed: '2026-07-15'
 consumed_by_sections:
 - §1
 consumed_by_arguments:
-- '[[eight-determinations]]'
+- '[[Core Theorem Bridge]]'
 - '[[Immutable Gap and Meta-Sign]]'
 - '[[The Advent of Zero, Subject, and Integral Logic]]'
 tags:
@@ -31,8 +31,6 @@ tags:
 - source-bank/mathematics
 - source-bank/zero
 title: Dutta — Zero-Divided Numbers in Indian Mathematics (2023)
-aliases:
-- Dutta — Zero-Divided Numbers in Indian Mathematics (2023)
 source_id: dutta-2023-zero-divided-numbers-india
 primary_domain: mathematics-logic
 node_type: source-house
@@ -41,6 +39,8 @@ schema_version: 1
 passage_surface: '#passages'
 main_source_for:
 - §1 · specialist history and cancellation-regime corrective
+aliases:
+- Dutta — Zero-Divided Numbers in Indian Mathematics (2023)
 ---
 # Dutta — Zero-Divided Numbers in Indian Mathematics (2023)
 
@@ -65,4 +65,30 @@ In the zero–subject historical braid, Dutta prevents the formal limit from bei
 <a id="passages"></a>
 ## Passages and excerpts
 
-No passage or excerpt has yet been gathered for this source.
+### Selected web passages
+
+Consulted September 29, 2026 at the article URL above. Assistant read the complete named sections. Paraphrases only; no quotation or critical-edition claim.
+
+<a id="dutta-2023-zero-divided-numbers-india-p001"></a>
+### Restricted operations
+
+Exceptional denominators require specifying whether cross-multiplication and cancellation remain permitted. A prohibition under ordinary inverse laws does not exhaust other definitions.
+
+- **Locator:** “Division by Zero: Undefined or Impossible?”
+- **Status:** paraphrase-only.
+- **Verification:** assistant, 2026-09-29; complete named section read directly as web text at the article URL; no OCR or quotation transcription.
+- **Source relation:** paraphrased.
+- **Evidential action:** supports.
+- **Consumer:** [Reframing](../../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md).
+
+<a id="dutta-2023-zero-divided-numbers-india-p002"></a>
+### A continuation can discard distinctions
+
+Localization at a multiplicative set containing zero yields the one-element ring. This construction does not preserve distinct original elements.
+
+- **Locator:** “Commutative Algebra: the Ring of Fractions.”
+- **Status:** paraphrase-only.
+- **Verification:** assistant, 2026-09-29; complete named section read directly as web text at the article URL; no OCR or quotation transcription.
+- **Source relation:** paraphrased.
+- **Evidential action:** qualifies.
+- **Consumer:** [Reframing](../../../../../../section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md).

@@ -74,7 +74,7 @@ The complete seventeen-page local report was read for the T21 technology/O:I dev
 - **Provenance:** corporate report, version 2.0, February 2026; actual local PDF above.
 - **Source relation:** Paraphrased.
 - **Use boundary:** internal design/report evidence; no independent historical, performance or deployment validation.
-- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md).
+- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md).
 
 <a id="42-techne-2026-sovereign-commons-q002"></a>
 ## Passage card — `42-techne-2026-sovereign-commons-q002` — Sessions, knowledge and Agora
@@ -88,7 +88,7 @@ The complete seventeen-page local report was read for the T21 technology/O:I dev
 - **Provenance:** corporate report, version 2.0, February 2026; actual local PDF above.
 - **Source relation:** Paraphrased.
 - **Use boundary:** internal design/report evidence; no independent historical, performance or deployment validation.
-- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md).
+- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md).
 
 <a id="42-techne-2026-sovereign-commons-q003"></a>
 ## Passage card — `42-techne-2026-sovereign-commons-q003` — Community entry and subsidiary governance
@@ -102,7 +102,7 @@ The complete seventeen-page local report was read for the T21 technology/O:I dev
 - **Provenance:** corporate report, version 2.0, February 2026; actual local PDF above.
 - **Source relation:** Paraphrased.
 - **Use boundary:** internal design/report evidence; no independent historical, performance or deployment validation.
-- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md).
+- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md).
 
 <a id="42-techne-2026-sovereign-commons-q004"></a>
 ## Passage card — `42-techne-2026-sovereign-commons-q004` — Dated maturity and five-phase roadmap
@@ -116,7 +116,7 @@ The complete seventeen-page local report was read for the T21 technology/O:I dev
 - **Provenance:** corporate report, version 2.0, February 2026; actual local PDF above.
 - **Source relation:** Paraphrased.
 - **Use boundary:** internal design/report evidence; no independent historical, performance or deployment validation.
-- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md).
+- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md).
 
 <a id="42-techne-2026-sovereign-commons-q005"></a>
 ## Passage card — `42-techne-2026-sovereign-commons-q005` — Economic branches and costs
@@ -130,7 +130,7 @@ The complete seventeen-page local report was read for the T21 technology/O:I dev
 - **Provenance:** corporate report, version 2.0, February 2026; actual local PDF above.
 - **Source relation:** Paraphrased.
 - **Use boundary:** internal design/report evidence; no independent historical, performance or deployment validation.
-- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md).
+- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md).
 
 <a id="42-techne-2026-sovereign-commons-q006"></a>
 ## Passage card — `42-techne-2026-sovereign-commons-q006` — Governance, federation and artifact return
@@ -144,4 +144,4 @@ The complete seventeen-page local report was read for the T21 technology/O:I dev
 - **Provenance:** corporate report, version 2.0, February 2026; actual local PDF above.
 - **Source relation:** Paraphrased.
 - **Use boundary:** internal design/report evidence; no independent historical, performance or deployment validation.
-- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md).
+- **Consumers:** [O:I responsibility dossier](../../../../dossiers/oi-technical-responsibility.md); [technology–politics development](../../../../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md).

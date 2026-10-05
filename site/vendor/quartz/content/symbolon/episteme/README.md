@@ -1,5 +1,5 @@
 ---
-title: "The Return of Zero — Episteme"
+title: "Episteme"
 record_id: register-episteme
 record_type: register-root
 register: episteme
@@ -7,25 +7,17 @@ claim_status: Derived
 status: T09-canonical-field-current
 ---
 
-# The Return of Zero — Episteme
+# Episteme
 
-**Where you are:** [Reading root](../../README.md) › [Symbolon](../README.md) › Episteme
+**Where you are:** [Reading root](../../README.md) › [#1 Symbolon](../README.md) › `#4` Episteme
 
-**Episteme** carries instituted knowledge for *The Return of Zero*: sources, histories, etymologies, maps, dossiers, and related warrant depth. It makes attribution, inheritance, disagreement and public warrant legible at the point where they bear the essay. It preserves the difference between the essay's position and what a source can establish.
+Episteme carries the forms in which knowledge stands: canonical Arguments and Concepts, sources, histories, Etymology whole-fields, interpretive lenses, maps, comparative dossiers, evidential figures and dialogue records. It makes attribution, inheritance, disagreement and public warrant legible at the point where they bear the essay. In the Vāk layering of the registers this is **vaikharī**: the inspected, documented utterance.
 
-It sits inside the [symbolon](../README.md) beside [Matheme](../matheme/README.md) and [Mytheme](../mytheme/README.md), and beside the [rooms](../../section-rooms/README.md) and the [manuscript](../../THE-RETURN-OF-ZERO.md). It is warrant depth when a movement opens into a source, a history, or a word-field — **not the first door**.
-
-[Etymologies](etymologies/README.md) live here as whole relational and lexical fields. Arguments and Concepts keep their Episteme office, but after migration their homes are under the rooms at [section-rooms/arguments/](../../section-rooms/arguments/README.md). Much of this field is generated or provisional. Quilt material, NOTES, reference-notes, and navigation JSON are **not** publication surfaces.
-
-**If you are new:** return to the [rooms](../../section-rooms/README.md) and begin there. Come here when a room or movement points into a source, a history, an etymology, or another warrant.
-
-A claim can remain Derived or Argued while its citation work is incomplete; the record states both conditions. Source relations — Extracted, Paraphrased, Argued from and Resonant with — name how a work enters the argument.
+This register preserves the difference between the essay's position and what a source can establish. A claim can remain Derived or Argued while its citation work is incomplete; the record states both conditions. Source relations — Extracted, Paraphrased, Argued from and Resonant with — name how a work enters the argument.
 
 ## The canonical semantic field
 
-Since the ratified 2026-09-25 migration these records are housed in the rooms, at `section-rooms/arguments/`, while keeping their Episteme office:
-
-- [Arguments A01–A36](../../section-rooms/arguments/README.md) — the canonical semantic Argument identities. Historical Argument `01–21` carriers remain frozen provenance under `working/legacy/section-rooms-arguments/`, and global Movement `01–48` remains the sovereign traversal numbering.
+- [Arguments A01–A36](../../section-rooms/arguments/README.md) — the canonical semantic Argument identities. Historical Argument `01–21` carriers remain provenance on the [rooms' argument shelf](../../section-rooms/README.md#the-argument-shelf), and global Movement `01–48` remains the sovereign traversal numbering.
 - [Conjugate arguments A01′–A36′](../../section-rooms/arguments/conjugate/README.md) — the technological face of each Argument, with the dual-form root `A/C`.
 - [Concepts C01–C64](../../section-rooms/arguments/concepts/CANONICAL-INDEX.md) — the canonical reusable semantic distinctions; the [concept register](../../section-rooms/arguments/concepts/README.md) also keeps the developed pre-T09 pages and the recovered reference shelf as provenance.
 - [A ↔ C ↔ E Reciprocity](etymologies/T09-A-C-E-RECIPROCITY-INDEX.md) — six mature Etymology whole-fields routed by exact consumed operation and evidence register.
@@ -38,10 +30,11 @@ Since the ratified 2026-09-25 migration these records are housed in the rooms, a
 - [Etymologies](etymologies/README.md) — whole relational/lexical fields and word histories, with philological, attested-semantic, operational-homology and poetic/phonic registers kept distinct.
 - [Atlas](atlas/README.md) — historical routes through the Etymology fields, sharing situated identities with the [Mytheme atlas](../mytheme/atlas/README.md).
 - [Lenses](lenses/README.md) — MEF and other declared perspectives through which one object is read without collapsing the perspectives.
-- [Maps](maps/README.md) — essay, argument, concept and path structures built from declared canonical relations and curated paths. Generated navigation JSON and MOC machinery are working aids, **not** publication surfaces.
+- [Maps](maps/README.md) — essay, argument, concept and path structures built from declared canonical relations, the curated paths, and the generated [navigation layer](maps/navigation/MOC.md).
 - [Dossiers](dossiers/README.md) — sustained comparative treatments of one pressure across several sources or fields.
 - [Figures](figures/README.md) — timelines, tables, genealogies and evidential visualisations that make a warranted relation inspectable.
-- [Aphorisms](aphorisms/README.md) — the aphorisms index: the one admitted aphorism, [Investigation and Faith](aphorisms/investigation-and-faith.md), retained whole, with the site copy blocks beside it.
+- [Aphorisms](aphorisms/investigation-and-faith.md) — the one admitted aphorism, *Investigation and Faith*, retained whole.
+- Dialogues — records of the work's own formation through dialogue; provenance of thinking, never evidence on its own.
 
 ## Record form
 
@@ -53,4 +46,4 @@ Formal derivations supported or tested by a knowledge record open into [Matheme]
 
 ## Standing
 
-Etymology architecture, tree seams, A/C/E reciprocity and Relational Form Growth govern development from the mature etymology whole-fields: generated relations → historical/lexical branches → developed knowledge carriers → exact Argument/Concept/Movement consumers → return. History and atlas organisation serve that development. Source houses retain evidence authority; declared argument maps retain dependency and traversal authority. Quilt ledgers, NOTES, and navigation JSON remain working material — not publication. The field names Movement consumers; section rooms and Movement prose are written in their own register.
+The Ought-Be Etymology Architecture, Tree Seams, A/C/E reciprocity and Relational Form Growth programmes govern development from and via the mature Etymology whole-fields: generated relations → historical/lexical branches → developed knowledge carriers → exact A/C/Movement consumers → return. History and atlas organisation serve that development. The ten history bodies occupy single canonical homes under the three history divisions, with protected prose retained and developed companions beside them; the preservation proof records the sixteen history checks. Source houses retain evidence authority and declared argument maps retain dependency/traversal authority. The architecture is bound by the central plan amendment of 2026-09-08 and executed through the T20–T21 world-register map; the complete disposition authority for the T09 wave is `working/final-argument-quilt-2026-08-23/T09-CANONICAL-CROSSWALK-AND-DISPOSITION-LEDGER.md`. The field names Movement consumers; section rooms and Movement prose are written in their own register.

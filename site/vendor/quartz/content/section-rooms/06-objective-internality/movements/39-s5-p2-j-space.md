@@ -15,7 +15,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5 · #2 — AIKit — Potency
 
 <!-- reader-navigation -->
-Movement 39 of 48 · [This room](../ROOM.md) · [← Previous](38-s5-p1-apoha-softmax.md) · [Next →](40-s5-p3-preference-hidden-zero.md)
+Movement 39 of 48 · [This room](../ROOM-06-objective-internality.md) · [← Previous](38-s5-p1-apoha-softmax.md) · [Next →](40-s5-p3-preference-hidden-zero.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -26,7 +26,7 @@ Movement 39 of 48 · [This room](../ROOM.md) · [← Previous](38-s5-p1-apoha-so
 
 The whole pair is **L2 Logical × L3′ Chronological**. Logical gives Tetralemmaic ground, IS, IS-NOT, BOTH, NEITHER and SILENCE. A real horizon contains presence, absence, co-presence, indeterminacy and the possibility that articulation itself is not yet fitting. Chronological gives Spirit, Spring, Summer, Autumn, Winter and Life/Aufhebung: capacities emerge, mature, become operative, recede, are relinquished, retained or transformed. Potency is therefore developmental rather than a static menu.
 
-The old J-Space material finds its proper relation here without making AIKit identical with J-Space. A proposed judgment space can represent what is near, salient, permitted or contradictory for an agent; AIKit concerns the wider horizon by which such resources and methods become available at all. The distinction matters because a richer representation is not itself a richer capability field, and neither exhausts Objective Internality. The complete J-Space technical development therefore remains primarily in [Actuation](../../arguments/products/S1-Actuation.md#model-j-space), while AIKit owns the modal horizon in which such a representation can become relevant and usable.
+The J-Space material finds its proper relation here without making AIKit identical with one representation. A proposed judgment space can map what is near, salient, permitted or contradictory for an agent; AIKit concerns the wider horizon by which such resources and methods become available at all. A richer representation is not itself a richer capability field, and the distinction lets [Actuation's J-Space development](../../arguments/products/S1-Actuation.md#model-j-space) remain a local model inside the wider modal horizon.
 
 A/C makes the office concrete through Profile/Scope/Resource identity; Context and projections; Capability/Skill/Method; ContextResolution and change horizons; compositions, sessions and world-inhabitation; then Trust, Familiarity, fitness observation, usage signal and semantic revision. The last movement is decisive. Encounter must be able to reorganise the horizon: what proved useful, unsafe, irrelevant, dormant or newly necessary changes what can fittingly be brought to bear next.
 
@@ -40,4 +40,4 @@ A capability inventory can counterfeit potency if it treats existence as equival
 
 AIKit gives Actuation a changing field of possibility. The next movement asks what happens when possibility, action and encounter are gathered into changed form: [Software Factory — Transformation](40-s5-p3-preference-hidden-zero.md).
 
-**Owning product:** [S2 — AIKit](../../arguments/products/S2-AIKit.md). **Whole field:** [S — World and Life](../../arguments/products/S-World-and-Life.md). The [authored P1 route for M39](../P1-CANONICAL-ALIGNMENT.md#p1-m39) carries the explicit S and A/C alignment.
+[AIKit](../../arguments/products/S2-AIKit.md) gives this movement its technical body within the wider [World and Life](../../arguments/products/S-World-and-Life.md) field. Potency is the changing horizon of what can fittingly be brought to bear, not a catalogue detached from situation.

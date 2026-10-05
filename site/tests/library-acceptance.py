@@ -39,11 +39,13 @@ with sync_playwright() as p:
     page.on('request',lambda r:requests.append(r.url))
     page.on('request',lambda r:mutations.append(r.url) if r.method not in ['GET','HEAD','OPTIONS'] else None)
     def home():
-        page.goto(BASE);expect(page.locator('.entrance')).to_be_visible()
-        expect(page.locator('.entrance__door')).to_have_count(2)
-        expect(page.locator('.entrance__door[href="./essay/"]')).to_be_visible()
+        page.goto(BASE);expect(page.locator('.pl')).to_be_visible()
+        expect(page.locator('.office-grid .office-tile')).to_have_count(6)
+        expect(page.locator('.sn__reading a[href="./essay/"]')).to_be_visible()
+        expect(page.locator('.sec__reading a[href="./essay/"]')).to_have_count(1)
         page.screenshot(path=str(OUT/'home.png'),full_page=True)
-        page.locator('.entrance__door[href="#/library?published=1"]').click()
+        expect(page.locator('a[href^="#/library"]')).to_have_count(0)
+        page.goto(BASE+'#/library?published=1')
         expect(page.locator('.native-public-library')).to_be_visible()
         # The site-edition reader has its own exact route; public corpus
         # navigation does not substitute these separately published editions.

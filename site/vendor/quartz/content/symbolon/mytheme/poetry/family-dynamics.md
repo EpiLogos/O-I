@@ -10,11 +10,11 @@ type: _md_
 title: "Family Dynamics"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c80c39030fcd679174463
-source_id: 191a4797-123c-80c3-9030-fcd679174463
 notion_created: 2025-02-05T20:31:51Z
 notion_edited: 2025-02-05T20:32:03.875Z
 status: sorted
 kind: poem
+source_id: family-dynamics
 ---
 Don't confuse true religion for the politics of the symbol,
 Nor allow yourself to be taken by the new religion of symbolic politics.

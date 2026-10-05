@@ -30,7 +30,7 @@ The scan’s opening title names lectures delivered by Richard Owen, notes taken
 
 [Acquired witness](https://darwin-online.org.uk/converted/pdf/1843_Owen_Lectures_A5436.pdf). Retrieved and selected text checked on 8 September 2026. Local SHA-256: `335ae0d425f2ba241794052b7f66228ceb77fe59dee07ccf35d8ea1c2aa5025b`.
 
-The witness **sources** [the historical branch](../../../../etymologies/homology-and-analogy/HISTORICAL-BRANCHES.md) and **qualifies** the historical comparison in its [whole-field](../../../../etymologies/homology-and-analogy/WHOLE-FIELD.md). Taylor’s generated operation remains distinct from the historical proposition.
+The witness **sources** [the historical branch](../../../../etymologies/homology-and-analogy/HISTORICAL-BRANCHES-homology-and-analogy.md) and **qualifies** the historical comparison in its [whole-field](../../../../etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md). Taylor’s generated operation remains distinct from the historical proposition.
 
 <a id="passages"></a>
 ## Selected passages

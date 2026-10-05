@@ -10,11 +10,11 @@ type: _md_
 title: "Good Jokes"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c80d3a208e5263332980b
-source_id: 18fa4797-123c-80d3-a208-e5263332980b
 notion_created: 2025-02-03T13:11:46Z
 notion_edited: 2025-02-03T13:11:52.564Z
 status: sorted
 kind: short-piece
+source_id: good-jokes
 ---
 The good jokes you don't see coming!
 

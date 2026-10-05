@@ -10,11 +10,11 @@ type: _md_
 title: "Take it upon oneSelf"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c8094b12bcf96e01586ea
-source_id: 18fa4797-123c-8094-b12b-cf96e01586ea
 notion_created: 2025-02-03T14:02:03Z
 notion_edited: 2025-02-03T14:02:13.874Z
 status: unsorted
 kind: needs-ratification
+source_id: take-it-upon-oneself
 ---
 One must take it upon oneSelf to be free.
 

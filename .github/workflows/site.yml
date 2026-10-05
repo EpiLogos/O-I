@@ -49,6 +49,13 @@ jobs:
           ref: dbf3b1771724bd56663e4e3410df13e9d3ae681b
           path: .publication-sources/Antykathera-Essay-Work
           persist-credentials: false
+      - name: Check out the exact current essay reading snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Antykathera-Essay-Work
+          ref: b2b5b706105891f69e2a68ecd160dbe4add3828e
+          path: .publication-sources/essay-reading
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -97,7 +104,7 @@ jobs:
       - name: Install the vendored Quartz
         run: npm ci --prefix vendor/quartz --no-audit --no-fund
       - name: Verify the essay publication builders and host contract
-        run: node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs
+        run: node --experimental-strip-types --test essay-source.test.mjs essay-browser.test.mjs essay-host.test.mjs quartz-staged-input.test.mjs
       - name: Verify the full live Explore client build separately
         env:
           VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
@@ -116,6 +123,8 @@ jobs:
         # The deployment consumes only the curated revision-pinned native
         # producer outputs assembled above. The old demo/starter collection is
         # not a member of this edition.
+        env:
+          OI_ESSAY_BROWSER_REPO: ${{ github.workspace }}/.publication-sources/essay-reading/published-reading/2026-10-04
         run: npm run build:public
       - name: Verify exact curated publication bytes
         run: node verify-public-edition.mjs --directory dist --expected-inputs "$OI_LIBRARY_PUBLICATIONS" --out evidence/library/curated-byte-receipt.json
@@ -133,6 +142,7 @@ jobs:
           python tests/library-regressions.py || result=1
           python tests/publication-acceptance.py || result=1
           python tests/essay-host-smoke.py || result=1
+          python tests/essay-reader-controls.py || result=1
           exit "$result"
       - name: Retain publication verification separately from deployable files
         if: always()

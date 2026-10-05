@@ -1,0 +1,4636 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-pauli-egg-dream",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+  "revision": 1,
+  "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background",
+    "revision": 1,
+    "title": "A physicist meets his concepts in a dream",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision",
+    "revision": 1,
+    "title": "Pictures 1–2: the egg laid; the egg divides itself",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand",
+    "revision": 1,
+    "title": "Pictures 3–4: the egg in his own hand; division that keeps wholeness",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient",
+    "revision": 1,
+    "title": "Pictures 5–6: four eggs become expressions; the conjugate quotient",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle",
+    "revision": 1,
+    "title": "Picture 7: he speaks, and the circle appears",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary",
+    "revision": 1,
+    "title": "Pauli reads the part played by consciousness",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return",
+    "revision": 1,
+    "title": "Return: the recovered telling and its authorial office",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270",
+     "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242",
+    "revision": 1,
+    "title": "the dreamer — Pauli, after the Kepler work, mid-March 1948",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.188,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243",
+    "revision": 1,
+    "title": "background physics — concepts arriving unbidden",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.2,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244",
+    "revision": 1,
+    "title": "the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245",
+    "revision": 1,
+    "title": "Fierz's note — an undated typescript, an outline not a finished publication",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246",
+    "revision": 1,
+    "title": "the woman with the bird — unnamed; their action brings the egg",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1785,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247",
+    "revision": 1,
+    "title": "picture 1 — the single egg, awaiting what will happen",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.356,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248",
+    "revision": 1,
+    "title": "picture 2 — the egg divides itself",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.15,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.575,
+      "automation": null
+     },
+     "share": {
+      "value": 1.5,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249",
+    "revision": 1,
+    "title": "no good egg and evil egg — no conflict between them",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250",
+    "revision": 1,
+    "title": "pictures 1–2 — the spontaneous pair above",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.11,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1465,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251",
+    "revision": 1,
+    "title": "picture 3 — the blue-shelled egg in his hand",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.19,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.357,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252",
+    "revision": 1,
+    "title": "picture 4 — divided, both whole",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.575,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253",
+    "revision": 1,
+    "title": "the marvel — two eggs, not two broken portions",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.7,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254",
+    "revision": 1,
+    "title": "the dreamer — approaches, notices, participates",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255",
+    "revision": 1,
+    "title": "picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.219,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256",
+    "revision": 1,
+    "title": "picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.408,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257",
+    "revision": 1,
+    "title": "no shell-to-function assignment is added",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258",
+    "revision": 1,
+    "title": "the opposing signs retained in one relation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.48,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259",
+    "revision": 1,
+    "title": "formula → circle",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.37,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260",
+    "revision": 1,
+    "title": "the spoken recognition — the dreamer's first speech",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.55,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261",
+    "revision": 1,
+    "title": "the unit circle — a point for fixed angle, the circle as the angle varies",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.23,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.398,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262",
+    "revision": 1,
+    "title": "no eighth scene — no return of the woman and bird",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.19,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263",
+    "revision": 1,
+    "title": "the ground state — the spontaneous pair",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1475,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264",
+    "revision": 1,
+    "title": "conscious intervention — noticing and dividing what he already holds",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.15,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265",
+    "revision": 1,
+    "title": "the imaginary unit's symbolic office — opposites combined into the form read as wholeness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266",
+    "revision": 1,
+    "title": "the refusal — further progress in the sciences would be required",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267",
+    "revision": 1,
+    "title": "Neumann's round compared — no egg-to-stage assignment",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268",
+    "revision": 1,
+    "title": "the circle — the dream's end, exact in its own scope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.41,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.626,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269",
+    "revision": 1,
+    "title": "the four eggs with two different origins — retained",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270",
+    "revision": 1,
+    "title": "X/x is Taylor's — seven pictures and four eggs count no eightfold identity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271",
+    "revision": 1,
+    "title": "A19 comparison — the observer brought into the operation he first receives as scene",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1145,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-pauli-egg-dream.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Pauli&#39;s egg dream — spontaneous division, conscious participation and the circle</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream\" data-expression-revision=\"1\"><h1>Pauli&#39;s egg dream — spontaneous division, conscious participation and the circle</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-pauli-egg-dream at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background\" aria-label=\"A physicist meets his concepts in a dream\"><h2>A physicist meets his concepts in a dream</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.80%;font-size:0.60rem;opacity:1.00\" title=\"the dreamer — Pauli, after the Kepler work, mid-March 1948\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:53.00%;top:48.00%;font-size:0.96rem;opacity:1.00\" title=\"background physics — concepts arriving unbidden\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"Fierz&#39;s note — an undated typescript, an outline not a finished publication\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision\" aria-label=\"Pictures 1–2: the egg laid; the egg divides itself\"><h2>Pictures 1–2: the egg laid; the egg divides itself</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the woman with the bird — unnamed; their action brings the egg\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.00%;font-size:1.07rem;opacity:1.00\" title=\"picture 1 — the single egg, awaiting what will happen\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:54.50%;top:51.50%;font-size:1.72rem;opacity:1.00\" title=\"picture 2 — the egg divides itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.80%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"no good egg and evil egg — no conflict between them\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand\" aria-label=\"Pictures 3–4: the egg in his own hand; division that keeps wholeness\"><h2>Pictures 3–4: the egg in his own hand; division that keeps wholeness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:47.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"pictures 1–2 — the spontaneous pair above\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:1.07rem;opacity:1.00\" title=\"picture 3 — the blue-shelled egg in his hand\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:1.72rem;opacity:1.00\" title=\"picture 4 — divided, both whole\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:57.00%;top:45.80%;font-size:0.60rem;opacity:1.00\" title=\"the marvel — two eggs, not two broken portions\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"the dreamer — approaches, notices, participates\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient\" aria-label=\"Pictures 5–6: four eggs become expressions; the conjugate quotient\"><h2>Pictures 5–6: four eggs become expressions; the conjugate quotient</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:0.66rem;opacity:1.00\" title=\"picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:1.22rem;opacity:1.00\" title=\"picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"no shell-to-function assignment is added\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.80%;font-size:0.60rem;opacity:1.00\" title=\"the opposing signs retained in one relation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle\" aria-label=\"Picture 7: he speaks, and the circle appears\"><h2>Picture 7: he speaks, and the circle appears</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.70%;font-size:1.06rem;opacity:1.00\" title=\"formula → circle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.20%;top:44.50%;font-size:0.66rem;opacity:1.00\" title=\"the spoken recognition — the dreamer&#39;s first speech\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:1.19rem;opacity:1.00\" title=\"the unit circle — a point for fixed angle, the circle as the angle varies\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"no eighth scene — no return of the woman and bird\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary\" aria-label=\"Pauli reads the part played by consciousness\"><h2>Pauli reads the part played by consciousness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the ground state — the spontaneous pair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:51.50%;top:46.00%;font-size:0.66rem;opacity:1.00\" title=\"conscious intervention — noticing and dividing what he already holds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.50%;top:49.50%;font-size:0.66rem;opacity:1.00\" title=\"the imaginary unit&#39;s symbolic office — opposites combined into the form read as wholeness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the refusal — further progress in the sciences would be required\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"Neumann&#39;s round compared — no egg-to-stage assignment\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return\" aria-label=\"Return: the recovered telling and its authorial office\"><h2>Return: the recovered telling and its authorial office</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:1.88rem;opacity:1.00\" title=\"the circle — the dream&#39;s end, exact in its own scope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"the four eggs with two different origins — retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.20%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"X/x is Taylor&#39;s — seven pictures and four eggs count no eightfold identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:50.60%;font-size:0.60rem;opacity:1.00\" title=\"A19 comparison — the observer brought into the operation he first receives as scene\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-pauli-egg-dream",
+  "world_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+  "revision": 1,
+  "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle"
+      },
+      "fallback": {
+       "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Pauli&#39;s egg dream — spontaneous division, conscious participation and the circle</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream\" data-expression-revision=\"1\"><h1>Pauli&#39;s egg dream — spontaneous division, conscious participation and the circle</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-pauli-egg-dream at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background\" aria-label=\"A physicist meets his concepts in a dream\"><h2>A physicist meets his concepts in a dream</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.80%;font-size:0.60rem;opacity:1.00\" title=\"the dreamer — Pauli, after the Kepler work, mid-March 1948\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:53.00%;top:48.00%;font-size:0.96rem;opacity:1.00\" title=\"background physics — concepts arriving unbidden\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"Fierz&#39;s note — an undated typescript, an outline not a finished publication\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision\" aria-label=\"Pictures 1–2: the egg laid; the egg divides itself\"><h2>Pictures 1–2: the egg laid; the egg divides itself</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the woman with the bird — unnamed; their action brings the egg\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.00%;font-size:1.07rem;opacity:1.00\" title=\"picture 1 — the single egg, awaiting what will happen\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:54.50%;top:51.50%;font-size:1.72rem;opacity:1.00\" title=\"picture 2 — the egg divides itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.80%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"no good egg and evil egg — no conflict between them\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand\" aria-label=\"Pictures 3–4: the egg in his own hand; division that keeps wholeness\"><h2>Pictures 3–4: the egg in his own hand; division that keeps wholeness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:47.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"pictures 1–2 — the spontaneous pair above\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:1.07rem;opacity:1.00\" title=\"picture 3 — the blue-shelled egg in his hand\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:1.72rem;opacity:1.00\" title=\"picture 4 — divided, both whole\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:57.00%;top:45.80%;font-size:0.60rem;opacity:1.00\" title=\"the marvel — two eggs, not two broken portions\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"the dreamer — approaches, notices, participates\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient\" aria-label=\"Pictures 5–6: four eggs become expressions; the conjugate quotient\"><h2>Pictures 5–6: four eggs become expressions; the conjugate quotient</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:0.66rem;opacity:1.00\" title=\"picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:1.22rem;opacity:1.00\" title=\"picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"no shell-to-function assignment is added\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.80%;font-size:0.60rem;opacity:1.00\" title=\"the opposing signs retained in one relation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle\" aria-label=\"Picture 7: he speaks, and the circle appears\"><h2>Picture 7: he speaks, and the circle appears</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.70%;font-size:1.06rem;opacity:1.00\" title=\"formula → circle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.20%;top:44.50%;font-size:0.66rem;opacity:1.00\" title=\"the spoken recognition — the dreamer&#39;s first speech\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:1.19rem;opacity:1.00\" title=\"the unit circle — a point for fixed angle, the circle as the angle varies\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"no eighth scene — no return of the woman and bird\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary\" aria-label=\"Pauli reads the part played by consciousness\"><h2>Pauli reads the part played by consciousness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the ground state — the spontaneous pair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:51.50%;top:46.00%;font-size:0.66rem;opacity:1.00\" title=\"conscious intervention — noticing and dividing what he already holds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.50%;top:49.50%;font-size:0.66rem;opacity:1.00\" title=\"the imaginary unit&#39;s symbolic office — opposites combined into the form read as wholeness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the refusal — further progress in the sciences would be required\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"Neumann&#39;s round compared — no egg-to-stage assignment\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return\" aria-label=\"Return: the recovered telling and its authorial office\"><h2>Return: the recovered telling and its authorial office</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:1.88rem;opacity:1.00\" title=\"the circle — the dream&#39;s end, exact in its own scope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"the four eggs with two different origins — retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.20%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"X/x is Taylor&#39;s — seven pictures and four eggs count no eightfold identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:50.60%;font-size:0.60rem;opacity:1.00\" title=\"A19 comparison — the observer brought into the operation he first receives as scene\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+        "revision": 1,
+        "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background",
+          "revision": 1,
+          "title": "A physicist meets his concepts in a dream",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision",
+          "revision": 1,
+          "title": "Pictures 1–2: the egg laid; the egg divides itself",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand",
+          "revision": 1,
+          "title": "Pictures 3–4: the egg in his own hand; division that keeps wholeness",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient",
+          "revision": 1,
+          "title": "Pictures 5–6: four eggs become expressions; the conjugate quotient",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle",
+          "revision": 1,
+          "title": "Picture 7: he speaks, and the circle appears",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary",
+          "revision": 1,
+          "title": "Pauli reads the part played by consciousness",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return",
+          "revision": 1,
+          "title": "Return: the recovered telling and its authorial office",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270",
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242",
+          "revision": 1,
+          "title": "the dreamer — Pauli, after the Kepler work, mid-March 1948",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.188,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243",
+          "revision": 1,
+          "title": "background physics — concepts arriving unbidden",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.2,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244",
+          "revision": 1,
+          "title": "the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245",
+          "revision": 1,
+          "title": "Fierz's note — an undated typescript, an outline not a finished publication",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246",
+          "revision": 1,
+          "title": "the woman with the bird — unnamed; their action brings the egg",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1785,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247",
+          "revision": 1,
+          "title": "picture 1 — the single egg, awaiting what will happen",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.356,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248",
+          "revision": 1,
+          "title": "picture 2 — the egg divides itself",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.15,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.575,
+            "automation": null
+           },
+           "share": {
+            "value": 1.5,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249",
+          "revision": 1,
+          "title": "no good egg and evil egg — no conflict between them",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250",
+          "revision": 1,
+          "title": "pictures 1–2 — the spontaneous pair above",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.11,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1465,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251",
+          "revision": 1,
+          "title": "picture 3 — the blue-shelled egg in his hand",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.19,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.357,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252",
+          "revision": 1,
+          "title": "picture 4 — divided, both whole",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.575,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253",
+          "revision": 1,
+          "title": "the marvel — two eggs, not two broken portions",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.7,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254",
+          "revision": 1,
+          "title": "the dreamer — approaches, notices, participates",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255",
+          "revision": 1,
+          "title": "picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.219,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256",
+          "revision": 1,
+          "title": "picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.408,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257",
+          "revision": 1,
+          "title": "no shell-to-function assignment is added",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258",
+          "revision": 1,
+          "title": "the opposing signs retained in one relation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.48,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259",
+          "revision": 1,
+          "title": "formula → circle",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.37,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260",
+          "revision": 1,
+          "title": "the spoken recognition — the dreamer's first speech",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.55,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261",
+          "revision": 1,
+          "title": "the unit circle — a point for fixed angle, the circle as the angle varies",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.23,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.398,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262",
+          "revision": 1,
+          "title": "no eighth scene — no return of the woman and bird",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.19,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263",
+          "revision": 1,
+          "title": "the ground state — the spontaneous pair",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1475,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264",
+          "revision": 1,
+          "title": "conscious intervention — noticing and dividing what he already holds",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.15,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265",
+          "revision": 1,
+          "title": "the imaginary unit's symbolic office — opposites combined into the form read as wholeness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266",
+          "revision": 1,
+          "title": "the refusal — further progress in the sciences would be required",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267",
+          "revision": 1,
+          "title": "Neumann's round compared — no egg-to-stage assignment",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268",
+          "revision": 1,
+          "title": "the circle — the dream's end, exact in its own scope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.41,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.626,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269",
+          "revision": 1,
+          "title": "the four eggs with two different origins — retained",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270",
+          "revision": 1,
+          "title": "X/x is Taylor's — seven pictures and four eggs count no eightfold identity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271",
+          "revision": 1,
+          "title": "A19 comparison — the observer brought into the operation he first receives as scene",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1145,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-pauli-egg-dream.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle"
+      },
+      "fallback": {
+       "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+       "text": "Pauli's egg dream — spontaneous division, conscious participation and the circle: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-pauli-egg-dream",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-pauli-egg-dream:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-pauli-egg-dream:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-pauli-egg-dream",
+    "world_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+    "revision": 1,
+    "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle"
+        },
+        "fallback": {
+         "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Pauli&#39;s egg dream — spontaneous division, conscious participation and the circle</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream\" data-expression-revision=\"1\"><h1>Pauli&#39;s egg dream — spontaneous division, conscious participation and the circle</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-pauli-egg-dream at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background\" aria-label=\"A physicist meets his concepts in a dream\"><h2>A physicist meets his concepts in a dream</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.80%;font-size:0.60rem;opacity:1.00\" title=\"the dreamer — Pauli, after the Kepler work, mid-March 1948\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:53.00%;top:48.00%;font-size:0.96rem;opacity:1.00\" title=\"background physics — concepts arriving unbidden\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"Fierz&#39;s note — an undated typescript, an outline not a finished publication\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision\" aria-label=\"Pictures 1–2: the egg laid; the egg divides itself\"><h2>Pictures 1–2: the egg laid; the egg divides itself</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the woman with the bird — unnamed; their action brings the egg\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.00%;font-size:1.07rem;opacity:1.00\" title=\"picture 1 — the single egg, awaiting what will happen\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:54.50%;top:51.50%;font-size:1.72rem;opacity:1.00\" title=\"picture 2 — the egg divides itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.80%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"no good egg and evil egg — no conflict between them\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand\" aria-label=\"Pictures 3–4: the egg in his own hand; division that keeps wholeness\"><h2>Pictures 3–4: the egg in his own hand; division that keeps wholeness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:47.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"pictures 1–2 — the spontaneous pair above\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:1.07rem;opacity:1.00\" title=\"picture 3 — the blue-shelled egg in his hand\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:1.72rem;opacity:1.00\" title=\"picture 4 — divided, both whole\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:57.00%;top:45.80%;font-size:0.60rem;opacity:1.00\" title=\"the marvel — two eggs, not two broken portions\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"the dreamer — approaches, notices, participates\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient\" aria-label=\"Pictures 5–6: four eggs become expressions; the conjugate quotient\"><h2>Pictures 5–6: four eggs become expressions; the conjugate quotient</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.40%;font-size:0.66rem;opacity:1.00\" title=\"picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:1.22rem;opacity:1.00\" title=\"picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"no shell-to-function assignment is added\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.80%;font-size:0.60rem;opacity:1.00\" title=\"the opposing signs retained in one relation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle\" aria-label=\"Picture 7: he speaks, and the circle appears\"><h2>Picture 7: he speaks, and the circle appears</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.70%;font-size:1.06rem;opacity:1.00\" title=\"formula → circle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.20%;top:44.50%;font-size:0.66rem;opacity:1.00\" title=\"the spoken recognition — the dreamer&#39;s first speech\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:1.19rem;opacity:1.00\" title=\"the unit circle — a point for fixed angle, the circle as the angle varies\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"no eighth scene — no return of the woman and bird\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary\" aria-label=\"Pauli reads the part played by consciousness\"><h2>Pauli reads the part played by consciousness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the ground state — the spontaneous pair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:51.50%;top:46.00%;font-size:0.66rem;opacity:1.00\" title=\"conscious intervention — noticing and dividing what he already holds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.50%;top:49.50%;font-size:0.66rem;opacity:1.00\" title=\"the imaginary unit&#39;s symbolic office — opposites combined into the form read as wholeness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the refusal — further progress in the sciences would be required\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"Neumann&#39;s round compared — no egg-to-stage assignment\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return\" aria-label=\"Return: the recovered telling and its authorial office\"><h2>Return: the recovered telling and its authorial office</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:1.88rem;opacity:1.00\" title=\"the circle — the dream&#39;s end, exact in its own scope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"the four eggs with two different origins — retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:56.20%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"X/x is Taylor&#39;s — seven pictures and four eggs count no eightfold identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream\" data-presentation-role=\"thing\" style=\"left:44.00%;top:50.60%;font-size:0.60rem;opacity:1.00\" title=\"A19 comparison — the observer brought into the operation he first receives as scene\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+          "revision": 1,
+          "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background",
+            "revision": 1,
+            "title": "A physicist meets his concepts in a dream",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision",
+            "revision": 1,
+            "title": "Pictures 1–2: the egg laid; the egg divides itself",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand",
+            "revision": 1,
+            "title": "Pictures 3–4: the egg in his own hand; division that keeps wholeness",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient",
+            "revision": 1,
+            "title": "Pictures 5–6: four eggs become expressions; the conjugate quotient",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle",
+            "revision": 1,
+            "title": "Picture 7: he speaks, and the circle appears",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary",
+            "revision": 1,
+            "title": "Pauli reads the part played by consciousness",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return",
+            "revision": 1,
+            "title": "Return: the recovered telling and its authorial office",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270",
+             "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242",
+            "revision": 1,
+            "title": "the dreamer — Pauli, after the Kepler work, mid-March 1948",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.188,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e243",
+            "revision": 1,
+            "title": "background physics — concepts arriving unbidden",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.2,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e244",
+            "revision": 1,
+            "title": "the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e245",
+            "revision": 1,
+            "title": "Fierz's note — an undated typescript, an outline not a finished publication",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e246",
+            "revision": 1,
+            "title": "the woman with the bird — unnamed; their action brings the egg",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1785,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e247",
+            "revision": 1,
+            "title": "picture 1 — the single egg, awaiting what will happen",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.356,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e248",
+            "revision": 1,
+            "title": "picture 2 — the egg divides itself",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.15,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.575,
+              "automation": null
+             },
+             "share": {
+              "value": 1.5,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-1-selfdivision:e249",
+            "revision": 1,
+            "title": "no good egg and evil egg — no conflict between them",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e250",
+            "revision": 1,
+            "title": "pictures 1–2 — the spontaneous pair above",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.11,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1465,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e251",
+            "revision": 1,
+            "title": "picture 3 — the blue-shelled egg in his hand",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.19,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.357,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e252",
+            "revision": 1,
+            "title": "picture 4 — divided, both whole",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.575,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e253",
+            "revision": 1,
+            "title": "the marvel — two eggs, not two broken portions",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.7,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-2-hand:e254",
+            "revision": 1,
+            "title": "the dreamer — approaches, notices, participates",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e255",
+            "revision": 1,
+            "title": "picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.219,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e256",
+            "revision": 1,
+            "title": "picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.408,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e257",
+            "revision": 1,
+            "title": "no shell-to-function assignment is added",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3-quotient:e258",
+            "revision": 1,
+            "title": "the opposing signs retained in one relation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.48,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e259",
+            "revision": 1,
+            "title": "formula → circle",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.37,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e260",
+            "revision": 1,
+            "title": "the spoken recognition — the dreamer's first speech",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.55,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e261",
+            "revision": 1,
+            "title": "the unit circle — a point for fixed angle, the circle as the angle varies",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.23,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.398,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-3b-circle:e262",
+            "revision": 1,
+            "title": "no eighth scene — no return of the woman and bird",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.19,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e263",
+            "revision": 1,
+            "title": "the ground state — the spontaneous pair",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1475,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e264",
+            "revision": 1,
+            "title": "conscious intervention — noticing and dividing what he already holds",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.15,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e265",
+            "revision": 1,
+            "title": "the imaginary unit's symbolic office — opposites combined into the form read as wholeness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e266",
+            "revision": 1,
+            "title": "the refusal — further progress in the sciences would be required",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-4-commentary:e267",
+            "revision": 1,
+            "title": "Neumann's round compared — no egg-to-stage assignment",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e268",
+            "revision": 1,
+            "title": "the circle — the dream's end, exact in its own scope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.41,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.626,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e269",
+            "revision": 1,
+            "title": "the four eggs with two different origins — retained",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e270",
+            "revision": 1,
+            "title": "X/x is Taylor's — seven pictures and four eggs count no eightfold identity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-5-return:e271",
+            "revision": 1,
+            "title": "A19 comparison — the observer brought into the operation he first receives as scene",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1145,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream:scene:m-pauli-0-background:e242"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-pauli-egg-dream.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle"
+        },
+        "fallback": {
+         "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+         "text": "Pauli's egg dream — spontaneous division, conscious participation and the circle: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-pauli-egg-dream",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-pauli-egg-dream.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-pauli-egg-dream"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-pauli-egg-dream:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+  "summary": "a living Expression · 7 scenes · 30 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-pauli-egg-dream:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-pauli-egg-dream"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-pauli-egg-dream:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-pauli-egg-dream",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-pauli-egg-dream",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-pauli-egg-dream:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-pauli-egg-dream:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-pauli-egg-dream",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-pauli-egg-dream"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

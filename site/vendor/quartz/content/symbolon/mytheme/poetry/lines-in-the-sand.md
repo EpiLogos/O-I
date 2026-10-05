@@ -10,11 +10,11 @@ type: _md_
 title: "Lines in the sand"
 source: notion
 source_url: https://app.notion.com/p/192a4797123c806c8ebdfbf01ce9355c
-source_id: 192a4797-123c-806c-8ebd-fbf01ce9355c
 notion_created: 2025-02-06T12:57:22Z
 notion_edited: 2025-02-06T12:59:19.717Z
 status: sorted
 kind: poem
+source_id: lines-in-the-sand
 ---
 Absolute,
 Show me a line in the sand

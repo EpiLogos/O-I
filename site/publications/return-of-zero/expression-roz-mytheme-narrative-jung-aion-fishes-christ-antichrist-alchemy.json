@@ -1,0 +1,3802 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "revision": 1,
+  "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow",
+    "revision": 1,
+    "title": "Ego, shadow, and the image of perfection",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes",
+    "revision": 1,
+    "title": "The fishes give the age its temporal image",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy",
+    "revision": 1,
+    "title": "The fish is caught, worked, and made to transform",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio",
+    "revision": 1,
+    "title": "The quaternio — Anthropos, Shadow, Physis, lapis",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return",
+    "revision": 1,
+    "title": "The age becomes visible as an age",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489",
+     "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467",
+    "revision": 1,
+    "title": "the ego — centre of reference, rooted beyond what it knows of itself",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.105,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468",
+    "revision": 1,
+    "title": "the shadow — recognised through moral effort; projection returning the rejected face",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.4,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469",
+    "revision": 1,
+    "title": "the Christ-image — the Self given a human face; exclusively luminous, not all the opposites",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3395,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470",
+    "revision": 1,
+    "title": "Antichrist — the compensatory counter-image within the same aeon",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471",
+    "revision": 1,
+    "title": "Pisces — the two fishes of the age, head to tail",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.276,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472",
+    "revision": 1,
+    "title": "the precessional spring-point — expectation as a historical actor",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473",
+    "revision": 1,
+    "title": "the Pistis Sophia double — bound, released, embraced, one",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474",
+    "revision": 1,
+    "title": "Leviathan split against itself, then food for the devout (chs. IX)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475",
+    "revision": 1,
+    "title": "Epiphanius's rite — the image carried up and returned below; a pagan rite used as testimony",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.25,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.089,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476",
+    "revision": 1,
+    "title": "the round sea creature — bonesless, heated with sea water until it shines",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.31,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.313,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477",
+    "revision": 1,
+    "title": "the eyewash — the preparation becoming the capacity to see",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.11,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.105,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478",
+    "revision": 1,
+    "title": "the Echeneis — the small fish that halts ships; the magnet taught to attract it",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479",
+    "revision": 1,
+    "title": "Mercurius — substance and philosophy; the lapis within darkness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480",
+    "revision": 1,
+    "title": "the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481",
+    "revision": 1,
+    "title": "A — Anthropos",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.125,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482",
+    "revision": 1,
+    "title": "B — Shadow (the inserted modern reconstruction)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483",
+    "revision": 1,
+    "title": "C — Physis / serpent",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484",
+    "revision": 1,
+    "title": "D — lapis",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485",
+    "revision": 1,
+    "title": "the connected diamonds — each whole unfolding into four and passing onward (p.259)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.491,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486",
+    "revision": 1,
+    "title": "the ring returning through differentiation — an unconscious totality becoming conscious",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.68,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487",
+    "revision": 1,
+    "title": "de-monopolisation — the inherited image becoming revisable",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.576,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488",
+    "revision": 1,
+    "title": "generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.31,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489",
+    "revision": 1,
+    "title": "the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490",
+    "revision": 1,
+    "title": "uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Jung&#39;s Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-expression-revision=\"1\"><h1>Jung&#39;s Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow\" aria-label=\"Ego, shadow, and the image of perfection\"><h2>Ego, shadow, and the image of perfection</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the ego — centre of reference, rooted beyond what it knows of itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.08rem;opacity:1.00\" title=\"the shadow — recognised through moral effort; projection returning the rejected face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.80%;font-size:1.02rem;opacity:1.00\" title=\"the Christ-image — the Self given a human face; exclusively luminous, not all the opposites\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"Antichrist — the compensatory counter-image within the same aeon\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes\" aria-label=\"The fishes give the age its temporal image\"><h2>The fishes give the age its temporal image</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:0.83rem;opacity:1.00\" title=\"Pisces — the two fishes of the age, head to tail\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.66rem;opacity:1.00\" title=\"the precessional spring-point — expectation as a historical actor\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.00%;font-size:0.96rem;opacity:1.00\" title=\"the Pistis Sophia double — bound, released, embraced, one\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:1.26rem;opacity:1.00\" title=\"Leviathan split against itself, then food for the devout (chs. IX)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.50%;font-size:0.60rem;opacity:1.00\" title=\"Epiphanius&#39;s rite — the image carried up and returned below; a pagan rite used as testimony\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy\" aria-label=\"The fish is caught, worked, and made to transform\"><h2>The fish is caught, worked, and made to transform</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.10%;font-size:0.94rem;opacity:1.00\" title=\"the round sea creature — bonesless, heated with sea water until it shines\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"the eyewash — the preparation becoming the capacity to see\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.72rem;opacity:1.00\" title=\"the Echeneis — the small fish that halts ships; the magnet taught to attract it\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"Mercurius — substance and philosophy; the lapis within darkness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.84rem;opacity:1.00\" title=\"the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio\" aria-label=\"The quaternio — Anthropos, Shadow, Physis, lapis\"><h2>The quaternio — Anthropos, Shadow, Physis, lapis</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"A — Anthropos\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.50%;font-size:0.72rem;opacity:1.00\" title=\"B — Shadow (the inserted modern reconstruction)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"C — Physis / serpent\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"D — lapis\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:1.47rem;opacity:1.00\" title=\"the connected diamonds — each whole unfolding into four and passing onward (p.259)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.80%;font-size:0.60rem;opacity:1.00\" title=\"the ring returning through differentiation — an unconscious totality becoming conscious\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return\" aria-label=\"The age becomes visible as an age\"><h2>The age becomes visible as an age</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:1.73rem;opacity:1.00\" title=\"de-monopolisation — the inherited image becoming revisable\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.93rem;opacity:1.00\" title=\"generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "world_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "revision": 1,
+  "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow"
+      },
+      "fallback": {
+       "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Jung&#39;s Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-expression-revision=\"1\"><h1>Jung&#39;s Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow\" aria-label=\"Ego, shadow, and the image of perfection\"><h2>Ego, shadow, and the image of perfection</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the ego — centre of reference, rooted beyond what it knows of itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.08rem;opacity:1.00\" title=\"the shadow — recognised through moral effort; projection returning the rejected face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.80%;font-size:1.02rem;opacity:1.00\" title=\"the Christ-image — the Self given a human face; exclusively luminous, not all the opposites\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"Antichrist — the compensatory counter-image within the same aeon\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes\" aria-label=\"The fishes give the age its temporal image\"><h2>The fishes give the age its temporal image</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:0.83rem;opacity:1.00\" title=\"Pisces — the two fishes of the age, head to tail\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.66rem;opacity:1.00\" title=\"the precessional spring-point — expectation as a historical actor\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.00%;font-size:0.96rem;opacity:1.00\" title=\"the Pistis Sophia double — bound, released, embraced, one\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:1.26rem;opacity:1.00\" title=\"Leviathan split against itself, then food for the devout (chs. IX)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.50%;font-size:0.60rem;opacity:1.00\" title=\"Epiphanius&#39;s rite — the image carried up and returned below; a pagan rite used as testimony\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy\" aria-label=\"The fish is caught, worked, and made to transform\"><h2>The fish is caught, worked, and made to transform</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.10%;font-size:0.94rem;opacity:1.00\" title=\"the round sea creature — bonesless, heated with sea water until it shines\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"the eyewash — the preparation becoming the capacity to see\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.72rem;opacity:1.00\" title=\"the Echeneis — the small fish that halts ships; the magnet taught to attract it\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"Mercurius — substance and philosophy; the lapis within darkness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.84rem;opacity:1.00\" title=\"the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio\" aria-label=\"The quaternio — Anthropos, Shadow, Physis, lapis\"><h2>The quaternio — Anthropos, Shadow, Physis, lapis</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"A — Anthropos\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.50%;font-size:0.72rem;opacity:1.00\" title=\"B — Shadow (the inserted modern reconstruction)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"C — Physis / serpent\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"D — lapis\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:1.47rem;opacity:1.00\" title=\"the connected diamonds — each whole unfolding into four and passing onward (p.259)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.80%;font-size:0.60rem;opacity:1.00\" title=\"the ring returning through differentiation — an unconscious totality becoming conscious\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return\" aria-label=\"The age becomes visible as an age\"><h2>The age becomes visible as an age</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:1.73rem;opacity:1.00\" title=\"de-monopolisation — the inherited image becoming revisable\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.93rem;opacity:1.00\" title=\"generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "revision": 1,
+        "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow",
+          "revision": 1,
+          "title": "Ego, shadow, and the image of perfection",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes",
+          "revision": 1,
+          "title": "The fishes give the age its temporal image",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy",
+          "revision": 1,
+          "title": "The fish is caught, worked, and made to transform",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio",
+          "revision": 1,
+          "title": "The quaternio — Anthropos, Shadow, Physis, lapis",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return",
+          "revision": 1,
+          "title": "The age becomes visible as an age",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489",
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467",
+          "revision": 1,
+          "title": "the ego — centre of reference, rooted beyond what it knows of itself",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.105,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468",
+          "revision": 1,
+          "title": "the shadow — recognised through moral effort; projection returning the rejected face",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.4,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469",
+          "revision": 1,
+          "title": "the Christ-image — the Self given a human face; exclusively luminous, not all the opposites",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3395,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470",
+          "revision": 1,
+          "title": "Antichrist — the compensatory counter-image within the same aeon",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471",
+          "revision": 1,
+          "title": "Pisces — the two fishes of the age, head to tail",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.276,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472",
+          "revision": 1,
+          "title": "the precessional spring-point — expectation as a historical actor",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473",
+          "revision": 1,
+          "title": "the Pistis Sophia double — bound, released, embraced, one",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474",
+          "revision": 1,
+          "title": "Leviathan split against itself, then food for the devout (chs. IX)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475",
+          "revision": 1,
+          "title": "Epiphanius's rite — the image carried up and returned below; a pagan rite used as testimony",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.25,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.089,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476",
+          "revision": 1,
+          "title": "the round sea creature — bonesless, heated with sea water until it shines",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.31,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.313,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477",
+          "revision": 1,
+          "title": "the eyewash — the preparation becoming the capacity to see",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.11,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.105,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478",
+          "revision": 1,
+          "title": "the Echeneis — the small fish that halts ships; the magnet taught to attract it",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479",
+          "revision": 1,
+          "title": "Mercurius — substance and philosophy; the lapis within darkness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480",
+          "revision": 1,
+          "title": "the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481",
+          "revision": 1,
+          "title": "A — Anthropos",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.125,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482",
+          "revision": 1,
+          "title": "B — Shadow (the inserted modern reconstruction)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483",
+          "revision": 1,
+          "title": "C — Physis / serpent",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484",
+          "revision": 1,
+          "title": "D — lapis",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485",
+          "revision": 1,
+          "title": "the connected diamonds — each whole unfolding into four and passing onward (p.259)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.491,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486",
+          "revision": 1,
+          "title": "the ring returning through differentiation — an unconscious totality becoming conscious",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.68,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487",
+          "revision": 1,
+          "title": "de-monopolisation — the inherited image becoming revisable",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.576,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488",
+          "revision": 1,
+          "title": "generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.31,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489",
+          "revision": 1,
+          "title": "the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490",
+          "revision": 1,
+          "title": "uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow"
+      },
+      "fallback": {
+       "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+       "text": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "world_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "revision": 1,
+    "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow"
+        },
+        "fallback": {
+         "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Jung&#39;s Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-expression-revision=\"1\"><h1>Jung&#39;s Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow\" aria-label=\"Ego, shadow, and the image of perfection\"><h2>Ego, shadow, and the image of perfection</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the ego — centre of reference, rooted beyond what it knows of itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.08rem;opacity:1.00\" title=\"the shadow — recognised through moral effort; projection returning the rejected face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.80%;font-size:1.02rem;opacity:1.00\" title=\"the Christ-image — the Self given a human face; exclusively luminous, not all the opposites\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"Antichrist — the compensatory counter-image within the same aeon\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes\" aria-label=\"The fishes give the age its temporal image\"><h2>The fishes give the age its temporal image</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:0.83rem;opacity:1.00\" title=\"Pisces — the two fishes of the age, head to tail\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.66rem;opacity:1.00\" title=\"the precessional spring-point — expectation as a historical actor\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.00%;font-size:0.96rem;opacity:1.00\" title=\"the Pistis Sophia double — bound, released, embraced, one\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:1.26rem;opacity:1.00\" title=\"Leviathan split against itself, then food for the devout (chs. IX)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.50%;font-size:0.60rem;opacity:1.00\" title=\"Epiphanius&#39;s rite — the image carried up and returned below; a pagan rite used as testimony\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy\" aria-label=\"The fish is caught, worked, and made to transform\"><h2>The fish is caught, worked, and made to transform</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.10%;font-size:0.94rem;opacity:1.00\" title=\"the round sea creature — bonesless, heated with sea water until it shines\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"the eyewash — the preparation becoming the capacity to see\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.72rem;opacity:1.00\" title=\"the Echeneis — the small fish that halts ships; the magnet taught to attract it\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"Mercurius — substance and philosophy; the lapis within darkness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.84rem;opacity:1.00\" title=\"the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio\" aria-label=\"The quaternio — Anthropos, Shadow, Physis, lapis\"><h2>The quaternio — Anthropos, Shadow, Physis, lapis</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"A — Anthropos\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.50%;font-size:0.72rem;opacity:1.00\" title=\"B — Shadow (the inserted modern reconstruction)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"C — Physis / serpent\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"D — lapis\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:1.47rem;opacity:1.00\" title=\"the connected diamonds — each whole unfolding into four and passing onward (p.259)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.80%;font-size:0.60rem;opacity:1.00\" title=\"the ring returning through differentiation — an unconscious totality becoming conscious\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return\" aria-label=\"The age becomes visible as an age\"><h2>The age becomes visible as an age</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:1.73rem;opacity:1.00\" title=\"de-monopolisation — the inherited image becoming revisable\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.93rem;opacity:1.00\" title=\"generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+          "revision": 1,
+          "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow",
+            "revision": 1,
+            "title": "Ego, shadow, and the image of perfection",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes",
+            "revision": 1,
+            "title": "The fishes give the age its temporal image",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy",
+            "revision": 1,
+            "title": "The fish is caught, worked, and made to transform",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio",
+            "revision": 1,
+            "title": "The quaternio — Anthropos, Shadow, Physis, lapis",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return",
+            "revision": 1,
+            "title": "The age becomes visible as an age",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489",
+             "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467",
+            "revision": 1,
+            "title": "the ego — centre of reference, rooted beyond what it knows of itself",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.105,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e468",
+            "revision": 1,
+            "title": "the shadow — recognised through moral effort; projection returning the rejected face",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.4,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e469",
+            "revision": 1,
+            "title": "the Christ-image — the Self given a human face; exclusively luminous, not all the opposites",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3395,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e470",
+            "revision": 1,
+            "title": "Antichrist — the compensatory counter-image within the same aeon",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e471",
+            "revision": 1,
+            "title": "Pisces — the two fishes of the age, head to tail",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.276,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e472",
+            "revision": 1,
+            "title": "the precessional spring-point — expectation as a historical actor",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e473",
+            "revision": 1,
+            "title": "the Pistis Sophia double — bound, released, embraced, one",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e474",
+            "revision": 1,
+            "title": "Leviathan split against itself, then food for the devout (chs. IX)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-1-fishes:e475",
+            "revision": 1,
+            "title": "Epiphanius's rite — the image carried up and returned below; a pagan rite used as testimony",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.25,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.089,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e476",
+            "revision": 1,
+            "title": "the round sea creature — bonesless, heated with sea water until it shines",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.31,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.313,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e477",
+            "revision": 1,
+            "title": "the eyewash — the preparation becoming the capacity to see",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.11,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.105,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e478",
+            "revision": 1,
+            "title": "the Echeneis — the small fish that halts ships; the magnet taught to attract it",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e479",
+            "revision": 1,
+            "title": "Mercurius — substance and philosophy; the lapis within darkness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-2-alchemy:e480",
+            "revision": 1,
+            "title": "the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e481",
+            "revision": 1,
+            "title": "A — Anthropos",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.125,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e482",
+            "revision": 1,
+            "title": "B — Shadow (the inserted modern reconstruction)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e483",
+            "revision": 1,
+            "title": "C — Physis / serpent",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e484",
+            "revision": 1,
+            "title": "D — lapis",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e485",
+            "revision": 1,
+            "title": "the connected diamonds — each whole unfolding into four and passing onward (p.259)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.491,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-3-quaternio:e486",
+            "revision": 1,
+            "title": "the ring returning through differentiation — an unconscious totality becoming conscious",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.68,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e487",
+            "revision": 1,
+            "title": "de-monopolisation — the inherited image becoming revisable",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.576,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e488",
+            "revision": 1,
+            "title": "generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.31,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e489",
+            "revision": 1,
+            "title": "the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-5-return:e490",
+            "revision": 1,
+            "title": "uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:scene:m-ai-0-shadow:e467"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow"
+        },
+        "fallback": {
+         "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+         "text": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+  "summary": "a living Expression · 5 scenes · 24 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

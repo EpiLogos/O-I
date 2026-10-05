@@ -1,0 +1,137 @@
+{
+ "states": [
+  {
+   "state": "closed",
+   "geometry": {
+    "rightWidth": "0px",
+    "rightSpace": "0px",
+    "floatWidth": "max(calc(0px - 0px),0px)",
+    "cutoutRight": "max(0px,calc(max(4px,48px - 0px) + 32px + 0.75rem - 6px - max(calc(0px - 0px),0px)))"
+   },
+   "companionDot": 0,
+   "presenceChip": 0
+  },
+  {
+   "state": "open-base",
+   "geometry": {
+    "rightWidth": "320px",
+    "rightSpace": "320px",
+    "floatWidth": "max(calc(320px - 320px),0px)",
+    "cutoutRight": "0px"
+   },
+   "panelTop": {
+    "box": {
+     "x": 960,
+     "y": 32,
+     "width": 316,
+     "height": 32
+    },
+    "top": "button.icon-tab."
+   },
+   "tabStrip": {
+    "box": {
+     "x": 1005,
+     "y": 32,
+     "width": 179,
+     "height": 32
+    },
+    "top": "button.icon-tab."
+   },
+   "tabs": [
+    "Chat",
+    "Activity",
+    "Agents",
+    "Context"
+   ]
+  },
+  {
+   "state": "full-base",
+   "geometry": {
+    "rightWidth": "1040px",
+    "rightSpace": "320px",
+    "floatWidth": "max(calc(1040px - 320px),0px)",
+    "cutoutRight": "max(0px,calc(max(4px,48px - 1040px) + 32px + 0.75rem - 6px - max(calc(1040px - 320px),0px)))"
+   },
+   "tabs": [
+    "Chat",
+    "Activity",
+    "Agents",
+    "Context"
+   ],
+   "tabStrip": {
+    "box": {
+     "x": 289,
+     "y": 36,
+     "width": 891,
+     "height": 32
+    },
+    "top": "div.icon-tab-strip.oi-scroll."
+   }
+  },
+  {
+   "state": "open-factory",
+   "geometry": {
+    "rightWidth": "320px",
+    "rightSpace": "320px",
+    "floatWidth": "max(calc(320px - 320px),0px)",
+    "cutoutRight": "0px"
+   },
+   "tabs": [
+    "Run",
+    "Agents",
+    "Context"
+   ],
+   "tabStrip": {
+    "box": {
+     "x": 1005,
+     "y": 32,
+     "width": 179,
+     "height": 32
+    },
+    "top": "button.icon-tab."
+   }
+  },
+  {
+   "state": "open-expressions",
+   "geometry": {
+    "rightWidth": "320px",
+    "rightSpace": "0px",
+    "floatWidth": "max(calc(320px - 0px),0px)",
+    "cutoutRight": "0px"
+   },
+   "tabs": [
+    "Chat",
+    "Activity",
+    "Agents",
+    "Context"
+   ],
+   "tabStrip": {
+    "box": {
+     "x": 1005,
+     "y": 32,
+     "width": 179,
+     "height": 32
+    },
+    "top": "button.icon-tab."
+   }
+  }
+ ],
+ "findings": [
+  {
+   "check": "panel functions menu item hit-test",
+   "at": [
+    1154,
+    83
+   ],
+   "top": "button.oi-menu-item"
+  },
+  {
+   "check": "factory panel functions menu item hit-test",
+   "at": [
+    1154,
+    83
+   ],
+   "top": "button.oi-menu-item"
+  }
+ ]
+}

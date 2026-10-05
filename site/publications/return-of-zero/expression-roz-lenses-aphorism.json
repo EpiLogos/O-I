@@ -1,0 +1,1912 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-lenses-aphorism",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+  "revision": 1,
+  "title": "Return of Zero — Lenses and the Aphorism",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard",
+    "revision": 1,
+    "title": "Baudrillard — Simulation and the Account’s Return",
+    "entity_refs": [
+     "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault",
+    "revision": 1,
+    "title": "Foucault — Knowledge, Power, and the Authority to Return",
+    "entity_refs": [
+     "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith",
+    "revision": 1,
+    "title": "Investigation and Faith",
+    "entity_refs": [
+     "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field",
+     "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src",
+    "revision": 1,
+    "title": "source discipline",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.1,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat",
+    "revision": 1,
+    "title": "native operation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.44,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap",
+    "revision": 1,
+    "title": "the refraction",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.17,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src",
+    "revision": 1,
+    "title": "source discipline",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.1,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat",
+    "revision": 1,
+    "title": "native operation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.44,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap",
+    "revision": 1,
+    "title": "the refraction",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.17,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l",
+    "revision": 1,
+    "title": "approachable limit",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.36,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.625,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r",
+    "revision": 1,
+    "title": "absolute limit",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.64,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.625,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field",
+    "revision": 1,
+    "title": "the investigation between",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core": {
+    "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core",
+    "revision": 1,
+    "title": "faith continuing through",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard",
+   "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src"
+  },
+  "provenance": [
+   {
+    "ref": "episteme/roz-lenses-aphorism.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-lenses-aphorism:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-lenses-aphorism",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — Lenses and the Aphorism</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-lenses-aphorism\" data-expression-revision=\"1\"><h1>Return of Zero — Lenses and the Aphorism</h1><p>Frozen reading of expression:return-of-zero:roz-lenses-aphorism at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard\" aria-label=\"Baudrillard — Simulation and the Account’s Return\"><h2>Baudrillard — Simulation and the Account’s Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:49.00%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"source discipline\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.20%;font-size:3.06rem;opacity:1.00\" title=\"native operation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.70%;top:50.40%;font-size:0.72rem;opacity:1.00\" title=\"the refraction\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault\" aria-label=\"Foucault — Knowledge, Power, and the Authority to Return\"><h2>Foucault — Knowledge, Power, and the Authority to Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:49.00%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"source discipline\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.20%;font-size:3.06rem;opacity:1.00\" title=\"native operation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.70%;top:50.40%;font-size:0.72rem;opacity:1.00\" title=\"the refraction\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith\" aria-label=\"Investigation and Faith\"><h2>Investigation and Faith</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:46.40%;top:50.60%;font-size:1.88rem;opacity:1.00\" title=\"approachable limit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:56.40%;top:50.60%;font-size:1.88rem;opacity:1.00\" title=\"absolute limit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.72rem;opacity:1.00\" title=\"the investigation between\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:0.66rem;opacity:1.00\" title=\"faith continuing through\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-lenses-aphorism",
+  "world_ref": "expression:return-of-zero:roz-lenses-aphorism",
+  "revision": 1,
+  "title": "Return of Zero — Lenses and the Aphorism",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-lenses-aphorism",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero — Lenses and the Aphorism"
+      },
+      "fallback": {
+       "title": "Return of Zero — Lenses and the Aphorism"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-lenses-aphorism",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-lenses-aphorism:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-lenses-aphorism",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — Lenses and the Aphorism</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-lenses-aphorism\" data-expression-revision=\"1\"><h1>Return of Zero — Lenses and the Aphorism</h1><p>Frozen reading of expression:return-of-zero:roz-lenses-aphorism at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard\" aria-label=\"Baudrillard — Simulation and the Account’s Return\"><h2>Baudrillard — Simulation and the Account’s Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:49.00%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"source discipline\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.20%;font-size:3.06rem;opacity:1.00\" title=\"native operation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.70%;top:50.40%;font-size:0.72rem;opacity:1.00\" title=\"the refraction\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault\" aria-label=\"Foucault — Knowledge, Power, and the Authority to Return\"><h2>Foucault — Knowledge, Power, and the Authority to Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:49.00%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"source discipline\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.20%;font-size:3.06rem;opacity:1.00\" title=\"native operation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.70%;top:50.40%;font-size:0.72rem;opacity:1.00\" title=\"the refraction\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith\" aria-label=\"Investigation and Faith\"><h2>Investigation and Faith</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:46.40%;top:50.60%;font-size:1.88rem;opacity:1.00\" title=\"approachable limit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:56.40%;top:50.60%;font-size:1.88rem;opacity:1.00\" title=\"absolute limit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.72rem;opacity:1.00\" title=\"the investigation between\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:0.66rem;opacity:1.00\" title=\"faith continuing through\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+        "revision": 1,
+        "title": "Return of Zero — Lenses and the Aphorism",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard",
+          "revision": 1,
+          "title": "Baudrillard — Simulation and the Account’s Return",
+          "entity_refs": [
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault",
+          "revision": 1,
+          "title": "Foucault — Knowledge, Power, and the Authority to Return",
+          "entity_refs": [
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith",
+          "revision": 1,
+          "title": "Investigation and Faith",
+          "entity_refs": [
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field",
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src",
+          "revision": 1,
+          "title": "source discipline",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.1,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat",
+          "revision": 1,
+          "title": "native operation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.44,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap",
+          "revision": 1,
+          "title": "the refraction",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.17,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src",
+          "revision": 1,
+          "title": "source discipline",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.1,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat",
+          "revision": 1,
+          "title": "native operation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.44,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap",
+          "revision": 1,
+          "title": "the refraction",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.17,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l",
+          "revision": 1,
+          "title": "approachable limit",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.36,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.625,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r",
+          "revision": 1,
+          "title": "absolute limit",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.64,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.625,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field",
+          "revision": 1,
+          "title": "the investigation between",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core": {
+          "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core",
+          "revision": 1,
+          "title": "faith continuing through",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard",
+         "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src"
+        },
+        "provenance": [
+         {
+          "ref": "episteme/roz-lenses-aphorism.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero — Lenses and the Aphorism"
+      },
+      "fallback": {
+       "title": "Return of Zero — Lenses and the Aphorism",
+       "text": "Return of Zero — Lenses and the Aphorism: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-lenses-aphorism",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-lenses-aphorism",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-lenses-aphorism",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-lenses-aphorism"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-lenses-aphorism",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-lenses-aphorism",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-lenses-aphorism:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-lenses-aphorism"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-lenses-aphorism",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-lenses-aphorism:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-lenses-aphorism",
+    "world_ref": "expression:return-of-zero:roz-lenses-aphorism",
+    "revision": 1,
+    "title": "Return of Zero — Lenses and the Aphorism",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-lenses-aphorism",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero — Lenses and the Aphorism"
+        },
+        "fallback": {
+         "title": "Return of Zero — Lenses and the Aphorism"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-lenses-aphorism",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-lenses-aphorism:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-lenses-aphorism",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — Lenses and the Aphorism</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-lenses-aphorism\" data-expression-revision=\"1\"><h1>Return of Zero — Lenses and the Aphorism</h1><p>Frozen reading of expression:return-of-zero:roz-lenses-aphorism at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard\" aria-label=\"Baudrillard — Simulation and the Account’s Return\"><h2>Baudrillard — Simulation and the Account’s Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:49.00%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"source discipline\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.20%;font-size:3.06rem;opacity:1.00\" title=\"native operation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.70%;top:50.40%;font-size:0.72rem;opacity:1.00\" title=\"the refraction\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault\" aria-label=\"Foucault — Knowledge, Power, and the Authority to Return\"><h2>Foucault — Knowledge, Power, and the Authority to Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:49.00%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"source discipline\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.20%;font-size:3.06rem;opacity:1.00\" title=\"native operation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.70%;top:50.40%;font-size:0.72rem;opacity:1.00\" title=\"the refraction\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith\" aria-label=\"Investigation and Faith\"><h2>Investigation and Faith</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:46.40%;top:50.60%;font-size:1.88rem;opacity:1.00\" title=\"approachable limit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:56.40%;top:50.60%;font-size:1.88rem;opacity:1.00\" title=\"absolute limit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.72rem;opacity:1.00\" title=\"the investigation between\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core\" data-subject-ref=\"world:return-of-zero/wiki:roz-lenses-aphorism\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:0.66rem;opacity:1.00\" title=\"faith continuing through\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-lenses-aphorism",
+          "revision": 1,
+          "title": "Return of Zero — Lenses and the Aphorism",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard",
+            "revision": 1,
+            "title": "Baudrillard — Simulation and the Account’s Return",
+            "entity_refs": [
+             "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault",
+            "revision": 1,
+            "title": "Foucault — Knowledge, Power, and the Authority to Return",
+            "entity_refs": [
+             "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith",
+            "revision": 1,
+            "title": "Investigation and Faith",
+            "entity_refs": [
+             "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field",
+             "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src",
+            "revision": 1,
+            "title": "source discipline",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.1,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-nat",
+            "revision": 1,
+            "title": "native operation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.44,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-overlap",
+            "revision": 1,
+            "title": "the refraction",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.17,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-src",
+            "revision": 1,
+            "title": "source discipline",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.1,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-nat",
+            "revision": 1,
+            "title": "native operation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.44,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-foucault:lens-foucault-overlap",
+            "revision": 1,
+            "title": "the refraction",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.17,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-l",
+            "revision": 1,
+            "title": "approachable limit",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.36,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.625,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-bar-r",
+            "revision": 1,
+            "title": "absolute limit",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.64,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.625,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-field",
+            "revision": 1,
+            "title": "the investigation between",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core": {
+            "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:aphorism-investigation-and-faith:aph-core",
+            "revision": 1,
+            "title": "faith continuing through",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard",
+           "entity_ref": "expression:return-of-zero:roz-lenses-aphorism:scene:lens-baudrillard:lens-baudrillard-src"
+          },
+          "provenance": [
+           {
+            "ref": "episteme/roz-lenses-aphorism.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero — Lenses and the Aphorism"
+        },
+        "fallback": {
+         "title": "Return of Zero — Lenses and the Aphorism",
+         "text": "Return of Zero — Lenses and the Aphorism: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-lenses-aphorism",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-lenses-aphorism",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-lenses-aphorism",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-lenses-aphorism",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-lenses-aphorism.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-lenses-aphorism"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-lenses-aphorism",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-lenses-aphorism",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-lenses-aphorism:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-lenses-aphorism",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero — Lenses and the Aphorism",
+  "summary": "a living Expression · 3 scenes · 10 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-lenses-aphorism:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-lenses-aphorism",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-lenses-aphorism"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-lenses-aphorism:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-lenses-aphorism",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-lenses-aphorism",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero — Lenses and the Aphorism",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-lenses-aphorism:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-lenses-aphorism:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-lenses-aphorism",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-lenses-aphorism"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

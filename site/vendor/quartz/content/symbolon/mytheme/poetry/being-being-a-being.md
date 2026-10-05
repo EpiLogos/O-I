@@ -10,11 +10,11 @@ type: _md_
 title: "Being being a being"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c80659fb1e9f5161ff00e
-source_id: 191a4797-123c-8065-9fb1-e9f5161ff00e
 notion_created: 2025-02-05T18:24:58Z
 notion_edited: 2025-02-05T18:26:07.281Z
 status: sorted
 kind: poem
+source_id: being-being-a-being
 ---
 Being is an enlightened state .
 Being a being is a deluded state.

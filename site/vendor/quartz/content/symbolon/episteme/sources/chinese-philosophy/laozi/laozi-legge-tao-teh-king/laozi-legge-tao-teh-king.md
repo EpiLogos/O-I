@@ -50,4 +50,4 @@ The selected English carrier is Project Gutenberg ebook 216, *The Tao Teh King, 
 
 **Verification:** complete chapter read; paraphrase-ready. Chang's reception, alternative translations and Chinese wording remain independently collatable; QL alignment belongs to Taylor.
 
-The selected passages **source** [E1's historical branches](../../../../etymologies/encounter-region-name-count/HISTORICAL-BRANCHES.md), which **return-to** [the whole-field](../../../../etymologies/encounter-region-name-count/WHOLE-FIELD.md). Source evidence and Taylor's authorial operation keep distinct standing.
+The selected passages **source** [E1's historical branches](../../../../etymologies/encounter-region-name-count/HISTORICAL-BRANCHES-encounter-region-name-count.md), which **return-to** [the whole-field](../../../../etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md). Source evidence and Taylor's authorial operation keep distinct standing.

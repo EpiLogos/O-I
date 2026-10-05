@@ -46,4 +46,4 @@ Likewise synchronicity concerns recognised meaning across events with distinct c
 
 The result joins two records: what configuration permitted the movement, and what movement actually occurred. A return can then ask whether the field stayed fixed, which conditions changed, and which future transitions the achieved history now enables.
 
-This record returns-to [A13](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [C50](../../../section-rooms/arguments/concepts/C50-Dia-Syn.md), and [X/x](../ql/x-x.md). [Dia](dia.md) and [Syn](syn.md) operate across both temporalities. The process chain's inverse-phase primes and the quilt's Night-pass primes remain source-local address systems; succession alone gives no licence to collapse them.
+This record returns-to [A13](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [C50](../../../section-rooms/arguments/concepts/C50-Dia-Syn.md), and [`X/x`](../ql/x-x.md). [Dia](dia.md) and [Syn](syn.md) operate across both temporalities. The process chain's inverse-phase primes and the quilt's Night-pass primes remain source-local address systems; succession alone gives no licence to collapse them.

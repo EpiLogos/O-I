@@ -1,0 +1,2899 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-symbolon-whole",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+  "revision": 1,
+  "title": "Symbolon — the whole/register relation",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root",
+    "revision": 1,
+    "title": "Symbolon — the whole form",
+    "entity_refs": [
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme",
+    "revision": 1,
+    "title": "Matheme — paśyantī",
+    "entity_refs": [
+     "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope",
+     "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme",
+    "revision": 1,
+    "title": "Mytheme — madhyamā",
+    "entity_refs": [
+     "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope",
+     "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme",
+    "revision": 1,
+    "title": "Episteme — vaikharī",
+    "entity_refs": [
+     "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope",
+     "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held",
+    "revision": 1,
+    "title": "Three presences, one whole",
+    "entity_refs": [
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return",
+    "revision": 1,
+    "title": "0/1 = 1/0 — the registers return",
+    "entity_refs": [
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation",
+     "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope",
+    "revision": 1,
+    "title": "whole-envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation",
+    "revision": 1,
+    "title": "0/1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.785,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return",
+    "revision": 1,
+    "title": "1/0",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.96,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope",
+    "revision": 1,
+    "title": "whole-envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence",
+    "revision": 1,
+    "title": "0/1 = 4+2 = 5→0 = 1/0",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.075,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope",
+    "revision": 1,
+    "title": "whole-envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence",
+    "revision": 1,
+    "title": "mytheme-presence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.85,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope",
+    "revision": 1,
+    "title": "whole-envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence",
+    "revision": 1,
+    "title": "episteme-presence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.82,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope",
+    "revision": 1,
+    "title": "whole-envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash",
+    "revision": 1,
+    "title": "/",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.33,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence",
+    "revision": 1,
+    "title": "0/1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.58,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence",
+    "revision": 1,
+    "title": "mytheme-presence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.38,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence",
+    "revision": 1,
+    "title": "episteme-presence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope",
+    "revision": 1,
+    "title": "whole-envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation",
+    "revision": 1,
+    "title": "1/0",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.785,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation": {
+    "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation",
+    "revision": 1,
+    "title": "0/1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.96,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root",
+   "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope"
+  },
+  "provenance": [
+   {
+    "ref": "symbolon/roz-symbolon-whole.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-symbolon-whole:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-symbolon-whole",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Symbolon — the whole/register relation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-symbolon-whole\" data-expression-revision=\"1\"><h1>Symbolon — the whole/register relation</h1><p>Frozen reading of expression:return-of-zero:roz-symbolon-whole at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root\" aria-label=\"Symbolon — the whole form\"><h2>Symbolon — the whole form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:2.35rem;opacity:1.00\" title=\"0/1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:59.60%;font-size:0.81rem;opacity:1.00\" title=\"1/0\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme\" aria-label=\"Matheme — paśyantī\"><h2>Matheme — paśyantī</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:3.22rem;opacity:1.00\" title=\"0/1 = 4+2 = 5→0 = 1/0\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme\" aria-label=\"Mytheme — madhyamā\"><h2>Mytheme — madhyamā</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:2.55rem;opacity:1.00\" title=\"mytheme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme\" aria-label=\"Episteme — vaikharī\"><h2>Episteme — vaikharī</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:2.46rem;opacity:1.00\" title=\"episteme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held\" aria-label=\"Three presences, one whole\"><h2>Three presences, one whole</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:0.99rem;opacity:1.00\" title=\"/\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:44.20%;font-size:0.72rem;opacity:1.00\" title=\"0/1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.00%;font-size:1.14rem;opacity:1.00\" title=\"mytheme-presence\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:1.08rem;opacity:1.00\" title=\"episteme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return\" aria-label=\"0/1 = 1/0 — the registers return\"><h2>0/1 = 1/0 — the registers return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:2.35rem;opacity:1.00\" title=\"1/0\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:40.40%;font-size:0.81rem;opacity:1.00\" title=\"0/1\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-symbolon-whole",
+  "world_ref": "expression:return-of-zero:roz-symbolon-whole",
+  "revision": 1,
+  "title": "Symbolon — the whole/register relation",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-symbolon-whole",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Symbolon — the whole/register relation"
+      },
+      "fallback": {
+       "title": "Symbolon — the whole/register relation"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-symbolon-whole",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-symbolon-whole:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-symbolon-whole",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Symbolon — the whole/register relation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-symbolon-whole\" data-expression-revision=\"1\"><h1>Symbolon — the whole/register relation</h1><p>Frozen reading of expression:return-of-zero:roz-symbolon-whole at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root\" aria-label=\"Symbolon — the whole form\"><h2>Symbolon — the whole form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:2.35rem;opacity:1.00\" title=\"0/1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:59.60%;font-size:0.81rem;opacity:1.00\" title=\"1/0\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme\" aria-label=\"Matheme — paśyantī\"><h2>Matheme — paśyantī</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:3.22rem;opacity:1.00\" title=\"0/1 = 4+2 = 5→0 = 1/0\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme\" aria-label=\"Mytheme — madhyamā\"><h2>Mytheme — madhyamā</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:2.55rem;opacity:1.00\" title=\"mytheme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme\" aria-label=\"Episteme — vaikharī\"><h2>Episteme — vaikharī</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:2.46rem;opacity:1.00\" title=\"episteme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held\" aria-label=\"Three presences, one whole\"><h2>Three presences, one whole</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:0.99rem;opacity:1.00\" title=\"/\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:44.20%;font-size:0.72rem;opacity:1.00\" title=\"0/1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.00%;font-size:1.14rem;opacity:1.00\" title=\"mytheme-presence\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:1.08rem;opacity:1.00\" title=\"episteme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return\" aria-label=\"0/1 = 1/0 — the registers return\"><h2>0/1 = 1/0 — the registers return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:2.35rem;opacity:1.00\" title=\"1/0\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:40.40%;font-size:0.81rem;opacity:1.00\" title=\"0/1\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+        "revision": 1,
+        "title": "Symbolon — the whole/register relation",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root",
+          "revision": 1,
+          "title": "Symbolon — the whole form",
+          "entity_refs": [
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme",
+          "revision": 1,
+          "title": "Matheme — paśyantī",
+          "entity_refs": [
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope",
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme",
+          "revision": 1,
+          "title": "Mytheme — madhyamā",
+          "entity_refs": [
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope",
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme",
+          "revision": 1,
+          "title": "Episteme — vaikharī",
+          "entity_refs": [
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope",
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held",
+          "revision": 1,
+          "title": "Three presences, one whole",
+          "entity_refs": [
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return",
+          "revision": 1,
+          "title": "0/1 = 1/0 — the registers return",
+          "entity_refs": [
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation",
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope",
+          "revision": 1,
+          "title": "whole-envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation",
+          "revision": 1,
+          "title": "0/1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.785,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return",
+          "revision": 1,
+          "title": "1/0",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.96,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope",
+          "revision": 1,
+          "title": "whole-envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence",
+          "revision": 1,
+          "title": "0/1 = 4+2 = 5→0 = 1/0",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.075,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope",
+          "revision": 1,
+          "title": "whole-envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence",
+          "revision": 1,
+          "title": "mytheme-presence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.85,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope",
+          "revision": 1,
+          "title": "whole-envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence",
+          "revision": 1,
+          "title": "episteme-presence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.82,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope",
+          "revision": 1,
+          "title": "whole-envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash",
+          "revision": 1,
+          "title": "/",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.33,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence",
+          "revision": 1,
+          "title": "0/1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.58,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence",
+          "revision": 1,
+          "title": "mytheme-presence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.38,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence",
+          "revision": 1,
+          "title": "episteme-presence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope",
+          "revision": 1,
+          "title": "whole-envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation",
+          "revision": 1,
+          "title": "1/0",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.785,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation": {
+          "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation",
+          "revision": 1,
+          "title": "0/1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.96,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root",
+         "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope"
+        },
+        "provenance": [
+         {
+          "ref": "symbolon/roz-symbolon-whole.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Symbolon — the whole/register relation"
+      },
+      "fallback": {
+       "title": "Symbolon — the whole/register relation",
+       "text": "Symbolon — the whole/register relation: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-symbolon-whole",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-symbolon-whole",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-symbolon-whole",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-symbolon-whole.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-symbolon-whole"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-symbolon-whole",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-symbolon-whole",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-symbolon-whole:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-symbolon-whole"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-symbolon-whole",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-symbolon-whole:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-symbolon-whole",
+    "world_ref": "expression:return-of-zero:roz-symbolon-whole",
+    "revision": 1,
+    "title": "Symbolon — the whole/register relation",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-symbolon-whole",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Symbolon — the whole/register relation"
+        },
+        "fallback": {
+         "title": "Symbolon — the whole/register relation"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-symbolon-whole",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-symbolon-whole:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-symbolon-whole",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Symbolon — the whole/register relation</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-symbolon-whole\" data-expression-revision=\"1\"><h1>Symbolon — the whole/register relation</h1><p>Frozen reading of expression:return-of-zero:roz-symbolon-whole at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root\" aria-label=\"Symbolon — the whole form\"><h2>Symbolon — the whole form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:2.35rem;opacity:1.00\" title=\"0/1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:59.60%;font-size:0.81rem;opacity:1.00\" title=\"1/0\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme\" aria-label=\"Matheme — paśyantī\"><h2>Matheme — paśyantī</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:3.22rem;opacity:1.00\" title=\"0/1 = 4+2 = 5→0 = 1/0\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme\" aria-label=\"Mytheme — madhyamā\"><h2>Mytheme — madhyamā</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:2.55rem;opacity:1.00\" title=\"mytheme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme\" aria-label=\"Episteme — vaikharī\"><h2>Episteme — vaikharī</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:2.46rem;opacity:1.00\" title=\"episteme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held\" aria-label=\"Three presences, one whole\"><h2>Three presences, one whole</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:0.99rem;opacity:1.00\" title=\"/\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:44.20%;font-size:0.72rem;opacity:1.00\" title=\"0/1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.00%;font-size:1.14rem;opacity:1.00\" title=\"mytheme-presence\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:1.08rem;opacity:1.00\" title=\"episteme-presence\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return\" aria-label=\"0/1 = 1/0 — the registers return\"><h2>0/1 = 1/0 — the registers return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"whole-envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:2.35rem;opacity:1.00\" title=\"1/0\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation\" data-subject-ref=\"world:return-of-zero/wiki:roz-symbolon-whole\" data-presentation-role=\"thing\" style=\"left:50.00%;top:40.40%;font-size:0.81rem;opacity:1.00\" title=\"0/1\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-symbolon-whole",
+          "revision": 1,
+          "title": "Symbolon — the whole/register relation",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root",
+            "revision": 1,
+            "title": "Symbolon — the whole form",
+            "entity_refs": [
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme",
+            "revision": 1,
+            "title": "Matheme — paśyantī",
+            "entity_refs": [
+             "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope",
+             "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme",
+            "revision": 1,
+            "title": "Mytheme — madhyamā",
+            "entity_refs": [
+             "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope",
+             "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme",
+            "revision": 1,
+            "title": "Episteme — vaikharī",
+            "entity_refs": [
+             "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope",
+             "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held",
+            "revision": 1,
+            "title": "Three presences, one whole",
+            "entity_refs": [
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return",
+            "revision": 1,
+            "title": "0/1 = 1/0 — the registers return",
+            "entity_refs": [
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation",
+             "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope",
+            "revision": 1,
+            "title": "whole-envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:root-relation",
+            "revision": 1,
+            "title": "0/1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.785,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:obverse-return",
+            "revision": 1,
+            "title": "1/0",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.96,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:whole-envelope",
+            "revision": 1,
+            "title": "whole-envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-matheme:matheme-presence",
+            "revision": 1,
+            "title": "0/1 = 4+2 = 5→0 = 1/0",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.075,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:whole-envelope",
+            "revision": 1,
+            "title": "whole-envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-mytheme:mytheme-presence",
+            "revision": 1,
+            "title": "mytheme-presence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.85,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:whole-envelope",
+            "revision": 1,
+            "title": "whole-envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:held-episteme:episteme-presence",
+            "revision": 1,
+            "title": "episteme-presence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.82,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:whole-envelope",
+            "revision": 1,
+            "title": "whole-envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:holding-slash",
+            "revision": 1,
+            "title": "/",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.33,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:matheme-presence",
+            "revision": 1,
+            "title": "0/1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.58,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:mytheme-presence",
+            "revision": 1,
+            "title": "mytheme-presence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.38,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-held:episteme-presence",
+            "revision": 1,
+            "title": "episteme-presence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:whole-envelope",
+            "revision": 1,
+            "title": "whole-envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:return-relation",
+            "revision": 1,
+            "title": "1/0",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.785,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation": {
+            "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-return:first-orientation",
+            "revision": 1,
+            "title": "0/1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-symbolon-whole.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.96,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root",
+           "entity_ref": "expression:return-of-zero:roz-symbolon-whole:scene:whole-root:whole-envelope"
+          },
+          "provenance": [
+           {
+            "ref": "symbolon/roz-symbolon-whole.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Symbolon — the whole/register relation"
+        },
+        "fallback": {
+         "title": "Symbolon — the whole/register relation",
+         "text": "Symbolon — the whole/register relation: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-symbolon-whole",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-symbolon-whole",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-symbolon-whole",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-symbolon-whole",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-symbolon-whole.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-symbolon-whole"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-symbolon-whole",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-symbolon-whole",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-symbolon-whole:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-symbolon-whole",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Symbolon — the whole/register relation",
+  "summary": "a living Expression · 6 scenes · 17 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-symbolon-whole:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-symbolon-whole",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-symbolon-whole"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-symbolon-whole:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-symbolon-whole",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-symbolon-whole",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Symbolon — the whole/register relation",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-symbolon-whole:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-symbolon-whole:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-symbolon-whole",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-symbolon-whole"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

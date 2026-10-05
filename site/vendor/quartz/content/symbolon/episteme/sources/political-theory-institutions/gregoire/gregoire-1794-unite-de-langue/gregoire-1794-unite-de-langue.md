@@ -25,7 +25,7 @@ url: https://www2.assemblee-nationale.fr/decouvrir-l-assemblee/histoire/les-gran
 
 Grégoire, Henri. “L’unité de langue.” Speech of 4 June 1794. Assemblée nationale historical transcription, consulted 8 September 2026. The published text contains explicit omissions. Editorial introductory framing is distinct from the transcribed speech. No complete-report or annexed-decree collation is claimed.
 
-The speech **historicises** [E3’s Logos/Nomos/Natio relation](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md) and the [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md).
+The speech **historicises** [E3’s Logos/Nomos/Natio relation](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md) and the [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/HISTORY-language-law-nation-centralisation.md).
 
 <a id="passages"></a>
 ## Selected argument

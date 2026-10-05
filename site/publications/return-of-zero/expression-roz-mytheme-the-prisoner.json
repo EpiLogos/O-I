@@ -1,0 +1,3406 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-the-prisoner",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+  "revision": 1,
+  "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival",
+    "revision": 1,
+    "title": "The resignation that becomes an address",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world",
+    "revision": 1,
+    "title": "A whole world for obtaining one answer",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale",
+    "revision": 1,
+    "title": "Degree Absolute; the masks; the escape",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count",
+    "revision": 1,
+    "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return",
+    "revision": 1,
+    "title": "Return without inheriting the hidden throne",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353",
+     "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334",
+    "revision": 1,
+    "title": "the Village — picturesque, enclosed, no freedom to leave",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.861,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335",
+    "revision": 1,
+    "title": "Number Six — the assigned designation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.23,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2315,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336",
+    "revision": 1,
+    "title": "Rover — the guardian that intercepts escape",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337",
+    "revision": 1,
+    "title": "the helicopter brought back by remote control (Arrival)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338",
+    "revision": 1,
+    "title": "the campaign — publicity ready before the candidate speaks",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339",
+    "revision": 1,
+    "title": "Number Fifty-Eight — incomprehensible, then English, then authority",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.25,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340",
+    "revision": 1,
+    "title": "the Green Dome — the office won without the power to end captivity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.39,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.595,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341",
+    "revision": 1,
+    "title": "the seventeen-episode field — neighbours, experiments, chess pawns, a Western town",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342",
+    "revision": 1,
+    "title": "the embryo room — a week of regression; Two dies as the period ends",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.235,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343",
+    "revision": 1,
+    "title": "the masked assembly — revolt acclaimed, then judged",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.42,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344",
+    "revision": 1,
+    "title": " beneath the ape mask — a face identical to his own",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.306,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345",
+    "revision": 1,
+    "title": "the rocket countdown; Two and Forty-Eight freed; the Butler beside him",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346",
+    "revision": 1,
+    "title": "the London door opening automatically — recalling the Village",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347",
+    "revision": 1,
+    "title": "Number Two — an office through changes of bearer",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.41,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.167,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348",
+    "revision": 1,
+    "title": "Number Six — a person held within an assigned position",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.27,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1965,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349",
+    "revision": 1,
+    "title": "Number One — the withheld source of command",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.15,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350",
+    "revision": 1,
+    "title": "2+2²=6=4+2 — the count including the relation that generates it; the Village's speech-act keeps the power of assignment",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351",
+    "revision": 1,
+    "title": "the open road from the Village — escape with others, divergence after",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352",
+    "revision": 1,
+    "title": "the counting operation — who selected the number, who answers for the selection",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.136,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353",
+    "revision": 1,
+    "title": "M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.25,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354",
+    "revision": 1,
+    "title": "A32 — the reply must be able to revise image, measure and institution",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-the-prisoner.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-the-prisoner:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Prisoner — Number Six, the changing Two, and the question of One</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner\" data-expression-revision=\"1\"><h1>The Prisoner — Number Six, the changing Two, and the question of One</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-the-prisoner at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival\" aria-label=\"The resignation that becomes an address\"><h2>The resignation that becomes an address</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.58rem;opacity:1.00\" title=\"the Village — picturesque, enclosed, no freedom to leave\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:0.69rem;opacity:1.00\" title=\"Number Six — the assigned designation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.02rem;opacity:1.00\" title=\"Rover — the guardian that intercepts escape\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.00%;font-size:0.69rem;opacity:1.00\" title=\"the helicopter brought back by remote control (Arrival)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world\" aria-label=\"A whole world for obtaining one answer\"><h2>A whole world for obtaining one answer</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.20%;font-size:0.81rem;opacity:1.00\" title=\"the campaign — publicity ready before the candidate speaks\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.75rem;opacity:1.00\" title=\"Number Fifty-Eight — incomprehensible, then English, then authority\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.90%;font-size:1.78rem;opacity:1.00\" title=\"the Green Dome — the office won without the power to end captivity\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"the seventeen-episode field — neighbours, experiments, chess pawns, a Western town\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale\" aria-label=\"Degree Absolute; the masks; the escape\"><h2>Degree Absolute; the masks; the escape</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.10%;font-size:0.70rem;opacity:1.00\" title=\"the embryo room — a week of regression; Two dies as the period ends\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:54.20%;top:46.50%;font-size:1.80rem;opacity:1.00\" title=\"the masked assembly — revolt acclaimed, then judged\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:0.92rem;opacity:1.00\" title=\" beneath the ape mask — a face identical to his own\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.69rem;opacity:1.00\" title=\"the rocket countdown; Two and Forty-Eight freed; the Butler beside him\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"the London door opening automatically — recalling the Village\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count\" aria-label=\"The asymmetric count: Two replaces, Six is assigned, One stays withheld\"><h2>The asymmetric count: Two replaces, Six is assigned, One stays withheld</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.10%;font-size:0.60rem;opacity:1.00\" title=\"Number Two — an office through changes of bearer\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:0.60rem;opacity:1.00\" title=\"Number Six — a person held within an assigned position\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.50%;font-size:0.96rem;opacity:1.00\" title=\"Number One — the withheld source of command\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:1.11rem;opacity:1.00\" title=\"2+2²=6=4+2 — the count including the relation that generates it; the Village&#39;s speech-act keeps the power of assignment\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return\" aria-label=\"Return without inheriting the hidden throne\"><h2>Return without inheriting the hidden throne</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.00%;font-size:0.69rem;opacity:1.00\" title=\"the open road from the Village — escape with others, divergence after\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the counting operation — who selected the number, who answers for the selection\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.75rem;opacity:1.00\" title=\"M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.66rem;opacity:1.00\" title=\"A32 — the reply must be able to revise image, measure and institution\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-the-prisoner",
+  "world_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+  "revision": 1,
+  "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "The Prisoner — Number Six, the changing Two, and the question of One"
+      },
+      "fallback": {
+       "title": "The Prisoner — Number Six, the changing Two, and the question of One"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-the-prisoner:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Prisoner — Number Six, the changing Two, and the question of One</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner\" data-expression-revision=\"1\"><h1>The Prisoner — Number Six, the changing Two, and the question of One</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-the-prisoner at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival\" aria-label=\"The resignation that becomes an address\"><h2>The resignation that becomes an address</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.58rem;opacity:1.00\" title=\"the Village — picturesque, enclosed, no freedom to leave\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:0.69rem;opacity:1.00\" title=\"Number Six — the assigned designation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.02rem;opacity:1.00\" title=\"Rover — the guardian that intercepts escape\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.00%;font-size:0.69rem;opacity:1.00\" title=\"the helicopter brought back by remote control (Arrival)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world\" aria-label=\"A whole world for obtaining one answer\"><h2>A whole world for obtaining one answer</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.20%;font-size:0.81rem;opacity:1.00\" title=\"the campaign — publicity ready before the candidate speaks\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.75rem;opacity:1.00\" title=\"Number Fifty-Eight — incomprehensible, then English, then authority\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.90%;font-size:1.78rem;opacity:1.00\" title=\"the Green Dome — the office won without the power to end captivity\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"the seventeen-episode field — neighbours, experiments, chess pawns, a Western town\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale\" aria-label=\"Degree Absolute; the masks; the escape\"><h2>Degree Absolute; the masks; the escape</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.10%;font-size:0.70rem;opacity:1.00\" title=\"the embryo room — a week of regression; Two dies as the period ends\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:54.20%;top:46.50%;font-size:1.80rem;opacity:1.00\" title=\"the masked assembly — revolt acclaimed, then judged\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:0.92rem;opacity:1.00\" title=\" beneath the ape mask — a face identical to his own\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.69rem;opacity:1.00\" title=\"the rocket countdown; Two and Forty-Eight freed; the Butler beside him\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"the London door opening automatically — recalling the Village\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count\" aria-label=\"The asymmetric count: Two replaces, Six is assigned, One stays withheld\"><h2>The asymmetric count: Two replaces, Six is assigned, One stays withheld</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.10%;font-size:0.60rem;opacity:1.00\" title=\"Number Two — an office through changes of bearer\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:0.60rem;opacity:1.00\" title=\"Number Six — a person held within an assigned position\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.50%;font-size:0.96rem;opacity:1.00\" title=\"Number One — the withheld source of command\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:1.11rem;opacity:1.00\" title=\"2+2²=6=4+2 — the count including the relation that generates it; the Village&#39;s speech-act keeps the power of assignment\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return\" aria-label=\"Return without inheriting the hidden throne\"><h2>Return without inheriting the hidden throne</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.00%;font-size:0.69rem;opacity:1.00\" title=\"the open road from the Village — escape with others, divergence after\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the counting operation — who selected the number, who answers for the selection\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.75rem;opacity:1.00\" title=\"M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.66rem;opacity:1.00\" title=\"A32 — the reply must be able to revise image, measure and institution\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+        "revision": 1,
+        "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival",
+          "revision": 1,
+          "title": "The resignation that becomes an address",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world",
+          "revision": 1,
+          "title": "A whole world for obtaining one answer",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale",
+          "revision": 1,
+          "title": "Degree Absolute; the masks; the escape",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count",
+          "revision": 1,
+          "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return",
+          "revision": 1,
+          "title": "Return without inheriting the hidden throne",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353",
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334",
+          "revision": 1,
+          "title": "the Village — picturesque, enclosed, no freedom to leave",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.861,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335",
+          "revision": 1,
+          "title": "Number Six — the assigned designation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.23,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2315,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336",
+          "revision": 1,
+          "title": "Rover — the guardian that intercepts escape",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337",
+          "revision": 1,
+          "title": "the helicopter brought back by remote control (Arrival)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338",
+          "revision": 1,
+          "title": "the campaign — publicity ready before the candidate speaks",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339",
+          "revision": 1,
+          "title": "Number Fifty-Eight — incomprehensible, then English, then authority",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.25,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340",
+          "revision": 1,
+          "title": "the Green Dome — the office won without the power to end captivity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.39,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.595,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341",
+          "revision": 1,
+          "title": "the seventeen-episode field — neighbours, experiments, chess pawns, a Western town",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342",
+          "revision": 1,
+          "title": "the embryo room — a week of regression; Two dies as the period ends",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.235,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343",
+          "revision": 1,
+          "title": "the masked assembly — revolt acclaimed, then judged",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.42,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344",
+          "revision": 1,
+          "title": " beneath the ape mask — a face identical to his own",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.306,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345",
+          "revision": 1,
+          "title": "the rocket countdown; Two and Forty-Eight freed; the Butler beside him",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346",
+          "revision": 1,
+          "title": "the London door opening automatically — recalling the Village",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347",
+          "revision": 1,
+          "title": "Number Two — an office through changes of bearer",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.41,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.167,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348",
+          "revision": 1,
+          "title": "Number Six — a person held within an assigned position",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.27,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1965,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349",
+          "revision": 1,
+          "title": "Number One — the withheld source of command",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.15,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350",
+          "revision": 1,
+          "title": "2+2²=6=4+2 — the count including the relation that generates it; the Village's speech-act keeps the power of assignment",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351",
+          "revision": 1,
+          "title": "the open road from the Village — escape with others, divergence after",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352",
+          "revision": 1,
+          "title": "the counting operation — who selected the number, who answers for the selection",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.136,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353",
+          "revision": 1,
+          "title": "M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.25,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354",
+          "revision": 1,
+          "title": "A32 — the reply must be able to revise image, measure and institution",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-the-prisoner.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "The Prisoner — Number Six, the changing Two, and the question of One"
+      },
+      "fallback": {
+       "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+       "text": "The Prisoner — Number Six, the changing Two, and the question of One: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-the-prisoner",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-the-prisoner"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-the-prisoner:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-the-prisoner"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-the-prisoner:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-the-prisoner",
+    "world_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+    "revision": 1,
+    "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "The Prisoner — Number Six, the changing Two, and the question of One"
+        },
+        "fallback": {
+         "title": "The Prisoner — Number Six, the changing Two, and the question of One"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-the-prisoner:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Prisoner — Number Six, the changing Two, and the question of One</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner\" data-expression-revision=\"1\"><h1>The Prisoner — Number Six, the changing Two, and the question of One</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-the-prisoner at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival\" aria-label=\"The resignation that becomes an address\"><h2>The resignation that becomes an address</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.58rem;opacity:1.00\" title=\"the Village — picturesque, enclosed, no freedom to leave\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:0.69rem;opacity:1.00\" title=\"Number Six — the assigned designation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.02rem;opacity:1.00\" title=\"Rover — the guardian that intercepts escape\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.00%;top:54.00%;font-size:0.69rem;opacity:1.00\" title=\"the helicopter brought back by remote control (Arrival)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world\" aria-label=\"A whole world for obtaining one answer\"><h2>A whole world for obtaining one answer</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.20%;font-size:0.81rem;opacity:1.00\" title=\"the campaign — publicity ready before the candidate speaks\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.75rem;opacity:1.00\" title=\"Number Fifty-Eight — incomprehensible, then English, then authority\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.90%;font-size:1.78rem;opacity:1.00\" title=\"the Green Dome — the office won without the power to end captivity\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"the seventeen-episode field — neighbours, experiments, chess pawns, a Western town\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale\" aria-label=\"Degree Absolute; the masks; the escape\"><h2>Degree Absolute; the masks; the escape</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.10%;font-size:0.70rem;opacity:1.00\" title=\"the embryo room — a week of regression; Two dies as the period ends\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:54.20%;top:46.50%;font-size:1.80rem;opacity:1.00\" title=\"the masked assembly — revolt acclaimed, then judged\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:0.92rem;opacity:1.00\" title=\" beneath the ape mask — a face identical to his own\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.69rem;opacity:1.00\" title=\"the rocket countdown; Two and Forty-Eight freed; the Butler beside him\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"the London door opening automatically — recalling the Village\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count\" aria-label=\"The asymmetric count: Two replaces, Six is assigned, One stays withheld\"><h2>The asymmetric count: Two replaces, Six is assigned, One stays withheld</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.10%;font-size:0.60rem;opacity:1.00\" title=\"Number Two — an office through changes of bearer\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:0.60rem;opacity:1.00\" title=\"Number Six — a person held within an assigned position\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.50%;font-size:0.96rem;opacity:1.00\" title=\"Number One — the withheld source of command\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:1.11rem;opacity:1.00\" title=\"2+2²=6=4+2 — the count including the relation that generates it; the Village&#39;s speech-act keeps the power of assignment\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return\" aria-label=\"Return without inheriting the hidden throne\"><h2>Return without inheriting the hidden throne</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.00%;font-size:0.69rem;opacity:1.00\" title=\"the open road from the Village — escape with others, divergence after\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the counting operation — who selected the number, who answers for the selection\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.75rem;opacity:1.00\" title=\"M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-the-prisoner\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.66rem;opacity:1.00\" title=\"A32 — the reply must be able to revise image, measure and institution\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+          "revision": 1,
+          "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival",
+            "revision": 1,
+            "title": "The resignation that becomes an address",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world",
+            "revision": 1,
+            "title": "A whole world for obtaining one answer",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale",
+            "revision": 1,
+            "title": "Degree Absolute; the masks; the escape",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count",
+            "revision": 1,
+            "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return",
+            "revision": 1,
+            "title": "Return without inheriting the hidden throne",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353",
+             "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334",
+            "revision": 1,
+            "title": "the Village — picturesque, enclosed, no freedom to leave",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.861,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e335",
+            "revision": 1,
+            "title": "Number Six — the assigned designation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.23,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2315,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e336",
+            "revision": 1,
+            "title": "Rover — the guardian that intercepts escape",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e337",
+            "revision": 1,
+            "title": "the helicopter brought back by remote control (Arrival)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e338",
+            "revision": 1,
+            "title": "the campaign — publicity ready before the candidate speaks",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e339",
+            "revision": 1,
+            "title": "Number Fifty-Eight — incomprehensible, then English, then authority",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.25,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e340",
+            "revision": 1,
+            "title": "the Green Dome — the office won without the power to end captivity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.39,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.595,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-1-world:e341",
+            "revision": 1,
+            "title": "the seventeen-episode field — neighbours, experiments, chess pawns, a Western town",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e342",
+            "revision": 1,
+            "title": "the embryo room — a week of regression; Two dies as the period ends",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.235,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e343",
+            "revision": 1,
+            "title": "the masked assembly — revolt acclaimed, then judged",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.42,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e344",
+            "revision": 1,
+            "title": " beneath the ape mask — a face identical to his own",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.306,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e345",
+            "revision": 1,
+            "title": "the rocket countdown; Two and Forty-Eight freed; the Butler beside him",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-2-finale:e346",
+            "revision": 1,
+            "title": "the London door opening automatically — recalling the Village",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e347",
+            "revision": 1,
+            "title": "Number Two — an office through changes of bearer",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.41,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.167,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e348",
+            "revision": 1,
+            "title": "Number Six — a person held within an assigned position",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.27,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1965,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e349",
+            "revision": 1,
+            "title": "Number One — the withheld source of command",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.15,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-3-count:e350",
+            "revision": 1,
+            "title": "2+2²=6=4+2 — the count including the relation that generates it; the Village's speech-act keeps the power of assignment",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e351",
+            "revision": 1,
+            "title": "the open road from the Village — escape with others, divergence after",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e352",
+            "revision": 1,
+            "title": "the counting operation — who selected the number, who answers for the selection",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.136,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e353",
+            "revision": 1,
+            "title": "M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.25,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-5-return:e354",
+            "revision": 1,
+            "title": "A32 — the reply must be able to revise image, measure and institution",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-the-prisoner:scene:m-pri-0-arrival:e334"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-the-prisoner.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "The Prisoner — Number Six, the changing Two, and the question of One"
+        },
+        "fallback": {
+         "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+         "text": "The Prisoner — Number Six, the changing Two, and the question of One: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-the-prisoner",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-the-prisoner",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-the-prisoner.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-the-prisoner"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-the-prisoner:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "The Prisoner — Number Six, the changing Two, and the question of One",
+  "summary": "a living Expression · 5 scenes · 21 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-the-prisoner:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-the-prisoner",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-the-prisoner"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-the-prisoner:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-the-prisoner",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-the-prisoner",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "The Prisoner — Number Six, the changing Two, and the question of One",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-the-prisoner:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-the-prisoner:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-the-prisoner",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-the-prisoner"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

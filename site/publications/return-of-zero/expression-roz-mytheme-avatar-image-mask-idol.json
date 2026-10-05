@@ -1,0 +1,3010 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-avatar-image-mask-idol",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+  "revision": 1,
+  "title": "Avatar · image · mask · idol",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar",
+    "revision": 1,
+    "title": "Presence becomes addressable through a form",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image",
+    "revision": 1,
+    "title": "The image gathers force",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask",
+    "revision": 1,
+    "title": "The mask: participation becoming self-administration",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol",
+    "revision": 1,
+    "title": "The idol closes the path through the image",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return",
+    "revision": 1,
+    "title": "Regard returns through the form",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532",
+     "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516",
+    "revision": 1,
+    "title": "the avatar — descent into a form that can act",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.08,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2815,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517",
+    "revision": 1,
+    "title": "the commissioned representative — authority within a commission, answerable to what was entrusted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518",
+    "revision": 1,
+    "title": "the prompt already a determination — A28's recursive relation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519",
+    "revision": 1,
+    "title": "the image — gathering attention, desire, expectation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.27,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.491,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520",
+    "revision": 1,
+    "title": "the organising complex — the field of response around a consequential formation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521",
+    "revision": 1,
+    "title": "Bimba locally · pratibimba widely — authority with a determinate scope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522",
+    "revision": 1,
+    "title": "the test — can the encountered source still alter what the image means?",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523",
+    "revision": 1,
+    "title": "the mask — the interface of participation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.36,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.287,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524",
+    "revision": 1,
+    "title": "the anticipated count — editing what can be shown; the unapproved response as defect",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.4,
+      "automation": null
+     },
+     "y": {
+      "value": 0.25,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525",
+    "revision": 1,
+    "title": "Number Six — the assigned number; Two's office changing; One questioned",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526",
+    "revision": 1,
+    "title": "the laurel — the emblem continuing after the living withdrawal",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.43,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527",
+    "revision": 1,
+    "title": "the protected account — contradiction classified as the judged person's defect",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.156,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528",
+    "revision": 1,
+    "title": "the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.361,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529",
+    "revision": 1,
+    "title": "the liar's dividend — counterfeiting making the genuine record refusable",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530",
+    "revision": 1,
+    "title": "regard — the disclosed criterion and the answer that can change it",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.41,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6265,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531",
+    "revision": 1,
+    "title": "the entrusted avatar remaining powerful — source office inspectable and revisable (A28)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532",
+    "revision": 1,
+    "title": "withdrawal as an answer the representation must learn to receive",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.19,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533",
+    "revision": 1,
+    "title": "the Symbol/Account/Trust circuit — all four operations through the ecology",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-avatar-image-mask-idol.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Avatar · image · mask · idol</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol\" data-expression-revision=\"1\"><h1>Avatar · image · mask · idol</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-avatar-image-mask-idol at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar\" aria-label=\"Presence becomes addressable through a form\"><h2>Presence becomes addressable through a form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.84rem;opacity:1.00\" title=\"the avatar — descent into a form that can act\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:0.72rem;opacity:1.00\" title=\"the commissioned representative — authority within a commission, answerable to what was entrusted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.50%;font-size:0.81rem;opacity:1.00\" title=\"the prompt already a determination — A28&#39;s recursive relation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image\" aria-label=\"The image gathers force\"><h2>The image gathers force</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:1.47rem;opacity:1.00\" title=\"the image — gathering attention, desire, expectation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the organising complex — the field of response around a consequential formation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"Bimba locally · pratibimba widely — authority with a determinate scope\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the test — can the encountered source still alter what the image means?\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask\" aria-label=\"The mask: participation becoming self-administration\"><h2>The mask: participation becoming self-administration</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.60%;font-size:0.86rem;opacity:1.00\" title=\"the mask — the interface of participation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.50%;font-size:1.02rem;opacity:1.00\" title=\"the anticipated count — editing what can be shown; the unapproved response as defect\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:0.84rem;opacity:1.00\" title=\"Number Six — the assigned number; Two&#39;s office changing; One questioned\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol\" aria-label=\"The idol closes the path through the image\"><h2>The idol closes the path through the image</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:1.29rem;opacity:1.00\" title=\"the laurel — the emblem continuing after the living withdrawal\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"the protected account — contradiction classified as the judged person&#39;s defect\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.80%;font-size:1.08rem;opacity:1.00\" title=\"the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the liar&#39;s dividend — counterfeiting making the genuine record refusable\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return\" aria-label=\"Regard returns through the form\"><h2>Regard returns through the form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:1.88rem;opacity:1.00\" title=\"regard — the disclosed criterion and the answer that can change it\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"the entrusted avatar remaining powerful — source office inspectable and revisable (A28)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"withdrawal as an answer the representation must learn to receive\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"the Symbol/Account/Trust circuit — all four operations through the ecology\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-avatar-image-mask-idol",
+  "world_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+  "revision": 1,
+  "title": "Avatar · image · mask · idol",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Avatar · image · mask · idol"
+      },
+      "fallback": {
+       "title": "Avatar · image · mask · idol"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Avatar · image · mask · idol</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol\" data-expression-revision=\"1\"><h1>Avatar · image · mask · idol</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-avatar-image-mask-idol at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar\" aria-label=\"Presence becomes addressable through a form\"><h2>Presence becomes addressable through a form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.84rem;opacity:1.00\" title=\"the avatar — descent into a form that can act\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:0.72rem;opacity:1.00\" title=\"the commissioned representative — authority within a commission, answerable to what was entrusted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.50%;font-size:0.81rem;opacity:1.00\" title=\"the prompt already a determination — A28&#39;s recursive relation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image\" aria-label=\"The image gathers force\"><h2>The image gathers force</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:1.47rem;opacity:1.00\" title=\"the image — gathering attention, desire, expectation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the organising complex — the field of response around a consequential formation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"Bimba locally · pratibimba widely — authority with a determinate scope\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the test — can the encountered source still alter what the image means?\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask\" aria-label=\"The mask: participation becoming self-administration\"><h2>The mask: participation becoming self-administration</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.60%;font-size:0.86rem;opacity:1.00\" title=\"the mask — the interface of participation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.50%;font-size:1.02rem;opacity:1.00\" title=\"the anticipated count — editing what can be shown; the unapproved response as defect\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:0.84rem;opacity:1.00\" title=\"Number Six — the assigned number; Two&#39;s office changing; One questioned\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol\" aria-label=\"The idol closes the path through the image\"><h2>The idol closes the path through the image</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:1.29rem;opacity:1.00\" title=\"the laurel — the emblem continuing after the living withdrawal\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"the protected account — contradiction classified as the judged person&#39;s defect\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.80%;font-size:1.08rem;opacity:1.00\" title=\"the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the liar&#39;s dividend — counterfeiting making the genuine record refusable\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return\" aria-label=\"Regard returns through the form\"><h2>Regard returns through the form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:1.88rem;opacity:1.00\" title=\"regard — the disclosed criterion and the answer that can change it\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"the entrusted avatar remaining powerful — source office inspectable and revisable (A28)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"withdrawal as an answer the representation must learn to receive\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"the Symbol/Account/Trust circuit — all four operations through the ecology\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+        "revision": 1,
+        "title": "Avatar · image · mask · idol",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar",
+          "revision": 1,
+          "title": "Presence becomes addressable through a form",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image",
+          "revision": 1,
+          "title": "The image gathers force",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask",
+          "revision": 1,
+          "title": "The mask: participation becoming self-administration",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol",
+          "revision": 1,
+          "title": "The idol closes the path through the image",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return",
+          "revision": 1,
+          "title": "Regard returns through the form",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532",
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516",
+          "revision": 1,
+          "title": "the avatar — descent into a form that can act",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.08,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2815,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517",
+          "revision": 1,
+          "title": "the commissioned representative — authority within a commission, answerable to what was entrusted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518",
+          "revision": 1,
+          "title": "the prompt already a determination — A28's recursive relation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519",
+          "revision": 1,
+          "title": "the image — gathering attention, desire, expectation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.27,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.491,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520",
+          "revision": 1,
+          "title": "the organising complex — the field of response around a consequential formation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521",
+          "revision": 1,
+          "title": "Bimba locally · pratibimba widely — authority with a determinate scope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522",
+          "revision": 1,
+          "title": "the test — can the encountered source still alter what the image means?",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523",
+          "revision": 1,
+          "title": "the mask — the interface of participation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.36,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.287,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524",
+          "revision": 1,
+          "title": "the anticipated count — editing what can be shown; the unapproved response as defect",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.4,
+            "automation": null
+           },
+           "y": {
+            "value": 0.25,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525",
+          "revision": 1,
+          "title": "Number Six — the assigned number; Two's office changing; One questioned",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526",
+          "revision": 1,
+          "title": "the laurel — the emblem continuing after the living withdrawal",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.43,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527",
+          "revision": 1,
+          "title": "the protected account — contradiction classified as the judged person's defect",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.156,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528",
+          "revision": 1,
+          "title": "the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.361,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529",
+          "revision": 1,
+          "title": "the liar's dividend — counterfeiting making the genuine record refusable",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530",
+          "revision": 1,
+          "title": "regard — the disclosed criterion and the answer that can change it",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.41,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6265,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531",
+          "revision": 1,
+          "title": "the entrusted avatar remaining powerful — source office inspectable and revisable (A28)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532",
+          "revision": 1,
+          "title": "withdrawal as an answer the representation must learn to receive",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.19,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533",
+          "revision": 1,
+          "title": "the Symbol/Account/Trust circuit — all four operations through the ecology",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-avatar-image-mask-idol.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Avatar · image · mask · idol"
+      },
+      "fallback": {
+       "title": "Avatar · image · mask · idol",
+       "text": "Avatar · image · mask · idol: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-avatar-image-mask-idol",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-avatar-image-mask-idol:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-avatar-image-mask-idol:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-avatar-image-mask-idol",
+    "world_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+    "revision": 1,
+    "title": "Avatar · image · mask · idol",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Avatar · image · mask · idol"
+        },
+        "fallback": {
+         "title": "Avatar · image · mask · idol"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Avatar · image · mask · idol</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol\" data-expression-revision=\"1\"><h1>Avatar · image · mask · idol</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-avatar-image-mask-idol at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar\" aria-label=\"Presence becomes addressable through a form\"><h2>Presence becomes addressable through a form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.84rem;opacity:1.00\" title=\"the avatar — descent into a form that can act\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:0.72rem;opacity:1.00\" title=\"the commissioned representative — authority within a commission, answerable to what was entrusted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.50%;font-size:0.81rem;opacity:1.00\" title=\"the prompt already a determination — A28&#39;s recursive relation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image\" aria-label=\"The image gathers force\"><h2>The image gathers force</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:1.47rem;opacity:1.00\" title=\"the image — gathering attention, desire, expectation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the organising complex — the field of response around a consequential formation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"Bimba locally · pratibimba widely — authority with a determinate scope\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the test — can the encountered source still alter what the image means?\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask\" aria-label=\"The mask: participation becoming self-administration\"><h2>The mask: participation becoming self-administration</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.60%;font-size:0.86rem;opacity:1.00\" title=\"the mask — the interface of participation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.50%;font-size:1.02rem;opacity:1.00\" title=\"the anticipated count — editing what can be shown; the unapproved response as defect\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:0.84rem;opacity:1.00\" title=\"Number Six — the assigned number; Two&#39;s office changing; One questioned\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol\" aria-label=\"The idol closes the path through the image\"><h2>The idol closes the path through the image</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:1.29rem;opacity:1.00\" title=\"the laurel — the emblem continuing after the living withdrawal\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"the protected account — contradiction classified as the judged person&#39;s defect\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.80%;font-size:1.08rem;opacity:1.00\" title=\"the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the liar&#39;s dividend — counterfeiting making the genuine record refusable\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return\" aria-label=\"Regard returns through the form\"><h2>Regard returns through the form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:1.88rem;opacity:1.00\" title=\"regard — the disclosed criterion and the answer that can change it\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"the entrusted avatar remaining powerful — source office inspectable and revisable (A28)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"withdrawal as an answer the representation must learn to receive\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"the Symbol/Account/Trust circuit — all four operations through the ecology\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+          "revision": 1,
+          "title": "Avatar · image · mask · idol",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar",
+            "revision": 1,
+            "title": "Presence becomes addressable through a form",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image",
+            "revision": 1,
+            "title": "The image gathers force",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask",
+            "revision": 1,
+            "title": "The mask: participation becoming self-administration",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol",
+            "revision": 1,
+            "title": "The idol closes the path through the image",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return",
+            "revision": 1,
+            "title": "Regard returns through the form",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532",
+             "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516",
+            "revision": 1,
+            "title": "the avatar — descent into a form that can act",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.08,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2815,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e517",
+            "revision": 1,
+            "title": "the commissioned representative — authority within a commission, answerable to what was entrusted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e518",
+            "revision": 1,
+            "title": "the prompt already a determination — A28's recursive relation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e519",
+            "revision": 1,
+            "title": "the image — gathering attention, desire, expectation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.27,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.491,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e520",
+            "revision": 1,
+            "title": "the organising complex — the field of response around a consequential formation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e521",
+            "revision": 1,
+            "title": "Bimba locally · pratibimba widely — authority with a determinate scope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-1-image:e522",
+            "revision": 1,
+            "title": "the test — can the encountered source still alter what the image means?",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e523",
+            "revision": 1,
+            "title": "the mask — the interface of participation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.36,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.287,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e524",
+            "revision": 1,
+            "title": "the anticipated count — editing what can be shown; the unapproved response as defect",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.4,
+              "automation": null
+             },
+             "y": {
+              "value": 0.25,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-2-mask:e525",
+            "revision": 1,
+            "title": "Number Six — the assigned number; Two's office changing; One questioned",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e526",
+            "revision": 1,
+            "title": "the laurel — the emblem continuing after the living withdrawal",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.43,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e527",
+            "revision": 1,
+            "title": "the protected account — contradiction classified as the judged person's defect",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.156,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e528",
+            "revision": 1,
+            "title": "the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.361,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-3-idol:e529",
+            "revision": 1,
+            "title": "the liar's dividend — counterfeiting making the genuine record refusable",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e530",
+            "revision": 1,
+            "title": "regard — the disclosed criterion and the answer that can change it",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.41,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6265,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e531",
+            "revision": 1,
+            "title": "the entrusted avatar remaining powerful — source office inspectable and revisable (A28)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e532",
+            "revision": 1,
+            "title": "withdrawal as an answer the representation must learn to receive",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.19,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-5-return:e533",
+            "revision": 1,
+            "title": "the Symbol/Account/Trust circuit — all four operations through the ecology",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol:scene:m-ava-0-avatar:e516"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-avatar-image-mask-idol.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Avatar · image · mask · idol"
+        },
+        "fallback": {
+         "title": "Avatar · image · mask · idol",
+         "text": "Avatar · image · mask · idol: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-avatar-image-mask-idol",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-avatar-image-mask-idol.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-avatar-image-mask-idol"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-avatar-image-mask-idol:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Avatar · image · mask · idol",
+  "summary": "a living Expression · 5 scenes · 18 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-avatar-image-mask-idol:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-avatar-image-mask-idol"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-avatar-image-mask-idol:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-avatar-image-mask-idol",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-avatar-image-mask-idol",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Avatar · image · mask · idol",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-avatar-image-mask-idol:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-avatar-image-mask-idol:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-avatar-image-mask-idol",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-avatar-image-mask-idol"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

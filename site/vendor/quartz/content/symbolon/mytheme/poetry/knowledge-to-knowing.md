@@ -10,11 +10,11 @@ type: _md_
 title: "Knowledge to Knowing"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c805ab5eae4aa3a3a2240
-source_id: 18fa4797-123c-805a-b5ea-e4aa3a3a2240
 notion_created: 2025-02-03T12:50:10Z
 notion_edited: 2025-02-03T12:50:17.674Z
 status: sorted
 kind: poem
+source_id: knowledge-to-knowing
 ---
 A learned fool and unknowledgeable savant,
 I am so because I know not what knowledge to want.

@@ -10,11 +10,11 @@ type: _md_
 title: "The Mind’s Shade"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c808ea052ffae794391ba
-source_id: 18fa4797-123c-808e-a052-ffae794391ba
 notion_created: 2025-02-03T12:29:47Z
 notion_edited: 2025-02-03T12:30:00.636Z
 status: sorted
 kind: short-piece
+source_id: the-minds-shade
 ---
 Let the false self, idling in the mind's shade, be overshadowed by the lustre of Truth's paradoxical flare.
 

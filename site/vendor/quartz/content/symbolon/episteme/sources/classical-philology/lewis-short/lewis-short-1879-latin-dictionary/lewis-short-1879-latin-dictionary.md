@@ -28,7 +28,7 @@ Lewis, Charlton T., and Charles Short. *A Latin Dictionary*. Oxford: Clarendon P
 
 ## Use and return
 
-The dictionary **sources** Latin semantic distinctions in [E2 Arbitration](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md) and [E3 Fides–Credere](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md). Their generated relations remain authorial register 3. The lexical evidence supplies particular attested senses and a recoverable citation chain; it does not derive the QL field or establish an institutional chronology.
+The dictionary **sources** Latin semantic distinctions in [E2 Arbitration](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md) and [E3 Fides–Credere](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md). Their generated relations remain authorial register 3. The lexical evidence supplies particular attested senses and a recoverable citation chain; it does not derive the QL field or establish an institutional chronology.
 
 <a id="passages"></a>
 ## Selected lexical witnesses
@@ -87,4 +87,4 @@ The dictionary **sources** Latin semantic distinctions in [E2 Arbitration](../..
 
 **Verification:** s.v. ratio, introduction and literal accounting senses; https://atlas.perseus.tufts.edu/dictionaries/entry/urn:cite2:scaife-viewer:dictionary-entries.atlas_v1:lat.ls.perseus-eng2-n40449/ ; selected senses read 2026-09-08, raw witness retained in T21-E6-private-development-packet.json. Paraphrase-ready to the online entry, with no independently verified ancient quotation or print collation. E6-ratio consumes this range while retaining A15’s native derivation and separate comparative-root debt.
 
-The entry **sources** [E6’s historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES.md) and its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD.md), with the institutional relation at register 3.
+The entry **sources** [E6’s historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES-apportionment-and-economy.md) and its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md), with the institutional relation at register 3.

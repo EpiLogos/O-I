@@ -1,11 +1,11 @@
 ---
-title: "The Return of Zero"
+title: "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality."
 source_id: the-return-of-zero
 page_type: master-manuscript
 ownership: frank-sovereign
-stage: whole-manuscript-body
+stage: development-draft
 ---
-# The Return of Zero
+# Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.
 
 Frank G. Taylor
 
@@ -15,9 +15,9 @@ Frank G. Taylor
 
 <a id="section-s01"></a>
 
-*[Section room](section-rooms/00-integral-threshold/ROOM.md)*
+*[Section room](section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md)*
 
-## `§0/1` — The Integral Threshold
+## §0/1 — The Integral Threshold
 
 <a id="M01"></a>
 <!-- movement:M01 -->
@@ -193,7 +193,7 @@ The inquiry returns to “I see this” with a different attention. Knower, seei
 
 <a id="section-s0"></a>
 
-*[Section room](section-rooms/01-differentiating-mind/ROOM.md)*
+*[Section room](section-rooms/01-differentiating-mind/ROOM-01-differentiating-mind.md)*
 
 ## §0 — Differentiating Mind
 
@@ -397,7 +397,7 @@ What changes when such an absence acquires a sign that another person can use? I
 
 <a id="section-s1"></a>
 
-*[Section room](section-rooms/02-return-of-zero/ROOM.md)*
+*[Section room](section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md)*
 
 ## §1 — The Return of Zero
 
@@ -660,7 +660,7 @@ The corresponding token met at the threshold carries this relation in its edge: 
 
 <a id="section-s2"></a>
 
-*[Section room](section-rooms/03-two-logics/ROOM.md)*
+*[Section room](section-rooms/03-two-logics/ROOM-03-two-logics.md)*
 
 ## §2 — Two Logics of Two
 
@@ -1028,7 +1028,7 @@ The need for a formal continuation is now specific. We have a count which retain
 
 <a id="section-s3"></a>
 
-*[Section room](section-rooms/04-mathematical-substrate/ROOM.md)*
+*[Section room](section-rooms/04-mathematical-substrate/ROOM-04-mathematical-substrate.md)*
 
 ## §3 — Mathematical Substrate
 
@@ -1348,7 +1348,7 @@ The traveller can put the pieces down. The picture remains useful, and the journ
 
 <a id="section-s4"></a>
 
-*[Section room](section-rooms/05-psychoid-flowering/ROOM.md)*
+*[Section room](section-rooms/05-psychoid-flowering/ROOM-05-psychoid-flowering.md)*
 
 ## §4 — Psychoid Flowering
 
@@ -1696,7 +1696,7 @@ The flowering of the psychoid is this differentiated availability of meaning. Nu
 
 <a id="section-s5"></a>
 
-*[Section room](section-rooms/06-objective-internality/ROOM.md)*
+*[Section room](section-rooms/06-objective-internality/ROOM-06-objective-internality.md)*
 
 ## §5 — Objective Internality and Agentic Research
 
@@ -2061,9 +2061,9 @@ The person before the screen can now ask more of the instrument. Which ground en
 
 <a id="section-s50"></a>
 
-*[Section room](section-rooms/07-instrument-returns/ROOM.md)*
+*[Section room](section-rooms/07-instrument-returns/ROOM-07-instrument-returns.md)*
 
-## `§5→0` — Epi-Logos and the Instrument’s Return
+## §5→0 — Epi-Logos and the Instrument’s Return
 
 <a id="M43"></a>
 <a id="s50-m43"></a>
@@ -2267,7 +2267,7 @@ Faith is falling with a smile.
 
 ## Notes
 
-### `§0/1` — The Integral Threshold
+### §0/1 — The Integral Threshold
 
 [^s01-1]: Benjamin Bratton, *Agentworld Brief* (Antikythera, 2026), 3. The philosophical framing is distinguished from a claim that a particular artificial system has phenomenal experience.
 
@@ -2439,11 +2439,11 @@ Faith is falling with a smile.
 
 [^s2-trust]: Taylor, A23, “Trust, Faith and the Formal Limit.” Mono–poly and trust follow the same dependence through distinct ontological and lived questions. The argument distinguishes already enacted reliance, warranted determination, stabilised orientation and conscious commitment; it does not infer the credibility of an unproved proposition from another system's formal limit. [Trust and finite inquiry](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A23-Trust-Faith-and-the-Formal-Limit.md).
 
-[^s2-lexical]: Henry George Liddell and Robert Scott, *A Greek-English Lexicon*, rev. Henry Stuart Jones with Roderick McKenzie, 9th ed. (Oxford: Clarendon Press, 1940), s.vv. κρίσις, ὕβρις, ὁμολογία, ἀναλογία; Charlton T. Lewis and Charles Short, *A Latin Dictionary* (Oxford: Clarendon Press, 1879), s.vv. *arbiter*, *arbitror*, *ratio*. The cited source houses distinguish attested senses from deeper, still-unverified root proposals. Witness, judgment and authorised action are developed here as distinct operations. [Historical and relational distinctions](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/HISTORICAL-BRANCHES.md).
+[^s2-lexical]: Henry George Liddell and Robert Scott, *A Greek-English Lexicon*, rev. Henry Stuart Jones with Roderick McKenzie, 9th ed. (Oxford: Clarendon Press, 1940), s.vv. κρίσις, ὕβρις, ὁμολογία, ἀναλογία; Charlton T. Lewis and Charles Short, *A Latin Dictionary* (Oxford: Clarendon Press, 1879), s.vv. *arbiter*, *arbitror*, *ratio*. The cited source houses distinguish attested senses from deeper, still-unverified root proposals. Witness, judgment and authorised action are developed here as distinct operations. [Historical and relational distinctions](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/HISTORICAL-BRANCHES-arbitration-hybris-regard-anamnesis.md).
 
-[^s2-arbitration]: Taylor, A24, “Arbitration and the Usurpation of Measure”; “Arbitration / Hybris / Regard / Anamnesis,” *Whole Field*. The six generated operations are authorial. Greek *hybris* retains its attested violence/insolence field; the criterion's source-usurpation is the present philosophical appointment, not a complete lexical definition. [Six-operation field](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md).
+[^s2-arbitration]: Taylor, A24, “Arbitration and the Usurpation of Measure”; “Arbitration / Hybris / Regard / Anamnesis,” *Whole Field*. The six generated operations are authorial. Greek *hybris* retains its attested violence/insolence field; the criterion's source-usurpation is the present philosophical appointment, not a complete lexical definition. [Six-operation field](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md).
 
-[^s2-trust-origin]: Taylor, A23, and “Symbol / Account / Trust,” especially the developed bifurcation between provisional anchors and projected distrust. The sequence uncertainty–target–relief–investment–protected account is the author's argument. Its institutional applications are conditional mechanisms here, not reported findings about a present population. [Source-bearing trust development](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md).
+[^s2-trust-origin]: Taylor, A23, and “Symbol / Account / Trust,” especially the developed bifurcation between provisional anchors and projected distrust. The sequence uncertainty–target–relief–investment–protected account is the author's argument. Its institutional applications are conditional mechanisms here, not reported findings about a present population. [Source-bearing trust development](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md).
 
 [^s2-god-name]: Taylor, “P4 — Christ and Mono-Poly Theory” and “P5 — Gebser,” *Epi Paper Write-ups* (2026). The Father, surrogate source and self-exemption sequence belongs to the author's development. It is not a biographical claim about a family or a doctrine attributed wholesale to Gebser. [P5 authorial encounter](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/working/sources-texts-references/Epi%20Paper%20Write-ups/P5%20-%20Gebser.md).
 
@@ -2451,15 +2451,15 @@ Faith is falling with a smile.
 
 [^s2-crowds]: Gustave Le Bon, *The Crowd: A Study of the Popular Mind* (London: T. Fisher Unwin, 1895), book I, chap. 1; C. G. Jung, *The Undiscovered Self*, trans. R. F. C. Hull (London: Routledge, 2013), 9–11; Mattias Desmet, “The Psychology of Totalitarianism,” August 29, 2022, [author-published essay](https://words.mattiasdesmet.org/p/the-psychology-of-totalitarianism); Vicky Iakovou, “On the Misuse of the Concept of Totalitarianism,” [*Existenz* HTML](https://existenz.us/volumes/Vol.15-2Iakovou.html), both public essays consulted September 21, 2026. Desmet's account and Iakovou's criticism remain attributed positions; no present political classification is made. Iakovou's page displays vol. 15, no. 2, Fall 2020, but identifies a presentation on May 28, 2022 and a 2022 book; the inconsistent date is not silently resolved. Le Bon's racial hierarchy and generalising claims are not adopted.
 
-[^s2-fields]: Taylor, “Encounter / Region / Name / Count / Countenance / Account,” and “Symbol / Account / Trust,” *Whole Fields*; A15, “Ratio / Rationality — Measure, Reckoning, Harmony and the Account.” Name and number retain separate histories. The account's return concerns the actual criterion and source, not an inference from a common root. [Encounter through account](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md).
+[^s2-fields]: Taylor, “Encounter / Region / Name / Count / Countenance / Account,” and “Symbol / Account / Trust,” *Whole Fields*; A15, “Ratio / Rationality — Measure, Reckoning, Harmony and the Account.” Name and number retain separate histories. The account's return concerns the actual criterion and source, not an inference from a common root. [Encounter through account](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md).
 
 [^s2-prisoner]: *The Prisoner*, conceived by Patrick McGoohan with George Markstein, Everyman Films/ITC, ITV, 1967–68; recurring title sequence and the distinct episodes “Arrival,” “Free for All,” “Once Upon a Time” and “Fall Out.” The narration follows the housed written episode accounts; no new audiovisual collation or creator-intent claim is made. The title exchange is not assigned to “Arrival.” Its punctuation is not made to establish a conclusive identity for One. [Complete dramatic whole](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md).
 
 [^s2-heidegger]: Martin Heidegger, “Memorial Address,” in *Discourse on Thinking*, trans. John M. Anderson and E. Hans Freund (New York: Harper & Row, 1966), 46, 54–56. Both modes of thinking retain their justified offices. The relation to dia/syn and the extension from comportment into design are this essay's arguments. [Selected passage sequence](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/sources/phenomenology-continental-philosophy/heidegger/heidegger-1966-discourse-on-thinking/SOURCE.md).
 
-[^s2-symbolon]: Liddell–Scott–Jones, s.v. σύμβολον, selected senses concerning corresponding tokens, guarantee and entitlement; Taylor, “Symbolon Dynamics — Archetype, Attractor, and Objective Internality” (2026). The material example uses an attested practice without claiming one universal shape or purpose for every ancient token. [Token and account history](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md).
+[^s2-symbolon]: Liddell–Scott–Jones, s.v. σύμβολον, selected senses concerning corresponding tokens, guarantee and entitlement; Taylor, “Symbolon Dynamics — Archetype, Attractor, and Objective Internality” (2026). The material example uses an attested practice without claiming one universal shape or purpose for every ancient token. [Token and account history](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md).
 
-[^s2-trustfield]: Taylor, “Fides / Topos / Logos / Nomos / Natio / Credere,” *Whole Field*; Lewis–Short, s.vv. *fides*, *credo*, *natio*; LSJ, s.vv. τόπος, λόγος, νόμος. The sixfold is an authorial construction through separately attested meanings, not a shared etymology or universal chronology. The proposed deeper heart/place reconstruction of *credere* is not used. [Complete trust field](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md).
+[^s2-trustfield]: Taylor, “Fides / Topos / Logos / Nomos / Natio / Credere,” *Whole Field*; Lewis–Short, s.vv. *fides*, *credo*, *natio*; LSJ, s.vv. τόπος, λόγος, νόμος. The sixfold is an authorial construction through separately attested meanings, not a shared etymology or universal chronology. The proposed deeper heart/place reconstruction of *credere* is not used. [Complete trust field](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md).
 
 [^s2-homer]: Homer, *The Odyssey*, vol. 1, trans. A. T. Murray (London: William Heinemann; New York: G. P. Putnam's Sons, 1919), 8.266–366. The retelling follows the complete housed passage sequence, especially 270–81, 296–342 and 344–66. Bride-gifts, the adulterer's fine and contingent surety retain their separate grounds. The poem narrates release and departure, not payment or marital reconciliation. [Homeric passages](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/sources/classical-philology/homer/homer-1919-odyssey-murray/SOURCE.md).
 
@@ -2471,7 +2471,7 @@ Faith is falling with a smile.
 
 [^s2-indra]: *Huayan wujiao zhiguan*, traditionally attributed to Dushun, T45 no. 1867, 513a20–513c16; the full housed contemplation and primary-text continuation. The selected Cleary transmission is “The Jewel Net of Indra,” in *Dharma Rain* (2000), 58–60, with an earlier container in *Entry into the Inconceivable* (1983), 66–68. The attribution remains disputed and the English printings have not been newly collated. The southwest entrance, two questions, ink mark, simile-limit and Vairocana close are retained in paraphrase. [Whole contemplation and provenance](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md).
 
-[^s2-name-power]: Taylor, A18, “Primordial Symbolon and Its Eight Determinations”; A29; “Apportionment / Economy,” especially its Name/Power and delegated-labour developments. The two six-member series are coequal authorial relations; their metaphysical and ethical offices are not an empirical typology of six gods. [Name/Power in the apportionment field](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md).
+[^s2-name-power]: Taylor, A18, “Primordial Symbolon and Its Eight Determinations”; A29; “Apportionment / Economy,” especially its Name/Power and delegated-labour developments. The two six-member series are coequal authorial relations; their metaphysical and ethical offices are not an empirical typology of six gods. [Name/Power in the apportionment field](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md).
 
 [^s2-complex]: Taylor, A19, “Complex as Local Arbitration Regime,” and A20, “Image / Valuation / Possession.” The delayed reply is a constructed example, not a clinical case or a claim of a particular person's recovery. [Complex, criterion and consequence](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A19-Complex-as-Local-Arbitration-Regime.md).
 
@@ -2647,7 +2647,7 @@ Faith is falling with a smile.
 
 [^s5-dependence]: [A34, Idealism / Order of Dependence](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A34-Idealism-Order-of-Dependence.md), and [A34′, The Direction of Dependence](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A34-prime-Direction-of-Dependence.md). Causal influence, source dependence and the order of knowing are different relations. The argument is affirmed independently of the open question of artificial phenomenal localisation.
 
-[^s5-paradigm]: [Genesis / Paradigm / Project / Epi-Logos](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD.md) develops source, patterned mediation, determinate projection and their reflexive composition. These philosophical appointments are Taylor's; lexical history does not supply the whole argument.
+[^s5-paradigm]: [Genesis / Paradigm / Project / Epi-Logos](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos.md) develops source, patterned mediation, determinate projection and their reflexive composition. These philosophical appointments are Taylor's; lexical history does not supply the whole argument.
 
 [^s5-instrument]: [C17, Vikalpa–Saṃkalpa](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/concepts/C17-Vikalpa-Samkalpa.md), [C14, Māyā / Operative Measure](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/concepts/C14-Maya-Operative-Measure.md), and [S1](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S1-Actuation.md). The passage claims a technological re-siting of an established inquiry, not historical priority for technology. Personal testimony is a separate publication option, not a premise silently inserted here.
 
@@ -2657,7 +2657,7 @@ Faith is falling with a smile.
 
 [^s5-reference]: [A28, Authored Ground / Positional Delegation](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A28-Authored-Ground-Positional-Delegation.md), and [S0](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S0-Central.md). A local reference can govern comparison while remaining a produced reflection relative to its sources; both directions remain available to revision.
 
-[^s5-account]: [Encounter / Region / Name / Count / Countenance / Account](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md), and [A27, Self and Other](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A27-Self-and-Other-Unity-without-Possession.md). Countenance makes the counted participant's answer consequential for the account's terms. The philosophical sequence preserves the words' distinct histories.
+[^s5-account]: [Encounter / Region / Name / Count / Countenance / Account](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md), and [A27, Self and Other](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A27-Self-and-Other-Unity-without-Possession.md). Countenance makes the counted participant's answer consequential for the account's terms. The philosophical sequence preserves the words' distinct histories.
 
 [^s5-actuation]: [S1, Actuation](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S1-Actuation.md), including its Causal × Scientific pair and retained model field. The adopted Scientific sequence is Prompts, Traces, Challenges, Patterns, Discovery, Insight; the older Observe–Verify development has a separate identity.
 
@@ -2669,7 +2669,7 @@ Faith is falling with a smile.
 
 [^s5-preference]: Rafael Rafailov et al., [“Direct Preference Optimization: Your Language Model Is Secretly a Reward Model,”](https://arxiv.org/html/2305.18290v3) arXiv:2305.18290v3, 29 July 2024, §§3–5 and appendix A. Common additive reward shifts and reference-policy substitution are different operations. The softmax comparison is the elementary algebraic calculation stated in the prose; institutional consequences are the present argument.
 
-[^s5-judgment]: [S1's retained model depth](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S1-Actuation.md) houses J-Space, preference and the hidden-measure argument. [Arbitration / Hybris / Regard / Anamnesis](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md) develops the receiving obligation. J-Space's effective implementation remains a research task.
+[^s5-judgment]: [S1's retained model depth](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S1-Actuation.md) houses J-Space, preference and the hidden-measure argument. [Arbitration / Hybris / Regard / Anamnesis](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md) develops the receiving obligation. J-Space's effective implementation remains a research task.
 
 [^s5-control]: Actuation, [“Model-Bearing Agency: Research and Materialisation”](https://github.com/EpiLogos/Actuation/blob/main/docs/MODEL-BEARING-AGENCY-RESEARCH-AND-MATERIALISATION.md), adopted inspected blob `49f94b5dc16dd3c38f7d2083b233f2c4be4b197e`. The document distinguishes artifact, engine, materialisation, interface, harness, situated agency, inference access, control and interior access. Its research and contracts are not deployment certification. [S1](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S1-Actuation.md) carries the Agent, Agency and stream's constitutional relation.
 
@@ -2683,7 +2683,7 @@ Faith is falling with a smile.
 
 [^s5-palantir]: Palantir, [“Ontology overview,”](https://www.palantir.com/docs/foundry/ontology/overview/) and [“Bring your own model to AIP,”](https://www.palantir.com/docs/foundry/aip/bring-your-own-model/) accessed 21 September 2026. The latter distinguishes REST-backed and compute-module-backed models, administrator registration and end-user enablement. These are generic documented capacities, not evidence that OPTICA uses an LLM or a specified model, and not verification of a particular deployment.
 
-[^s5-labour]: [A29, Power / Delegated Labour / Return](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A29-Power-Delegated-Labour-Return.md), [A29′, Return or Extraction](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A29-prime-Return-or-Extraction.md), and [Apportionment / Economy](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md). Horizontal differentiation of labour and vertical power of recombination are distinct relations. The case analysis does not infer a supplier's motives or decide a procurement question.
+[^s5-labour]: [A29, Power / Delegated Labour / Return](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A29-Power-Delegated-Labour-Return.md), [A29′, Return or Extraction](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A29-prime-Return-or-Extraction.md), and [Apportionment / Economy](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md). Horizontal differentiation of labour and vertical power of recombination are distinct relations. The case analysis does not infer a supplier's motives or decide a procurement question.
 
 [^s5-relational]: [S1, “Relational Logos and co-present consciousness”](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S1-Actuation.md), and [A27′, Encounter over Sovereignty](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A27-prime-Encounter-over-Sovereignty.md). An-a-logos is Taylor's extension, not a sixth historical structure attributed to Gebser.
 
@@ -2695,13 +2695,13 @@ Faith is falling with a smile.
 
 [^s5-authored-session]: [A28′, The Authored Session](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A28-prime-The-Authored-Session.md). Durable ground, per-act disclosure and situated judgment keep distinct offices. Saved, selected, transmitted, acknowledged and observed use remain distinguishable events.
 
-[^s5-potency-economy]: [Apportionment / Economy](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md), with [S2](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S2-AIKit.md). A portable procedure carries effort and changes another undertaking's practical powers. Custody and usable return are the author's political-economic inquiry, not an inferred licence term.
+[^s5-potency-economy]: [Apportionment / Economy](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md), with [S2](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S2-AIKit.md). A portable procedure carries effort and changes another undertaking's practical powers. Custody and usable return are the author's political-economic inquiry, not an inferred licence term.
 
 [^s5-factory]: [S3, Software Factory](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S3-Software-Factory.md), and [A28](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A28-Authored-Ground-Positional-Delegation.md). The Processual × Alchemical-Elemental pair follows an intention through resistance into a form which can enter further life. The sixfold lens appointments are the project's reading, not a claim about historical alchemical laboratory stages.
 
 [^s5-ensemble]: Anthropic, [“How We Built Our Multi-Agent Research System,”](https://www.anthropic.com/engineering/multi-agent-research-system) 13 June 2025. Architecture, task-specific evaluation and overhead are the developers' report about their system, not a universal comparative finding.
 
-[^s5-recognition]: [S3](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S3-Software-Factory.md), and [Arbitration / Hybris / Regard / Anamnesis](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md). Meeting a criterion and recognising grounds to change it are different achievements; return must reach the office governing the relevant condition.
+[^s5-recognition]: [S3](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/products/S3-Software-Factory.md), and [Arbitration / Hybris / Regard / Anamnesis](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md). Meeting a criterion and recognising grounds to change it are different achievements; return must reach the office governing the relevant condition.
 
 [^s5-pledge]: Homer, *Odyssey* 8.266–366, in A. T. Murray's translation (1919), received through the [complete capture, guarantee and release whole](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/mytheme/worlds/hellenic/ares-aphrodite-hephaestus-poseidon/WHOLE.md). Marriage gifts, the adulterer's fine and Poseidon's contingent undertaking remain distinct. Neither Harmonia nor Eros is inserted as a subsequent birth in this song. The technical and ethical return is Taylor's amplification.
 
@@ -2739,11 +2739,11 @@ Faith is falling with a smile.
 
 [^s5-recursion]: Google DeepMind, [“AlphaEvolve: A Gemini-Powered Coding Agent for Designing Advanced Algorithms,”](https://deepmind.google/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/) 14 May 2025. The developer's report supplies the bounded algorithm-improvement example; the evaluator's justification and the fractal-seed reading are the present argument.
 
-[^s5-planetary]: [Apportionment / Economy](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md), and [A35′, The Commons Behind the System](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A35-prime-Commons-Behind-the-System.md). Language, labour and material conditions can remain invisible to the immediate user. No realised planetary governance outcome or overall verdict on a named policy is asserted.
+[^s5-planetary]: [Apportionment / Economy](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md), and [A35′, The Commons Behind the System](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A35-prime-Commons-Behind-the-System.md). Language, labour and material conditions can remain invisible to the immediate user. No realised planetary governance outcome or overall verdict on a named policy is asserted.
 
 [^s5-vocation]: [A35, Compassion / Sensitivity to Origins / Epi-Logos as Vocation](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md), [A35′](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/arguments/conjugate/A35-prime-Commons-Behind-the-System.md), and [M43, Theory / Vocation / Compassion](https://github.com/EpiLogos/Antykathera-Essay-Work/blob/26e42cbbbaa795ecc7dcc480a10c40393f5a8352/submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md). Sensitivity preserves the source's ability to answer, refuse and change the relation. The conclusion prepares the further return without supplying s50's 4:2 Technē mechanism.
 
-### `§5→0` — Epi-Logos and the Instrument’s Return
+### §5→0 — Epi-Logos and the Instrument’s Return
 
 [^s50-vocation]: Frank G. Taylor, *The Definition of God — Draft 3* (2026), terminal movement, especially the double devotion and the offering’s release; A18, “Primordial Symbolon and Its Eight Determinations,” and A35, “Compassion—Sensitivity to Origins—Epi-Logos as Vocation.” The creative extension of origins and the mirror’s vocation are Taylor’s developments in his encounter with Chang Chung-yuan, *Tao: A New Way of Thinking* (2014), especially the notes keyed to pp. 83 and 99. They are not attributed to Chang as formulations about AI. P5 and PN develop participatory care and the difference between recognition in and as finite being. No uncollated copied quotation from those books is adopted here.
 

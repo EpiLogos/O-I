@@ -40,7 +40,7 @@ No sibling NOTES existed on admission; none was created. Passage cards below are
 
 ## Comparison and consumption
 
-The [Symbol / Account / Trust field](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD.md) **compares** this source at register 3 after its historical and lexical scope has been stated at register 2. The native three terms and four operations retain their own authorial warrant. Laplace owns the historical-branch and whole-field integration; consumer insertions remain private proposals. No newly installed E/A/C/Movement return is claimed here.
+The [Symbol / Account / Trust field](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md) **compares** this source at register 3 after its historical and lexical scope has been stated at register 2. The native three terms and four operations retain their own authorial warrant. Laplace owns the historical-branch and whole-field integration; consumer insertions remain private proposals. No newly installed E/A/C/Movement return is claimed here.
 
 <a id="passages"></a>
 ## Passages and excerpts

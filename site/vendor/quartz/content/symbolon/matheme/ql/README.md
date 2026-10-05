@@ -16,13 +16,13 @@ The direct Symbolon records state the whole relation. QL records supply their fo
 
 ## Records
 
-- [0/1 ↔ 1/0 native derivation and meta-sign boundary](primordial-symbolon.md)
+- [`0/1` ↔ `1/0` native derivation and meta-sign boundary](primordial-symbolon.md)
 - [The Two Ones / One–All matheme](two-ones.md)
 - [Slash / AND-OR formal operation](slash-and-or.md)
 - [Eight Determinations](eight-determinations.md)
-- [2+2² = 4+2 = 5→0 / sixfold derivation](binary-and-binary-of-binary.md)
+- [`2+2² = 4+2 = 5→0` / sixfold derivation](binary-and-binary-of-binary.md)
 - [Crossed zero and native re-entry](crossed-zero-re-entry.md)
-- [X/x native QL derivation](x-x.md)
+- [`X/x` native QL derivation](x-x.md)
 - [Complex orientation / phase / modulus](complex-orientation.md)
 
 Return to [[symbolon/matheme/README.md|Matheme]] or [[symbolon/README.md|Symbolon]].

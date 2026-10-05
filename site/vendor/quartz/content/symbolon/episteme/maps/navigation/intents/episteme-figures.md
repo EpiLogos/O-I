@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -20,9 +20,9 @@ Position #4. Entrance: [Episteme Figures](../../../figures/README.md). Each entr
 
 `episteme` · `register-domain`
 
-**Implicates:** *unnamed* → [Matheme Diagrams](../../../../matheme/diagrams/README.md), [Mytheme Plates](../../../../mytheme/plates/README.md), [The Return of Zero — Episteme](../../../README.md), [Figure — The Canonical A/C Suite and Its Traversal by the Rooms](../../../figures/ac-suite-field-shape.md), [Figure — Bimba / Pratibimba: the Relational Office](../../../figures/bimba-pratibimba-relational-office.md), [Figure — Objective Internality: the Six Paired Product Disclosures](../../../figures/objective-internality-paired-disclosures.md), [Figure — The Straight Vāk Layering of the Four Registers](../../../figures/vak-register-layering.md)
+**Implicates:** *unnamed* → [Matheme Diagrams](../../../../matheme/diagrams/README.md), [Mytheme Plates](../../../../mytheme/plates/README.md), [Episteme](../../../README.md), [Figure — The Canonical A/C Suite and Its Traversal by the Rooms](../../../figures/ac-suite-field-shape.md), [Figure — Bimba / Pratibimba: the Relational Office](../../../figures/bimba-pratibimba-relational-office.md), [Figure — Objective Internality: the Six Paired Product Disclosures](../../../figures/objective-internality-paired-disclosures.md), [Figure — The Straight Vāk Layering of the Four Registers](../../../figures/vak-register-layering.md)
 
-**Reached from:** *figures* ← [The Return of Zero — Episteme](../../../README.md), [Matheme Diagrams](../../../../matheme/diagrams/README.md), [Mytheme Plates](../../../../mytheme/plates/README.md)
+**Reached from:** *figures* ← [Episteme](../../../README.md), [Matheme Diagrams](../../../../matheme/diagrams/README.md), [Mytheme Plates](../../../../mytheme/plates/README.md)
 
 ### [Figure — Bimba / Pratibimba: the Relational Office](../../../figures/bimba-pratibimba-relational-office.md)
 
@@ -44,7 +44,7 @@ Position #4. Entrance: [Episteme Figures](../../../figures/README.md). Each entr
 
 `episteme` · `figure` · `Derived (census) / Argued (suite standing)`
 
-**Implicates:** *unnamed* → [A/C — Argument / Concept — Root of the Conjugate Field](../../../../../section-rooms/arguments/conjugate/AC.md), [The Return of Zero — The Rooms](../../../../../section-rooms/README.md), [P1 Canonical Alignment — §5 Objective Internality](../../../../../section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md), [Canonical Arguments A01–A36](../../../../../section-rooms/arguments/README.md), [Conjugate Argument Field — A01′–A36′ and the A/C Root](../../../../../section-rooms/arguments/conjugate/README.md), [Canonical Concepts C01–C64](../../../../../section-rooms/arguments/concepts/CANONICAL-INDEX.md), [Episteme — S Product Field](../../../../../section-rooms/arguments/products/README.md), [The Return of Zero — Episteme](../../../README.md)
+**Implicates:** *unnamed* → [A/C — Argument / Concept — Root of the Conjugate Field](../../../../../section-rooms/arguments/conjugate/AC.md), [The Return of Zero — The Rooms](../../../../../section-rooms/README.md), [P1 Canonical Alignment — §5 Objective Internality](../../../../../section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md), [Canonical Arguments A01–A36](../../../../../section-rooms/arguments/README.md), [Conjugate Argument Field — A01′–A36′ and the A/C Root](../../../../../section-rooms/arguments/conjugate/README.md), [Canonical Concepts C01–C64](../../../../../section-rooms/arguments/concepts/CANONICAL-INDEX.md), [Episteme — S Product Field](../../../../../section-rooms/arguments/products/README.md), [Episteme](../../../README.md)
 
 **Reached from:** *unnamed* ← [Episteme Figures](../../../figures/README.md)
 

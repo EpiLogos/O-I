@@ -1,0 +1,3955 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-apollo-dionysus-daphne",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+  "revision": 1,
+  "title": "Apollo, Dionysus and Daphne",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view",
+    "revision": 1,
+    "title": "A world becomes a view",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence",
+    "revision": 1,
+    "title": "The view grows confident of its own completeness",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus",
+    "revision": 1,
+    "title": "Dionysus opens the enclosure and returns through form",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne",
+    "revision": 1,
+    "title": "Daphne requires someone to remain other",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity",
+    "revision": 1,
+    "title": "The view becomes transparent to its context",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return",
+    "revision": 1,
+    "title": "Form returns with its source still able to answer",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145",
+     "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122",
+    "revision": 1,
+    "title": "the world — before the view",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.8905,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123",
+    "revision": 1,
+    "title": "Apollo's boundary — the communicable image",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.686,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124",
+    "revision": 1,
+    "title": "what stands out",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2125,
+      "automation": null
+     },
+     "share": {
+      "value": 1.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125",
+    "revision": 1,
+    "title": "the enclosure — now claiming completeness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.7985,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126",
+    "revision": 1,
+    "title": "the absent Father — surrogate authority, self-exemption",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.08,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.116,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127",
+    "revision": 1,
+    "title": "what escapes the measure — now read as deficiency",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.12,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128",
+    "revision": 1,
+    "title": "the invested viewer — body, history, language, concern",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129",
+    "revision": 1,
+    "title": "the enclosure opened",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130",
+    "revision": 1,
+    "title": "Dionysus — dismemberment and death/rebirth of bounded identity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131",
+    "revision": 1,
+    "title": "Nietzsche §21 — each power expressive through the other",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.66,
+      "automation": null
+     },
+     "y": {
+      "value": -0.44,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132",
+    "revision": 1,
+    "title": "life returning through reconstitution",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.106,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133",
+    "revision": 1,
+    "title": "Daphne — the centre that exceeds what either power makes of her",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134",
+    "revision": 1,
+    "title": "the transformed tree's recoil — preserved with the seeming assent",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.52,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5215,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135",
+    "revision": 1,
+    "title": "Apollo — articulation without final possession",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.116,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136",
+    "revision": 1,
+    "title": "Dionysus — openness without dissolving the responder",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.64,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137",
+    "revision": 1,
+    "title": "the perspectival triangle — 180°",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.37,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.491,
+      "automation": null
+     },
+     "share": {
+      "value": 1.2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138",
+    "revision": 1,
+    "title": "opened into the contextual field — 360°",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.23,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.83,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139",
+    "revision": 1,
+    "title": "the viewer within the field — fourth-person",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.12,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140",
+    "revision": 1,
+    "title": "Gebser's aperspectivity — no amalgamation of structures",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141",
+    "revision": 1,
+    "title": "care and telos — being with text and subtext",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142",
+    "revision": 1,
+    "title": "the finite act of seeing — renewed",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6755,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143",
+    "revision": 1,
+    "title": "the other's answer — remaining their own",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.52,
+      "automation": null
+     },
+     "y": {
+      "value": -0.36,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144",
+    "revision": 1,
+    "title": "A20 — the source's continuing capacity to revise the image",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1145,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145",
+    "revision": 1,
+    "title": "A21 — individuation retains the mediating relation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.44,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146",
+    "revision": 1,
+    "title": "Draft 3 — recognition recurrent, never completed possession",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Apollo, Dionysus and Daphne</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne\" data-expression-revision=\"1\"><h1>Apollo, Dionysus and Daphne</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view\" aria-label=\"A world becomes a view\"><h2>A world becomes a view</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.67rem;opacity:1.00\" title=\"the world — before the view\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:2.06rem;opacity:1.00\" title=\"Apollo&#39;s boundary — the communicable image\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:48.00%;top:50.00%;font-size:0.64rem;opacity:1.00\" title=\"what stands out\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence\" aria-label=\"The view grows confident of its own completeness\"><h2>The view grows confident of its own completeness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:2.40rem;opacity:1.00\" title=\"the enclosure — now claiming completeness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.60rem;opacity:1.00\" title=\"the absent Father — surrogate authority, self-exemption\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.00%;font-size:0.60rem;opacity:1.00\" title=\"what escapes the measure — now read as deficiency\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.80%;font-size:0.60rem;opacity:1.00\" title=\"the invested viewer — body, history, language, concern\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus\" aria-label=\"Dionysus opens the enclosure and returns through form\"><h2>Dionysus opens the enclosure and returns through form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:1.06rem;opacity:1.00\" title=\"the enclosure opened\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.20%;top:45.00%;font-size:0.96rem;opacity:1.00\" title=\"Dionysus — dismemberment and death/rebirth of bounded identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.40%;top:54.40%;font-size:0.66rem;opacity:1.00\" title=\"Nietzsche §21 — each power expressive through the other\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:51.80%;font-size:0.60rem;opacity:1.00\" title=\"life returning through reconstitution\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne\" aria-label=\"Daphne requires someone to remain other\"><h2>Daphne requires someone to remain other</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:1.11rem;opacity:1.00\" title=\"Daphne — the centre that exceeds what either power makes of her\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:47.00%;top:55.20%;font-size:1.56rem;opacity:1.00\" title=\"the transformed tree&#39;s recoil — preserved with the seeming assent\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"Apollo — articulation without final possession\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.40%;top:54.60%;font-size:0.78rem;opacity:1.00\" title=\"Dionysus — openness without dissolving the responder\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity\" aria-label=\"The view becomes transparent to its context\"><h2>The view becomes transparent to its context</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.70%;font-size:1.47rem;opacity:1.00\" title=\"the perspectival triangle — 180°\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:52.30%;font-size:2.49rem;opacity:1.00\" title=\"opened into the contextual field — 360°\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.50%;font-size:0.60rem;opacity:1.00\" title=\"the viewer within the field — fourth-person\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:45.00%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"Gebser&#39;s aperspectivity — no amalgamation of structures\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.20%;top:55.00%;font-size:0.60rem;opacity:1.00\" title=\"care and telos — being with text and subtext\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return\" aria-label=\"Form returns with its source still able to answer\"><h2>Form returns with its source still able to answer</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.03rem;opacity:1.00\" title=\"the finite act of seeing — renewed\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:55.20%;top:53.60%;font-size:0.60rem;opacity:1.00\" title=\"the other&#39;s answer — remaining their own\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.40%;font-size:0.60rem;opacity:1.00\" title=\"A20 — the source&#39;s continuing capacity to revise the image\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.40%;font-size:0.66rem;opacity:1.00\" title=\"A21 — individuation retains the mediating relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:0.72rem;opacity:1.00\" title=\"Draft 3 — recognition recurrent, never completed possession\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-apollo-dionysus-daphne",
+  "world_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+  "revision": 1,
+  "title": "Apollo, Dionysus and Daphne",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Apollo, Dionysus and Daphne"
+      },
+      "fallback": {
+       "title": "Apollo, Dionysus and Daphne"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Apollo, Dionysus and Daphne</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne\" data-expression-revision=\"1\"><h1>Apollo, Dionysus and Daphne</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view\" aria-label=\"A world becomes a view\"><h2>A world becomes a view</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.67rem;opacity:1.00\" title=\"the world — before the view\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:2.06rem;opacity:1.00\" title=\"Apollo&#39;s boundary — the communicable image\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:48.00%;top:50.00%;font-size:0.64rem;opacity:1.00\" title=\"what stands out\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence\" aria-label=\"The view grows confident of its own completeness\"><h2>The view grows confident of its own completeness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:2.40rem;opacity:1.00\" title=\"the enclosure — now claiming completeness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.60rem;opacity:1.00\" title=\"the absent Father — surrogate authority, self-exemption\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.00%;font-size:0.60rem;opacity:1.00\" title=\"what escapes the measure — now read as deficiency\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.80%;font-size:0.60rem;opacity:1.00\" title=\"the invested viewer — body, history, language, concern\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus\" aria-label=\"Dionysus opens the enclosure and returns through form\"><h2>Dionysus opens the enclosure and returns through form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:1.06rem;opacity:1.00\" title=\"the enclosure opened\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.20%;top:45.00%;font-size:0.96rem;opacity:1.00\" title=\"Dionysus — dismemberment and death/rebirth of bounded identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.40%;top:54.40%;font-size:0.66rem;opacity:1.00\" title=\"Nietzsche §21 — each power expressive through the other\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:51.80%;font-size:0.60rem;opacity:1.00\" title=\"life returning through reconstitution\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne\" aria-label=\"Daphne requires someone to remain other\"><h2>Daphne requires someone to remain other</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:1.11rem;opacity:1.00\" title=\"Daphne — the centre that exceeds what either power makes of her\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:47.00%;top:55.20%;font-size:1.56rem;opacity:1.00\" title=\"the transformed tree&#39;s recoil — preserved with the seeming assent\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"Apollo — articulation without final possession\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.40%;top:54.60%;font-size:0.78rem;opacity:1.00\" title=\"Dionysus — openness without dissolving the responder\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity\" aria-label=\"The view becomes transparent to its context\"><h2>The view becomes transparent to its context</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.70%;font-size:1.47rem;opacity:1.00\" title=\"the perspectival triangle — 180°\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:52.30%;font-size:2.49rem;opacity:1.00\" title=\"opened into the contextual field — 360°\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.50%;font-size:0.60rem;opacity:1.00\" title=\"the viewer within the field — fourth-person\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:45.00%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"Gebser&#39;s aperspectivity — no amalgamation of structures\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.20%;top:55.00%;font-size:0.60rem;opacity:1.00\" title=\"care and telos — being with text and subtext\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return\" aria-label=\"Form returns with its source still able to answer\"><h2>Form returns with its source still able to answer</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.03rem;opacity:1.00\" title=\"the finite act of seeing — renewed\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:55.20%;top:53.60%;font-size:0.60rem;opacity:1.00\" title=\"the other&#39;s answer — remaining their own\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.40%;font-size:0.60rem;opacity:1.00\" title=\"A20 — the source&#39;s continuing capacity to revise the image\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.40%;font-size:0.66rem;opacity:1.00\" title=\"A21 — individuation retains the mediating relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:0.72rem;opacity:1.00\" title=\"Draft 3 — recognition recurrent, never completed possession\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+        "revision": 1,
+        "title": "Apollo, Dionysus and Daphne",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view",
+          "revision": 1,
+          "title": "A world becomes a view",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence",
+          "revision": 1,
+          "title": "The view grows confident of its own completeness",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus",
+          "revision": 1,
+          "title": "Dionysus opens the enclosure and returns through form",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne",
+          "revision": 1,
+          "title": "Daphne requires someone to remain other",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity",
+          "revision": 1,
+          "title": "The view becomes transparent to its context",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return",
+          "revision": 1,
+          "title": "Form returns with its source still able to answer",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145",
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122",
+          "revision": 1,
+          "title": "the world — before the view",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.8905,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123",
+          "revision": 1,
+          "title": "Apollo's boundary — the communicable image",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.686,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124",
+          "revision": 1,
+          "title": "what stands out",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2125,
+            "automation": null
+           },
+           "share": {
+            "value": 1.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125",
+          "revision": 1,
+          "title": "the enclosure — now claiming completeness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.7985,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126",
+          "revision": 1,
+          "title": "the absent Father — surrogate authority, self-exemption",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.08,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.116,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127",
+          "revision": 1,
+          "title": "what escapes the measure — now read as deficiency",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.12,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128",
+          "revision": 1,
+          "title": "the invested viewer — body, history, language, concern",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129",
+          "revision": 1,
+          "title": "the enclosure opened",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130",
+          "revision": 1,
+          "title": "Dionysus — dismemberment and death/rebirth of bounded identity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131",
+          "revision": 1,
+          "title": "Nietzsche §21 — each power expressive through the other",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.66,
+            "automation": null
+           },
+           "y": {
+            "value": -0.44,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132",
+          "revision": 1,
+          "title": "life returning through reconstitution",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.106,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133",
+          "revision": 1,
+          "title": "Daphne — the centre that exceeds what either power makes of her",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134",
+          "revision": 1,
+          "title": "the transformed tree's recoil — preserved with the seeming assent",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.52,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5215,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135",
+          "revision": 1,
+          "title": "Apollo — articulation without final possession",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.116,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136",
+          "revision": 1,
+          "title": "Dionysus — openness without dissolving the responder",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.64,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137",
+          "revision": 1,
+          "title": "the perspectival triangle — 180°",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.37,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.491,
+            "automation": null
+           },
+           "share": {
+            "value": 1.2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138",
+          "revision": 1,
+          "title": "opened into the contextual field — 360°",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.23,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.83,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139",
+          "revision": 1,
+          "title": "the viewer within the field — fourth-person",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.12,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140",
+          "revision": 1,
+          "title": "Gebser's aperspectivity — no amalgamation of structures",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141",
+          "revision": 1,
+          "title": "care and telos — being with text and subtext",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142",
+          "revision": 1,
+          "title": "the finite act of seeing — renewed",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6755,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143",
+          "revision": 1,
+          "title": "the other's answer — remaining their own",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.52,
+            "automation": null
+           },
+           "y": {
+            "value": -0.36,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144",
+          "revision": 1,
+          "title": "A20 — the source's continuing capacity to revise the image",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1145,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145",
+          "revision": 1,
+          "title": "A21 — individuation retains the mediating relation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.44,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146",
+          "revision": 1,
+          "title": "Draft 3 — recognition recurrent, never completed possession",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Apollo, Dionysus and Daphne"
+      },
+      "fallback": {
+       "title": "Apollo, Dionysus and Daphne",
+       "text": "Apollo, Dionysus and Daphne: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-apollo-dionysus-daphne",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-apollo-dionysus-daphne:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-dionysus-daphne:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-apollo-dionysus-daphne",
+    "world_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+    "revision": 1,
+    "title": "Apollo, Dionysus and Daphne",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Apollo, Dionysus and Daphne"
+        },
+        "fallback": {
+         "title": "Apollo, Dionysus and Daphne"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Apollo, Dionysus and Daphne</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne\" data-expression-revision=\"1\"><h1>Apollo, Dionysus and Daphne</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view\" aria-label=\"A world becomes a view\"><h2>A world becomes a view</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.67rem;opacity:1.00\" title=\"the world — before the view\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:2.06rem;opacity:1.00\" title=\"Apollo&#39;s boundary — the communicable image\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:48.00%;top:50.00%;font-size:0.64rem;opacity:1.00\" title=\"what stands out\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence\" aria-label=\"The view grows confident of its own completeness\"><h2>The view grows confident of its own completeness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:2.40rem;opacity:1.00\" title=\"the enclosure — now claiming completeness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.60rem;opacity:1.00\" title=\"the absent Father — surrogate authority, self-exemption\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.00%;font-size:0.60rem;opacity:1.00\" title=\"what escapes the measure — now read as deficiency\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.80%;font-size:0.60rem;opacity:1.00\" title=\"the invested viewer — body, history, language, concern\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus\" aria-label=\"Dionysus opens the enclosure and returns through form\"><h2>Dionysus opens the enclosure and returns through form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:1.06rem;opacity:1.00\" title=\"the enclosure opened\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.20%;top:45.00%;font-size:0.96rem;opacity:1.00\" title=\"Dionysus — dismemberment and death/rebirth of bounded identity\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.40%;top:54.40%;font-size:0.66rem;opacity:1.00\" title=\"Nietzsche §21 — each power expressive through the other\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:51.80%;font-size:0.60rem;opacity:1.00\" title=\"life returning through reconstitution\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne\" aria-label=\"Daphne requires someone to remain other\"><h2>Daphne requires someone to remain other</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:1.11rem;opacity:1.00\" title=\"Daphne — the centre that exceeds what either power makes of her\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:47.00%;top:55.20%;font-size:1.56rem;opacity:1.00\" title=\"the transformed tree&#39;s recoil — preserved with the seeming assent\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:43.80%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"Apollo — articulation without final possession\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.40%;top:54.60%;font-size:0.78rem;opacity:1.00\" title=\"Dionysus — openness without dissolving the responder\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity\" aria-label=\"The view becomes transparent to its context\"><h2>The view becomes transparent to its context</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.70%;font-size:1.47rem;opacity:1.00\" title=\"the perspectival triangle — 180°\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:52.30%;font-size:2.49rem;opacity:1.00\" title=\"opened into the contextual field — 360°\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.50%;font-size:0.60rem;opacity:1.00\" title=\"the viewer within the field — fourth-person\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:45.00%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"Gebser&#39;s aperspectivity — no amalgamation of structures\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.20%;top:55.00%;font-size:0.60rem;opacity:1.00\" title=\"care and telos — being with text and subtext\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return\" aria-label=\"Form returns with its source still able to answer\"><h2>Form returns with its source still able to answer</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:2.03rem;opacity:1.00\" title=\"the finite act of seeing — renewed\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:55.20%;top:53.60%;font-size:0.60rem;opacity:1.00\" title=\"the other&#39;s answer — remaining their own\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.40%;font-size:0.60rem;opacity:1.00\" title=\"A20 — the source&#39;s continuing capacity to revise the image\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.40%;font-size:0.66rem;opacity:1.00\" title=\"A21 — individuation retains the mediating relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:0.72rem;opacity:1.00\" title=\"Draft 3 — recognition recurrent, never completed possession\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+          "revision": 1,
+          "title": "Apollo, Dionysus and Daphne",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view",
+            "revision": 1,
+            "title": "A world becomes a view",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence",
+            "revision": 1,
+            "title": "The view grows confident of its own completeness",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus",
+            "revision": 1,
+            "title": "Dionysus opens the enclosure and returns through form",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne",
+            "revision": 1,
+            "title": "Daphne requires someone to remain other",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity",
+            "revision": 1,
+            "title": "The view becomes transparent to its context",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return",
+            "revision": 1,
+            "title": "Form returns with its source still able to answer",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145",
+             "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122",
+            "revision": 1,
+            "title": "the world — before the view",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.8905,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e123",
+            "revision": 1,
+            "title": "Apollo's boundary — the communicable image",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.686,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e124",
+            "revision": 1,
+            "title": "what stands out",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2125,
+              "automation": null
+             },
+             "share": {
+              "value": 1.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e125",
+            "revision": 1,
+            "title": "the enclosure — now claiming completeness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.7985,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e126",
+            "revision": 1,
+            "title": "the absent Father — surrogate authority, self-exemption",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.08,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.116,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e127",
+            "revision": 1,
+            "title": "what escapes the measure — now read as deficiency",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.12,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-1-confidence:e128",
+            "revision": 1,
+            "title": "the invested viewer — body, history, language, concern",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e129",
+            "revision": 1,
+            "title": "the enclosure opened",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e130",
+            "revision": 1,
+            "title": "Dionysus — dismemberment and death/rebirth of bounded identity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e131",
+            "revision": 1,
+            "title": "Nietzsche §21 — each power expressive through the other",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.66,
+              "automation": null
+             },
+             "y": {
+              "value": -0.44,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-2-dionysus:e132",
+            "revision": 1,
+            "title": "life returning through reconstitution",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.106,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e133",
+            "revision": 1,
+            "title": "Daphne — the centre that exceeds what either power makes of her",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e134",
+            "revision": 1,
+            "title": "the transformed tree's recoil — preserved with the seeming assent",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.52,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5215,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e135",
+            "revision": 1,
+            "title": "Apollo — articulation without final possession",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.116,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-3-daphne:e136",
+            "revision": 1,
+            "title": "Dionysus — openness without dissolving the responder",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.64,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e137",
+            "revision": 1,
+            "title": "the perspectival triangle — 180°",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.37,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.491,
+              "automation": null
+             },
+             "share": {
+              "value": 1.2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e138",
+            "revision": 1,
+            "title": "opened into the contextual field — 360°",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.23,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.83,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e139",
+            "revision": 1,
+            "title": "the viewer within the field — fourth-person",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.12,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e140",
+            "revision": 1,
+            "title": "Gebser's aperspectivity — no amalgamation of structures",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-4-diaphaneity:e141",
+            "revision": 1,
+            "title": "care and telos — being with text and subtext",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e142",
+            "revision": 1,
+            "title": "the finite act of seeing — renewed",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6755,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e143",
+            "revision": 1,
+            "title": "the other's answer — remaining their own",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.52,
+              "automation": null
+             },
+             "y": {
+              "value": -0.36,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e144",
+            "revision": 1,
+            "title": "A20 — the source's continuing capacity to revise the image",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1145,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e145",
+            "revision": 1,
+            "title": "A21 — individuation retains the mediating relation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.44,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-5-return:e146",
+            "revision": 1,
+            "title": "Draft 3 — recognition recurrent, never completed possession",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne:scene:m-apd-0-view:e122"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Apollo, Dionysus and Daphne"
+        },
+        "fallback": {
+         "title": "Apollo, Dionysus and Daphne",
+         "text": "Apollo, Dionysus and Daphne: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-apollo-dionysus-daphne",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-apollo-dionysus-daphne.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-apollo-dionysus-daphne"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-dionysus-daphne:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Apollo, Dionysus and Daphne",
+  "summary": "a living Expression · 6 scenes · 25 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-apollo-dionysus-daphne:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-apollo-dionysus-daphne"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-apollo-dionysus-daphne:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-apollo-dionysus-daphne",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-apollo-dionysus-daphne",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Apollo, Dionysus and Daphne",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-dionysus-daphne:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-apollo-dionysus-daphne:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-apollo-dionysus-daphne",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-apollo-dionysus-daphne"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

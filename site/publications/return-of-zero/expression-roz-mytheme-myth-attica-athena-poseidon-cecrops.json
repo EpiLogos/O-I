@@ -1,0 +1,3274 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "revision": 1,
+  "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest",
+    "revision": 1,
+    "title": "Claim, witness, verdict",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath",
+    "revision": 1,
+    "title": "The flood and its variant aftermaths",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary",
+    "revision": 1,
+    "title": "The sanctuary remembers both claims",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus",
+    "revision": 1,
+    "title": "The ratified reading: the well at the centre; the olive chain",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return",
+    "revision": 1,
+    "title": "The verdict returns to the place",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428",
+     "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410",
+    "revision": 1,
+    "title": "Cecrops — earth-born, man and serpent; the land already named Cecropia",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.38,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411",
+    "revision": 1,
+    "title": "Poseidon's trident — the sea called Erechtheis at the Acropolis's middle",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412",
+    "revision": 1,
+    "title": "Athena's olive — planted under witness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.4,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.248,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413",
+    "revision": 1,
+    "title": "Zeus separates; the twelve gods arbitrate; Cecrops's testimony is the stated ground",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.33,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5055,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414",
+    "revision": 1,
+    "title": "Athens — named after Athena",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415",
+    "revision": 1,
+    "title": "the flood — the Thriasian plain under the sea",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.31,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416",
+    "revision": 1,
+    "title": "Hyginus, Fab. 164 — Mercury, on Jupiter's orders, prevents the inundation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417",
+    "revision": 1,
+    "title": "Augustine, Civ. Dei 18.9 — the women outvote the men, then lose votes, maternal names, and the designation Athenian",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418",
+    "revision": 1,
+    "title": "the Parthenon west pediment — the monumental contest, 437–432 BCE",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419",
+    "revision": 1,
+    "title": "the Erechtheion — Athena east; Poseidon-Erechtheus west, lower",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6135,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420",
+    "revision": 1,
+    "title": "the sacred olive — burnt, a shoot about a cubit by the next day (Herodotus 8.55); two cubits in Pausanias",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.43,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421",
+    "revision": 1,
+    "title": "the trident mark in the bedrock; the sea-water cistern sounding in a south wind (Pausanias 1.26.5–7)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422",
+    "revision": 1,
+    "title": "the toroidal civic image — Athena's order wound around Poseidon's unfilled depth",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.6,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.666,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423",
+    "revision": 1,
+    "title": "the well/sea at the centre — archaic, mobile, retained, not abolished",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.209,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424",
+    "revision": 1,
+    "title": "the olive chain — root, tree, fruit, pressing, oil, anointing, flame/light",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.41,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425",
+    "revision": 1,
+    "title": "\"the verdict determines the city; it does not exhaust the place\"",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426",
+    "revision": 1,
+    "title": "the retained contrary — Poseidon's sign, cult and force with standing in Athena's city",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.41,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.73,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427",
+    "revision": 1,
+    "title": "the five held candidates — Cecrops as psychoid mediator; two modes of power; flood as return; two namings; complexio oppositorum (all human-amplified: no)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428",
+    "revision": 1,
+    "title": "Topos → Logos → Nomos → Natio — the operational fourfold, not an encoded etymology",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429",
+    "revision": 1,
+    "title": "the Neumann shared ground — no new parentage, no stage history",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.2,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.178,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-expression-revision=\"1\"><h1>Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest\" aria-label=\"Claim, witness, verdict\"><h2>Claim, witness, verdict</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:1.14rem;opacity:1.00\" title=\"Cecrops — earth-born, man and serpent; the land already named Cecropia\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.96rem;opacity:1.00\" title=\"Poseidon&#39;s trident — the sea called Erechtheis at the Acropolis&#39;s middle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:46.00%;top:52.10%;font-size:0.74rem;opacity:1.00\" title=\"Athena&#39;s olive — planted under witness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.30%;font-size:1.52rem;opacity:1.00\" title=\"Zeus separates; the twelve gods arbitrate; Cecrops&#39;s testimony is the stated ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.20%;font-size:0.96rem;opacity:1.00\" title=\"Athens — named after Athena\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath\" aria-label=\"The flood and its variant aftermaths\"><h2>The flood and its variant aftermaths</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.10%;font-size:1.80rem;opacity:1.00\" title=\"the flood — the Thriasian plain under the sea\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"Hyginus, Fab. 164 — Mercury, on Jupiter&#39;s orders, prevents the inundation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.90rem;opacity:1.00\" title=\"Augustine, Civ. Dei 18.9 — the women outvote the men, then lose votes, maternal names, and the designation Athenian\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:1.11rem;opacity:1.00\" title=\"the Parthenon west pediment — the monumental contest, 437–432 BCE\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary\" aria-label=\"The sanctuary remembers both claims\"><h2>The sanctuary remembers both claims</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:1.84rem;opacity:1.00\" title=\"the Erechtheion — Athena east; Poseidon-Erechtheus west, lower\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.00%;font-size:1.29rem;opacity:1.00\" title=\"the sacred olive — burnt, a shoot about a cubit by the next day (Herodotus 8.55); two cubits in Pausanias\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:0.90rem;opacity:1.00\" title=\"the trident mark in the bedrock; the sea-water cistern sounding in a south wind (Pausanias 1.26.5–7)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus\" aria-label=\"The ratified reading: the well at the centre; the olive chain\"><h2>The ratified reading: the well at the centre; the olive chain</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.00%;font-size:2.00rem;opacity:1.00\" title=\"the toroidal civic image — Athena&#39;s order wound around Poseidon&#39;s unfilled depth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:0.63rem;opacity:1.00\" title=\"the well/sea at the centre — archaic, mobile, retained, not abolished\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:55.00%;font-size:1.23rem;opacity:1.00\" title=\"the olive chain — root, tree, fruit, pressing, oil, anointing, flame/light\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:55.00%;font-size:0.78rem;opacity:1.00\" title=\"&quot;the verdict determines the city; it does not exhaust the place&quot;\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return\" aria-label=\"The verdict returns to the place\"><h2>The verdict returns to the place</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:2.19rem;opacity:1.00\" title=\"the retained contrary — Poseidon&#39;s sign, cult and force with standing in Athena&#39;s city\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.84rem;opacity:1.00\" title=\"the five held candidates — Cecrops as psychoid mediator; two modes of power; flood as return; two namings; complexio oppositorum (all human-amplified: no)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"Topos → Logos → Nomos → Natio — the operational fourfold, not an encoded etymology\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:52.00%;font-size:0.60rem;opacity:1.00\" title=\"the Neumann shared ground — no new parentage, no stage history\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "world_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "revision": 1,
+  "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim"
+      },
+      "fallback": {
+       "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-expression-revision=\"1\"><h1>Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest\" aria-label=\"Claim, witness, verdict\"><h2>Claim, witness, verdict</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:1.14rem;opacity:1.00\" title=\"Cecrops — earth-born, man and serpent; the land already named Cecropia\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.96rem;opacity:1.00\" title=\"Poseidon&#39;s trident — the sea called Erechtheis at the Acropolis&#39;s middle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:46.00%;top:52.10%;font-size:0.74rem;opacity:1.00\" title=\"Athena&#39;s olive — planted under witness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.30%;font-size:1.52rem;opacity:1.00\" title=\"Zeus separates; the twelve gods arbitrate; Cecrops&#39;s testimony is the stated ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.20%;font-size:0.96rem;opacity:1.00\" title=\"Athens — named after Athena\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath\" aria-label=\"The flood and its variant aftermaths\"><h2>The flood and its variant aftermaths</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.10%;font-size:1.80rem;opacity:1.00\" title=\"the flood — the Thriasian plain under the sea\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"Hyginus, Fab. 164 — Mercury, on Jupiter&#39;s orders, prevents the inundation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.90rem;opacity:1.00\" title=\"Augustine, Civ. Dei 18.9 — the women outvote the men, then lose votes, maternal names, and the designation Athenian\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:1.11rem;opacity:1.00\" title=\"the Parthenon west pediment — the monumental contest, 437–432 BCE\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary\" aria-label=\"The sanctuary remembers both claims\"><h2>The sanctuary remembers both claims</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:1.84rem;opacity:1.00\" title=\"the Erechtheion — Athena east; Poseidon-Erechtheus west, lower\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.00%;font-size:1.29rem;opacity:1.00\" title=\"the sacred olive — burnt, a shoot about a cubit by the next day (Herodotus 8.55); two cubits in Pausanias\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:0.90rem;opacity:1.00\" title=\"the trident mark in the bedrock; the sea-water cistern sounding in a south wind (Pausanias 1.26.5–7)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus\" aria-label=\"The ratified reading: the well at the centre; the olive chain\"><h2>The ratified reading: the well at the centre; the olive chain</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.00%;font-size:2.00rem;opacity:1.00\" title=\"the toroidal civic image — Athena&#39;s order wound around Poseidon&#39;s unfilled depth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:0.63rem;opacity:1.00\" title=\"the well/sea at the centre — archaic, mobile, retained, not abolished\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:55.00%;font-size:1.23rem;opacity:1.00\" title=\"the olive chain — root, tree, fruit, pressing, oil, anointing, flame/light\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:55.00%;font-size:0.78rem;opacity:1.00\" title=\"&quot;the verdict determines the city; it does not exhaust the place&quot;\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return\" aria-label=\"The verdict returns to the place\"><h2>The verdict returns to the place</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:2.19rem;opacity:1.00\" title=\"the retained contrary — Poseidon&#39;s sign, cult and force with standing in Athena&#39;s city\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.84rem;opacity:1.00\" title=\"the five held candidates — Cecrops as psychoid mediator; two modes of power; flood as return; two namings; complexio oppositorum (all human-amplified: no)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"Topos → Logos → Nomos → Natio — the operational fourfold, not an encoded etymology\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:52.00%;font-size:0.60rem;opacity:1.00\" title=\"the Neumann shared ground — no new parentage, no stage history\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "revision": 1,
+        "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest",
+          "revision": 1,
+          "title": "Claim, witness, verdict",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath",
+          "revision": 1,
+          "title": "The flood and its variant aftermaths",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary",
+          "revision": 1,
+          "title": "The sanctuary remembers both claims",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus",
+          "revision": 1,
+          "title": "The ratified reading: the well at the centre; the olive chain",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return",
+          "revision": 1,
+          "title": "The verdict returns to the place",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428",
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410",
+          "revision": 1,
+          "title": "Cecrops — earth-born, man and serpent; the land already named Cecropia",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.38,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411",
+          "revision": 1,
+          "title": "Poseidon's trident — the sea called Erechtheis at the Acropolis's middle",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412",
+          "revision": 1,
+          "title": "Athena's olive — planted under witness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.4,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.248,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413",
+          "revision": 1,
+          "title": "Zeus separates; the twelve gods arbitrate; Cecrops's testimony is the stated ground",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.33,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5055,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414",
+          "revision": 1,
+          "title": "Athens — named after Athena",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415",
+          "revision": 1,
+          "title": "the flood — the Thriasian plain under the sea",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.31,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416",
+          "revision": 1,
+          "title": "Hyginus, Fab. 164 — Mercury, on Jupiter's orders, prevents the inundation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417",
+          "revision": 1,
+          "title": "Augustine, Civ. Dei 18.9 — the women outvote the men, then lose votes, maternal names, and the designation Athenian",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418",
+          "revision": 1,
+          "title": "the Parthenon west pediment — the monumental contest, 437–432 BCE",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419",
+          "revision": 1,
+          "title": "the Erechtheion — Athena east; Poseidon-Erechtheus west, lower",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6135,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420",
+          "revision": 1,
+          "title": "the sacred olive — burnt, a shoot about a cubit by the next day (Herodotus 8.55); two cubits in Pausanias",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.43,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421",
+          "revision": 1,
+          "title": "the trident mark in the bedrock; the sea-water cistern sounding in a south wind (Pausanias 1.26.5–7)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422",
+          "revision": 1,
+          "title": "the toroidal civic image — Athena's order wound around Poseidon's unfilled depth",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.6,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.666,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423",
+          "revision": 1,
+          "title": "the well/sea at the centre — archaic, mobile, retained, not abolished",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.209,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424",
+          "revision": 1,
+          "title": "the olive chain — root, tree, fruit, pressing, oil, anointing, flame/light",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.41,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425",
+          "revision": 1,
+          "title": "\"the verdict determines the city; it does not exhaust the place\"",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426",
+          "revision": 1,
+          "title": "the retained contrary — Poseidon's sign, cult and force with standing in Athena's city",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.41,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.73,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427",
+          "revision": 1,
+          "title": "the five held candidates — Cecrops as psychoid mediator; two modes of power; flood as return; two namings; complexio oppositorum (all human-amplified: no)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428",
+          "revision": 1,
+          "title": "Topos → Logos → Nomos → Natio — the operational fourfold, not an encoded etymology",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429",
+          "revision": 1,
+          "title": "the Neumann shared ground — no new parentage, no stage history",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.2,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.178,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim"
+      },
+      "fallback": {
+       "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+       "text": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-attica-athena-poseidon-cecrops:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "world_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "revision": 1,
+    "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim"
+        },
+        "fallback": {
+         "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-expression-revision=\"1\"><h1>Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest\" aria-label=\"Claim, witness, verdict\"><h2>Claim, witness, verdict</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:1.14rem;opacity:1.00\" title=\"Cecrops — earth-born, man and serpent; the land already named Cecropia\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.96rem;opacity:1.00\" title=\"Poseidon&#39;s trident — the sea called Erechtheis at the Acropolis&#39;s middle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:46.00%;top:52.10%;font-size:0.74rem;opacity:1.00\" title=\"Athena&#39;s olive — planted under witness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.30%;font-size:1.52rem;opacity:1.00\" title=\"Zeus separates; the twelve gods arbitrate; Cecrops&#39;s testimony is the stated ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.20%;font-size:0.96rem;opacity:1.00\" title=\"Athens — named after Athena\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath\" aria-label=\"The flood and its variant aftermaths\"><h2>The flood and its variant aftermaths</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.10%;font-size:1.80rem;opacity:1.00\" title=\"the flood — the Thriasian plain under the sea\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"Hyginus, Fab. 164 — Mercury, on Jupiter&#39;s orders, prevents the inundation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.90rem;opacity:1.00\" title=\"Augustine, Civ. Dei 18.9 — the women outvote the men, then lose votes, maternal names, and the designation Athenian\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:1.11rem;opacity:1.00\" title=\"the Parthenon west pediment — the monumental contest, 437–432 BCE\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary\" aria-label=\"The sanctuary remembers both claims\"><h2>The sanctuary remembers both claims</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:1.84rem;opacity:1.00\" title=\"the Erechtheion — Athena east; Poseidon-Erechtheus west, lower\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.00%;font-size:1.29rem;opacity:1.00\" title=\"the sacred olive — burnt, a shoot about a cubit by the next day (Herodotus 8.55); two cubits in Pausanias\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.00%;font-size:0.90rem;opacity:1.00\" title=\"the trident mark in the bedrock; the sea-water cistern sounding in a south wind (Pausanias 1.26.5–7)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus\" aria-label=\"The ratified reading: the well at the centre; the olive chain\"><h2>The ratified reading: the well at the centre; the olive chain</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.00%;font-size:2.00rem;opacity:1.00\" title=\"the toroidal civic image — Athena&#39;s order wound around Poseidon&#39;s unfilled depth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:0.63rem;opacity:1.00\" title=\"the well/sea at the centre — archaic, mobile, retained, not abolished\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:55.00%;font-size:1.23rem;opacity:1.00\" title=\"the olive chain — root, tree, fruit, pressing, oil, anointing, flame/light\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:55.00%;font-size:0.78rem;opacity:1.00\" title=\"&quot;the verdict determines the city; it does not exhaust the place&quot;\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return\" aria-label=\"The verdict returns to the place\"><h2>The verdict returns to the place</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:2.19rem;opacity:1.00\" title=\"the retained contrary — Poseidon&#39;s sign, cult and force with standing in Athena&#39;s city\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.84rem;opacity:1.00\" title=\"the five held candidates — Cecrops as psychoid mediator; two modes of power; flood as return; two namings; complexio oppositorum (all human-amplified: no)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"Topos → Logos → Nomos → Natio — the operational fourfold, not an encoded etymology\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops\" data-presentation-role=\"thing\" style=\"left:44.00%;top:52.00%;font-size:0.60rem;opacity:1.00\" title=\"the Neumann shared ground — no new parentage, no stage history\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+          "revision": 1,
+          "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest",
+            "revision": 1,
+            "title": "Claim, witness, verdict",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath",
+            "revision": 1,
+            "title": "The flood and its variant aftermaths",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary",
+            "revision": 1,
+            "title": "The sanctuary remembers both claims",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus",
+            "revision": 1,
+            "title": "The ratified reading: the well at the centre; the olive chain",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return",
+            "revision": 1,
+            "title": "The verdict returns to the place",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428",
+             "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410",
+            "revision": 1,
+            "title": "Cecrops — earth-born, man and serpent; the land already named Cecropia",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.38,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e411",
+            "revision": 1,
+            "title": "Poseidon's trident — the sea called Erechtheis at the Acropolis's middle",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e412",
+            "revision": 1,
+            "title": "Athena's olive — planted under witness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.4,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.248,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e413",
+            "revision": 1,
+            "title": "Zeus separates; the twelve gods arbitrate; Cecrops's testimony is the stated ground",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.33,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5055,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e414",
+            "revision": 1,
+            "title": "Athens — named after Athena",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e415",
+            "revision": 1,
+            "title": "the flood — the Thriasian plain under the sea",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.31,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e416",
+            "revision": 1,
+            "title": "Hyginus, Fab. 164 — Mercury, on Jupiter's orders, prevents the inundation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e417",
+            "revision": 1,
+            "title": "Augustine, Civ. Dei 18.9 — the women outvote the men, then lose votes, maternal names, and the designation Athenian",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-1-aftermath:e418",
+            "revision": 1,
+            "title": "the Parthenon west pediment — the monumental contest, 437–432 BCE",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e419",
+            "revision": 1,
+            "title": "the Erechtheion — Athena east; Poseidon-Erechtheus west, lower",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6135,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e420",
+            "revision": 1,
+            "title": "the sacred olive — burnt, a shoot about a cubit by the next day (Herodotus 8.55); two cubits in Pausanias",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.43,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-2-sanctuary:e421",
+            "revision": 1,
+            "title": "the trident mark in the bedrock; the sea-water cistern sounding in a south wind (Pausanias 1.26.5–7)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e422",
+            "revision": 1,
+            "title": "the toroidal civic image — Athena's order wound around Poseidon's unfilled depth",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.6,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.666,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e423",
+            "revision": 1,
+            "title": "the well/sea at the centre — archaic, mobile, retained, not abolished",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.209,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e424",
+            "revision": 1,
+            "title": "the olive chain — root, tree, fruit, pressing, oil, anointing, flame/light",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.41,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-3-torus:e425",
+            "revision": 1,
+            "title": "\"the verdict determines the city; it does not exhaust the place\"",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e426",
+            "revision": 1,
+            "title": "the retained contrary — Poseidon's sign, cult and force with standing in Athena's city",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.41,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.73,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e427",
+            "revision": 1,
+            "title": "the five held candidates — Cecrops as psychoid mediator; two modes of power; flood as return; two namings; complexio oppositorum (all human-amplified: no)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e428",
+            "revision": 1,
+            "title": "Topos → Logos → Nomos → Natio — the operational fourfold, not an encoded etymology",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-5-return:e429",
+            "revision": 1,
+            "title": "the Neumann shared ground — no new parentage, no stage history",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.2,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.178,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:scene:m-att-0-contest:e410"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim"
+        },
+        "fallback": {
+         "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+         "text": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-myth-attica-athena-poseidon-cecrops.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-myth-attica-athena-poseidon-cecrops"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-attica-athena-poseidon-cecrops:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+  "summary": "a living Expression · 5 scenes · 20 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-myth-attica-athena-poseidon-cecrops"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-myth-attica-athena-poseidon-cecrops",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-attica-athena-poseidon-cecrops:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-attica-athena-poseidon-cecrops:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-myth-attica-athena-poseidon-cecrops",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-myth-attica-athena-poseidon-cecrops"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

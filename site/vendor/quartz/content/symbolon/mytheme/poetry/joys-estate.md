@@ -10,11 +10,11 @@ type: _md_
 title: "Joy’s Estate"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c8041ae32f0a9a3a74c13
-source_id: 18fa4797-123c-8041-ae32-f0a9a3a74c13
 notion_created: 2025-02-03T12:46:22Z
 notion_edited: 2025-06-12T08:56:23.414Z
 status: sorted
 kind: poem
+source_id: joys-estate
 ---
 Joy is no emotion or state,
 but the sonorous motion of essence, and its boundless estate.

@@ -1,67 +1,90 @@
 ---
+title: C47 — Deferential Intelligence
 record_id: C47
+record_type: concept
 register: "episteme"
 claim_status: "Argued"
-source_relation: "Argued from the mature Deferential Intelligence carrier; Offered formal designs do not certify implementation"
+source_relation: "Argued from the Definition of God Epi-Logos unit and model-revising encounter; technical tests separately evidenced"
+source_ids:
+  - taylor-2026-definition-god-draft3
+  - taylor-2026-core-theorems-pithy
+generating_material:
+  - submission-package/essay/quilt/27-07-26-QUILTING-FOR-FULL-ARGUMENT.md
 ---
 # C47 — Deferential Intelligence
 
-## #0
+## #0 — Model-revising encounter
 
-Deferential Intelligence is model-revising encounter: an Other, source or world can change the model under which it is encountered. The account must be strong enough to act and permeable enough to be corrected by what it does not already contain.
+Deferential Intelligence is the capacity for an Other, source or world to change the model under which it is encountered.
 
-Within the restored paradigm language, this can reach deeper than a local model update. [C41 — Objective Internality](C41-Objective-Internality.md) names the enacted pattern through which a Life and World become mutually discloseable. Deferential Intelligence becomes **paradigm-revising encounter** when what returns changes one of those mediating conditions—source authority, salience, permission, evaluator, available capacity, material expectation or relation—rather than merely replacing a conclusion inside an otherwise untouched pattern.
+The account remains strong enough to act and permeable enough to be corrected by what it does not already contain. [The architectural limit](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-definition-god-draft3/taylor-2026-definition-god-draft3.md#taylor-2026-definition-god-draft3-q026) is the opening through which the encountered source can exceed the frame: precision is maintained while the claim to completion is relinquished.
 
-## #1
+At paradigm scale, the change can reach the mediating conditions through which a Life and World become mutually discloseable: source authority, salience, permission, evaluator, available capacity, material expectation or relation. Deference is deepest where returned difference reaches the condition actually producing the next judgment.
 
-The mature carrier specifies disclosure of origin, aperture, exclusions, confidence, counterclaim and undecidable remainder before consequential action. Each has an operative use: another participant can locate disagreement, assess a delegation, supply missing evidence or change the authorised route. A manner of modesty with no such possibility leaves the model untouched.
+## #1 — Disclosure gives return somewhere to land
 
-Disclosure is therefore not the virtue by itself. A paradigm can become extremely articulate about its own conditions while protecting every consequential condition from revision. The test begins where the disclosed difference has an address: which part of the enacted pattern can this source, refusal, counterexample or consequence actually change?
+Origin, aperture, exclusions, confidence, counterclaim and undecidable remainder matter only where they give another difference an address.
 
-## #2
+Disclosure is not itself deference. A system can describe its conditions beautifully while protecting all consequential conditions from revision.
 
-The Other can be within Mono without being within my model. Q27's Watson–Gans–Levinas development makes address a change in the conditions of knowing, not merely another datum to classify. Sycophancy removes the difference through which correction becomes possible. Deference can therefore require disagreement rather than obedience.
+The test is operational:
 
-[C42 — Objective Co-Internality](C42-Objective-Co-Internality.md) makes the paradigmatic scale explicit. Distinct operative interiors can alter one another's future conditions without merging their grounds. An encounter is deepest not when one paradigm wins possession of the other, but when each can preserve the other's source and difference while allowing the relation to modify what later appears possible, credible or actionable.
+**Which part of the enacted pattern can this source, refusal, counterexample or consequence now change?**
 
-## #3
+A strong bounded judgment can therefore be more deferential than a weakly hedged one. Exactness and permeability are not opposites.
 
-The offered formal contrast is between minimising a fixed `Eθ(m,y)` over outputs and allowing encounter to change `(m, θ, Eθ)` itself. Representation, parameters, evaluator or the commission can be revised. This is a design inscription of the ethical operation, not a LeCun theorem or a completed training experiment. The revision must be earned by discriminating evaluation, rather than granted to every assertion equally.
+## #2 — Deference preserves the Other's power to differ
 
-The five revision depths in A31 now form an explicit ladder of paradigmatic consequence: **answer → task interpretation → world-model → evaluator/gauge → terms of commission**. A changed answer may leave the paradigm intact. A changed commission can reorganise the field in which future answers are even sought. Neither depth is inherently superior; the warranted depth is the one the encounter actually reaches.
+The Other can be within Mono without being within my model.
 
-The six product offices give those depths places to land. [Central](../products/S0-Central.md) can receive changed source/commission; [Actuation](../products/S1-Actuation.md), changed judgment/evaluator relation; [AIKit](../products/S2-AIKit.md), changed availability or permission; [Factory](../products/S3-Software-Factory.md), changed developmental form; [Workcell](../products/S4-Workcell.md), changed material condition; [QL](../products/S5-Quaternal-Logic.md), changed relation among frames or containing wholes. The mapping is functional rather than compulsory: a particular encounter need not revise all six.
+Sycophancy removes the difference through which correction becomes possible. Deference can therefore require disagreement rather than obedience.
 
-## #4
+[Objective Co-Internality](C42-Objective-Co-Internality.md) gives the paradigmatic scale: distinct interiors can alter one another's future conditions without merging their grounds.
 
-Draft3 gives double devotion: the exceeding whole and the specific aperture now disclosing it. General humility cannot erase the second obligation. A system may make a decisive, bounded judgment while exposing where its warrant ends. Owning the limit increases exactness by preventing the present account from posing as a view from nowhere.
+Encounter succeeds when another's difference can remain attributable, resist my inherited categories, and still become consequential in what I next do.
 
-This is also the link to [C51 — Epi-Logos](C51-Logos-Epi-Logos.md). Deference supplies the **encounter pressure** by which an articulated paradigm can fail its own enactment and be called to revision. Epi-Logos supplies the wider reflexive office through which that returned difference can become part of the paradigm's explicit self-articulation. A paradigm that can redescribe every challenge without allowing the challenge to alter its structure is reflexive in appearance and non-deferential in operation.
+## #3 — Five sites of revision
 
-## #5→0
+Returned difference can reach:
 
-Deferential Intelligence **returns-to** [Count-through-Countenance](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md#count-through-countenance) when the other’s address can challenge the attribution through which it was first received. The response reaches a source, representation, evaluator or commission according to what the encounter warrants. A justified rejection remains possible; fidelity requires the account to answer for that judgment rather than remove the difference which occasioned it.
+**answer → task interpretation → world-model → evaluator/gauge → terms of commission.**
 
-[E2’s con text through diaphaneity](../../../symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md#con-text-through-diaphaneity) supplies Deferential Intelligence with the passage from making conditions visible to allowing them to change. Disclosure alone can leave the deciding office intact. Regard carries the encountered consequence through the five levels of correction until criterion and commission, as well as an answer, can be revised; Resolution tests whether that return has actually altered the next encounter.
+A changed answer may leave the paradigm intact. A changed evaluator reaches what counts as success. A changed commission can reorganise why the activity is occurring at all.
 
-The practical test compares what disclosure and revisability change in delegation, correction and answerability. C45 governs operational parity and C46 repeated cultivation. A32 adds the mirror's initiative: the reflection can turn toward its own source before requiring the other participant to conform. Deference becomes a changed next act, with the achieved claim and its history still attributable.
+No depth is intrinsically better. The warranted depth is the one the encounter actually exposes.
 
-At paradigm scale, the most compact acceptance test is: **after the encounter, what will this Life or system be able to notice, believe, permit, ask, refuse or do differently because the returned difference reached its means of world-disclosure?** A changed sentence is evidence only if it participates in such a changed future. The question remains applicable to human, institutional and artificial interiors without equating their phenomenal status.
+The model-revising encounter proposal writes fixed-evaluator search as
 
-### Declared field
+$$
+y^*=\operatorname*{argmin}_y E_\theta(m,y).
+$$
 
-**Argument consumers:** A27, A31–A33, A35. **Product consumers:** S0–S5 according to the warranted revision depth. **Movement consumers:** mature Deferential Intelligence carrier and final Agentworld/idealism/product returns.
+The representation `m` makes candidates `y` available; the evaluator `E_θ`, with parameters `θ`, scores them; the operation selects a minimum. A new candidate can change the answer while leaving the representation and criterion intact. The second operation makes `(m, θ, E_θ)` itself available to revision through the encounter. Changing what counts as a candidate or a fitting result differs from finding another candidate under the same conditions.
 
-**Etymology relation:** *Encounter / Region / Name / Count / Countenance / Account* plus *Arbitration / Hybris / Regard / Anamnesis*. Exact operations: **Countenance** as irreducible address; **Con-text-through-Diaphaneity → Regard**; **Resolution-in-Reconciliation → Return**. Register **3**. Return C47 → A31 → C45/A33 → C41/C51 → C47.
+This is a proposed design distinction. It supplies no automatic update rule and reports no completed experiment. [The judgment field](C40-Model-Internality-Judgment-Field.md) makes the test exact: identify the condition changed, the means of changing it and the later act which inherited the change. The scope of revision is warranted by the particular encounter.
 
-**Source/tradition standing:** current `08-deferential-intelligence.md` is direct mature authorial provenance. Other epistemic humility/testimony traditions are neighbours.
+The six product offices give such changes practical homes: Central for sources and commitments; Actuation for judgment and evaluator relation; AIKit for capability and permission; Factory for developmental form; Workcell for material condition; QL for relations among frames and wholes.
 
-### Provenance
+## #4 — Regard turns transparency into consequence
 
-Direct carriers: [Deferential Intelligence](../A31-Deferential-Intelligence.md), [Trust and formal limit](../A23-Trust-Faith-and-the-Formal-Limit.md), [trust revision](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md), [Draft3](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-definition-god-draft3/taylor-2026-definition-god-draft3.md), `compassion's authorial formulation`, and [Q27's root-trust and encounter corrections](../../../quilt/27-07-26-QUILTING-FOR-FULL-ARGUMENT.md). [Watson SOURCE](../../../symbolon/episteme/sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md) and protected notes preserve the authorial encounter; its Gans/Levinas quotations retain nested-source and selected-edition debts. The September 15 [paradigm / Epi-Logos minute] supplies the later paradigm-level articulation. Proposed comparisons are not reported as executed experiments. Particular philosophical, theological and institutional histories retain their own source tasks.
+Diaphaneity makes conditions visible. Regard lets what is disclosed change the relation. Return carries that changed relation into another act.
 
-### Remaining depth
+This is the link to Epi-Logos. A paradigm can articulate itself and remain sealed. Encounter reveals the difference between self-description and enactment; deference lets that difference change the paradigm.
 
-Restore all mature technical examples and acceptance criteria; keep deference distinct from compliance, indecision and generic uncertainty. Evaluate actual cases where encounter changes a paradigmatic condition rather than only a local answer.
+Operational parity therefore asks what changed in delegation, correction and answerability. A longer explanation does not count by itself. The relevant evidence is a changed source, task, model, evaluator, commission, permission or action.
 
-**Depth Restoration: enriched; paradigm-revision office restored; experimental/historical debts retained.**
+## #5→0 — Deference is visible in the next act
+
+Deferential Intelligence returns through Countenance when another's address can challenge the attribution under which they were first received.
+
+A justified rejection remains possible. Fidelity requires the rejecting account to answer for the encounter rather than erase the difference which occasioned it.
+
+The compact test is:
+
+**After the encounter, what can this Life or system notice, believe, permit, ask, refuse or do differently because the returned difference reached its means of world-disclosure?**
+
+A changed sentence matters only if it participates in a changed future.
+
+The [Mirror That Moves First](../../../symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md#mirror-initiated-return) gives the image: the reflective instrument turns first toward its source so that resistance can reach premise, evaluator, task or commission.
+
+Deference is therefore neither compliance nor uncertainty. It is intelligence whose next determination can bear the difference it has encountered.

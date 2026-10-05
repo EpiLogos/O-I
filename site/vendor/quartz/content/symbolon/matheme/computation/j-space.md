@@ -11,7 +11,7 @@ source_relation: "Exact technical construction; argued native relation and offer
 
 ## #0 — Specify what the map represents
 
-[J-Space's movement](../../../section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md) proposes a bounded relational field of active judgements, affordances, uncertainties, values, tools, memories and interlocutors. It sits within Model Internality and represents world-for-agency; it does not claim to contain the agent's entire world. The [core spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) supplies the context/return operation beneath that proposal.
+[A bounded judgment field](../../../section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md) holds active judgements, affordances, uncertainties, values, tools, memories and interlocutors in specified relations. It sits within Model Internality and represents world-for-agency; it does not claim to contain the agent's entire world. The [native context and return](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) keep the selected field answerable to the horizon and operations through which it becomes available.
 
 The input is a declared reference field `B`, a lens `ℓ`, a representation `φ`, and a situated state `s`. A present formal specification is `J=J(B,ℓ,φ,s)`: it makes the dependencies explicit without claiming one canonical metric already exists.
 
@@ -37,10 +37,12 @@ The Bimba reference is itself provisional and revisable. A situated Pratibimba i
 
 Hold a task and relevant sources fixed, perturb one declared condition, and compare both reachable actions and the resulting behaviour. A richer log alone is not success. Relevant measurements include correction of unsupported claims, prevention of unauthorised transitions, recovery of excluded alternatives and the preservation of source scope across context changes.
 
-[Energy-based inference](ebm-resonance.md) is one possible mechanism within this field. Its scalar energy requires declared variables and objectives; the [LeCun house](../../episteme/sources/computer-science-ml/lecun/lecun-et-al-2006-energy-based-learning/lecun-et-al-2006-energy-based-learning.md) does not supply an entire world or an intrinsic semantic metric.
+[Energy-based inference](ebm-resonance.md) is one possible mechanism within this field. Its scalar energy requires declared variables and objectives; [LeCun’s conditional energy](../../episteme/sources/computer-science-ml/lecun/lecun-et-al-2006-energy-based-learning/lecun-et-al-2006-energy-based-learning.md) ranks compatible candidates under those declared conditions, rather than measuring an entire world by an intrinsic semantic metric.
 
 ## #5→0 — Return the map-making conditions
 
 The result is an inspectable bounded field whose changes can be related to changes in conduct. “Circumscription without circumstance” is its precise failure: a clear boundary hides the horizon that produced it. Returning the metric, lens, permission and source conditions keeps the circumscription answerable to that horizon.
 
-This record returns-to [Movement39](../../../section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md) and the [six research vectors](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md). [Operational parity](operational-parity.md) governs promotion of this Offered representation. No actual deployed J-space or machine subject is established by the specification alone.
+A returned discrepancy can correct the addressed claim under fitting conditions, revise the map, lens, permission or source whose failure it exposes, or retain a fitting condition with reasons. [The bounded judgment field](../../../section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md) carries that result into its next act; the [six research vectors](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md) discriminate which condition made the practical difference. [Operational parity](operational-parity.md) ties a deployment claim to the implementation and actual inherited behaviour.
+
+The local judging agent functions as knower, its map, sources and tools as means, and the addressed situation as known. The containing person can inspect that centre within a further inquiry, where the apparatus serves as means and its local judgment becomes known. These relative offices remain within Life/Mind; the first-person condition through which their activity appears does not become another item in the represented field.

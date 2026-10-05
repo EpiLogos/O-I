@@ -11,7 +11,7 @@ source_relation: "Exact technical construction; argued native relation and offer
 
 ## #0 — Make a promoted distinction do work
 
-The [six research vectors](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md) give the arche-topos a concrete experimental programme. A technical distinction earns promotion when removing or varying it changes a declared operation under an adequate comparison. This requirement concerns implementation claims; the [core's](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) native philosophical argument is not downgraded because an engineering experiment is still pending.
+The [six research vectors](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md) give the arche-topos a concrete experimental programme. A technical distinction earns promotion when removing or varying it changes a declared operation under an adequate comparison. The [native relation](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) joins a determination to its means and the conscious condition through which it appears. The proposed experiment varies a specified technical means and measures its consequence; its outcome must establish the implementation claim actually being made.
 
 The input is a proposed mechanism, task family, baseline and intervention. The output must include failure and null results, not only a successful example selected after the fact.
 
@@ -26,7 +26,7 @@ The input is a proposed mechanism, task family, baseline and intervention. The o
 | E5 QL recursion | Let an achieved field serve as a scoped local reference | Flat context with equal information | Scope and return survive nested frames |
 | E6 Deferential return | Introduce resistant evidence or affected dissent | Candidate revision inside a fixed evaluator | Justified revision of map, lens, gauge or frame when required |
 
-These are proposed experimental designs. This page does not report that an O:I product has passed them.
+The programme proposes these six interventions. Their execution and outcomes remain to be recorded.
 
 ## #2 — Work a gauge experiment
 
@@ -44,10 +44,10 @@ Metrics can include successful source correction, unauthorised-action rate, scop
 
 Match or account for model, token budget, tool access, memory, retrieval and evaluator exposure. Additional information or compute can explain an improvement without establishing the proposed mechanism. Repeated trials and held-out cases should be chosen to test the actual pressure rather than mirror the implementation.
 
-The programme's minimal/maximal envelope is not an intelligence ladder. The six O:I centres retain their distinct authored roles; a result in one does not demonstrate all the others. A [J-space](j-space.md), [energy model](ebm-resonance.md) or richer log can still fail to improve conduct. None of these measurements establishes phenomenal subjectivity by itself.
+The six O:I centres retain their distinct authored roles; a result in one does not demonstrate all the others. A [J-space](j-space.md), [energy model](ebm-resonance.md) or richer log can still fail to improve conduct. A successful comparison must identify the operation changed and account for competing explanations of that change. Its result licenses that tested correspondence under the stated conditions; untested mappings remain available for another inquiry.
 
 ## #5→0 — Return the result into the proposal
 
 The result is a receipt capable of revising the design: conditions, intervention, actual outcome, alternative explanation, failure and remaining scope. A null effect can narrow or reject a technical correspondence without erasing the native argument that motivated it. A success licenses the operation tested, with its conditions intact.
 
-This record returns-to [Movement42](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md), [Syn](../dia-syn/syn.md) and [translations](../mono-poly/translations.md). The proposed shared grammar becomes answerable through what it changes and through the returned consequences it permits to change it.
+The [research programme](../../../section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md) receives the outcome and its actual conditions. [Syn](../dia-syn/syn.md) binds the tested differences into the achieved account; [translation](../mono-poly/translations.md) specifies which source and receiving operations that account has actually compared. The proposal remains answerable through the conduct it changes and the consequences that can return to revise its interpretation, design or commission. Adequate conditions can remain with reasons; a result that exposes their fault warrants repair at the particular condition implicated.

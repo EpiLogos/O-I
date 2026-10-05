@@ -1,0 +1,2329 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-goethe-permanence-change",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+  "revision": 1,
+  "title": "Goethe — Permanence in Change",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom",
+    "revision": 1,
+    "title": "The wish for one hour — and the west wind",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river",
+    "revision": 1,
+    "title": "Fruit, valley, river",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body",
+    "revision": 1,
+    "title": "The changing eyes; the lip, the foot, the hand",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses",
+    "revision": 1,
+    "title": "Beginning and end joined; content and form",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384",
+     "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373",
+    "revision": 1,
+    "title": "blossom falling",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374",
+    "revision": 1,
+    "title": "the mild west wind — the gentle force of loss",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375",
+    "revision": 1,
+    "title": "the shade just enjoyed — autumn already seen within it",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376",
+    "revision": 1,
+    "title": "the fruit — ripening and germination overlapping",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.07,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.172,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377",
+    "revision": 1,
+    "title": "the valley — addressed as one's own, changed by every rain",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378",
+    "revision": 1,
+    "title": "the river — the swimmer never in the same water twice",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.85,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379",
+    "revision": 1,
+    "title": "walls and palaces — rock-solid, seen with changing eyes",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2585,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380",
+    "revision": 1,
+    "title": "the cliff — the foot's remembered daring, the chamois's boldness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381",
+    "revision": 1,
+    "title": "lip · foot · hand — the articulated bodily form declared changed",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.47,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382",
+    "revision": 1,
+    "title": "beginning and end drawn together — faster than objects flee",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.178,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383",
+    "revision": 1,
+    "title": "the Muses — favour promising something imperishable; thanks asked",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384",
+    "revision": 1,
+    "title": "der Gehalt im Busen — the content borne inwardly",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385",
+    "revision": 1,
+    "title": "die Form im Geist — the formed expression carrying the relation onward",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-goethe-permanence-change.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Goethe — Permanence in Change</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change\" data-expression-revision=\"1\"><h1>Goethe — Permanence in Change</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-goethe-permanence-change at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom\" aria-label=\"The wish for one hour — and the west wind\"><h2>The wish for one hour — and the west wind</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:1.06rem;opacity:1.00\" title=\"blossom falling\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.20rem;opacity:1.00\" title=\"the mild west wind — the gentle force of loss\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.00%;font-size:0.90rem;opacity:1.00\" title=\"the shade just enjoyed — autumn already seen within it\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river\" aria-label=\"Fruit, valley, river\"><h2>Fruit, valley, river</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"the fruit — ripening and germination overlapping\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:1.50rem;opacity:1.00\" title=\"the valley — addressed as one&#39;s own, changed by every rain\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:2.55rem;opacity:1.00\" title=\"the river — the swimmer never in the same water twice\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body\" aria-label=\"The changing eyes; the lip, the foot, the hand\"><h2>The changing eyes; the lip, the foot, the hand</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.60%;font-size:0.78rem;opacity:1.00\" title=\"walls and palaces — rock-solid, seen with changing eyes\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:1.50rem;opacity:1.00\" title=\"the cliff — the foot&#39;s remembered daring, the chamois&#39;s boldness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:1.41rem;opacity:1.00\" title=\"lip · foot · hand — the articulated bodily form declared changed\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses\" aria-label=\"Beginning and end joined; content and form\"><h2>Beginning and end joined; content and form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"beginning and end drawn together — faster than objects flee\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"the Muses — favour promising something imperishable; thanks asked\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"der Gehalt im Busen — the content borne inwardly\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:0.78rem;opacity:1.00\" title=\"die Form im Geist — the formed expression carrying the relation onward\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-goethe-permanence-change",
+  "world_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+  "revision": 1,
+  "title": "Goethe — Permanence in Change",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Goethe — Permanence in Change"
+      },
+      "fallback": {
+       "title": "Goethe — Permanence in Change"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Goethe — Permanence in Change</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change\" data-expression-revision=\"1\"><h1>Goethe — Permanence in Change</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-goethe-permanence-change at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom\" aria-label=\"The wish for one hour — and the west wind\"><h2>The wish for one hour — and the west wind</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:1.06rem;opacity:1.00\" title=\"blossom falling\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.20rem;opacity:1.00\" title=\"the mild west wind — the gentle force of loss\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.00%;font-size:0.90rem;opacity:1.00\" title=\"the shade just enjoyed — autumn already seen within it\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river\" aria-label=\"Fruit, valley, river\"><h2>Fruit, valley, river</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"the fruit — ripening and germination overlapping\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:1.50rem;opacity:1.00\" title=\"the valley — addressed as one&#39;s own, changed by every rain\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:2.55rem;opacity:1.00\" title=\"the river — the swimmer never in the same water twice\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body\" aria-label=\"The changing eyes; the lip, the foot, the hand\"><h2>The changing eyes; the lip, the foot, the hand</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.60%;font-size:0.78rem;opacity:1.00\" title=\"walls and palaces — rock-solid, seen with changing eyes\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:1.50rem;opacity:1.00\" title=\"the cliff — the foot&#39;s remembered daring, the chamois&#39;s boldness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:1.41rem;opacity:1.00\" title=\"lip · foot · hand — the articulated bodily form declared changed\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses\" aria-label=\"Beginning and end joined; content and form\"><h2>Beginning and end joined; content and form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"beginning and end drawn together — faster than objects flee\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"the Muses — favour promising something imperishable; thanks asked\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"der Gehalt im Busen — the content borne inwardly\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:0.78rem;opacity:1.00\" title=\"die Form im Geist — the formed expression carrying the relation onward\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+        "revision": 1,
+        "title": "Goethe — Permanence in Change",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom",
+          "revision": 1,
+          "title": "The wish for one hour — and the west wind",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river",
+          "revision": 1,
+          "title": "Fruit, valley, river",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body",
+          "revision": 1,
+          "title": "The changing eyes; the lip, the foot, the hand",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses",
+          "revision": 1,
+          "title": "Beginning and end joined; content and form",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384",
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373",
+          "revision": 1,
+          "title": "blossom falling",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374",
+          "revision": 1,
+          "title": "the mild west wind — the gentle force of loss",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375",
+          "revision": 1,
+          "title": "the shade just enjoyed — autumn already seen within it",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376",
+          "revision": 1,
+          "title": "the fruit — ripening and germination overlapping",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.07,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.172,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377",
+          "revision": 1,
+          "title": "the valley — addressed as one's own, changed by every rain",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378",
+          "revision": 1,
+          "title": "the river — the swimmer never in the same water twice",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.85,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379",
+          "revision": 1,
+          "title": "walls and palaces — rock-solid, seen with changing eyes",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2585,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380",
+          "revision": 1,
+          "title": "the cliff — the foot's remembered daring, the chamois's boldness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381",
+          "revision": 1,
+          "title": "lip · foot · hand — the articulated bodily form declared changed",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.47,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382",
+          "revision": 1,
+          "title": "beginning and end drawn together — faster than objects flee",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.178,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383",
+          "revision": 1,
+          "title": "the Muses — favour promising something imperishable; thanks asked",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384",
+          "revision": 1,
+          "title": "der Gehalt im Busen — the content borne inwardly",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385",
+          "revision": 1,
+          "title": "die Form im Geist — the formed expression carrying the relation onward",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-goethe-permanence-change.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Goethe — Permanence in Change"
+      },
+      "fallback": {
+       "title": "Goethe — Permanence in Change",
+       "text": "Goethe — Permanence in Change: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-goethe-permanence-change",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-goethe-permanence-change:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-goethe-permanence-change:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-goethe-permanence-change",
+    "world_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+    "revision": 1,
+    "title": "Goethe — Permanence in Change",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Goethe — Permanence in Change"
+        },
+        "fallback": {
+         "title": "Goethe — Permanence in Change"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Goethe — Permanence in Change</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change\" data-expression-revision=\"1\"><h1>Goethe — Permanence in Change</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-goethe-permanence-change at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom\" aria-label=\"The wish for one hour — and the west wind\"><h2>The wish for one hour — and the west wind</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.70%;font-size:1.06rem;opacity:1.00\" title=\"blossom falling\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:56.00%;top:45.00%;font-size:1.20rem;opacity:1.00\" title=\"the mild west wind — the gentle force of loss\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.00%;font-size:0.90rem;opacity:1.00\" title=\"the shade just enjoyed — autumn already seen within it\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river\" aria-label=\"Fruit, valley, river\"><h2>Fruit, valley, river</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"the fruit — ripening and germination overlapping\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:1.50rem;opacity:1.00\" title=\"the valley — addressed as one&#39;s own, changed by every rain\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:2.55rem;opacity:1.00\" title=\"the river — the swimmer never in the same water twice\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body\" aria-label=\"The changing eyes; the lip, the foot, the hand\"><h2>The changing eyes; the lip, the foot, the hand</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.60%;font-size:0.78rem;opacity:1.00\" title=\"walls and palaces — rock-solid, seen with changing eyes\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:1.50rem;opacity:1.00\" title=\"the cliff — the foot&#39;s remembered daring, the chamois&#39;s boldness\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:1.41rem;opacity:1.00\" title=\"lip · foot · hand — the articulated bodily form declared changed\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses\" aria-label=\"Beginning and end joined; content and form\"><h2>Beginning and end joined; content and form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"beginning and end drawn together — faster than objects flee\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"the Muses — favour promising something imperishable; thanks asked\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"der Gehalt im Busen — the content borne inwardly\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:0.78rem;opacity:1.00\" title=\"die Form im Geist — the formed expression carrying the relation onward\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+          "revision": 1,
+          "title": "Goethe — Permanence in Change",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom",
+            "revision": 1,
+            "title": "The wish for one hour — and the west wind",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river",
+            "revision": 1,
+            "title": "Fruit, valley, river",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body",
+            "revision": 1,
+            "title": "The changing eyes; the lip, the foot, the hand",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses",
+            "revision": 1,
+            "title": "Beginning and end joined; content and form",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384",
+             "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373",
+            "revision": 1,
+            "title": "blossom falling",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e374",
+            "revision": 1,
+            "title": "the mild west wind — the gentle force of loss",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e375",
+            "revision": 1,
+            "title": "the shade just enjoyed — autumn already seen within it",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e376",
+            "revision": 1,
+            "title": "the fruit — ripening and germination overlapping",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.07,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.172,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e377",
+            "revision": 1,
+            "title": "the valley — addressed as one's own, changed by every rain",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-1-river:e378",
+            "revision": 1,
+            "title": "the river — the swimmer never in the same water twice",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.85,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e379",
+            "revision": 1,
+            "title": "walls and palaces — rock-solid, seen with changing eyes",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2585,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e380",
+            "revision": 1,
+            "title": "the cliff — the foot's remembered daring, the chamois's boldness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-2-body:e381",
+            "revision": 1,
+            "title": "lip · foot · hand — the articulated bodily form declared changed",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.47,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e382",
+            "revision": 1,
+            "title": "beginning and end drawn together — faster than objects flee",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.178,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e383",
+            "revision": 1,
+            "title": "the Muses — favour promising something imperishable; thanks asked",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e384",
+            "revision": 1,
+            "title": "der Gehalt im Busen — the content borne inwardly",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-4-muses:e385",
+            "revision": 1,
+            "title": "die Form im Geist — the formed expression carrying the relation onward",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change:scene:m-goe-0-blossom:e373"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-goethe-permanence-change.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Goethe — Permanence in Change"
+        },
+        "fallback": {
+         "title": "Goethe — Permanence in Change",
+         "text": "Goethe — Permanence in Change: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-goethe-permanence-change",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-goethe-permanence-change.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-goethe-permanence-change"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-goethe-permanence-change:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Goethe — Permanence in Change",
+  "summary": "a living Expression · 4 scenes · 13 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-goethe-permanence-change:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-goethe-permanence-change"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-goethe-permanence-change:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-goethe-permanence-change",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-goethe-permanence-change",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Goethe — Permanence in Change",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-goethe-permanence-change:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-goethe-permanence-change:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-goethe-permanence-change",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-goethe-permanence-change"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

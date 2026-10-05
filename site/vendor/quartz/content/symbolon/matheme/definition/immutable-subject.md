@@ -19,7 +19,7 @@ The [Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-20
 
 A thought about awareness, a body-image, a feeling of ownership, or the sense of being a witness can each become a content. Examining such a content yields something appearing; the fact of its appearing remains implicated in the examination. Refinement of the content can make the account more accurate without changing those offices into one another.
 
-[C01](../../../section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md) defines the canonical subject distinction. [A01](../../../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md) embodies the performed return through its own defining act. A technical system's production of a self-report concerns the content it produces; it does not by itself settle the fact-question of phenomenal localisation.
+[C01](../../../section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md) defines the canonical subject distinction. [A01](../../../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md) embodies the performed return through its own defining act. A self-report is a determinate content; its production and reception belong to the means through which it can be known. The first-person condition of their appearing is already involved in the inquiry. Accumulating contents can make mediation more legible while retaining knower, means and known as distinct offices within Life / Mind.
 
 ## #2 — The apparent subject has an instrument
 

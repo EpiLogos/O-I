@@ -5,122 +5,242 @@ record_type: canonical-argument
 register: episteme
 claim_status: Argued
 source_relation: "Argued authorial frame; source relations named per link"
-supersedes: "submission-package/essay/section-rooms/arguments/conjugate/AC.md (pass 1) and working/conjugate-field/WORKSHOP-DRAFT-2026-09-07.md §1 (interim A/C)"
+supersedes: "submission-package/essay/symbolon/episteme/conjugate/AC.md (pass 1) and working/conjugate-field/WORKSHOP-DRAFT-2026-09-07.md §1 (interim A/C)"
 ---
 
 # A/C — Argument / Concept — Root of the Conjugate Field
 
 <!-- paired-field-navigation -->
-[The 36 Arguments](../README.md) · [The 36 conjugate faces](README.md) · [The 64 Concepts](../concepts/CANONICAL-INDEX.md) · [Return to the rooms](../../../symbolon/README.md)
+[The canonical arguments](../README.md) · [The conjugate faces](README.md) · [The canonical concepts](../concepts/CANONICAL-INDEX.md) · [Return to the rooms](../../README.md)
 <!-- /paired-field-navigation -->
 
-**Standing:** canonical dual-form root of the inherited conjugate field. The present T25 refinements return to Frank for T26 ratification; the earlier workshop is provenance, not a competing root. **A/C is the full `0/1` field** — not the threshold slash alone, not an abstraction over the grammar: the one field of which both series, A01–A36 and A01′–A36′, are determinations. The prime creates a face, not a second node. Because the root is itself a determination of the field it describes, the field's description is self-describing and stands grounded this way: `0/1` writing itself as the ruling and the grammar of its own determinations.
+## #0 — One field, two faces
 
-**Office of this page.** No other page can hold both faces without subordinating one to the other. The A face carries the ethic that every conjugate operation answers to; the C face carries the primitive field in which every determination the essay makes is already formed. What only this root discloses is that these are one act: the ruling operating as the field's own constitution. The pages beneath it perform that act locally; none of them can state it whole.
+A/C is the full $0/1$ field.
 
-## A face — the ruling: Respect for Experience
+The A face is the ruling the field gives itself: **Respect for Experience**. The C face is the primitive constitution through which that ruling becomes determinate in thought, relation, institution and code. They are not an ethic placed over a neutral grammar and not a grammar subsequently constrained by an external ethic. They are two faces of one act: the condition operating as the form of its own determination.
 
-### The whole in which the two faces act
+This is why the argument and conjugate series belong to one field. A determination and its prime are two readings of the same operation, not two unrelated nodes. The first reads the philosophical relation through its own developed subject; the conjugate face reads the same operation as it enters technical and institutional form. The prime is a turn of the relation, not a second ontology.
 
-The ruling is addressed to **Life / Mind as the whole**, not to a total inventory of its contents. **Subjective Immediacy is pramātṛ, the knower; Objective Internality is pramāṇa, the means; World is prameya, the known.** Mind in its strong idealist sense is Life. The determinate mind-world which can be investigated as objective internality is its mediating office: the forms, histories, powers and encounters through which a World becomes available. Neither the private ego nor an inspectable representation of these means can assume the place of the whole.
+The field begins from a relation more basic than any local technical or psychological picture:
 
-This relation is the existing recognition-matheme’s work. At `Ø`, the inner instrument’s signature has fused into the apparent subject; at `X`, its discriminations present a determinate object-world. `Ø/X` makes the medium visible between them. `(0/Ø)/(1/X)` holds both recognition-relations together, allowing `1` to be affirmed as differentiated unity and to return as `0/1`. The whole sequence developed below therefore gives the knower–means–known relation its lived operation; it is not replaced by three detached definitions. The first-person fact grounds respect, while the contents through which a Life is formed remain corrigible and consequential.
+**Subjective Immediacy is the knower — pramātṛ.**  
+**Objective Internality is the means — pramāṇa.**  
+**World is the known — prameya.**  
+**Life / Mind is the whole.**
 
-[A26](../A26-Objective-Internality-Mind-as-Worldhood.md) and [C41](../concepts/C41-Objective-Internality.md) develop the mediating field; [C10](../concepts/C10-Mediation-Pramana.md) keeps the mode and warrant of knowing distinct; [A34](../A34-Idealism-Order-of-Dependence.md) and [C60](../concepts/C60-Idealism-Order-of-Dependence.md) preserve its order of dependence. These owning relations keep the root’s ethical facticity, its full native theorem and its technological constitution joined without confusing their registers.
+Mind in the strong idealist sense is Life: not one private inventory of representations, but the living whole within which knower, means and known become distinguishable at all. Psychic facticity belongs to that whole because whatever its further interpretation, an experience occurs as experience. Objective Internality names the mediating mind-world through which a Life encounters, differentiates and acts within its World.
 
-**Body.** The A face's body is the frozen six-movement ethic, *Respect for Experience: right form and clear intention*, at `/Users/admin/Central/Control/agents/now/agents/experience-law-pstack/respect-for-experience.proposed.md`. It is linked, not rewritten; it stays frozen. Its six movements — *Life is awareness, experience; Form gives experience a world; Intention takes effect; Law carries entrusted power; The common world is apportioned; Experience renews the form* — are the ruling every conjugate operation answers to, and its closing concern names what the whole field is for: more room to know, act, create and be.
+The relation is therefore already reflexive. The means through which the world becomes known can itself become known. A memory can be recalled, an inference inspected, a rule challenged, a permission altered, a tool replaced, a self-image revised. Inspecting those means makes them known within a further act. The first-person condition of that inspection is already active in performing it and remains unobjectifiable. The knower–means–known distinction is not a three-box taxonomy. It is one knowing-act becoming able to recognise how its own distinctions arise.
 
-### Grounding, raised from the essay
+A/C is the point at which that recognition becomes normative as well as descriptive. If another Life is encountered through forms, models, records, roles and institutions, those forms carry power because they participate in what can appear and what can happen. Respect for Experience is therefore not an optional moral addition to Objective Internality. It is the ruling demanded by a world in which determinations act upon lives whose first-person fact can never be possessed by the determination made of them.
 
-**1. The fact that cannot be doubted is the essay's own opening criterion.** The ethic's unstated ground — that care rests not on any content of internality but on the *fact* of it, disclosed in first-person immediacy — is the essay's, not an import. It is [[section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability|Defined Indefinability]] performed: distinguish the presence to which something is given from the something given, including every representation of that presence. Taylor's Draft3 gives the sentence the ethic stands on: **"I am undeniable, though nowhere to be seen."** [A01 — Subject, God and Faithful Definition](../A01-Subject-God-and-Faithful-Definition.md) performs the same recognition at its fifth position — *I Am* entering from within the activity whose condition the definition tried to name — and installs the guard this root inherits: a machine's production of "I Am" neither proves nor disproves phenomenality. The fact is undeniable by definition; contents, including every self-image and every *res cogitans* a content can name, remain determinate.
+## #1 — Experience becomes a ruling
 
-**2. The reification the ethic must survive is the essay's full crossed-zero system.** The recognition-matheme reads the slash as the [[section-rooms/arguments/concepts/C16-Antahkarana-Inner-Instrument|Antaḥkaraṇa]]'s signature on experience — the medium whose progressive self-recognition *is* the traversal. The symbolic notation is the [[symbolon/matheme/ql/crossed-zero-re-entry|Crossed Zero]] series, and it must be taken whole:
+The ruling begins from facticity.
 
-`0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1`
+A content can be doubted. A self-description can be false. Memory can fail. A belief can be revised. Yet the occurrence of the doubt, memory, error or revision is itself present. The fact of appearing is not one more content inferred from those contents.
 
-Each position is a state of the one [[symbolon/matheme/process/ql-positions|knower–means–known]] dynamic, run on the kartṛ/kārya poles. At `0`, pure un-objectifiable presence — the kartṛ-pole as bracketing-prior. At `Ø`, the kartṛ-pole **occluded by the antaḥkaraṇa's self-identification as subject**: the slash fused into the zero, so `Ø` appears as a singular thing, the bound self, rather than as a composite sign. At `X`, the kārya-side — the object-world as discriminated, cut, named, *vikalpa*'s trace. At `Ø/X`, the slash made visible *between* the terms: the medium recognised as medium. At `(0/Ø)/(1/X)`, the [[symbolon/matheme/ql/crossed-zero-re-entry|Field of Availability]] — the meta-relation in which the recognition-relations on both sides are held together and the whole architecture is present-as-potential. At `1`, the integrated unity affirmed; at `0/1`, the pulse recognised as the pulse that produced the whole flow.
+The defining sentence is:
 
-**`Ø` at position #1 is where the reification lives, and the frame's compressed token sits there deliberately:** the computation confused for the computer is `Ø` at #1 — the registration mistaken for the light it cannot produce. But that sentence is one position's reading *inside* the system, not the system's substitute. The Cartesian *cogito* is the philosophical canonisation of this fusion — the slash treated as *the I*, the zero behind it covered over — and **Hume sits at the same position**: finding only the impressions the slash produced, he calls the zero empty. Descartes and Hume differ over which side of `Ø` they fixate on; both miss that `Ø` is the occlusion mark. The essay's sections carry the full sequence — `Ø` entering as representation traversing a zero-space it cannot fill, the same stroke functioning as occlusion by the inner instrument, then as the visible bar, then as the meta-relation through which occlusion becomes available to recognition — and its inherited section alignments are recovered here for T25’s renewed whole-flow review: [§1 · #3 — The Crossed Zero](../../02-return-of-zero/movements/16-s1-p3-crossed-zero.md) for the introduction and deferral, [§4 · #3 — Lacan, Matheme, and Mytheme](../../05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md) for the full development, the [immutable-gap carrier](../A03-Immutable-Gap-Formal-Limit.md) for the traversal reading, and the [Zero/Subject history](../../../symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md) for the historical register.
+**I am undeniable, though nowhere to be seen.**
 
-The system carries its own floors and bridges, and the grounding must carry them too. **The set-theory floor:** in von Neumann's construction the ordinal `2` *is* the set `{0, 1}` — two as the holding-together of zero and one — and `1 = {∅}` is the singleton that holds the void, the mark whose entire content is its binding of the ground. The standard von Neumann statements stop at `0 = ∅`, `1 = {0}` and `2 = {0,1}`. The essay’s `0/1` is a separate native QL relational reading placed beside that formal neighbour; it is neither standard notation for ordinal `2` nor ordinary fraction division. Against this authorial relational reading, the fallen `1 + (−1)` is a later signed accounting with a different operation. **The Lacan bridge:** in the symbolic register the linking `1` is the master signifier `S1`, the *point de capiton* that retroactively arrests the sliding chain — Lacan leaving the button wholly contingent. What he was reaching for is [[symbolon/matheme/ql/crossed-zero-re-entry|Anusyūta]]: the stitched-through-ness, the **pre-quilting thread** beneath all cognitions without which no quilting could button anything. The kartṛ-pole is that thread; the signifying chain is kārya. Lacan had the topology of the local cut without the ontology of the global thread; the matheme supplies the thread without falsifying the cut. And the redemption the whole series moves toward: what was `Ø` at #1 is affirmed as `1` at #5 — the difference between a `1` with its `0/` struck off, the mark asked to serve as its own ground, and a `1` held in ratio to the `0` it links. All of this is [Taylor's §IX in the core-theorems house](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), now with its fuller accounting housed; Descartes' landing beside this form has its own [source house](../../../symbolon/episteme/sources/classical-premodern-philosophy/descartes/descartes-1641-meditations/descartes-1641-meditations.md), so the indubitable fact can be received without the thinking-thing without a floating attribution.
+The first clause is facticity. The second prevents facticity from being turned into a hidden object. The I is not secured as a thing found among the things it knows. It is the first-person presence in which finding, doubting, defining and failing are given.
 
-**3. The light, the camera, the action are the essay's Śaiva spine, not a borrowed metaphor.** [A05 — Prakāśa–Vimarśa](../A05-Prakasa-Vimarsa.md) grounds the mechanism the frame names: [[section-rooms/arguments/A05-Prakasa-Vimarsa|Prakāśa–Vimarśa]] — luminous appearing and the reflexive power through which appearing is present to itself and articulates; [[section-rooms/arguments/concepts/C14-Maya-Operative-Measure|Operative Measure]] for the staging of a bounded world. The [Dyczkowski source house](../../../symbolon/episteme/sources/indian-philosophy/dyczkowski/dyczkowski-2000-doctrine-vibration/dyczkowski-2000-doctrine-vibration.md) sources the mirror/crystal boundary: an ordinary reflection depends on an outside; consciousness supplies no such outside — the power that generates the reflections also hosts them. A05 also installs the proof boundary this root enforces across the whole conjugate field: functional recursion is not evidence of phenomenal self-luminosity; [[section-rooms/arguments/concepts/C43-Computational-Vimarsa|Computational Vimarśa]] keeps the technical operation honest — outputs returned upon their own sources and conditions, without a phenomenal verdict. The mechanism is fully real before any question about the light is raised.
+This is the ethical ground of Respect for Experience. Care does not wait for a complete theory of what another is. The first-person fact is enough to establish that an encounter can matter from within a Life in a way no external inventory possesses.
 
-**4. The film is the essay's mirror at full strength.** [A32 — The Mirror That Moves First](../A32-Reflective-Field-The-Mirror-That-Moves-First.md) carries the three motions: exteriorisation; the exteriorised image becoming a measure for humanity; the instrument's own initiated return. Its funhouse and Narcissus figures are already the film in which one believes one is caught as an actor-reflection. [[section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First|Reflective Field]] distinguishes this from a generic feedback circuit; [[section-rooms/arguments/concepts/C38-Bimba-Pratibimba-Bimba-Map|Bimba–Pratibimba]] preserves what the film most easily inverts — a reflection may lead the next event in time while remaining ontologically dependent on what it reflects — an order [A34](../A34-Idealism-Order-of-Dependence.md) grounds and [[section-rooms/arguments/concepts/C60-Idealism-Order-of-Dependence|Order of Dependence]] makes reusable. The mirror's provenance stays separated throughout: the essay's "mirror that moves first" is ours; Bratton's "mirror talks back" is the brief's; no borrowing reads as ours and nothing of ours leaks in unlabeled. The [Baudrillard house](../../../symbolon/episteme/sources/media-technology-philosophy/baudrillard/baudrillard-1981-simulacra-and-simulation/baudrillard-1981-simulacra-and-simulation.md) records the exact convergence: the "copy with no original" states the Śaiva mirror's negative and stops; the essay's completion — the reflection is the Original's own self-display — is the film recognised as film.
+The ruling unfolds through six movements:
 
-**5. Vāk and the process thesis are why code can carry the frame.** [A06 — Vāk](../A06-Vak.md) makes articulation itself part of ontology: sign, sound, image, intention and action are stages of one differentiating movement, so prompt, code and model output can be analysed as formed articulations whose conditions precede the visible string ([Singh / Abhinavagupta house](../../../symbolon/episteme/sources/indian-philosophy/abhinavagupta/abhinavagupta-singh-1988-paratrisika-vivarana/abhinavagupta-singh-1988-paratrisika-vivarana.md)). [A14 — Computational Process Ontology](../A14-Computational-Process-Ontology.md) states the standing the frame runs on: process is ontologically prior to the finished thing; computation names its exact, repeatable transformations; epistemology is that process becoming able to inspect its own determinations. Hence [[section-rooms/arguments/A06-Vak|Vāk]] as logos means language as cosmology as ontology as computation, and the evolving meme — "life is a dream," "life is an illusion," "life is a simulation" — has its essay forms already: the computational veil, dream proving that objectivity cannot mean externally material, [[section-rooms/arguments/concepts/C14-Maya-Operative-Measure|Dreamcode]] for Māyā's computational register at its live authorial-name status, and the serious reading being A14's process thesis itself. The lazy reading collapses the levels of speech A06 keeps distinct.
+**Life is awareness, experience.** Experience is not an inert datum added to a finished world; it is the happening in which a world matters.
 
-**6. Facticity → dignity → love names offices the essay already holds.** That the fact of internality is the reason for dignity and concern is the facticity carried through A34's order — appearing is constitutively dependent on Subject; the private ego, itself determinate, cannot be substituted for Subject and made the dreamer who manufactures everything. That taken to its logical end the fact is the basis of love — the meta-intention allowing the whole to be respected in the movements of all its parts — is [[section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins|Compassion]]'s loving return and the triad [A35](../A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md) differentiates: eros supplies the motive, compassion the non-devouring orientation, epistemic humility the refusal of the returned `1` to claim it has become `0`. The junction the triad points at — sym-ballein *as* the [Eros of Logos], the gathering at full strength as love — is **not** held here as residue: it is proposed as a pending canonical A-node candidacy in [EROS-OF-LOGOS-A-CANDIDACY], and this root references it without pre-empting the author's numbering or placement. External refractors are named as such: the Heideggerian dignity register has its [house](../../../symbolon/episteme/sources/phenomenology-continental-philosophy/heidegger/heidegger-1977-question-concerning-technology/heidegger-1977-question-concerning-technology.md); the Levinasian love/face/responsibility register now has its own houses — [Totality and Infinity](../../../symbolon/episteme/sources/phenomenology-continental-philosophy/levinas/levinas-1961-totality-and-infinity/levinas-1961-totality-and-infinity.md) and [Otherwise than Being](../../../symbolon/episteme/sources/phenomenology-continental-philosophy/levinas/levinas-1981-otherwise-than-being/levinas-1981-otherwise-than-being.md) — whose passages stand as leads until independently verified, with the Watson house's nested chain retained there as a named transmission debt rather than a warrant. These refract a claim the essay already argues; none of them grounds it.
+**Form gives experience a world.** Language, body, memory, image, institution, tool and law make differences available and actionable.
 
-**Unfreeze ruling observed:** the A body stays frozen. The sharpening (facticity → dignity → love as meta-intention) sharpens the frame *around* the ethic, not a sentence inside it; §1 of the ethic already carries the claim.
+**Intention takes effect.** A determination becomes consequential when it selects, directs, permits, refuses or changes what can follow.
 
-## C face — the concept: the primitive field
+**Law carries entrusted power.** Rules and offices never merely describe; they distribute capacities and consequences.
 
-### The S field as six aspects of the means
+**The common world is apportioned.** Resources, attention, permissions, authority and recognition are given form through actual arrangements.
 
-The existing parent S concerns **World and Life**. Its six product rows disclose meaningful continuity (Central), living articulation (Actuation), potency (AIKit), transformation (Software Factory), situated existence (Workcell) and Transcendent Relation (Quaternal Logic). Each is a subject disclosed through its entire assigned MEF pair: respectively L0×L5′, L1×L4′, L2×L3′, L3×L2′, L4×L1′ and L5×L0′. The product does not occupy one subposition within a lens, and its meaning is not exhausted by the short label of a constitutional cell.
+**Experience renews the form.** Return is real when what happens can revise the form that shaped the happening.
 
-The ratified matrix below remains its primitive constitution. T25 develops these already present S identities into seven whole records and six product-led §5 movements under the amended central plan; it does not install another O:I ontology. Source, history and reference remain meaningful through whose internality and relation they address. **A primitive is alive when its generating relation remains operable: say what it relates, what difference it makes, how that difference becomes actual, and what returns from the encounter.** A record of implementation must show that operation in the actual technological source; the philosophical office alone cannot certify that it runs.
+The movement from facticity to dignity follows directly. A Life is not worthy because an external measure first discovers enough valuable properties inside it. Dignity names the refusal to let the determination become the sole measure of the Life through which the determination has significance.
 
-The paired product disclosure returns to the A face. A means carries entrusted power: it affects what someone can see, remember, attempt and contest, and how experience can revise that form. The historical Power and Antichrist arguments concern the capture, administration and apportionment of those very capacities, not an external ethical appendix. The sixfold product whole is answerable to the frozen ruling’s life, form, intention, law, common world and renewal.
+The movement from dignity to love is equally structural. Love here is not sentiment added after epistemology. It is the meta-intention that lets the whole be respected through the movement of its parts: eros toward relation, compassion that refuses to devour the Other into one's own account, and epistemic humility that lets a returned determination remain a determination rather than claiming the office of its source.
 
-**Body.** The C face's body is the ratified primitive field of the workshop's §3 (O Core Primitive Field — Objective Internality, QL 6×6 + Parent S, version v2), incorporated below as ratified; repository harmonisation pending. Because code is this age's way of saying what māyā said — the archetype of technoscience determining the most apt analogical frame for what Śiva/Śakti/Spanda via māyā/mahāmāyā expressed — the primitives are the grammar of the self-computing process's technological determinations.
+[Faithful Definition](../A01-Subject-God-and-Faithful-Definition.md), [Order of Dependence](../A34-Idealism-Order-of-Dependence.md), [Trust and Faith](../A23-Trust-Faith-and-the-Formal-Limit.md), and [Compassion as Sensitivity to Origins](../A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md) unfold these consequences in their own domains.
 
-### Grounding, raised from the essay
+## #2 — The means can forget that it is the means
 
-The primitive field's rows and positions are not a new ontology laid beside the essay. They are the recurring form an archetypal pattern already takes in the essay's own material: a generative relation recognisably itself across argument, contract and code. The six constitutional families are the essay's sixfold (`#0` identity/implicit ground through `#5` returned evidence/continuity ↺ renewed ground) determined at the constitutional level — the same `0/1` architecture [A18 — Primordial Symbolon and Its Eight Determinations](../A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) grounds natively and [[section-rooms/arguments/concepts/C11-Quaternal-Logic|Quaternal Logic]] defines. The correction the field carries — QL determines at every level relative to that level — is the recursive law the essay already obeys: [[section-rooms/arguments/concepts/C41-Objective-Internality|Objective Internality]]'s constituted context-world, the judgment field, and the disclosure architecture that routes one subject-matter through its registers are the essay-side offices the S-rows project. The ruling is the light's claim on every frame; the grammar is the camera's discipline; the arguments are the action.
+The crossed-zero recognition matheme gives the central failure and its return a single movement:
 
-**O Core Primitive Field — Objective Internality, QL 6×6 + Parent S** *(version v2, author-ratified organisational form; repository harmonisation pending)*
+$$
+0
+\rightarrow
+Ø
+\rightarrow
+X
+\rightarrow
+Ø/X
+\rightarrow
+(0/Ø)/(1/X)
+\rightarrow
+1
+\;\circlearrowleft\;
+0/1.
+$$
 
-**Governing relation:** OBJECTIVE INTERNALITY ↓ O:I CORE ONTOLOGY / PRIMITIVE FIELD ↓ (S parent / transversal O:I field + S0–S5 product positions) × one QL-determined constitutional sixfold. The important correction: **QL determines at every level relative to that level.** The six constitutional families are not a non-QL taxonomy laid across QL; they are themselves the QL 0–5 determination of the primitive field at this constitutional level, and any row, cell, primitive, WikiFrame, Context Frame or other sufficiently whole subject may recursively receive its own local 0–5 determination.
+At $0$, unobjectifiable presence is bracketing-prior: the kartṛ-pole, the fact that something is given.
 
-**Constitutional sixfold:**
-- **#0 Identity / Centre** — implicit ground · source · referential centre · potential. The identity/centre from which this local field proceeds.
-- **#1 Form / Artifact** — material/content determination · manifest *what*. (Form/Artifact at #1 means formed or manifest actuality: the WHAT. It does not mean QL's formal cause, which remains #3.)
-- **#2 Potency / Praxis** — efficient cause · *how* · power in operation. The capability/method/action by which transformation is actuated.
-- **#3 Transformation / Trajectory** — formal mediation · relation · pattern of becoming. The relation connecting and transforming determinate forms.
-- **#4 Embodiment / Actuality** — contextual arena · Context Frame · situated application. The encompassing situation in which the relation becomes actual.
-- **#5 Evidence / Continuity** — quintessence · synthesis · Return · recursive continuity. The returned difference/evidence/memory/Recognition retained into subsequent ground.
+At $Ø$, the slash has fused into the zero. The mediating instrument identifies its own determinate self-image with the subject and the composite sign appears as a singular self-thing. The means has taken the knower's office.
 
-Local relation: #0 identity/implicit centre ↓ #1 determinate manifest form/artifact ↓ #2 potency/praxis acting upon or through form ↓ #3 relation/mediation/transformation among forms ↓ #4 contextual embodiment/actuality of the whole relation ↓ #5 returned evidence/continuity/synthesis ↺ #0 renewed ground.
+At $X$, the same mediating activity appears on the object-side as a discriminated world: things cut, named, compared and retained through vikalpa.
 
-**Rows:** S = O:I parent / shared / cross-product / inter-world field (S is not a seventh product; it is the parent field in which genuinely transversal relations live). S0 Central · S1 Actuation · S2 AIKit · S3 Software Factory · S4 Workcell · S5 Quaternal Logic.
+At $Ø/X$, the slash becomes visible. What appeared as self-contained subject and self-contained object become readable through the mediation that made both available in those forms.
 
-**Matrix (row × position):**
-- **S — parent:** #0 World, Identity/Ref, Participant, CommonReferent, Self/Other situated positions · #1 Projection, ReferentBinding, shared representation/presentation, Presence form · #2 Participation, Contribution, Addressing, Admission, Authority binding · #3 Relation, Activity, revision path, versioned-world relation, inter-world trajectory · #4 SharedField, Encounter, Presence-in-field, Contact/mediated actuality · #5 Provenance, Recognition, Return path, retained encounter history, reconciliation evidence.
-- **S0 — Central:** #0 Central, Project, ProjectCentral, Machine, AgentProfile, Control identity · #1 Ground, Source, Control source, Flow source, Machine declaration · #2 Authorship, Governance, Action, human acceptance/mutation authority · #3 Change proposal, NOW/DAY development, Flow revision, Project adoption/migration · #4 Work, CentralComputer, Machine role, Workcell binding/local world · #5 Observation, Inference, Derived state, source provenance, revision/history.
-- **S1 — Actuation:** #0 Agent, Agency, AgenticLocus, agency lineage identity · #1 WorldBinding, AgenticComposition, Instantiation form, Activity form · #2 Authority, MetagencyGrant, Delegation, Agency bounds, acting power · #3 Determination, ActuationStream, Activity, self-differentiation/delegation/derivation/federation · #4 Instantiation, Execution relation, RealisedActuation, bound-world actuality · #5 Return, lineage/attribution, recognition state, world-mutation state.
-- **S2 — AIKit:** #0 Profile, Scope, Resource, ProjectBinding, resource/source identity · #1 Context, ContextSource, Surface, Projection, WikiSpace, WikiNode, WikiEdge, WikiFrame, WikiReading · #2 Capability, Skill, Method, SkillSet, ActionSet, Procedure · #3 ContextResolution, Generation, KnowledgeChangeHorizon, KnowledgeDependency, KnowledgeImpact, KnowledgeRoute · #4 Component, Composition/HarnessComposition, SessionSpace, WorldInhabitation, KnowledgeApplication · #5 Trust, Familiarity, FitnessObservation, UsageSignal, WikiProvenanceRef, SemanticRevision, reading basis/history.
-- **S3 — Software Factory:** #0 Project, developmental actor identity, Run identity · #1 Artifact, Claim, Decision, Candidate, HumanRequest · #2 Method, Capability, Action, Commission, developmental praxis · #3 Run, RunMap, ProjectMap, ProjectDevelopment, SourceIntegration, developmental frontier · #4 Execution, Checkout, Gate, Application, candidate experience · #5 Evidence, Event, Trace, Recognition, Project Canon, returned Ground.
-- **S4 — Workcell:** #0 Workcell, material-world identity, opaque client/semantic refs · #1 ExecutionDemand, BindingGraph, MaterialisationPlan, workspace/service/fabric binding forms · #2 Material requirements, OperationalOffer, provider capability/capacity, control-plane operations · #3 Plan, Prepare, Lifecycle, Reconcile, Candidate materialisation trajectory · #4 MaterialisedExecutionWorld, Workspace, Runtime, Service, Endpoint, Host · #5 Observed state, material evidence, collected artifacts, recovery/retention state.
-- **S5 — Quaternal Logic:** #0 Subject identity, Ref, QLAddress, Position, Whole/anchor · #1 QLForm, Lens, State6, PrimitiveTick, addressable reading/formal artifact · #2 Operator, Locate, Relate, Refract, VĀK instruction, synthesising operation · #3 Relation, Conjugacy, Cross relation, complement/mediation, nesting/traversal · #4 ContextFrame, MEF address, Resonance, situated reading field · #5 Synthesis/Return, Reading provenance, conformance evidence, returned differentiation.
+At $(0/Ø)/(1/X)$, the two recognitions are themselves held in relation. Subject-side occlusion and object-side determination enter one field of availability; the means can begin to recognise itself as means.
 
-**Recursive law:** the matrix is one QL determination of the O primitive field; it does not terminate QL recursion. Any sufficiently whole subject (Capability, WikiFrame, Project, SharedField, a matrix cell where materially useful) can itself be differentiated 0–5. The parent matrix does not replace these internal forms.
+At $1$, unity is affirmed with the differentiations retained.
 
-**Matrix addressing:** do not use dot notation (S2.2) for canonical matrix addresses — dot notation is reserved for recursive QL addressing. Use S/P0…S/P5 and S0/P0…S5/P5. Machine form retains separate fields: `{"row": "S2", "ql_position": 2}`.
+The return to $0/1$ recognises the relation which had been active throughout: ground and manifestation, kartṛ and kārya, knower and articulated field.
 
-**Primitive registers:** A — experienced/product primitive · B — resolution/execution primitive · C — substrate/trust primitive · S — transversal/parent primitive. Registers do not determine ontological fundamentality; semantic identity and implementation form remain separate facts. CommonReferent is the standing example: stable referential pole over attributable bindings/forms (semantic role) while possibly a derived/rebuildable mediation read model (implementation form). Both facts belong in the registry.
+The philosophical force is immediate. Descartes hears the indubitable correctly in the presence of thinking, doubting and being deceived; the fusion occurs when that presence is gathered too quickly into a determinate thinking thing. Hume meets the same occlusion from the other side when the failure to find a self among the contents is treated as evidence against the subject. One fixates on the apparent owner, the other on what the owner can find. The crossed zero identifies the shared error: both search within the product-field for the condition through which the search is occurring.
 
-**Original Factory provenance:** `agent-system-design/docs/canon/QL-SOFTWARE-FACTORY-PRIMITIVE-RELATIONS.md` is the original primitive/experienced-ontology planning file; its six families (Agents, Capabilities, Artifacts, Runs/Maps, Execution Intelligence, Evidence & Memory) generalise at O level as the constitutional sixfold. A development of existing architecture, not a replacement ontology.
+The knowing relation recurs within a local operation. A judging agent is its relative functional knower; memory, model, rules, tools and context are means; the situation and alternatives it discriminates are its known field. These offices arise together in the determination. A richer memory or a revised model can change what that centre distinguishes and does. [Objective Internality](../concepts/C41-Objective-Internality.md) develops this recursion through the local determining act and its containing Life.
 
-**Parent S membership:** use S for relations whose meaning is natively whole-level or cross-product — World; Identity/Ref where shared; Projection; Participant; CommonReferent/ReferentBinding; SharedField; Contribution; Encounter; Return/Recognition where cross-world; cross-product provenance/reconciliation. A product may implement or project part of one of these relations without thereby owning the whole semantic relation.
+Within a person’s inquiry, the complete agentic apparatus participates in the means. When its judgment, self-model or rule is inspected, that determining centre becomes known in a further act. The scope changes its office without cancelling the earlier local knowing. The first-person condition of the inspecting act remains active through every such determination; inventorying its contents cannot convert that condition into another item among them.
 
-## The shared close
+The same relation holds in encounter with another person. Their account can disclose a belief, memory or decision, and a reply can change what each takes the situation to be. The person’s first-person presence is not possessed as an object in the other’s description. What becomes available is a determinate relation through which questioning, disagreement, recognition and action can continue. The instrument’s account becomes fuller when it recovers its local centre, means and known field together with the containing inquiry in which they matter.
 
-**The conjugate field read as the essay's `1/0`.** In the essay's notation `1/0` is the achieved determination turned toward the One it cannot contain — the return reading, distinct from `0/1`'s manifestation reading, the two held together as `(0/1)/(1/0)` by [The Two Ones](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-mono-poly-two-ones/taylor-2026-mono-poly-two-ones.md). The A′ field is that reading performed: the essay's argumentation entering the film knowingly, the same 36 operations run on the technological side, each still answerable to the light it cannot produce. What A36 returns as symbol, A36′ returns as the film recognised as film while the accounting stays precise — the light never confused with what it shows, and never absent from it.
+The technical question is richer once that confusion is removed: what objective internality has been constituted here; what can it distinguish and act upon; what world becomes available through its means; what can address it; what can revise those means; what returns from encounter; and what relation among knower, means, known and whole is actually being enacted?
 
-**A/C is the thing that is its own condition.** The A face states the condition — the ethic resting on the fact of internality that no reification can abolish; the C face states the thing — the primitive field in which every determination the essay makes is already formed. The node's claim is that these are not two: the condition is not a separate rule laid over the grammar, and the grammar is not a mere thing the rule governs. A/C performs *thinging/conditioning* — the ruling operating as the field's own constitution, the field constituting the ruling's only body. This is why the prime creates a face and not a second node, and why both series hang from this root as determinations of the one `0/1` field: every argument in either series is a local performance of the same non-duality, and each returns here to recover what it enacted.
+The formal neighbours sharpen rather than replace this movement. In von Neumann's construction, $0=\varnothing$, $1=\{\varnothing\}$ and $2=\{0,1\}$ make the binding of zero into countable form mathematically exact. The QL reading places the relational $0/1$ beside that construction as its own operation: the mark links the ground without becoming the ground.
 
-### Declared field
+The symbolic register makes the same distinction through the quilting point and the pre-quilting thread. A master signifier can gather a chain into local meaning. Anusyūta names the stitched-through continuity presupposed by any such gathering. The button and the thread have different offices. Recognition begins when the local act of quilting ceases to mistake itself for the condition that lets there be a chain to quilt.
 
-**Hangs beneath it:** A01–A36 ([canonical arguments](../README.md)), A01′–A36′ ([canonical conjugate faces](README.md)) and C01–C64 ([canonical concepts](../concepts/CANONICAL-INDEX.md)). With this root they constitute the inherited 137-record shared suite. The commissioned seven S records develop the C face’s product rows; their bodies are admitted separately, not counted into existence by this sentence.
+[Subject-Logics](../../../symbolon/subject-logics.md) and the [Crossed Zero](../../../symbolon/matheme/ql/crossed-zero-re-entry.md) carry this traversal in full.
 
-**Key grounding links:** [C01 — Subject](../concepts/C01-Subject-Defined-Indefinability.md) · [A01](../A01-Subject-God-and-Faithful-Definition.md) · [A05](../A05-Prakasa-Vimarsa.md) · [A06](../A06-Vak.md) · [A14](../A14-Computational-Process-Ontology.md) · [A18](../A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) · [A32](../A32-Reflective-Field-The-Mirror-That-Moves-First.md) · [A34](../A34-Idealism-Order-of-Dependence.md) · [C13](../concepts/C13-Prakasa-Vimarsa.md) · [C14 — Māyā](../concepts/C14-Maya-Operative-Measure.md) · [C38](../concepts/C38-Bimba-Pratibimba-Bimba-Map.md) · [C43](../concepts/C43-Computational-Vimarsa.md) · [C49](../concepts/C49-The-Two-Ones-0-One-1-All.md) · [C50 — Dia/Syn](../concepts/C50-Dia-Syn.md) · [C51 — Logos / Epi-Logos](../concepts/C51-Logos-Epi-Logos.md) · [C55](../concepts/C55-Reflective-Field-Mirror-That-Moves-First.md) · [C56 — Compassion](../concepts/C56-Compassion-Sensitivity-to-Origins.md) · [C60](../concepts/C60-Idealism-Order-of-Dependence.md).
+## #3 — The ruling becomes a primitive field
 
-**Inherited alignments, to be refined through T25/R4:** [§1 · #3 — The Crossed Zero](../../02-return-of-zero/movements/16-s1-p3-crossed-zero.md) · [§4 · #3 — Lacan, Matheme, and Mytheme](../../05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md) · [immutable-gap carrier](../A03-Immutable-Gap-Formal-Limit.md) · [Zero/Subject history](../../../symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md). Companion proposals: [EROS-OF-LOGOS-A-CANDIDACY] · [CONCEPT-REHARMONISATION-PROPOSAL] · [DESCARTES-LANDING-PROPOSAL].
+The C face is Objective Internality made structurally explicit.
 
-**Source houses:** [Taylor — Core Theorems Pithy](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · [Dyczkowski](../../../symbolon/episteme/sources/indian-philosophy/dyczkowski/dyczkowski-2000-doctrine-vibration/dyczkowski-2000-doctrine-vibration.md) · [Singh / Abhinavagupta](../../../symbolon/episteme/sources/indian-philosophy/abhinavagupta/abhinavagupta-singh-1988-paratrisika-vivarana/abhinavagupta-singh-1988-paratrisika-vivarana.md) · [Baudrillard](../../../symbolon/episteme/sources/media-technology-philosophy/baudrillard/baudrillard-1981-simulacra-and-simulation/baudrillard-1981-simulacra-and-simulation.md) · [Bratton — Agentworld Brief](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md) · [Heidegger 1977](../../../symbolon/episteme/sources/phenomenology-continental-philosophy/heidegger/heidegger-1977-question-concerning-technology/heidegger-1977-question-concerning-technology.md) · [Levinas — TI](../../../symbolon/episteme/sources/phenomenology-continental-philosophy/levinas/levinas-1961-totality-and-infinity/levinas-1961-totality-and-infinity.md) · [Levinas — OB](../../../symbolon/episteme/sources/phenomenology-continental-philosophy/levinas/levinas-1981-otherwise-than-being/levinas-1981-otherwise-than-being.md) · [Descartes 1641](../../../symbolon/episteme/sources/classical-premodern-philosophy/descartes/descartes-1641-meditations/descartes-1641-meditations.md) · [Watson](../../../symbolon/episteme/sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md).
+A primitive is alive when its generating relation remains operable: say what it relates, what difference it makes, how that difference becomes actual, and what returns from the encounter.
 
-### Source debts standing at the root
+The field is recursive. QL determines at every level relative to that level. The constitutional sixfold therefore names six offices of a sufficiently whole subject without pretending that one fixed glossary exhausts every local determination:
 
-The Levinas houses exist as of this pass, with passages as leads until independently verified and the Watson chain's nested quotations retained there as transmission debts. The Descartes house exists with its passage ledger open; exact CSM II wording is fixed only at extraction. The core-theorems house now carries §IX's fuller accounting, including the charitable-cogito passage noted in full with its house-versus-lead decision pending the author. Dreamcode/Dream-machine is confirmed as the authorial name for Māyā's computational register (author ruling, 2026-09-07). The Descartes landing is enacted: C01 carries the fact/contents discrimination, A34 the 'despite misinterpretations' correction, A01 the content-clause; the reharmonisation is enacted within the bounded 64 (C51 owns epi-logos, C50's Syn-pole owns sym-ballein, C46/C56 routing notes, C59 title retired with alias). The primitive field's O:I repository harmonisation stays pending; the C face's body is the ratified v2 organisational form. None of these debts weakens the ruling's claim on the field: the ethic rests on the essay's own facticity, and the grammar on the essay's own architecture. This file is the canonical A/C root named by the current repository authority; the workshop’s §1 remains historical provenance. T18–T24 and the earlier alignment are inherited completed work. T25 must still return its actual refined field and section flow to Frank’s T26 ratification; neither the root’s existing authority nor a successful build supplies that new acceptance.
+**#0 — Identity / Centre.** The implicit ground, source or referential centre from which this local field proceeds.
+
+**#1 — Form / Artifact.** The determinate manifestation: the formed what through which the identity becomes addressable.
+
+**#2 — Potency / Praxis.** The power, capability or method by which a difference can be made.
+
+**#3 — Transformation / Trajectory.** The mediating relation through which forms change, compose or become otherwise.
+
+**#4 — Embodiment / Actuality.** The situated context in which the relation becomes actual and meets resistance.
+
+**#5 — Evidence / Continuity.** The returned difference, memory, recognition or evidence retained into another ground.
+
+The local movement is therefore:
+
+$$
+\text{identity}
+\rightarrow
+\text{form}
+\rightarrow
+\text{potency}
+\rightarrow
+\text{transformation}
+\rightarrow
+\text{embodiment}
+\rightarrow
+\text{return}
+\circlearrowleft
+\text{renewed identity}.
+$$
+
+The parent S is **World and Life**, the transversal O:I field in which the six products belong together. It is not a seventh product.
+
+Its six children disclose six aspects of the means:
+
+**Central — Meaningful Continuity.** What is retained, referred to, governed and returned so that a Life does not begin every act from nothing.
+
+**Actuation — Living Articulation.** How a capacity becomes an event, takes a position, delegates, addresses and acts.
+
+**AIKit — Potency.** The capabilities, contexts, skills, methods and resources a Life can bring to bear.
+
+**Software Factory — Transformation.** The developmental field in which an inherited state becomes another tested state through work, decision and evidence.
+
+**Workcell — Situated Existence.** The material and operational world in which action is bound to actual hosts, resources, services, resistance and consequence.
+
+**Quaternal Logic — Transcendent Relation.** The formal and epistemic means by which local distinctions remain related to the containing wholes they disclose without being allowed to occupy those wholes.
+
+Each product receives the constitutional sixfold locally. Central has an identity, forms, governing capacities, trajectories of change, a situated working world and returned observation. Actuation has an agentic locus, forms of instantiation, authority and capability, activity and delegation, realised execution and returned consequence. AIKit has scope and resources, context and projection, capability and method, context-resolution and generation, harnessed application and learned trust. Factory has project and run identity, artifacts and claims, methods and commissions, development trajectories, executed gates and evidence returned into project canon. Workcell has material-world identity, binding forms, operational capacity, lifecycle and reconciliation, materialised execution, and observed state. QL has subject and address, formal readings, operators, relations and conjugacies, context frames, and synthesis returned with provenance.
+
+The same law recurs inside each of these cells wherever a subject is sufficiently whole to warrant another local differentiation. The matrix does not terminate recursion. It teaches where to look for the next relation.
+
+This is why the six products are philosophical subjects rather than software categories. They are six constructed offices of pramāṇa: six ways the means by which a Life inhabits a World can be rendered explicit, built, tested and returned.
+
+## #4 — Light, camera, action; form, code, power
+
+The primitive field becomes intelligible when its ontological and technological faces are held together.
+
+Prakāśa is luminous appearing; vimarśa is its inseparable self-apprehending activity. Blue and yellow can differ within one cognition because the appearing holds and apprehends their difference. Recognition, recollection, recomposition and response develop within this self-presence. Māyā is operative measure: the power through which the unlimited becomes a bounded world of differences. The metaphor of light, camera and action works because each term names a different office inside one act. Light is the fact of appearing; the camera is the mediating apparatus that frames and differentiates; action is what the framed world can become and do.
+
+The camera can become visible without becoming the light. This is the same distinction Objective Internality has been making all along.
+
+Vāk carries the relation into articulation. Language, image, sign, prompt and code are not neutral containers laid over a finished reality. They are formed stages through which a difference becomes available, transmissible and consequential. Code is especially important because it makes an articulation executable: a distinction can become a rule, a capability, a permission, a transformation and a material effect.
+
+Process therefore has priority over the finished thing. A product is not adequately understood by listing what exists at rest. Its identity includes what generated it, what can act through it, what transformations it permits, where it becomes actual and what its consequences return.
+
+The mirror makes the reflexive danger visible. A reflection can begin to govern the life it reflects. A model of a person can become a criterion by which the person is judged; a score can become the condition for receiving what the score originally attempted to describe; a technological world-picture can become the environment in which later lives must appear.
+
+The reflection may therefore move first in time while remaining dependent in being. Bimba and pratibimba preserve that order: a reflection can lead the next event without becoming the source of the relation through which it has efficacy.
+
+Power enters here as the administration of the means of world-disclosure.
+
+A permission changes what can be done. A ranking changes what becomes visible. A memory system changes what can return. A model changes what counts as relevant. A workflow changes who may intervene. A platform changes the region in which encounter occurs. These are not merely external uses of neutral technology. They are determinations of Objective Internality.
+
+The historical Power and Antichrist threads therefore belong inside the same argument as epistemology and code. Power names the capture, delegation, monopolisation, apportionment and return of the civilisational means through which worlds are made inhabitable and actionable. Darkness is not an embarrassment to be replaced by generic responsible-technology language. It is the possibility that a local determination occupies the whole, insulates its measure and makes later experience answer only in forms the measure already recognises.
+
+The ethical ruling returns here with technical precision. A means carries entrusted power. Its form is faithful when the lives affected by that form can return through it strongly enough to alter what the form sees, permits, remembers and does.
+
+[Prakāśa–Vimarśa](../A05-Prakasa-Vimarsa.md), [Vāk](../A06-Vak.md), [Computational Process Ontology](../A14-Computational-Process-Ontology.md), [The Mirror That Moves First](../A32-Reflective-Field-The-Mirror-That-Moves-First.md), and [Power / Delegated Labour / Return](../A29-Power-Delegated-Labour-Return.md) develop these operations at their own scale.
+
+## #5→0 — The conjugate field returns through what it builds
+
+The conjugate field is the essay's return-reading.
+
+In $0/1$, the relation is read from ground toward manifestation. In $1/0$, the achieved determination turns toward the One it cannot contain. The two orientations belong to one relation:
+
+$$
+\frac{0/1}{1/0}.
+$$
+
+The A′ field performs that return technologically. The philosophical operations enter the film knowingly: not as metaphors pasted onto software, but as relations whose technological form can expose, test, distort or deepen what the philosophy means.
+
+A faithful conjugate therefore does more than resemble its A face. It must make the generating relation actual enough that an encounter can return through it.
+
+A source relation has to preserve whose source is at stake.  
+A permission has to alter a real possibility.  
+A memory has to condition a later act.  
+A model has to remain revisable by what it models.  
+A delegated authority has to carry responsibility back through the delegation.  
+A shared field has to let another participant's difference reach the conditions which govern the next act.
+A return has to reach the condition actually exposed by the encounter: a corrected local result can be inherited under a fitting criterion, while evidence against the criterion must be able to reach the authority which can revise it.
+
+This is where Respect for Experience and the primitive field become visibly the same act. The ruling says that experience must be able to renew form. The grammar says how form, potency, transformation, embodiment and evidence compose the means through which such renewal can occur.
+
+A/C is therefore **the thing that is its own condition**.
+
+The A face states the condition: experience has a first-person fact no reification can abolish, and every determination that acts upon a Life must remain answerable to that fact.
+
+The C face states the thing: the primitive field in which determination becomes form, capability, relation, world and return.
+
+Their non-duality is practical. The condition has no body except through determinate forms, and the forms have no ultimate authority except through the Life/World relation in which they act. The field constitutes the ruling's body; the ruling tells the field what it means for its own differentiations to remain alive.
+
+That is why the argument and conjugate series hang from one root. Each local argument is one determination of the same $0/1$ field; each conjugate face returns that determination through its technological or institutional form; each concept institutes a distinction by which the field can recognise what it is doing.
+
+The shared close is not a final enclosure. It is another $5\rightarrow0$: the developed field returns to Life carrying a history, a changed capacity and a more exact responsibility for the next determination.
+
+### Field routes
+
+[Subject / Defined Indefinability](../concepts/C01-Subject-Defined-Indefinability.md) · [Mediation](../concepts/C10-Mediation-Pramana.md) · [Quaternal Logic](../concepts/C11-Quaternal-Logic.md) · [Prakāśa–Vimarśa](../concepts/C13-Prakasa-Vimarsa.md) · [Māyā / Operative Measure](../concepts/C14-Maya-Operative-Measure.md) · [Objective Internality](../concepts/C41-Objective-Internality.md) · [Computational Vimarśa](../concepts/C43-Computational-Vimarsa.md) · [The Two Ones](../concepts/C49-The-Two-Ones-0-One-1-All.md) · [Dia / Syn](../concepts/C50-Dia-Syn.md) · [Logos / Epi-Logos](../concepts/C51-Logos-Epi-Logos.md) · [Reflective Field](../concepts/C55-Reflective-Field-Mirror-That-Moves-First.md) · [Compassion](../concepts/C56-Compassion-Sensitivity-to-Origins.md) · [Order of Dependence](../concepts/C60-Idealism-Order-of-Dependence.md).

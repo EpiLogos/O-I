@@ -13,9 +13,9 @@ source_readiness: Layton-online-whole-read-canonical-source-admitted-Coptic-coll
 
 # The *Hypostasis of the Archons* — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above
 
-`Mytheme Whole-Story Amplification Law` **defines** the direction of this record. The primary unit is not “archon,” “firmament,” “Sophia,” “veil,” “demiurge,” “Norea,” “seven heavens,” or “Gnosticism” as a reusable symbolic label. It is the **whole relational cosmology and revolt/revelation sequence of Nag Hammadi Codex II,4, usually titled *The Hypostasis of the Archons* / *The Reality of the Rulers*.**
+The **cosmology and revolt/revelation sequence of Nag Hammadi Codex II,4, usually titled *The Hypostasis of the Archons* / *The Reality of the Rulers*,** gives each figure its active place. A ruler forms and claims; a woman eludes possession; Norea refuses an imposed ancestry; Eleleth answers her inquiry. Their acts disclose the relation between effective power and the origin that power cannot own.
 
-The record is intentionally source-first. Project interpretation remains separate because Native 020 had explicitly left the layered-cosmos / firmament / archons seam blocked until an intact source-bearing whole could be recovered.
+The telling differentiates creation, human formation, coercion, resistance, retrospective revelation and promised liberation. Its cosmological hierarchy becomes consequential through what the rulers can do to the lives within it and what those lives can answer.
 
 ---
 
@@ -24,17 +24,17 @@ The record is intentionally source-first. Project interpretation remains separat
 <a id="1-source-identity-and-structure"></a>
 ### Source identity and structure
 
-The tractate is a Gnostic exposition of the **origin, nature and power of the rulers/authorities**. Its surviving Coptic text belongs to Nag Hammadi Codex II. Modern editions and translations differ in title and wording; Bentley Layton's *Hypostasis of the Archons* and Willis Barnstone / Marvin Meyer's *Reality of the Rulers* are current English carriers for this recovery.
+The tractate is a Gnostic exposition of the **origin, nature and power of the rulers/authorities**. Its surviving Coptic text belongs to Nag Hammadi Codex II. Modern editions and translations differ in title and wording; Bentley Layton's *Hypostasis of the Archons* and Willis Barnstone / Marvin Meyer's *Reality of the Rulers* are separately named English translations.
 
 Scholarly description of the tractate gives the essential cosmological distinction clearly: a **veil** divides an incorruptible, invisible realm above from the corruptible, visible realm of matter and ignorance below; the lower rulers arise inside the shadowed realm and reproduce a hierarchy modelled on what lies above them.
 
 The whole narrative then moves through creation, human formation, domination, resistance and revelation rather than presenting one static map.
 
-The material home is **late-antique-gnostic**: a Coptic tractate in Nag Hammadi Codex II,4. Manuscript provenance in Egypt, proposed composition, narrated cosmography and modern reception have separate offices. Stephen E. Robinson's [Coptic Encyclopedia account, CE 1261a–1262a](https://ccdl.claremont.edu/digital/api/collection/cce/id/1001/download) places a Greek composition before AD 350 and notes Jewish or Jewish-Christian connections. That dating is a scholarly attribution; no exact city of composition is established here. The heavens, abyss, garden and ark belong to narrated space. The 2026 recovery belongs to reception, not the ancient story's timeline.
+The surviving work is a late-antique Coptic tractate in Nag Hammadi Codex II,4. Manuscript provenance in Egypt, proposed composition, narrated cosmography and modern reception have separate offices. Stephen E. Robinson's [Coptic Encyclopedia account, CE 1261a–1262a](https://ccdl.claremont.edu/digital/api/collection/cce/id/1001/download) places a Greek composition before AD 350 and notes Jewish or Jewish-Christian connections. That dating is a scholarly attribution; no exact city of composition is established here. The heavens, abyss, garden and ark belong to narrated space. Taylor's contemporary reception belongs to a different historical moment from the ancient story.
 
-The earlier page arranged the material partly in cosmological order. The developed telling below follows the tractate's disclosure: ruler and human formation; Norea's crisis; Eleleth's retrospective account of origins; promised liberation. The existing cosmological account is retained inside that retrospective speech. The late revelation changes the reader's understanding of the earlier coercion.
+The disclosure changes the reader's understanding of the earlier coercion. Human formation and Norea's crisis precede Eleleth's retrospective account of the rulers' origins. The late speech makes their local power intelligible through a source they had claimed to exhaust; promised liberation remains a later event.
 
-The [complete Layton translation and its canonical source record](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md) were read for this development. The source now holds the selected online carrier, saved local copy and six episode cards. No sibling NOTES exists for this newly admitted house. The earlier page's Barnstone–Meyer carrier is retained as a named translation lead, not represented as independently collated in this pass. The opening invokes apostolic teaching about cosmic powers and answers a correspondent's inquiry.
+In the [selected Layton translation](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md), the opening invokes apostolic teaching about cosmic powers and answers a correspondent's inquiry. The received telling runs from that inquiry through its closing hymn. Barnstone–Meyer is a separately named translation, whose variants have not been collated with this English carrier.
 
 
 ## #1 — A formed human exceeds the makers
@@ -44,7 +44,7 @@ The [complete Layton translation and its canonical source record](../../../../ep
 
 The tractate begins from the rulers' claim to authority. Their chief is described as **blind**, powerful, ignorant and arrogant. He declares himself to be the sole god. A voice from incorruptibility answers that claim and names his error: he does not see the greater reality whose absence from his field he has mistaken for non-existence.
 
-This is a source-side operation before any project amplification:
+The declaration turns a limit of sight into a claim over reality:
 
 ```text
 local ruler sees only his own field
@@ -126,7 +126,7 @@ The ruler opens his eyes upon an apparently limitless quantity of matter and rep
 
 Sophia introduces light into matter, exposing the ruler's mistake without making the lower realm unreal.
 
-The source whole therefore differentiates:
+The lower ruler's generation retains the boundary and the conditions beneath it:
 
 ```text
 incorruptible / invisible above
@@ -149,7 +149,7 @@ light from above reveals the error
 
 The lower ruler generates **seven offspring**, rulers like their parent. The cosmology then distributes rule through layered heavens / chaotic realms. A secondary scholarly summary of the tractate describes Yaldabaoth's offspring as an organised hierarchy corresponding to the higher realm; surviving translations also place Sabaoth in the seventh heaven beneath the veil and describe the heavens of chaos becoming populated by subordinate powers.
 
-This is the actual source-side basis of Native 020's **layered cosmos / firmament / archons** seam. The important relation is not simply “seven levels.” It is:
+The layered cosmos relates a higher order to a lower formation and its administered heavens. The number of levels alone does not explain the jurisdiction each ruler claims:
 
 ```text
 higher order
@@ -183,12 +183,12 @@ The two rebellions retain different offices. Sabaoth changes allegiance within t
 
 <a id="hypostasis-norea-root-return"></a>
 
-His revelation promises disclosure after three generations. Eleleth's answer extends to Norea's offspring and to future deliverance. The true Man will bring saving disclosure; spiritual beings will be freed, and the authorities' world will lose its dominion. The closing hymn gives the ending a collective voice before Father, Son and Holy Spirit. This prospective ending matters: Norea's immediate rescue is not narrated as the completion of the whole cosmic history. Robinson's [account of the tractate's ending](https://ccdl.claremont.edu/digital/api/collection/cce/id/1001/download) **sources** this bounded synopsis; the complete Layton telling retains the future teaching, anointing, ascent, lament and praise in their sequence.
+His revelation promises disclosure after three generations. Eleleth's answer extends to Norea's offspring and to future deliverance. The true Man will bring saving disclosure; spiritual beings will be freed, and the authorities' world will lose its dominion. The closing hymn gives the ending a collective voice before Father, Son and Holy Spirit. This prospective ending matters: Norea's immediate rescue is not narrated as the completion of the whole cosmic history. In Robinson's [account of the tractate's ending](https://ccdl.claremont.edu/digital/api/collection/cce/id/1001/download), the promised liberation and destruction remain eschatological. Layton's telling gives that future its teaching, anointing, ascent, lament and praise in sequence.
 
 <a id="3-what-whole-story-recovery-changes"></a>
-### What whole-story recovery changes
+### Origin answers the claim to entire authority
 
-A compressed “archons = bad rulers” reading loses the tractate's central machinery. The whole contains:
+The authorities act through an ordered world whose formation and threatened lives remain connected:
 
 - Pistis Sophia's creative initiative;
 - veil, shadow and material realm;
@@ -201,94 +201,75 @@ A compressed “archons = bad rulers” reading loses the tractate's central mac
 - Norea's refusal of their genealogy;
 - Eleleth's rescue and disclosure of the root.
 
-The narrative's deepest source-side movement is therefore **false sovereignty corrected by provenance**.
+The narrative's deepest movement is therefore **false sovereignty corrected by provenance**.
 
 The rulers' mistake is not that their local world is imaginary. They possess real efficacy inside it. Their mistake is to infer from local efficacy and local visibility that their order is self-grounding and exhaustive.
 
 <a id="hypostasis-neumann-shared-relation"></a>
 ### Shared archetypal relation, situated telling
 
-[Neumann's shared whole](../../../archetypal-ground/neumann-images/WHOLE.md#neumann-world-parent-separation) **compares** genesis, separation, contested parental authority and the emergence of a being able to answer its inherited world. The shared archetypal structuration is already the project's appointed ground. **human-amplified: no** for equating this tractate's figures or episodes one-to-one with Neumann's stages. This local comparison remains a proposal: Norea's resistance can enter the shared question of liberation without being renamed as Neumann's hero, and her revealed origin need not become a psychological episode of ego formation.
+Genesis, separation and contested parental authority also enter [Neumann's account of differentiation](../../../archetypal-ground/neumann-images/WHOLE.md#neumann-world-parent-separation), where an emerging being becomes able to answer its inherited world. That shared archetypal structuration gives the comparison a ground while leaving this particular connection proposed. Norea's resistance can enter a question of liberation without being renamed as Neumann's hero; her revealed origin retains a religious office distinct from a psychological episode of ego formation.
 
 The difference is consequential. The existing Neumann whole moves through separation toward renewed differentiated participation. This tractate gives the realms a pronounced opposition and directs its promised ending beyond the rulers' order. Sabaoth's internal reversal and Norea's transcendent root keep that opposition complex, but they do not make its soteriology identical to the positive Śaiva account of manifestation. The comparison must return to the whole that resists its simplification.
 
-The authorial native field and its complete eightfold remain as recovered in the preceding work; no local god or episode replaces a determination. Taylor's `X/x` remains native. [Homology and Analogy](../../../../episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md) **qualifies** this proposed crossing at evidence register 3: identify the shared operation and the consequence that survives, while retaining the source's theological difference. **human-amplified: no** for a settled QL appointment to this story.
+The complete native eightfold retains its own derivation; a local god or episode does not replace a determination. Taylor's `X/x` follows determining capacity into a particular formation. A [preserved relation or analogous operation](../../../../episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md) makes the proposed crossing exact through both the shared consequence and the theological difference retained. The cosmological telling does not become an ancient derivation of QL through that comparison.
 
-This whole also remains distinct from [the Valentinian Sophia–Horos–Achamoth whole](../valentinian-sophia-horos-achamoth/WHOLE.md), which **compares** a separate source tradition. That companion cannot fill a gap in II,4. Norea, Eleleth, Zoe and Sabaoth keep their present offices; Horos and Achamoth are not inserted into them. No historical identity or line of transmission between the two wholes is asserted by the shared Sophia name.
+The [Valentinian Sophia–Horos–Achamoth telling](../valentinian-sophia-horos-achamoth/WHOLE.md) gives a separate cosmology and fate to its actors. Its events cannot fill a gap in II,4. Norea, Eleleth, Zoe and Sabaoth keep their present offices; Horos and Achamoth are not inserted into them. No historical identity or line of transmission between the two wholes is asserted by the shared Sophia name.
 
 ## #5→0 — Return with the whole and its source seam intact
 
 <a id="4-human-amplified-ledger"></a>
-### Human-amplified ledger
+### Local authority and returned origins
 
-This whole is newly recovered from source work. Native 020 must therefore distinguish current project relations from candidate amplification.
+Four further comparisons are proposed through the differentiated actions already present. Each keeps this telling's cosmology, coercion, gendered refusal and religious promise as its particular conditions.
 
 <a id="41-layered-frame--local-totalisation-relation"></a>
 ### Layered frame / local-totalisation relation
 
-**human-amplified: no**  
-**system candidate:** the chief ruler's declaration can strongly **figure** the project's mature Hybris relation: a determinate local formation installs itself at the zero/ground office because it cannot see the conditions outside its frame.
+The chief ruler's declaration proposes a particular image of Hybris: a determinate local formation takes its own horizon as the ground of reality because the conditions outside that horizon do not appear within it. The formation's real power makes its appropriation consequential.
 
-The fit is exact enough to preserve as an amplification prompt, but it has not yet been supplied or ratified by Frank as the author's symbolic appointment to this tractate.
+The narrative gives that claim a reply from incorruptibility. The reply does not erase the lower world; it exposes the difference between effective local jurisdiction and self-grounding entire authority.
 
 <a id="42-veil--māyā-comparison"></a>
 ### Veil / Māyā comparison
 
-**human-amplified: no**  
-**system candidate:** the tractate's veil can be compared with the project's Māyā/frame field insofar as both organise a distinction between a locally visible world and conditions not visible within that world.
+The proposed Māyā/frame comparison concerns a visible world related to conditions that do not appear as contents within it. The veil divides the narrated realms; shadow and matter give the lower ruler the field through which he can act.
 
 The doctrines are not identical. The Gnostic lower-world cosmology and the project's positive Śaiva account of Māyā have materially different metaphysical valences; any comparison must preserve that difference.
 
 <a id="43-archon--technical-evaluator-comparison"></a>
 ### Archon / technical evaluator comparison
 
-**human-amplified: no**  
-**system candidate:** an archon may become a useful cross-register image for an evaluator, institution or agent whose real local jurisdiction is silently expanded into ground-authority.
+An evaluator, institution or agent has a similarly proposed point of comparison where an effective local jurisdiction expands its claim into ground-authority. The fault concerns that expansion, rather than the mere possession of a local office.
 
-No such technical analogy propagates from this record without human amplification.
+Within an actual technical comparison, the judging agent can be a relative functional knower, accounts and alternatives the known, and selected evidence, memory, tools and rules its means. The complete apparatus is in turn a means within the containing person's inquiry, whose immediate condition and lived judgment retain their office. A returned encounter can correct an answer or task under a fitting measure, revise a failed model, source, evaluator, permission or commission, or retain a fitting condition with reasons. The warranted consequence must be inherited by the next act. A stronger claim of changed processing requires an identifiable changed producing condition. This constructed office is a contemporary proposal; no spiritual rank or narrated archon is assigned to software by the comparison.
 
 <a id="44-norea--objective-internality--refusal"></a>
 ### Norea / Objective Internality / refusal
 
-**human-amplified: no**  
-**system candidate:** Norea's refusal of the genealogy assigned by the rulers may eventually compare with Number Six's refusal of exhaustive assigned identity and Daphne's refusal of possessive determination.
+Norea's refusal proposes a comparison with Number Six's resistance to exhaustive assigned identity and Daphne's resistance to possessive determination. Her reply reaches the rulers' asserted ancestry, and her question obtains an account of their origin. These different refusals keep their particular adversaries and consequences.
 
 The historical, gendered and religious specificity of Norea's scene must remain primary.
 
 <a id="5-native-020-relation--layered-cosmos-now-has-an-intact-owner"></a>
-### Native 020 relation — layered cosmos now has an intact owner
+### Layering, image and a claim over life
 
-`Native 020 — Deep-Seam Reconciliation` had correctly left the seam blocked until a concrete source whole was named. That blocker is now removed at the **whole-source** level.
+Veil, shadow, material ruler, subordinate authorities and human world form a layered cosmology whose power is contested through Norea and Eleleth. The image makes hierarchy, horizon, local efficacy, false totalisation and recovered origin consequential together. Their narrated relation differs from a modern constitution or an AI architecture. The proposed technical and psychic comparisons remain answerable to the religious and gendered events through which this particular story discloses authority.
 
-The exact current relation is:
-
-```text
-Hypostasis source whole
-veil · shadow · lower ruler · layered archons · human world · Norea · Eleleth · root
-        ↓
-possible authored amplification
-nested frame / local sovereignty / provenance / return
-        ↓
-QL / Objective Internality / Hybris / technical governance
-only after provenance-preserving comparison
-```
-
-The source does **not** prove QL, a modern political theory or an AI architecture. It gives Native 020 an intact cosmological image in which hierarchy, horizon, local power, false totalisation and recovered origin actually occur together.
-
-The coverage row names [A20 — Image, Valuation, Possession](../../../../../section-rooms/arguments/A20-Image-Valuation-Possession.md) as the intended return: this whole **returns-to** its question of image and claimed authority through the intact coercion/refusal/revelation movement. This is an outgoing retrieval route, **human-amplified: no** for the unratified technical or psychological interpretation. It does not certify a reciprocal consumer edit or override the four inherited candidate flags above.
+[An image can be valued through a claim to possess what it discloses](../../../../../section-rooms/arguments/A20-Image-Valuation-Possession.md). Here the rulers' attraction to incorruptibility's reflection leads to human formation as decoy, attempted seizure, violated shadow and coerced ancestry. Norea's refusal and Eleleth's disclosure turn that claim back upon the rulers' derivative origin. The proposed comparison keeps the living event beyond an administrator's image of it.
 
 <a id="6-source-control"></a>
-### Source control — current recovery
+### Source and interpretive scope
 
-**Primary ancient owner:** Nag Hammadi Codex II,4, *The Hypostasis of the Archons* / *The Reality of the Rulers*. **Source relation:** Paraphrased. The named ancient actors and events belong to the telling; local symbolic comparisons remain Offered, with relation-local human-amplification flags. Neither pending source admission nor quotation readiness lowers an independently Derived or Argued native operation.
+The ancient work is Nag Hammadi Codex II,4, *The Hypostasis of the Archons* / *The Reality of the Rulers*. The telling here paraphrases Layton's English electronic carrier. The technical and psychic comparisons are proposals; their shared operation preserves the source's particular cosmology rather than attributing a native logical system to its ancient author.
 
-**Read this pass:** the complete Bentley Layton online translation at Early Christian Writings, whose footer identifies its origin in the Gnostic Society Library and *The Nag Hammadi Library in English* edited by James M. Robinson; Stephen E. Robinson's complete Coptic Encyclopedia entry, CE 1261a–1262a. The latter is scholarly control, not a substitute for the primary telling. Its compressed Eve/serpent account is not used to overwrite the more differentiated Layton sequence.
+Layton's electronic translation at Early Christian Writings identifies its origin in the Gnostic Society Library and *The Nag Hammadi Library in English*, edited by James M. Robinson, without identifying a print impression. Stephen E. Robinson's encyclopedia entry, CE 1261a–1262a, supplies scholarly chronology. Its compressed Eve/serpent synopsis remains distinct from the spiritual woman, shadow, carnal woman and entering/departing instructing principle in Layton's sequence.
 
-**Translation seam:** the Barnstone–Meyer original hosting could not be retrieved successfully in this pass. A Korean repost was encountered but was not accepted as an English translation-control witness. The earlier recovery's named carrier remains a lead. Exact Coptic text/edition, page-line references, damaged passages and translation differences remain pending. No quoted modern translation passage is reproduced here as quotation-ready.
+Barnstone–Meyer remains a named translation lead rather than a collated variant witness. Exact Coptic text, page-lines, damaged passages and differences between translations require their own textual control. The selected English telling supports paraphrase without supplying a critical Coptic edition or verified modern quotation.
 
-**Canonical source return:** [formation](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q001), [woman/shadow/instruction](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q002), [family/flood](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q003), [Norea/Eleleth](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q004), [retrospective cosmology](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q005) and [ending](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q006) now have separate passage scopes in the one primary source house. The scholarly commentary remains distinct. Barnstone–Meyer and Coptic collation remain required before variant claims.
+**Selected episode scopes:** [formation](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q001), [woman/shadow/instruction](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q002), [family/flood](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q003), [Norea/Eleleth](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q004), [retrospective cosmology](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q005) and [ending](../../../../episteme/sources/biblical-studies/nag-hammadi/hypostasis-archons-layton/hypostasis-archons-layton.md#hypostasis-archons-layton-q006) retain separate sequences within the one telling. Scholarly commentary supplies a different historical warrant. Barnstone–Meyer and Coptic collation remain required before variant claims.
 
-### Return statement
+### Power answers through the life it cannot own
 
-The *Hypostasis of the Archons* is now recoverable as a whole Mytheme because its cosmology is inseparable from its drama of authority. A veil divides realms; shadow becomes the material condition of a lower world; a ruler born inside that world mistakes his horizon for the entirety and generates subordinate rulers; life and human origin repeatedly exceed their claimed jurisdiction; Norea refuses the genealogy through which they would possess her; Eleleth finally reveals both her root and the rulers' derivative origin. **The story's rulers are most dangerous not because they are unreal, but because real local power is mistaken for self-grounding total authority.** That last sentence is presently a system synthesis of the recovered whole and remains `human-amplified: no` until Frank ratifies the amplification.
+The *Hypostasis of the Archons* makes cosmology inseparable from a drama of authority. A veil divides realms; shadow becomes the material condition of a lower world; a ruler born inside that world mistakes his horizon for the entirety and generates subordinate rulers; life and human origin repeatedly exceed their claimed jurisdiction; Norea refuses the genealogy through which they would possess her; Eleleth finally reveals both her root and the rulers' derivative origin. **The story's rulers are most dangerous not because they are unreal, but because real local power is mistaken for self-grounding total authority.** That interpretation preserves the difference between the rulers' narrated efficacy and their claim to entire authority; it does not turn the proposed technical or psychological comparisons into established ancient teaching.
 

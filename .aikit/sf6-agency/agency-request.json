@@ -1,0 +1,56 @@
+{
+  "schema": "actuation.agency-actualisation/v1",
+  "request_ref": "request:oi-factory-guardian-agency-2026-09-24",
+  "requester_ref": "human:owner",
+  "governing_binding": {
+    "schema": "actuation.agency/v1",
+    "binding_ref": "binding:oi-root-agency@project:O-I",
+    "agent_ref": "agent/oi-field-guardian",
+    "agency_ref": "agency:oi-root",
+    "world_ref": "project:O-I",
+    "scope_ref": "central:position:project:O-I:oi-root-agency",
+    "bounds_refs": ["bound:project:O-I"],
+    "authority_refs": ["authority:owner"],
+    "return_relation_ref": "return-relation:owner"
+  },
+  "metagency_grant": {
+    "schema": "actuation.agency/v1",
+    "grant_ref": "grant:oi-root-delegates-product-guardians",
+    "agency_ref": "agency:oi-root",
+    "world_binding_ref": "binding:oi-root-agency@project:O-I",
+    "authority_ref": "authority:owner",
+    "operations": ["determine-agency"],
+    "bounds_refs": ["bound:project:O-I"]
+  },
+  "determination": {
+    "schema": "actuation.agency/v1",
+    "determination_ref": "determination:oi-root-delegates-factory-guardian",
+    "kind": "delegation",
+    "determining_agency_ref": "agency:oi-root",
+    "differentiated_agency_ref": "agency:factory-guardian@project:O-I",
+    "world_binding_ref": "binding:factory-guardian@project:O-I",
+    "bounds_refs": ["bound:project:O-I"],
+    "delegated_autonomy": {"may_determine_within_bounds": true},
+    "return_policy": {"mode": "required", "return_relation_ref": "return-relation:owner"},
+    "authority_refs": ["authority:owner"]
+  },
+  "differentiated_binding": {
+    "schema": "actuation.agency/v1",
+    "binding_ref": "binding:factory-guardian@project:O-I",
+    "agent_ref": "agent/factory-guardian",
+    "agency_ref": "agency:factory-guardian@project:O-I",
+    "world_ref": "project:O-I",
+    "scope_ref": "central:position:project:O-I:factory-guardian",
+    "determining_agency_ref": "agency:oi-root",
+    "bounds_refs": ["bound:project:O-I"],
+    "authority_refs": ["authority:owner"],
+    "return_relation_ref": "return-relation:owner"
+  },
+  "agent_identity": {
+    "standing": "existing",
+    "evidence_refs": ["central:source:control:root:Control/agents/profiles/profile-cf2d2255e74c3265.json"]
+  },
+  "provenance": {
+    "source_refs": ["https://github.com/EpiLogos/O-I/issues/65", "central:source:project:O-I:ProjectCentral/relations/positions/factory-guardian.json"]
+  }
+}

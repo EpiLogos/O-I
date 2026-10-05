@@ -1,0 +1,2376 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-room-07-instrument-returns",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+  "revision": 1,
+  "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43",
+    "revision": 1,
+    "title": "§5→0 · #0 — From Theory to Vocation",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44",
+    "revision": 1,
+    "title": "§5→0 · #1 — QL, MEF, Bimba, and Harness",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45",
+    "revision": 1,
+    "title": "§5→0 · #2 — Antikythera as Attunement Instrument",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46",
+    "revision": 1,
+    "title": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47",
+    "revision": 1,
+    "title": "§5→0 · #4 — Idealism as Horizon",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k",
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48",
+    "revision": 1,
+    "title": "§5→0 · #5→0 — AHI and Planetary Return",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050",
+    "revision": 1,
+    "title": "#0 — From Theory to Vocation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052",
+    "revision": 1,
+    "title": "0/1 — QL, MEF, Bimba, and Harness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.425,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054",
+    "revision": 1,
+    "title": "the instrument — outer gear ring",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.25,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.75,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056",
+    "revision": 1,
+    "title": "middle train",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.25,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058",
+    "revision": 1,
+    "title": "inner train",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.25,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.8,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a",
+    "revision": 1,
+    "title": "the observer the instrument does not replace",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.25,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c",
+    "revision": 1,
+    "title": "shared commons — protocol · memory · provenance · consequence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e",
+    "revision": 1,
+    "title": "Bimba A — local ground",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.75,
+      "automation": null
+     },
+     "y": {
+      "value": -0.6,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g",
+    "revision": 1,
+    "title": "Bimba B — local ground",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": -0.72,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i",
+    "revision": 1,
+    "title": "Bimba C — local ground",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 1.05,
+      "automation": null
+     },
+     "y": {
+      "value": -0.6,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k",
+    "revision": 1,
+    "title": "the field it cannot finally map from outside",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m",
+    "revision": 1,
+    "title": "a locally authoritative map",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o": {
+    "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o",
+    "revision": 1,
+    "title": "#5→0 — AHI and Planetary Return",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43",
+   "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050"
+  },
+  "provenance": [
+   {
+    "ref": "rooms/roz-room-07-instrument-returns.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+      "revision": "dbf3b17",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-room-07-instrument-returns:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-07-instrument-returns\" data-expression-revision=\"1\"><h1>Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns</h1><p>Frozen reading of expression:return-of-zero:roz-room-07-instrument-returns at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43\" aria-label=\"§5→0 · #0 — From Theory to Vocation\"><h2>§5→0 · #0 — From Theory to Vocation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — From Theory to Vocation\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44\" aria-label=\"§5→0 · #1 — QL, MEF, Bimba, and Harness\"><h2>§5→0 · #1 — QL, MEF, Bimba, and Harness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"0/1 — QL, MEF, Bimba, and Harness\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45\" aria-label=\"§5→0 · #2 — Antikythera as Attunement Instrument\"><h2>§5→0 · #2 — Antikythera as Attunement Instrument</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:5.25rem;opacity:1.00\" title=\"the instrument — outer gear ring\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:3.90rem;opacity:1.00\" title=\"middle train\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:2.40rem;opacity:1.00\" title=\"inner train\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"the observer the instrument does not replace\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46\" aria-label=\"§5→0 · #3 — 4:2 Technē and the Sovereign Commons\"><h2>§5→0 · #3 — 4:2 Technē and the Sovereign Commons</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:46.80%;font-size:4.20rem;opacity:1.00\" title=\"shared commons — protocol · memory · provenance · consequence\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:42.50%;top:56.00%;font-size:1.65rem;opacity:1.00\" title=\"Bimba A — local ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:57.20%;font-size:1.65rem;opacity:1.00\" title=\"Bimba B — local ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:60.50%;top:56.00%;font-size:1.65rem;opacity:1.00\" title=\"Bimba C — local ground\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47\" aria-label=\"§5→0 · #4 — Idealism as Horizon\"><h2>§5→0 · #4 — Idealism as Horizon</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:53.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"the field it cannot finally map from outside\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:53.00%;top:50.00%;font-size:3.30rem;opacity:1.00\" title=\"a locally authoritative map\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48\" aria-label=\"§5→0 · #5→0 — AHI and Planetary Return\"><h2>§5→0 · #5→0 — AHI and Planetary Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.65rem;opacity:1.00\" title=\"#5→0 — AHI and Planetary Return\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-room-07-instrument-returns",
+  "world_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+  "revision": 1,
+  "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+            "revision": "dbf3b17",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-room-07-instrument-returns:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-07-instrument-returns\" data-expression-revision=\"1\"><h1>Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns</h1><p>Frozen reading of expression:return-of-zero:roz-room-07-instrument-returns at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43\" aria-label=\"§5→0 · #0 — From Theory to Vocation\"><h2>§5→0 · #0 — From Theory to Vocation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — From Theory to Vocation\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44\" aria-label=\"§5→0 · #1 — QL, MEF, Bimba, and Harness\"><h2>§5→0 · #1 — QL, MEF, Bimba, and Harness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"0/1 — QL, MEF, Bimba, and Harness\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45\" aria-label=\"§5→0 · #2 — Antikythera as Attunement Instrument\"><h2>§5→0 · #2 — Antikythera as Attunement Instrument</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:5.25rem;opacity:1.00\" title=\"the instrument — outer gear ring\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:3.90rem;opacity:1.00\" title=\"middle train\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:2.40rem;opacity:1.00\" title=\"inner train\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"the observer the instrument does not replace\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46\" aria-label=\"§5→0 · #3 — 4:2 Technē and the Sovereign Commons\"><h2>§5→0 · #3 — 4:2 Technē and the Sovereign Commons</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:46.80%;font-size:4.20rem;opacity:1.00\" title=\"shared commons — protocol · memory · provenance · consequence\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:42.50%;top:56.00%;font-size:1.65rem;opacity:1.00\" title=\"Bimba A — local ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:57.20%;font-size:1.65rem;opacity:1.00\" title=\"Bimba B — local ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:60.50%;top:56.00%;font-size:1.65rem;opacity:1.00\" title=\"Bimba C — local ground\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47\" aria-label=\"§5→0 · #4 — Idealism as Horizon\"><h2>§5→0 · #4 — Idealism as Horizon</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:53.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"the field it cannot finally map from outside\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:53.00%;top:50.00%;font-size:3.30rem;opacity:1.00\" title=\"a locally authoritative map\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48\" aria-label=\"§5→0 · #5→0 — AHI and Planetary Return\"><h2>§5→0 · #5→0 — AHI and Planetary Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.65rem;opacity:1.00\" title=\"#5→0 — AHI and Planetary Return\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+        "revision": 1,
+        "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43",
+          "revision": 1,
+          "title": "§5→0 · #0 — From Theory to Vocation",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44",
+          "revision": 1,
+          "title": "§5→0 · #1 — QL, MEF, Bimba, and Harness",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45",
+          "revision": 1,
+          "title": "§5→0 · #2 — Antikythera as Attunement Instrument",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46",
+          "revision": 1,
+          "title": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47",
+          "revision": 1,
+          "title": "§5→0 · #4 — Idealism as Horizon",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k",
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48",
+          "revision": 1,
+          "title": "§5→0 · #5→0 — AHI and Planetary Return",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050",
+          "revision": 1,
+          "title": "#0 — From Theory to Vocation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052",
+          "revision": 1,
+          "title": "0/1 — QL, MEF, Bimba, and Harness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.425,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054",
+          "revision": 1,
+          "title": "the instrument — outer gear ring",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.25,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.75,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056",
+          "revision": 1,
+          "title": "middle train",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.25,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058",
+          "revision": 1,
+          "title": "inner train",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.25,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.8,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a",
+          "revision": 1,
+          "title": "the observer the instrument does not replace",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.25,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c",
+          "revision": 1,
+          "title": "shared commons — protocol · memory · provenance · consequence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e",
+          "revision": 1,
+          "title": "Bimba A — local ground",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.75,
+            "automation": null
+           },
+           "y": {
+            "value": -0.6,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g",
+          "revision": 1,
+          "title": "Bimba B — local ground",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": -0.72,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i",
+          "revision": 1,
+          "title": "Bimba C — local ground",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 1.05,
+            "automation": null
+           },
+           "y": {
+            "value": -0.6,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k",
+          "revision": 1,
+          "title": "the field it cannot finally map from outside",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m",
+          "revision": 1,
+          "title": "a locally authoritative map",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o": {
+          "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o",
+          "revision": 1,
+          "title": "#5→0 — AHI and Planetary Return",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43",
+         "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050"
+        },
+        "provenance": [
+         {
+          "ref": "rooms/roz-room-07-instrument-returns.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+       "text": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-room-07-instrument-returns",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-room-07-instrument-returns"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-room-07-instrument-returns:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-room-07-instrument-returns"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+   "revision": "1",
+   "canonical": {
+    "record_id": "roz-room-07-instrument-returns",
+    "vault_path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+    "source_revision": "dbf3b17"
+   }
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-room-07-instrument-returns:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-room-07-instrument-returns",
+    "world_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+    "revision": 1,
+    "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+              "revision": "dbf3b17",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-room-07-instrument-returns:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-07-instrument-returns\" data-expression-revision=\"1\"><h1>Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns</h1><p>Frozen reading of expression:return-of-zero:roz-room-07-instrument-returns at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43\" aria-label=\"§5→0 · #0 — From Theory to Vocation\"><h2>§5→0 · #0 — From Theory to Vocation</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — From Theory to Vocation\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44\" aria-label=\"§5→0 · #1 — QL, MEF, Bimba, and Harness\"><h2>§5→0 · #1 — QL, MEF, Bimba, and Harness</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"0/1 — QL, MEF, Bimba, and Harness\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45\" aria-label=\"§5→0 · #2 — Antikythera as Attunement Instrument\"><h2>§5→0 · #2 — Antikythera as Attunement Instrument</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:5.25rem;opacity:1.00\" title=\"the instrument — outer gear ring\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:3.90rem;opacity:1.00\" title=\"middle train\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:2.40rem;opacity:1.00\" title=\"inner train\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.50%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"the observer the instrument does not replace\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46\" aria-label=\"§5→0 · #3 — 4:2 Technē and the Sovereign Commons\"><h2>§5→0 · #3 — 4:2 Technē and the Sovereign Commons</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:46.80%;font-size:4.20rem;opacity:1.00\" title=\"shared commons — protocol · memory · provenance · consequence\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:42.50%;top:56.00%;font-size:1.65rem;opacity:1.00\" title=\"Bimba A — local ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:57.20%;font-size:1.65rem;opacity:1.00\" title=\"Bimba B — local ground\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:60.50%;top:56.00%;font-size:1.65rem;opacity:1.00\" title=\"Bimba C — local ground\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47\" aria-label=\"§5→0 · #4 — Idealism as Horizon\"><h2>§5→0 · #4 — Idealism as Horizon</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:53.00%;top:50.00%;font-size:5.70rem;opacity:1.00\" title=\"the field it cannot finally map from outside\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:53.00%;top:50.00%;font-size:3.30rem;opacity:1.00\" title=\"a locally authoritative map\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48\" aria-label=\"§5→0 · #5→0 — AHI and Planetary Return\"><h2>§5→0 · #5→0 — AHI and Planetary Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-07-instrument-returns\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.65rem;opacity:1.00\" title=\"#5→0 — AHI and Planetary Return\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+          "revision": 1,
+          "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43",
+            "revision": 1,
+            "title": "§5→0 · #0 — From Theory to Vocation",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44",
+            "revision": 1,
+            "title": "§5→0 · #1 — QL, MEF, Bimba, and Harness",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45",
+            "revision": 1,
+            "title": "§5→0 · #2 — Antikythera as Attunement Instrument",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46",
+            "revision": 1,
+            "title": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47",
+            "revision": 1,
+            "title": "§5→0 · #4 — Idealism as Horizon",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k",
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48",
+            "revision": 1,
+            "title": "§5→0 · #5→0 — AHI and Planetary Return",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050",
+            "revision": 1,
+            "title": "#0 — From Theory to Vocation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-44:ent-052",
+            "revision": 1,
+            "title": "0/1 — QL, MEF, Bimba, and Harness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.425,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-054",
+            "revision": 1,
+            "title": "the instrument — outer gear ring",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.25,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.75,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-056",
+            "revision": 1,
+            "title": "middle train",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.25,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-058",
+            "revision": 1,
+            "title": "inner train",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.25,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.8,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-45:ent-05a",
+            "revision": 1,
+            "title": "the observer the instrument does not replace",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.25,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05c",
+            "revision": 1,
+            "title": "shared commons — protocol · memory · provenance · consequence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05e",
+            "revision": 1,
+            "title": "Bimba A — local ground",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.75,
+              "automation": null
+             },
+             "y": {
+              "value": -0.6,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05g",
+            "revision": 1,
+            "title": "Bimba B — local ground",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": -0.72,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-46:ent-05i",
+            "revision": 1,
+            "title": "Bimba C — local ground",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 1.05,
+              "automation": null
+             },
+             "y": {
+              "value": -0.6,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05k",
+            "revision": 1,
+            "title": "the field it cannot finally map from outside",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-47:ent-05m",
+            "revision": 1,
+            "title": "a locally authoritative map",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o": {
+            "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-48:ent-05o",
+            "revision": 1,
+            "title": "#5→0 — AHI and Planetary Return",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43",
+           "entity_ref": "expression:return-of-zero:roz-room-07-instrument-returns:scene:movement-43:ent-050"
+          },
+          "provenance": [
+           {
+            "ref": "rooms/roz-room-07-instrument-returns.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+         "text": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-room-07-instrument-returns",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-room-07-instrument-returns",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-room-07-instrument-returns"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-07-instrument-returns:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+  "summary": "a living Expression · 6 scenes · 13 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-room-07-instrument-returns:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-07-instrument-returns",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-room-07-instrument-returns"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-room-07-instrument-returns:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-room-07-instrument-returns",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-room-07-instrument-returns",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-07-instrument-returns:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-room-07-instrument-returns:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-room-07-instrument-returns",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-room-07-instrument-returns"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

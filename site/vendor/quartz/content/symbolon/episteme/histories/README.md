@@ -23,17 +23,17 @@ The histories also provide the **trunk and branch body** for the project's etymo
 
 ## Register histories
 
-- [Ancient philosophy](traditions-and-disciplines/ancient-philosophy/HISTORY.md) — measure, tension, negation, form, and the inherited Greek field.
-- [Indian philosophy](traditions-and-disciplines/indian-philosophy/HISTORY.md) — Sāṃkhya, Buddhist exclusion and emptiness, Śaiva manifestation, Spanda, and recognition.
-- [Myth](encounters-and-transmissions/myth/HISTORY.md) — genealogy, divine drama, symbolic transformation, and technē.
-- [Mathematics](traditions-and-disciplines/mathematics/HISTORY.md) — zero, logical closure, incompleteness, re-entry, topology, and harmonic return.
-- [Psychology](traditions-and-disciplines/psychology/HISTORY.md) — mass, complex, archetype, individuation, the psychoid, and the barred subject.
-- [Language, symbol, and dialogue](traditions-and-disciplines/language-symbol-dialogue/HISTORY.md) — exclusion, naming, saying/showing, signification, symbolon, and meaning moving through relation.
-- [Language, law, nation, and centralisation](places-and-peoples/language-law-nation-centralisation/HISTORY.md) — trust, place, administrative Logos, instituted Nomos, national belonging, neo-nativity, epistemic arbitration, regional histories and the computational return of classification.
+- [Ancient philosophy](traditions-and-disciplines/ancient-philosophy/HISTORY-ancient-philosophy.md) — measure, tension, negation, form, and the inherited Greek field.
+- [Indian philosophy](traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy.md) — Sāṃkhya, Buddhist exclusion and emptiness, Śaiva manifestation, Spanda, and recognition.
+- [Myth](encounters-and-transmissions/myth/HISTORY-myth.md) — genealogy, divine drama, symbolic transformation, and technē.
+- [Mathematics](traditions-and-disciplines/mathematics/HISTORY-mathematics.md) — zero, logical closure, incompleteness, re-entry, topology, and harmonic return.
+- [Psychology](traditions-and-disciplines/psychology/HISTORY-psychology.md) — mass, complex, archetype, individuation, the psychoid, and the barred subject.
+- [Language, symbol, and dialogue](traditions-and-disciplines/language-symbol-dialogue/HISTORY-language-symbol-dialogue.md) — exclusion, naming, saying/showing, signification, symbolon, and meaning moving through relation.
+- [Language, law, nation, and centralisation](places-and-peoples/language-law-nation-centralisation/HISTORY-language-law-nation-centralisation.md) — trust, place, administrative Logos, instituted Nomos, national belonging, neo-nativity, epistemic arbitration, regional histories and the computational return of classification.
 - [Etymologies](../etymologies/README.md) — word-histories, operational resonances, complete QL word-fields and poetic re-entries that can be carried back into the essay without confusing philology with its use.
-- [Process, systems, and science](traditions-and-disciplines/process-systems-science/HISTORY.md) — process philosophy, physics, cybernetics, autopoiesis, complexity, and the observational blind spot.
-- [Technology, politics, and institutions](traditions-and-disciplines/technology-politics/HISTORY.md) — division, mass formation, preference, legibility, commons, and planetary technē.
-- [Zero, subject, and integral logic](traditions-and-disciplines/zero-subject-advent/HISTORY.md) — zero's mathematical admission, the subject's psychic-scientific admission, the mental-rational split, and the advent of `0/1` as integral Logos.
+- [Process, systems, and science](traditions-and-disciplines/process-systems-science/HISTORY-process-systems-science.md) — process philosophy, physics, cybernetics, autopoiesis, complexity, and the observational blind spot.
+- [Technology, politics, and institutions](traditions-and-disciplines/technology-politics/HISTORY-technology-politics.md) — division, mass formation, preference, legibility, commons, and planetary technē.
+- [Zero, subject, and integral logic](traditions-and-disciplines/zero-subject-advent/HISTORY-zero-subject-advent.md) — zero's mathematical admission, the subject's psychic-scientific admission, the mental-rational split, and the advent of `0/1` as integral Logos.
 
 ## How these histories grow
 

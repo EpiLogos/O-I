@@ -1,0 +1,682 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:native-reference_oi",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:native-reference_oi",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:native-reference_oi",
+  "revision": 1,
+  "title": "O ⇄ I Vortex Bridge",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
+    "revision": 1,
+    "title": "O ⇄ I Vortex Bridge",
+    "entity_refs": [
+     "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main": {
+    "entity_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main",
+    "revision": 1,
+    "title": "Main",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/native/native-reference_oi.journey.json",
+       "revision": "de879530fd0989434d5b8eb4663f85d326df7ea050c6fb683128277e3de56282",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
+   "entity_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main"
+  },
+  "provenance": [
+   {
+    "ref": "starters/native/native-reference_oi.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:native-reference_oi",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:native-reference_oi",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "starters/native/native-reference_oi.journey.json",
+      "revision": "de879530fd0989434d5b8eb4663f85d326df7ea050c6fb683128277e3de56282",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:native-reference_oi:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:native-reference_oi",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>O ⇄ I Vortex Bridge</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:native-reference_oi\" data-expression-revision=\"1\"><h1>O ⇄ I Vortex Bridge</h1><p>Frozen reading of expression:return-of-zero:native-reference_oi at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb\" aria-label=\"O ⇄ I Vortex Bridge\"><h2>O ⇄ I Vortex Bridge</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main\" data-subject-ref=\"world:return-of-zero/wiki:native-reference_oi\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Main\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-native-reference-oi",
+  "world_ref": "expression:return-of-zero:native-reference_oi",
+  "revision": 1,
+  "title": "O ⇄ I Vortex Bridge",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:native-reference_oi",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "O ⇄ I Vortex Bridge"
+      },
+      "fallback": {
+       "title": "O ⇄ I Vortex Bridge"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:native-reference_oi",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:native-reference_oi",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:native-reference_oi",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "starters/native/native-reference_oi.journey.json",
+            "revision": "de879530fd0989434d5b8eb4663f85d326df7ea050c6fb683128277e3de56282",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:native-reference_oi:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:native-reference_oi",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>O ⇄ I Vortex Bridge</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:native-reference_oi\" data-expression-revision=\"1\"><h1>O ⇄ I Vortex Bridge</h1><p>Frozen reading of expression:return-of-zero:native-reference_oi at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb\" aria-label=\"O ⇄ I Vortex Bridge\"><h2>O ⇄ I Vortex Bridge</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main\" data-subject-ref=\"world:return-of-zero/wiki:native-reference_oi\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Main\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:native-reference_oi",
+        "revision": 1,
+        "title": "O ⇄ I Vortex Bridge",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
+          "revision": 1,
+          "title": "O ⇄ I Vortex Bridge",
+          "entity_refs": [
+           "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main": {
+          "entity_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main",
+          "revision": 1,
+          "title": "Main",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/native/native-reference_oi.journey.json",
+             "revision": "de879530fd0989434d5b8eb4663f85d326df7ea050c6fb683128277e3de56282",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
+         "entity_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main"
+        },
+        "provenance": [
+         {
+          "ref": "starters/native/native-reference_oi.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "O ⇄ I Vortex Bridge"
+      },
+      "fallback": {
+       "title": "O ⇄ I Vortex Bridge",
+       "text": "O ⇄ I Vortex Bridge: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:native-reference_oi",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-native-reference-oi",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:native-reference_oi",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "starters/native/native-reference_oi.journey.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:native-reference_oi"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:native-reference_oi",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:native-reference_oi",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:native-reference_oi:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:native-reference_oi"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:native-reference_oi",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-native-reference-oi:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-native-reference-oi",
+    "world_ref": "expression:return-of-zero:native-reference_oi",
+    "revision": 1,
+    "title": "O ⇄ I Vortex Bridge",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:native-reference_oi",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "O ⇄ I Vortex Bridge"
+        },
+        "fallback": {
+         "title": "O ⇄ I Vortex Bridge"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:native-reference_oi",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:native-reference_oi",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:native-reference_oi",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "starters/native/native-reference_oi.journey.json",
+              "revision": "de879530fd0989434d5b8eb4663f85d326df7ea050c6fb683128277e3de56282",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:native-reference_oi:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:native-reference_oi",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>O ⇄ I Vortex Bridge</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:native-reference_oi\" data-expression-revision=\"1\"><h1>O ⇄ I Vortex Bridge</h1><p>Frozen reading of expression:return-of-zero:native-reference_oi at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb\" aria-label=\"O ⇄ I Vortex Bridge\"><h2>O ⇄ I Vortex Bridge</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main\" data-subject-ref=\"world:return-of-zero/wiki:native-reference_oi\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.00%;font-size:3.00rem;opacity:1.00\" title=\"Main\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:native-reference_oi",
+          "revision": 1,
+          "title": "O ⇄ I Vortex Bridge",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
+            "revision": 1,
+            "title": "O ⇄ I Vortex Bridge",
+            "entity_refs": [
+             "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main": {
+            "entity_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main",
+            "revision": 1,
+            "title": "Main",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/native/native-reference_oi.journey.json",
+               "revision": "de879530fd0989434d5b8eb4663f85d326df7ea050c6fb683128277e3de56282",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
+           "entity_ref": "expression:return-of-zero:native-reference_oi:scene:scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb:ent_main"
+          },
+          "provenance": [
+           {
+            "ref": "starters/native/native-reference_oi.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "O ⇄ I Vortex Bridge"
+        },
+        "fallback": {
+         "title": "O ⇄ I Vortex Bridge",
+         "text": "O ⇄ I Vortex Bridge: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:native-reference_oi",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-native-reference-oi",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:native-reference_oi",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:native-reference_oi",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "starters/native/native-reference_oi.journey.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:native-reference_oi"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:native-reference_oi",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:native-reference_oi",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-native-reference-oi:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:native-reference_oi",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "O ⇄ I Vortex Bridge",
+  "summary": "a living Expression · 1 scene · 1 entity",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:native-reference_oi:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:native-reference_oi",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Anative-reference_oi"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:native-reference_oi:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-native-reference-oi",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:native-reference_oi",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "O ⇄ I Vortex Bridge",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-native-reference-oi:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-native-reference-oi:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:native-reference_oi",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:native-reference_oi"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

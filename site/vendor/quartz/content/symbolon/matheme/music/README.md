@@ -6,7 +6,7 @@ register: matheme
 claim_status: Derived
 ---
 
-# Music — the 0/1 returned
+# Music — the `0/1` returned
 
 What the matheme **SOUNDS, COMPUTES, AND KNOWS AS**. File 4 of the Binary Explication ([source house](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md)), projecting its own structure. The musical theory is not metaphor — it is the ratio-body of QL. File 4 is the parallel to `ql-musical-derivation-v3` — what that derivation wanted to become — and both are superseded in practice by the actual ql-mef package, whose details centralise into the current work. Music operates here as returned whole and, inside the mytheme, as its sounding engine.
 

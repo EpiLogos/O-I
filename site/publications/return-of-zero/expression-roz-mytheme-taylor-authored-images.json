@@ -1,0 +1,3802 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-taylor-authored-images",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+  "revision": 1,
+  "title": "Taylor — Poetry and Authored Images",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems",
+    "revision": 1,
+    "title": "A word that can return to its speaker",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads",
+    "revision": 1,
+    "title": "Two roads, six works, and the return through the loop",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose",
+    "revision": 1,
+    "title": "Images that retain the relation they expose",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun",
+    "revision": 1,
+    "title": "The black sun and the radiating star",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return",
+    "revision": 1,
+    "title": "Keeping the opening in the form",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408",
+     "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386",
+    "revision": 1,
+    "title": "checkmate — and \"Another game?\"",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.07,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1535,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387",
+    "revision": 1,
+    "title": "the husk — what comes back when knowing fixes on its object",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388",
+    "revision": 1,
+    "title": "\"The 0 is the One, the 1 is the All!\" — FT-P04",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.2,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.33,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389",
+    "revision": 1,
+    "title": "the institutions which must not devour the humanity that made and makes them (FT-P07)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390",
+    "revision": 1,
+    "title": "P0 — the fork: cancellation beside generation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.193,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391",
+    "revision": 1,
+    "title": "P0 — 4+2: the four pairings with the generating two retained",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.33,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392",
+    "revision": 1,
+    "title": "P3 — two through the Two Ones, ring around the Rosie, falling down through the loop",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.43,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.433,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393",
+    "revision": 1,
+    "title": "P4 — \"we forgot that one really is two\"; humility as prerequisite of precision",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394",
+    "revision": 1,
+    "title": "P5 — \"to find the limit, so, to speak\" — the pauses making the finding an act of language",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.19,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395",
+    "revision": 1,
+    "title": "the fish — describing the water it lives in",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.151,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396",
+    "revision": 1,
+    "title": "the cage / the window — both need the frame",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.15,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.215,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397",
+    "revision": 1,
+    "title": "the kaleidoscope — a word as local orbital centre",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398",
+    "revision": 1,
+    "title": "the Necker cube — reversal held by context, not a fourth face",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399",
+    "revision": 1,
+    "title": "the broken token — each half referring to the absent other",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400",
+    "revision": 1,
+    "title": "the erased dots — the outer form kept, the reciprocity gone",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.173,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401",
+    "revision": 1,
+    "title": "the black sun — intake without renewal",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.41,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.313,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402",
+    "revision": 1,
+    "title": "the four rings — Neptune's distance, Jupiter's gravity, Mercury's fixers, the corona's mutual exposure",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403",
+    "revision": 1,
+    "title": "the radiating star — what reaches the centre becoming available outward",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404",
+    "revision": 1,
+    "title": "cynicism → exhaustion → blankness — the field ready for re-inscription",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405",
+    "revision": 1,
+    "title": "city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406",
+    "revision": 1,
+    "title": "God as Other — source exceeding possession",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407",
+    "revision": 1,
+    "title": "shadow as other-self · friend as my-self's-other · alien/enemy as externalised uncertainty",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.07,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.178,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408",
+    "revision": 1,
+    "title": "the returned shoe — \"Let the shoe fit / But return it\" (FT-P23)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3825,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409",
+    "revision": 1,
+    "title": "recursive Bimba — a reference genuinely occupying the local original's office, pratibimba in the wider relation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-taylor-authored-images.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Taylor — Poetry and Authored Images</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images\" data-expression-revision=\"1\"><h1>Taylor — Poetry and Authored Images</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-taylor-authored-images at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems\" aria-label=\"A word that can return to its speaker\"><h2>A word that can return to its speaker</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"checkmate — and &quot;Another game?&quot;\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:1.02rem;opacity:1.00\" title=\"the husk — what comes back when knowing fixes on its object\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.00%;font-size:0.99rem;opacity:1.00\" title=\"&quot;The 0 is the One, the 1 is the All!&quot; — FT-P04\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.08rem;opacity:1.00\" title=\"the institutions which must not devour the humanity that made and makes them (FT-P07)\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads\" aria-label=\"Two roads, six works, and the return through the loop\"><h2>Two roads, six works, and the return through the loop</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"P0 — the fork: cancellation beside generation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:0.99rem;opacity:1.00\" title=\"P0 — 4+2: the four pairings with the generating two retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.30%;font-size:1.30rem;opacity:1.00\" title=\"P3 — two through the Two Ones, ring around the Rosie, falling down through the loop\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"P4 — &quot;we forgot that one really is two&quot;; humility as prerequisite of precision\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"P5 — &quot;to find the limit, so, to speak&quot; — the pauses making the finding an act of language\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose\" aria-label=\"Images that retain the relation they expose\"><h2>Images that retain the relation they expose</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"the fish — describing the water it lives in\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:51.50%;top:50.20%;font-size:0.65rem;opacity:1.00\" title=\"the cage / the window — both need the frame\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:56.00%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"the kaleidoscope — a word as local orbital centre\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.00%;font-size:1.20rem;opacity:1.00\" title=\"the Necker cube — reversal held by context, not a fourth face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:54.00%;font-size:0.87rem;opacity:1.00\" title=\"the broken token — each half referring to the absent other\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"the erased dots — the outer form kept, the reciprocity gone\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun\" aria-label=\"The black sun and the radiating star\"><h2>The black sun and the radiating star</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.10%;font-size:0.94rem;opacity:1.00\" title=\"the black sun — intake without renewal\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:2.70rem;opacity:1.00\" title=\"the four rings — Neptune&#39;s distance, Jupiter&#39;s gravity, Mercury&#39;s fixers, the corona&#39;s mutual exposure\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"the radiating star — what reaches the centre becoming available outward\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.84rem;opacity:1.00\" title=\"cynicism → exhaustion → blankness — the field ready for re-inscription\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return\" aria-label=\"Keeping the opening in the form\"><h2>Keeping the opening in the form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:0.66rem;opacity:1.00\" title=\"God as Other — source exceeding possession\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"shadow as other-self · friend as my-self&#39;s-other · alien/enemy as externalised uncertainty\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:1.15rem;opacity:1.00\" title=\"the returned shoe — &quot;Let the shoe fit / But return it&quot; (FT-P23)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"recursive Bimba — a reference genuinely occupying the local original&#39;s office, pratibimba in the wider relation\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-taylor-authored-images",
+  "world_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+  "revision": 1,
+  "title": "Taylor — Poetry and Authored Images",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Taylor — Poetry and Authored Images"
+      },
+      "fallback": {
+       "title": "Taylor — Poetry and Authored Images"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Taylor — Poetry and Authored Images</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images\" data-expression-revision=\"1\"><h1>Taylor — Poetry and Authored Images</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-taylor-authored-images at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems\" aria-label=\"A word that can return to its speaker\"><h2>A word that can return to its speaker</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"checkmate — and &quot;Another game?&quot;\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:1.02rem;opacity:1.00\" title=\"the husk — what comes back when knowing fixes on its object\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.00%;font-size:0.99rem;opacity:1.00\" title=\"&quot;The 0 is the One, the 1 is the All!&quot; — FT-P04\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.08rem;opacity:1.00\" title=\"the institutions which must not devour the humanity that made and makes them (FT-P07)\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads\" aria-label=\"Two roads, six works, and the return through the loop\"><h2>Two roads, six works, and the return through the loop</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"P0 — the fork: cancellation beside generation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:0.99rem;opacity:1.00\" title=\"P0 — 4+2: the four pairings with the generating two retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.30%;font-size:1.30rem;opacity:1.00\" title=\"P3 — two through the Two Ones, ring around the Rosie, falling down through the loop\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"P4 — &quot;we forgot that one really is two&quot;; humility as prerequisite of precision\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"P5 — &quot;to find the limit, so, to speak&quot; — the pauses making the finding an act of language\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose\" aria-label=\"Images that retain the relation they expose\"><h2>Images that retain the relation they expose</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"the fish — describing the water it lives in\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:51.50%;top:50.20%;font-size:0.65rem;opacity:1.00\" title=\"the cage / the window — both need the frame\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:56.00%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"the kaleidoscope — a word as local orbital centre\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.00%;font-size:1.20rem;opacity:1.00\" title=\"the Necker cube — reversal held by context, not a fourth face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:54.00%;font-size:0.87rem;opacity:1.00\" title=\"the broken token — each half referring to the absent other\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"the erased dots — the outer form kept, the reciprocity gone\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun\" aria-label=\"The black sun and the radiating star\"><h2>The black sun and the radiating star</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.10%;font-size:0.94rem;opacity:1.00\" title=\"the black sun — intake without renewal\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:2.70rem;opacity:1.00\" title=\"the four rings — Neptune&#39;s distance, Jupiter&#39;s gravity, Mercury&#39;s fixers, the corona&#39;s mutual exposure\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"the radiating star — what reaches the centre becoming available outward\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.84rem;opacity:1.00\" title=\"cynicism → exhaustion → blankness — the field ready for re-inscription\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return\" aria-label=\"Keeping the opening in the form\"><h2>Keeping the opening in the form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:0.66rem;opacity:1.00\" title=\"God as Other — source exceeding possession\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"shadow as other-self · friend as my-self&#39;s-other · alien/enemy as externalised uncertainty\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:1.15rem;opacity:1.00\" title=\"the returned shoe — &quot;Let the shoe fit / But return it&quot; (FT-P23)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"recursive Bimba — a reference genuinely occupying the local original&#39;s office, pratibimba in the wider relation\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+        "revision": 1,
+        "title": "Taylor — Poetry and Authored Images",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems",
+          "revision": 1,
+          "title": "A word that can return to its speaker",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads",
+          "revision": 1,
+          "title": "Two roads, six works, and the return through the loop",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose",
+          "revision": 1,
+          "title": "Images that retain the relation they expose",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun",
+          "revision": 1,
+          "title": "The black sun and the radiating star",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return",
+          "revision": 1,
+          "title": "Keeping the opening in the form",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408",
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386",
+          "revision": 1,
+          "title": "checkmate — and \"Another game?\"",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.07,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1535,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387",
+          "revision": 1,
+          "title": "the husk — what comes back when knowing fixes on its object",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388",
+          "revision": 1,
+          "title": "\"The 0 is the One, the 1 is the All!\" — FT-P04",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.2,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.33,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389",
+          "revision": 1,
+          "title": "the institutions which must not devour the humanity that made and makes them (FT-P07)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390",
+          "revision": 1,
+          "title": "P0 — the fork: cancellation beside generation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.193,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391",
+          "revision": 1,
+          "title": "P0 — 4+2: the four pairings with the generating two retained",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.33,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392",
+          "revision": 1,
+          "title": "P3 — two through the Two Ones, ring around the Rosie, falling down through the loop",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.43,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.433,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393",
+          "revision": 1,
+          "title": "P4 — \"we forgot that one really is two\"; humility as prerequisite of precision",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394",
+          "revision": 1,
+          "title": "P5 — \"to find the limit, so, to speak\" — the pauses making the finding an act of language",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.19,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395",
+          "revision": 1,
+          "title": "the fish — describing the water it lives in",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.151,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396",
+          "revision": 1,
+          "title": "the cage / the window — both need the frame",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.15,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.215,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397",
+          "revision": 1,
+          "title": "the kaleidoscope — a word as local orbital centre",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398",
+          "revision": 1,
+          "title": "the Necker cube — reversal held by context, not a fourth face",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399",
+          "revision": 1,
+          "title": "the broken token — each half referring to the absent other",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400",
+          "revision": 1,
+          "title": "the erased dots — the outer form kept, the reciprocity gone",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.173,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401",
+          "revision": 1,
+          "title": "the black sun — intake without renewal",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.41,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.313,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402",
+          "revision": 1,
+          "title": "the four rings — Neptune's distance, Jupiter's gravity, Mercury's fixers, the corona's mutual exposure",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403",
+          "revision": 1,
+          "title": "the radiating star — what reaches the centre becoming available outward",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404",
+          "revision": 1,
+          "title": "cynicism → exhaustion → blankness — the field ready for re-inscription",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405",
+          "revision": 1,
+          "title": "city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406",
+          "revision": 1,
+          "title": "God as Other — source exceeding possession",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407",
+          "revision": 1,
+          "title": "shadow as other-self · friend as my-self's-other · alien/enemy as externalised uncertainty",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.07,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.178,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408",
+          "revision": 1,
+          "title": "the returned shoe — \"Let the shoe fit / But return it\" (FT-P23)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3825,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409",
+          "revision": 1,
+          "title": "recursive Bimba — a reference genuinely occupying the local original's office, pratibimba in the wider relation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-taylor-authored-images.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Taylor — Poetry and Authored Images"
+      },
+      "fallback": {
+       "title": "Taylor — Poetry and Authored Images",
+       "text": "Taylor — Poetry and Authored Images: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-taylor-authored-images",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-taylor-authored-images:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-taylor-authored-images:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-taylor-authored-images",
+    "world_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+    "revision": 1,
+    "title": "Taylor — Poetry and Authored Images",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Taylor — Poetry and Authored Images"
+        },
+        "fallback": {
+         "title": "Taylor — Poetry and Authored Images"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Taylor — Poetry and Authored Images</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images\" data-expression-revision=\"1\"><h1>Taylor — Poetry and Authored Images</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-taylor-authored-images at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems\" aria-label=\"A word that can return to its speaker\"><h2>A word that can return to its speaker</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"checkmate — and &quot;Another game?&quot;\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:1.02rem;opacity:1.00\" title=\"the husk — what comes back when knowing fixes on its object\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.00%;font-size:0.99rem;opacity:1.00\" title=\"&quot;The 0 is the One, the 1 is the All!&quot; — FT-P04\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.08rem;opacity:1.00\" title=\"the institutions which must not devour the humanity that made and makes them (FT-P07)\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads\" aria-label=\"Two roads, six works, and the return through the loop\"><h2>Two roads, six works, and the return through the loop</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"P0 — the fork: cancellation beside generation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:0.99rem;opacity:1.00\" title=\"P0 — 4+2: the four pairings with the generating two retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.30%;font-size:1.30rem;opacity:1.00\" title=\"P3 — two through the Two Ones, ring around the Rosie, falling down through the loop\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"P4 — &quot;we forgot that one really is two&quot;; humility as prerequisite of precision\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"P5 — &quot;to find the limit, so, to speak&quot; — the pauses making the finding an act of language\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose\" aria-label=\"Images that retain the relation they expose\"><h2>Images that retain the relation they expose</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"the fish — describing the water it lives in\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:51.50%;top:50.20%;font-size:0.65rem;opacity:1.00\" title=\"the cage / the window — both need the frame\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:56.00%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"the kaleidoscope — a word as local orbital centre\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.00%;font-size:1.20rem;opacity:1.00\" title=\"the Necker cube — reversal held by context, not a fourth face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:54.00%;font-size:0.87rem;opacity:1.00\" title=\"the broken token — each half referring to the absent other\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"the erased dots — the outer form kept, the reciprocity gone\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun\" aria-label=\"The black sun and the radiating star\"><h2>The black sun and the radiating star</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.10%;font-size:0.94rem;opacity:1.00\" title=\"the black sun — intake without renewal\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:2.70rem;opacity:1.00\" title=\"the four rings — Neptune&#39;s distance, Jupiter&#39;s gravity, Mercury&#39;s fixers, the corona&#39;s mutual exposure\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"the radiating star — what reaches the centre becoming available outward\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.84rem;opacity:1.00\" title=\"cynicism → exhaustion → blankness — the field ready for re-inscription\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return\" aria-label=\"Keeping the opening in the form\"><h2>Keeping the opening in the form</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:0.66rem;opacity:1.00\" title=\"God as Other — source exceeding possession\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:44.50%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"shadow as other-self · friend as my-self&#39;s-other · alien/enemy as externalised uncertainty\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:1.15rem;opacity:1.00\" title=\"the returned shoe — &quot;Let the shoe fit / But return it&quot; (FT-P23)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-taylor-authored-images\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"recursive Bimba — a reference genuinely occupying the local original&#39;s office, pratibimba in the wider relation\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+          "revision": 1,
+          "title": "Taylor — Poetry and Authored Images",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems",
+            "revision": 1,
+            "title": "A word that can return to its speaker",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads",
+            "revision": 1,
+            "title": "Two roads, six works, and the return through the loop",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose",
+            "revision": 1,
+            "title": "Images that retain the relation they expose",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun",
+            "revision": 1,
+            "title": "The black sun and the radiating star",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return",
+            "revision": 1,
+            "title": "Keeping the opening in the form",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408",
+             "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386",
+            "revision": 1,
+            "title": "checkmate — and \"Another game?\"",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.07,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1535,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e387",
+            "revision": 1,
+            "title": "the husk — what comes back when knowing fixes on its object",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e388",
+            "revision": 1,
+            "title": "\"The 0 is the One, the 1 is the All!\" — FT-P04",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.2,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.33,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e389",
+            "revision": 1,
+            "title": "the institutions which must not devour the humanity that made and makes them (FT-P07)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e390",
+            "revision": 1,
+            "title": "P0 — the fork: cancellation beside generation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.193,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e391",
+            "revision": 1,
+            "title": "P0 — 4+2: the four pairings with the generating two retained",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.33,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e392",
+            "revision": 1,
+            "title": "P3 — two through the Two Ones, ring around the Rosie, falling down through the loop",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.43,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.433,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e393",
+            "revision": 1,
+            "title": "P4 — \"we forgot that one really is two\"; humility as prerequisite of precision",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-1-roads:e394",
+            "revision": 1,
+            "title": "P5 — \"to find the limit, so, to speak\" — the pauses making the finding an act of language",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.19,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e395",
+            "revision": 1,
+            "title": "the fish — describing the water it lives in",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.151,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e396",
+            "revision": 1,
+            "title": "the cage / the window — both need the frame",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.15,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.215,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e397",
+            "revision": 1,
+            "title": "the kaleidoscope — a word as local orbital centre",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e398",
+            "revision": 1,
+            "title": "the Necker cube — reversal held by context, not a fourth face",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e399",
+            "revision": 1,
+            "title": "the broken token — each half referring to the absent other",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-3-prose:e400",
+            "revision": 1,
+            "title": "the erased dots — the outer form kept, the reciprocity gone",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.173,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e401",
+            "revision": 1,
+            "title": "the black sun — intake without renewal",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.41,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.313,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e402",
+            "revision": 1,
+            "title": "the four rings — Neptune's distance, Jupiter's gravity, Mercury's fixers, the corona's mutual exposure",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e403",
+            "revision": 1,
+            "title": "the radiating star — what reaches the centre becoming available outward",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e404",
+            "revision": 1,
+            "title": "cynicism → exhaustion → blankness — the field ready for re-inscription",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-4-blacksun:e405",
+            "revision": 1,
+            "title": "city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e406",
+            "revision": 1,
+            "title": "God as Other — source exceeding possession",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e407",
+            "revision": 1,
+            "title": "shadow as other-self · friend as my-self's-other · alien/enemy as externalised uncertainty",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.07,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.178,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e408",
+            "revision": 1,
+            "title": "the returned shoe — \"Let the shoe fit / But return it\" (FT-P23)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3825,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-5-return:e409",
+            "revision": 1,
+            "title": "recursive Bimba — a reference genuinely occupying the local original's office, pratibimba in the wider relation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images:scene:m-tay-0-poems:e386"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-taylor-authored-images.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Taylor — Poetry and Authored Images"
+        },
+        "fallback": {
+         "title": "Taylor — Poetry and Authored Images",
+         "text": "Taylor — Poetry and Authored Images: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-taylor-authored-images",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-taylor-authored-images.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-taylor-authored-images"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-taylor-authored-images:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Taylor — Poetry and Authored Images",
+  "summary": "a living Expression · 5 scenes · 24 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-taylor-authored-images:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-taylor-authored-images"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-taylor-authored-images:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-taylor-authored-images",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-taylor-authored-images",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Taylor — Poetry and Authored Images",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-taylor-authored-images:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-taylor-authored-images:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-taylor-authored-images",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-taylor-authored-images"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

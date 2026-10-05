@@ -15,7 +15,7 @@ For four distinct finite complex points, define
 
 `λ(z₁,z₂;z₃,z₄)=((z₁−z₃)(z₂−z₄))/((z₁−z₄)(z₂−z₃))`.
 
-The order and convention are explicit because other conventions permute this value. The [NIST house](../../episteme/sources/mathematics-logic/nist/nist-dlmf-2026-complex-variable/nist-dlmf-2026-complex-variable.md) states invariance under bilinear transformations. The [core's](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) ratio-of-ratios is a native relational operation with a separate signature.
+The order and convention are explicit because other conventions permute this value. [Bilinear invariance](../../episteme/sources/mathematics-logic/nist/nist-dlmf-2026-complex-variable/nist-dlmf-2026-complex-variable.md) states the transformation class under which the cross-ratio remains unchanged. The [native ratio-of-ratios](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) holds the whole relation in its two obverse orientations; its distinct signature supplies the comparison developed below.
 
 ## #1 — State the transformation
 
@@ -49,4 +49,4 @@ An attempted identification would have to map the objects and preserve the opera
 
 The result is a quantity that survives a specified transformation while retaining ordered relational information. Returning the map, determinant condition and quadruple makes the invariance checkable and its failure outside scope equally exact.
 
-This record returns-to [Movement28](../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md), [projective line](../topology/projective-line.md) and [translations](../mono-poly/translations.md). The mathematical carrier remains precise beneath the author's native relation.
+[Projective reframing](../../../section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md) carries the invariant with its specific transformations. The [projective line](../topology/projective-line.md) retains its containing-space construction, while [translation](../mono-poly/translations.md) specifies any correspondence of these mathematical objects with the native relation. The map and its preserved operation give that comparison its measure.

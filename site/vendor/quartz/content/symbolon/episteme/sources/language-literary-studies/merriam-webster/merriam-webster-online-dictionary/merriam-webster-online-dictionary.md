@@ -23,7 +23,7 @@ passage_surface: '#passages'
 
 The named online entries were checked on 8 September 2026. Cite the individual headword, Word History or specified sense, and access date; this is not a historical print-edition collation. Dictionary-reported descent remains distinct from independently collated early texts.
 
-The entries **source** [E1’s historical branches](../../../../etymologies/encounter-region-name-count/HISTORICAL-BRANCHES.md), which **return-to** [the whole-field](../../../../etymologies/encounter-region-name-count/WHOLE-FIELD.md) with the four evidence registers retained.
+The entries **source** [E1’s historical branches](../../../../etymologies/encounter-region-name-count/HISTORICAL-BRANCHES-encounter-region-name-count.md), which **return-to** [the whole-field](../../../../etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md) with the four evidence registers retained.
 
 <a id="passages"></a>
 ## Selected entries
@@ -172,4 +172,4 @@ The entries **source** [E1’s historical branches](../../../../etymologies/enco
 
 **Use boundary:** Register 1. English hole/whole permits the authorial poetic crossing at register 4; no descent arrow joins hol to hāl and no topology theorem follows from the sound-match.
 
-The account and trust entries **source** [E4’s historical companion](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md); the five hāl/hol entries **source** its [reference-38 distinction](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md#reference-38-hal-and-hole). The [whole-field return](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD.md#opening-and-integrity) preserves the authorial operational and poetic registers independently.
+The account and trust entries **source** [E4’s historical companion](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md); the five hāl/hol entries **source** its [reference-38 distinction](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md#reference-38-hal-and-hole). The [whole-field return](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md#opening-and-integrity) preserves the authorial operational and poetic registers independently.

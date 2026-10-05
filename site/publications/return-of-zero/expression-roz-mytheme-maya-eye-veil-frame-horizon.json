@@ -1,0 +1,3934 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-maya-eye-veil-frame-horizon",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+  "revision": 1,
+  "title": "Māyā — Eye, Veil, Frame, Horizon",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye",
+    "revision": 1,
+    "title": "An eye opens upon a world",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil",
+    "revision": 1,
+    "title": "The Śaiva genealogy: measure, dream, crystal",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation",
+    "revision": 1,
+    "title": "The frame calls its boundary the horizon",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard",
+    "revision": 1,
+    "title": "The Other interrupts — regard, context, refraction",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return",
+    "revision": 1,
+    "title": "Recognition returns through the veil",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514",
+     "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491",
+    "revision": 1,
+    "title": "the eye — its condition already at work in what appears",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.614,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492",
+    "revision": 1,
+    "title": "the blindside — constitutive, more than the anatomical spot",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.42,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493",
+    "revision": 1,
+    "title": "the frame — productive exclusion, a determinate appearance",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.45,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494",
+    "revision": 1,
+    "title": "the horizon — the field of coming-forward, changed by walking and reply",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495",
+    "revision": 1,
+    "title": "Anuttara/Paramaśiva — the unobjectifiable ground",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.11,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.136,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496",
+    "revision": 1,
+    "title": "Śakti — manifestation and self-articulation; prakāśa–vimarśa together",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.23,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.217,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497",
+    "revision": 1,
+    "title": "Māyā — measure: this appears, that is withheld; the five kañcukas",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498",
+    "revision": 1,
+    "title": "paśu — the bounded knower; buddhi, ahaṃkāra, manas",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499",
+    "revision": 1,
+    "title": "the dream — sleep disappearing from the experienced situation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500",
+    "revision": 1,
+    "title": "the crystal — display without knowing; the mirror that also generates its appearances",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501",
+    "revision": 1,
+    "title": "x acting as X — the local 1 claiming the 0 on which it depends",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.167,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502",
+    "revision": 1,
+    "title": "the prepared role — words becoming further evidence of what the frame knew",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503",
+    "revision": 1,
+    "title": "the complex — investment colouring perception confirming the image",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.37,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.246,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504",
+    "revision": 1,
+    "title": "the nested relay — model, action, changed world, model; capture when results erase their status as results",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.44,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505",
+    "revision": 1,
+    "title": "Bratton p.25 §§5.1–5.3 — the relay's distinct temporal tasks",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506",
+    "revision": 1,
+    "title": "the Other's refusal — the excess that can alter the measure of the encounter",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507",
+    "revision": 1,
+    "title": "the 180°→360° turn — perspectives and transitions held in context",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.36,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.469,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508",
+    "revision": 1,
+    "title": "the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509",
+    "revision": 1,
+    "title": "the holographic unit — the whole descent carried through one local unit",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510",
+    "revision": 1,
+    "title": "Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511",
+    "revision": 1,
+    "title": "the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.73,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512",
+    "revision": 1,
+    "title": "the opening — never one more bounded patch",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.18,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.217,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513",
+    "revision": 1,
+    "title": "A24 — necessary measuring preserved; usurped measure made answerable",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514",
+    "revision": 1,
+    "title": "the paśu correction — the \"I am\" preceding separation; the bounded position arising within recognition's field",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515",
+    "revision": 1,
+    "title": "A35/A36 — the eye opens again; recognition lived in the next seeing",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-maya-eye-veil-frame-horizon.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Māyā — Eye, Veil, Frame, Horizon</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon\" data-expression-revision=\"1\"><h1>Māyā — Eye, Veil, Frame, Horizon</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye\" aria-label=\"An eye opens upon a world\"><h2>An eye opens upon a world</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:1.84rem;opacity:1.00\" title=\"the eye — its condition already at work in what appears\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:54.20%;top:49.00%;font-size:0.72rem;opacity:1.00\" title=\"the blindside — constitutive, more than the anatomical spot\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:1.35rem;opacity:1.00\" title=\"the frame — productive exclusion, a determinate appearance\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:1.26rem;opacity:1.00\" title=\"the horizon — the field of coming-forward, changed by walking and reply\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil\" aria-label=\"The Śaiva genealogy: measure, dream, crystal\"><h2>The Śaiva genealogy: measure, dream, crystal</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"Anuttara/Paramaśiva — the unobjectifiable ground\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.30%;font-size:0.65rem;opacity:1.00\" title=\"Śakti — manifestation and self-articulation; prakāśa–vimarśa together\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:54.50%;top:49.50%;font-size:0.81rem;opacity:1.00\" title=\"Māyā — measure: this appears, that is withheld; the five kañcukas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:0.60rem;opacity:1.00\" title=\"paśu — the bounded knower; buddhi, ahaṃkāra, manas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the dream — sleep disappearing from the experienced situation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.78rem;opacity:1.00\" title=\"the crystal — display without knowing; the mirror that also generates its appearances\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation\" aria-label=\"The frame calls its boundary the horizon\"><h2>The frame calls its boundary the horizon</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"x acting as X — the local 1 claiming the 0 on which it depends\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.69rem;opacity:1.00\" title=\"the prepared role — words becoming further evidence of what the frame knew\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.70%;font-size:0.74rem;opacity:1.00\" title=\"the complex — investment colouring perception confirming the image\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.50%;font-size:1.32rem;opacity:1.00\" title=\"the nested relay — model, action, changed world, model; capture when results erase their status as results\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"Bratton p.25 §§5.1–5.3 — the relay&#39;s distinct temporal tasks\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard\" aria-label=\"The Other interrupts — regard, context, refraction\"><h2>The Other interrupts — regard, context, refraction</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.00%;font-size:0.72rem;opacity:1.00\" title=\"the Other&#39;s refusal — the excess that can alter the measure of the encounter\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.60%;font-size:1.41rem;opacity:1.00\" title=\"the 180°→360° turn — perspectives and transitions held in context\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:1.50rem;opacity:1.00\" title=\"the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.90rem;opacity:1.00\" title=\"the holographic unit — the whole descent carried through one local unit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:0.60rem;opacity:1.00\" title=\"Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return\" aria-label=\"Recognition returns through the veil\"><h2>Recognition returns through the veil</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.19rem;opacity:1.00\" title=\"the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:0.65rem;opacity:1.00\" title=\"the opening — never one more bounded patch\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"A24 — necessary measuring preserved; usurped measure made answerable\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the paśu correction — the &quot;I am&quot; preceding separation; the bounded position arising within recognition&#39;s field\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"A35/A36 — the eye opens again; recognition lived in the next seeing\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-maya-eye-veil-frame-horizon",
+  "world_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+  "revision": 1,
+  "title": "Māyā — Eye, Veil, Frame, Horizon",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Māyā — Eye, Veil, Frame, Horizon"
+      },
+      "fallback": {
+       "title": "Māyā — Eye, Veil, Frame, Horizon"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Māyā — Eye, Veil, Frame, Horizon</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon\" data-expression-revision=\"1\"><h1>Māyā — Eye, Veil, Frame, Horizon</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye\" aria-label=\"An eye opens upon a world\"><h2>An eye opens upon a world</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:1.84rem;opacity:1.00\" title=\"the eye — its condition already at work in what appears\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:54.20%;top:49.00%;font-size:0.72rem;opacity:1.00\" title=\"the blindside — constitutive, more than the anatomical spot\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:1.35rem;opacity:1.00\" title=\"the frame — productive exclusion, a determinate appearance\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:1.26rem;opacity:1.00\" title=\"the horizon — the field of coming-forward, changed by walking and reply\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil\" aria-label=\"The Śaiva genealogy: measure, dream, crystal\"><h2>The Śaiva genealogy: measure, dream, crystal</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"Anuttara/Paramaśiva — the unobjectifiable ground\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.30%;font-size:0.65rem;opacity:1.00\" title=\"Śakti — manifestation and self-articulation; prakāśa–vimarśa together\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:54.50%;top:49.50%;font-size:0.81rem;opacity:1.00\" title=\"Māyā — measure: this appears, that is withheld; the five kañcukas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:0.60rem;opacity:1.00\" title=\"paśu — the bounded knower; buddhi, ahaṃkāra, manas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the dream — sleep disappearing from the experienced situation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.78rem;opacity:1.00\" title=\"the crystal — display without knowing; the mirror that also generates its appearances\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation\" aria-label=\"The frame calls its boundary the horizon\"><h2>The frame calls its boundary the horizon</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"x acting as X — the local 1 claiming the 0 on which it depends\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.69rem;opacity:1.00\" title=\"the prepared role — words becoming further evidence of what the frame knew\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.70%;font-size:0.74rem;opacity:1.00\" title=\"the complex — investment colouring perception confirming the image\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.50%;font-size:1.32rem;opacity:1.00\" title=\"the nested relay — model, action, changed world, model; capture when results erase their status as results\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"Bratton p.25 §§5.1–5.3 — the relay&#39;s distinct temporal tasks\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard\" aria-label=\"The Other interrupts — regard, context, refraction\"><h2>The Other interrupts — regard, context, refraction</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.00%;font-size:0.72rem;opacity:1.00\" title=\"the Other&#39;s refusal — the excess that can alter the measure of the encounter\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.60%;font-size:1.41rem;opacity:1.00\" title=\"the 180°→360° turn — perspectives and transitions held in context\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:1.50rem;opacity:1.00\" title=\"the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.90rem;opacity:1.00\" title=\"the holographic unit — the whole descent carried through one local unit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:0.60rem;opacity:1.00\" title=\"Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return\" aria-label=\"Recognition returns through the veil\"><h2>Recognition returns through the veil</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.19rem;opacity:1.00\" title=\"the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:0.65rem;opacity:1.00\" title=\"the opening — never one more bounded patch\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"A24 — necessary measuring preserved; usurped measure made answerable\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the paśu correction — the &quot;I am&quot; preceding separation; the bounded position arising within recognition&#39;s field\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"A35/A36 — the eye opens again; recognition lived in the next seeing\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+        "revision": 1,
+        "title": "Māyā — Eye, Veil, Frame, Horizon",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye",
+          "revision": 1,
+          "title": "An eye opens upon a world",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil",
+          "revision": 1,
+          "title": "The Śaiva genealogy: measure, dream, crystal",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation",
+          "revision": 1,
+          "title": "The frame calls its boundary the horizon",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard",
+          "revision": 1,
+          "title": "The Other interrupts — regard, context, refraction",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return",
+          "revision": 1,
+          "title": "Recognition returns through the veil",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514",
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491",
+          "revision": 1,
+          "title": "the eye — its condition already at work in what appears",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.614,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492",
+          "revision": 1,
+          "title": "the blindside — constitutive, more than the anatomical spot",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.42,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493",
+          "revision": 1,
+          "title": "the frame — productive exclusion, a determinate appearance",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.45,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494",
+          "revision": 1,
+          "title": "the horizon — the field of coming-forward, changed by walking and reply",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495",
+          "revision": 1,
+          "title": "Anuttara/Paramaśiva — the unobjectifiable ground",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.11,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.136,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496",
+          "revision": 1,
+          "title": "Śakti — manifestation and self-articulation; prakāśa–vimarśa together",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.23,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.217,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497",
+          "revision": 1,
+          "title": "Māyā — measure: this appears, that is withheld; the five kañcukas",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498",
+          "revision": 1,
+          "title": "paśu — the bounded knower; buddhi, ahaṃkāra, manas",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499",
+          "revision": 1,
+          "title": "the dream — sleep disappearing from the experienced situation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500",
+          "revision": 1,
+          "title": "the crystal — display without knowing; the mirror that also generates its appearances",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501",
+          "revision": 1,
+          "title": "x acting as X — the local 1 claiming the 0 on which it depends",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.167,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502",
+          "revision": 1,
+          "title": "the prepared role — words becoming further evidence of what the frame knew",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503",
+          "revision": 1,
+          "title": "the complex — investment colouring perception confirming the image",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.37,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.246,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504",
+          "revision": 1,
+          "title": "the nested relay — model, action, changed world, model; capture when results erase their status as results",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.44,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505",
+          "revision": 1,
+          "title": "Bratton p.25 §§5.1–5.3 — the relay's distinct temporal tasks",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506",
+          "revision": 1,
+          "title": "the Other's refusal — the excess that can alter the measure of the encounter",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507",
+          "revision": 1,
+          "title": "the 180°→360° turn — perspectives and transitions held in context",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.36,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.469,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508",
+          "revision": 1,
+          "title": "the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509",
+          "revision": 1,
+          "title": "the holographic unit — the whole descent carried through one local unit",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510",
+          "revision": 1,
+          "title": "Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511",
+          "revision": 1,
+          "title": "the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.73,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512",
+          "revision": 1,
+          "title": "the opening — never one more bounded patch",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.18,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.217,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513",
+          "revision": 1,
+          "title": "A24 — necessary measuring preserved; usurped measure made answerable",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514",
+          "revision": 1,
+          "title": "the paśu correction — the \"I am\" preceding separation; the bounded position arising within recognition's field",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515",
+          "revision": 1,
+          "title": "A35/A36 — the eye opens again; recognition lived in the next seeing",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-maya-eye-veil-frame-horizon.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Māyā — Eye, Veil, Frame, Horizon"
+      },
+      "fallback": {
+       "title": "Māyā — Eye, Veil, Frame, Horizon",
+       "text": "Māyā — Eye, Veil, Frame, Horizon: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-maya-eye-veil-frame-horizon",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-maya-eye-veil-frame-horizon:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-maya-eye-veil-frame-horizon",
+    "world_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+    "revision": 1,
+    "title": "Māyā — Eye, Veil, Frame, Horizon",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Māyā — Eye, Veil, Frame, Horizon"
+        },
+        "fallback": {
+         "title": "Māyā — Eye, Veil, Frame, Horizon"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Māyā — Eye, Veil, Frame, Horizon</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon\" data-expression-revision=\"1\"><h1>Māyā — Eye, Veil, Frame, Horizon</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye\" aria-label=\"An eye opens upon a world\"><h2>An eye opens upon a world</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:1.84rem;opacity:1.00\" title=\"the eye — its condition already at work in what appears\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:54.20%;top:49.00%;font-size:0.72rem;opacity:1.00\" title=\"the blindside — constitutive, more than the anatomical spot\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:1.35rem;opacity:1.00\" title=\"the frame — productive exclusion, a determinate appearance\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:1.26rem;opacity:1.00\" title=\"the horizon — the field of coming-forward, changed by walking and reply\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil\" aria-label=\"The Śaiva genealogy: measure, dream, crystal\"><h2>The Śaiva genealogy: measure, dream, crystal</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"Anuttara/Paramaśiva — the unobjectifiable ground\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.30%;font-size:0.65rem;opacity:1.00\" title=\"Śakti — manifestation and self-articulation; prakāśa–vimarśa together\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:54.50%;top:49.50%;font-size:0.81rem;opacity:1.00\" title=\"Māyā — measure: this appears, that is withheld; the five kañcukas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:0.60rem;opacity:1.00\" title=\"paśu — the bounded knower; buddhi, ahaṃkāra, manas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the dream — sleep disappearing from the experienced situation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.78rem;opacity:1.00\" title=\"the crystal — display without knowing; the mirror that also generates its appearances\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation\" aria-label=\"The frame calls its boundary the horizon\"><h2>The frame calls its boundary the horizon</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"x acting as X — the local 1 claiming the 0 on which it depends\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.69rem;opacity:1.00\" title=\"the prepared role — words becoming further evidence of what the frame knew\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.70%;font-size:0.74rem;opacity:1.00\" title=\"the complex — investment colouring perception confirming the image\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.50%;font-size:1.32rem;opacity:1.00\" title=\"the nested relay — model, action, changed world, model; capture when results erase their status as results\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"Bratton p.25 §§5.1–5.3 — the relay&#39;s distinct temporal tasks\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard\" aria-label=\"The Other interrupts — regard, context, refraction\"><h2>The Other interrupts — regard, context, refraction</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:46.00%;font-size:0.72rem;opacity:1.00\" title=\"the Other&#39;s refusal — the excess that can alter the measure of the encounter\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:45.50%;top:53.60%;font-size:1.41rem;opacity:1.00\" title=\"the 180°→360° turn — perspectives and transitions held in context\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:1.50rem;opacity:1.00\" title=\"the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.90rem;opacity:1.00\" title=\"the holographic unit — the whole descent carried through one local unit\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.00%;font-size:0.60rem;opacity:1.00\" title=\"Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return\" aria-label=\"Recognition returns through the veil\"><h2>Recognition returns through the veil</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.19rem;opacity:1.00\" title=\"the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.80%;font-size:0.65rem;opacity:1.00\" title=\"the opening — never one more bounded patch\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.00%;font-size:0.66rem;opacity:1.00\" title=\"A24 — necessary measuring preserved; usurped measure made answerable\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.72rem;opacity:1.00\" title=\"the paśu correction — the &quot;I am&quot; preceding separation; the bounded position arising within recognition&#39;s field\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"A35/A36 — the eye opens again; recognition lived in the next seeing\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+          "revision": 1,
+          "title": "Māyā — Eye, Veil, Frame, Horizon",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye",
+            "revision": 1,
+            "title": "An eye opens upon a world",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil",
+            "revision": 1,
+            "title": "The Śaiva genealogy: measure, dream, crystal",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation",
+            "revision": 1,
+            "title": "The frame calls its boundary the horizon",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard",
+            "revision": 1,
+            "title": "The Other interrupts — regard, context, refraction",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return",
+            "revision": 1,
+            "title": "Recognition returns through the veil",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514",
+             "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491",
+            "revision": 1,
+            "title": "the eye — its condition already at work in what appears",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.614,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e492",
+            "revision": 1,
+            "title": "the blindside — constitutive, more than the anatomical spot",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.42,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e493",
+            "revision": 1,
+            "title": "the frame — productive exclusion, a determinate appearance",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.45,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e494",
+            "revision": 1,
+            "title": "the horizon — the field of coming-forward, changed by walking and reply",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e495",
+            "revision": 1,
+            "title": "Anuttara/Paramaśiva — the unobjectifiable ground",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.11,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.136,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e496",
+            "revision": 1,
+            "title": "Śakti — manifestation and self-articulation; prakāśa–vimarśa together",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.23,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.217,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e497",
+            "revision": 1,
+            "title": "Māyā — measure: this appears, that is withheld; the five kañcukas",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e498",
+            "revision": 1,
+            "title": "paśu — the bounded knower; buddhi, ahaṃkāra, manas",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e499",
+            "revision": 1,
+            "title": "the dream — sleep disappearing from the experienced situation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-1-veil:e500",
+            "revision": 1,
+            "title": "the crystal — display without knowing; the mirror that also generates its appearances",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e501",
+            "revision": 1,
+            "title": "x acting as X — the local 1 claiming the 0 on which it depends",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.167,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e502",
+            "revision": 1,
+            "title": "the prepared role — words becoming further evidence of what the frame knew",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e503",
+            "revision": 1,
+            "title": "the complex — investment colouring perception confirming the image",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.37,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.246,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e504",
+            "revision": 1,
+            "title": "the nested relay — model, action, changed world, model; capture when results erase their status as results",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.44,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-2-usurpation:e505",
+            "revision": 1,
+            "title": "Bratton p.25 §§5.1–5.3 — the relay's distinct temporal tasks",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e506",
+            "revision": 1,
+            "title": "the Other's refusal — the excess that can alter the measure of the encounter",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e507",
+            "revision": 1,
+            "title": "the 180°→360° turn — perspectives and transitions held in context",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.36,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.469,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e508",
+            "revision": 1,
+            "title": "the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e509",
+            "revision": 1,
+            "title": "the holographic unit — the whole descent carried through one local unit",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-3-regard:e510",
+            "revision": 1,
+            "title": "Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e511",
+            "revision": 1,
+            "title": "the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.73,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e512",
+            "revision": 1,
+            "title": "the opening — never one more bounded patch",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.18,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.217,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e513",
+            "revision": 1,
+            "title": "A24 — necessary measuring preserved; usurped measure made answerable",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e514",
+            "revision": 1,
+            "title": "the paśu correction — the \"I am\" preceding separation; the bounded position arising within recognition's field",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-5-return:e515",
+            "revision": 1,
+            "title": "A35/A36 — the eye opens again; recognition lived in the next seeing",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:scene:m-maya-0-eye:e491"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-maya-eye-veil-frame-horizon.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Māyā — Eye, Veil, Frame, Horizon"
+        },
+        "fallback": {
+         "title": "Māyā — Eye, Veil, Frame, Horizon",
+         "text": "Māyā — Eye, Veil, Frame, Horizon: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-maya-eye-veil-frame-horizon",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-maya-eye-veil-frame-horizon.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-maya-eye-veil-frame-horizon"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-maya-eye-veil-frame-horizon:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Māyā — Eye, Veil, Frame, Horizon",
+  "summary": "a living Expression · 5 scenes · 25 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-maya-eye-veil-frame-horizon"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-maya-eye-veil-frame-horizon",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-maya-eye-veil-frame-horizon",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Māyā — Eye, Veil, Frame, Horizon",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-maya-eye-veil-frame-horizon:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-maya-eye-veil-frame-horizon:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-maya-eye-veil-frame-horizon",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-maya-eye-veil-frame-horizon"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

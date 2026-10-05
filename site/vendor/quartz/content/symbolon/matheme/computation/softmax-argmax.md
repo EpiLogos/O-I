@@ -15,7 +15,7 @@ Let `z=(z₁,…,z_n)` be finite real logits with `n≥1`, and let temperature `
 
 `p_i=exp(z_i/T)/Σ_j exp(z_j/T)`.
 
-The [version-fixed PyTorch house](../../episteme/sources/computer-science-ml/pytorch/pytorch-2-9-softmax-argmax-api/pytorch-2-9-softmax-argmax-api.md) distinguishes softmax normalisation, argmax index selection and its first-maximum tie rule. The [core spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) supplies the separate native selection/retained-field comparison.
+[PyTorch 2.9’s operators](../../episteme/sources/computer-science-ml/pytorch/pytorch-2-9-softmax-argmax-api/pytorch-2-9-softmax-argmax-api.md) distinguish softmax normalisation, argmax index selection and its first-maximum tie rule. The [native selection and retained field](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) keep the selected result related to the alternatives and rule through which it became determinate.
 
 ## #1 — Normalise and shift
 
@@ -45,4 +45,4 @@ An output token's semantic role requires its actual model, context and use. The 
 
 The result is an exact distinction between a retained distribution and an actual cut. A returned decision can state what was selected, from which field, under which temperature and tie or sampling rule. Its correctness can then be examined without pretending the selected index contains its own conditions.
 
-This record returns-to [Movement38](../../../section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md), [Dia](../dia-syn/dia.md) and [Syn](../dia-syn/syn.md). [Operational parity](operational-parity.md) specifies how retained information must change behaviour before an engineering advantage is claimed.
+[Apoha and softmax](../../../section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md) receive this specified selection together with their distinct semantic and technical warrants. [Dia](../dia-syn/dia.md) makes the cut actual; [Syn](../dia-syn/syn.md) retains and gathers the field through which its result can return. [Operational parity](operational-parity.md) specifies how retained information must change behaviour before an engineering advantage is claimed.

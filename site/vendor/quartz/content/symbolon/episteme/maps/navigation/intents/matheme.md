@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -14,12 +14,12 @@ source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571
 
 **Where you are:** [Reading root](../../../../../README.md) › [#4 Episteme](../../../README.md) › [Maps](../../README.md) › [Navigation](../MOC.md) › Matheme — exact operations
 
-Position #2. Entrance: [The Return of Zero — Matheme](../../../../matheme/README.md). This class is large, so its intents are split by the folder that files it:
+Position #2. Entrance: [Matheme](../../../../matheme/README.md). This class is large, so its intents are split by the folder that files it:
 
 - [computation](matheme--computation.md) — 6 pages
 - [definition](matheme--definition.md) — 8 pages
 - [dia-syn](matheme--dia-syn.md) — 4 pages
-- [diagrams](matheme--diagrams.md) — 7 pages
+- [diagrams](matheme--diagrams.md) — 8 pages
 - [formal-neighbours](matheme--formal-neighbours.md) — 18 pages
 - [harmonics](matheme--harmonics.md) — 9 pages
 - [mono-poly](matheme--mono-poly.md) — 4 pages

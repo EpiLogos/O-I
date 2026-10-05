@@ -24,7 +24,7 @@ url: https://www.legifrance.gouv.fr/loda/id/LEGITEXT000006070939/
 
 François I. *Ordonnance du 25 août 1539 sur le fait de la justice*. Articles 110–111. Légifrance transcription, consulted 8 September 2026. This house records the named articles, not a reading of every provision or a history of enforcement.
 
-The ordinance **historicises** the Logos/Nomos branch of [E3](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md) and the [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md). Prescription and observed compliance retain distinct evidence.
+The ordinance **historicises** the Logos/Nomos branch of [E3](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md) and the [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/HISTORY-language-law-nation-centralisation.md). Prescription and observed compliance retain distinct evidence.
 
 <a id="passages"></a>
 ## Passages

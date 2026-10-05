@@ -32,4 +32,4 @@ The Chinese University of Hong Kong's online dictionary is the selected speciali
 
 **Verification:** selected commentary read 2026-09-08; paraphrase-ready. Separate 嚮/饗/響 entries, historical phonology and inscriptions remain separate tasks. The dictionary does not establish Taylor's philosophical account of community.
 
-The selected passages **source** [E1's historical branches](../../../../etymologies/encounter-region-name-count/HISTORICAL-BRANCHES.md), which **return-to** [the whole-field](../../../../etymologies/encounter-region-name-count/WHOLE-FIELD.md). Source evidence and Taylor's authorial operation keep distinct standing.
+The selected passages **source** [E1's historical branches](../../../../etymologies/encounter-region-name-count/HISTORICAL-BRANCHES-encounter-region-name-count.md), which **return-to** [the whole-field](../../../../etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md). Source evidence and Taylor's authorial operation keep distinct standing.

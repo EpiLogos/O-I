@@ -4,12 +4,11 @@ record_id: S5
 record_type: product
 register: episteme
 claim_status: Argued
-source_relation: Reconstituted from the authorised authorial minute, retained paired-lens reading, A/C primitive constitution and existing Objective Internality field after loss of the original transfer payload
+source_relation: "Argued from A/C, Objective Internality and the paired product-lens relation"
 source_ids:
   - taylor-2026-oi-product-field-commission
   - taylor-2026-core-theorems-pithy
   - taylor-2026-mef-twelve-lenses
-refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 product_parent: S
 movement: 42
 mef_pair:
@@ -32,6 +31,7 @@ concept_relations:
   - C42
   - C45
   - C50
+refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 ---
 # S5 — Quaternal Logic: Transcendent Relation
 
@@ -75,7 +75,9 @@ Neither logic is the diachronic/synchronic distinction. A temporal sequence can 
 
 ## #4 — Local formal constitution: address, operator, relation, context, return
 
-A/C gives QL the local constitution **S5/P0–P5**. **P0** carries Subject identity, Ref, QLAddress, Position and Whole/anchor. **P1** gives QLForm, Lens, State6, PrimitiveTick and an addressable formal artifact. **P2** carries Operator, Locate, Relate, Refract, VĀK instruction and synthesising operation. **P3** gives Relation, Conjugacy, Cross relation, complement/mediation, nesting and traversal. **P4** situates the reading through ContextFrame, MEF address and Resonance. **P5** returns Synthesis, reading provenance, conformance evidence and returned differentiation.
+Quaternal Logic's local sixfold begins from **subject, reference, address and whole**; takes form as **a determinate QL form, lens or state**; acts through **locating, relating, refracting and synthesising operations**; develops through **conjugacy, mediation, nesting and traversal**; becomes situated in **context frames, MEF positions and resonance**; and returns through **synthesis, reading provenance, conformance evidence and retained differentiation**.
+
+The six turns are themselves an example of QL determining at the level of a subject. The form is useful only while the reader can recover what relation each turn carries and how the achieved reading returns to the whole it differentiated.
 
 This makes the philosophical rule from the paired reading operational: **a primitive is alive when its generating relation remains operable**. One must be able to say what it relates, what difference it makes, how that difference becomes actual and what returns from the encounter. A bare coordinate is not yet a living determination.
 
@@ -85,12 +87,8 @@ The same rule keeps mathematical and symbolic language answerable to prose. The 
 
 Transcendent Relation reaches its strongest form in co-internality. Self and Other can be distinct while belonging to a whole that contains their relation. One internality can become part of another’s Objective Internality without becoming its possession. A shared field can condition both while remaining irreducible to either participant’s private model.
 
-This is the formal and ethical force of [A30/A30′](../A30-Objective-Co-Internality.md). The larger whole is not a super-agent swallowing its parts. It is the containing relation through which their difference can remain real and consequential. The possibility of further relation remains open because no present determination can install itself as the absolute exterior from which every scale is finally judged.
+[Co-internality](../A30-Objective-Co-Internality.md) makes each contribution consequential within another’s means while preserving its source and capacity to answer. The larger whole is not a super-agent swallowing its parts. It is the containing relation through which their difference can remain real and consequential. The possibility of further relation remains open because no present determination can install itself as the absolute exterior from which every scale is finally judged.
 
 QL therefore returns to [S — World and Life](S-World-and-Life.md) as Objective Internality’s aspect of **Transcendent Relation**. Central’s ground is a determination within larger histories; Actuation’s event exceeds itself in consequence; AIKit’s potency depends on contextual fields; Factory’s transformation becomes material for further becoming; Workcell’s situated here belongs to wider worlds. QL names the relational movement through which each can remain itself and still pass beyond its present enclosure.
 
 The 5→0 return is not a reset. It is the achieved articulation becoming ground for another movement. Epi-Logos belongs here precisely as reflective return: not a final word above Logos, but Logos becoming capable of recognising and revising the conditions of its own articulation.
-
-### Standing
-
-This body reconstitutes the authorised R2 philosophical office from the retained authorial minute, paired-lens reading, native theorem field and canonical A/C S5 constitution. It does not claim byte identity with the lost transfer. Independent R5 review must still test its exact relation to C39, the complete Matheme field, whole Mythemes and implementation evidence before T26 ratification.

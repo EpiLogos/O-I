@@ -4,12 +4,11 @@ record_id: S4
 record_type: product
 register: episteme
 claim_status: Argued
-source_relation: Reconstituted from the authorised authorial minute, retained paired-lens reading, A/C primitive constitution and existing Objective Internality field after loss of the original transfer payload
+source_relation: "Argued from A/C, Objective Internality and the paired product-lens relation"
 source_ids:
   - taylor-2026-oi-product-field-commission
   - taylor-2026-core-theorems-pithy
   - taylor-2026-mef-twelve-lenses
-refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 product_parent: S
 movement: 41
 mef_pair:
@@ -26,6 +25,7 @@ concept_relations:
   - C41
   - C44
   - C45
+refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 ---
 # S4 — Workcell: situated existence
 
@@ -51,7 +51,9 @@ Thrownness also keeps the technical actor from being imagined as self-originatin
 
 The conjugate pair gives **Introversion · Sensation · Feeling · Thinking · Intuition · Extroversion**. These name differentiated modes through which a situated Life encounters itself and World.
 
-The technical application must preserve the distinction between a structural analogue and a phenomenal claim. Input channels, telemetry, logs, local state, inference and output can be organised into an aperture through which an artificial actor differentiates its situation. That does not establish that sensation or feeling is phenomenally present. The philosophical pair remains broader than its technical refraction.
+**Introversion** directs attention inward, toward the relation of the encountered circumstance to the Life's own formation. **Sensation** receives what is immediately there. **Feeling** judges worth: what matters in this encounter and how it is valued. **Thinking** distinguishes and relates through concepts, reasons and classifications. **Intuition** receives possibilities and connections which the presently given facts do not exhaust. **Extroversion** directs attention and investment toward the encountered World. Sensation and intuition receive what is given or possible; feeling and thinking judge it through value and conceptual relation. The inward and outward attitudes change where that reception and judgment are directed. Together the six modes explain how one concrete situation can be received and articulated in different ways.
+
+The technical application follows the Phenomenological / Phenomenal pair by distinguishing situated mediation from what appears through it. Input channels, telemetry, logs, local state, inference and output compose an aperture through which an artificial actor differentiates its situation. Their arrangement matters because changing the aperture changes the world of actionable difference. The psychological meanings of the six modes supply distinctions for this architectural application; naming a log “sensation” or a ranking “feeling” would not establish the corresponding psychological function. Workcell's precise task is to make situated existence and its material resistance legible while retaining the relation between encounter and the means through which it becomes inspectable.
 
 The value of the pairing is that situation is not passive containment. A Life receives and articulates its situation through differentiated modes of encounter. Inward attention and outward action are connected by the concrete here in which both take place. Thought is not nowhere; intuition is not outside history; sensation and feeling are conditioned by a body-world relation.
 
@@ -59,7 +61,7 @@ Gebser’s psychic-fact office remains relevant here. Extraordinary and ordinary
 
 ## #3 — Material demand, offer and realised world
 
-A/C gives the local constitution **S4/P0–P5**. **P0** identifies Workcell, material-world identity and opaque client or semantic references. **P1** carries ExecutionDemand, BindingGraph, MaterialisationPlan and workspace/service/fabric bindings. **P2** gives material requirements, OperationalOffer, provider capability and capacity, and control-plane operations. **P3** is Plan, Prepare, Lifecycle, Reconcile and candidate materialisation trajectory. **P4** is MaterialisedExecutionWorld, Workspace, Runtime, Service, Endpoint and Host. **P5** returns observed state, material evidence, collected artifacts, recovery and retention state.
+Workcell's local sixfold begins from the identity of a material execution world; takes form as execution demand, bindings and materialisation plan; gathers provider capability and operational capacity; moves through planning, preparation, lifecycle and reconciliation; becomes actual as workspace, runtime, service, endpoint and host; and returns through observed state, material evidence, collected artifacts and recovery. A demanded world thus becomes a situated attempt whose realised conditions can confirm or change the next demand.
 
 The distinction between demand and offer is philosophically important. A desired capability does not imply that the world can presently sustain it. The material field answers. Resources may be absent, capacity insufficient, topology wrong, permissions unavailable or latency consequential. The Workcell is therefore where intention meets resistance in its most literal form.
 
@@ -69,7 +71,7 @@ That resistance is not simply an obstacle. It is information returned by actuali
 
 To be somewhere is also to be available, in some manner, to encounter by others. A host can be reachable; a person can be addressed; a service can expose an endpoint; a shared workspace can make activity visible. Availability, however, is not consent, ownership or unrestricted access.
 
-[A27/A27′](../A27-Self-and-Other-Unity-without-Possession.md) matters here because co-presence must not become possession. The Other can be in relation with me, and within a containing whole, without becoming an object inside my authority. Technically, reachability does not grant permission. Philosophically, exposure does not abolish alterity.
+[Co-presence](../A27-Self-and-Other-Unity-without-Possession.md) gives participants a real relation while preserving their distinct authority to answer, permit and refuse. The Other can be in relation with me, and within a containing whole, without becoming an object inside my authority. Technically, reachability does not grant permission. Philosophically, exposure does not abolish alterity.
 
 Workcell therefore carries the ethical weight of boundaries at the level of situation. Who can enter this space? What can leave it? What evidence may be retained? Which processes may affect which worlds? These are not secondary governance questions placed atop neutral infrastructure. They help constitute the situation itself.
 
@@ -80,7 +82,3 @@ Situated existence becomes reflective when what happened in the material world c
 The return is not merely logging. A log may record resistance while leaving the governing assumptions untouched. Workcell completes its movement when material evidence can reach the office that can reinterpret the situation, change the plan, revise the capacity horizon or reconsider the purpose.
 
 Workcell therefore returns to [S — World and Life](S-World-and-Life.md) as Objective Internality’s aspect of **situated existence**. Central gives the ground carried into the situation; Actuation articulates events within it; AIKit gives the changing powers available there; Factory transforms through its resistances; QL relates this local here to the wider wholes in which it is nested.
-
-### Standing
-
-This body reconstitutes the authorised R2 philosophical office from the retained authorial minute, paired-lens reading and canonical A/C S4 constitution. It does not claim byte identity with the lost transfer. The independent R5 review must still test the full phenomenological, phenomenal, technical and ethical relations before T26 ratification.

@@ -1,51 +1,61 @@
 ---
 record_id: C35
+record_type: concept
 register: "episteme"
 claim_status: "Argued"
 source_relation: "Argued from Taylor's Subject/self distinctions and Symbolon Dynamics; Jungian Self and technical self-models remain source-specific"
+source_ids:
+  - watson-1998-resonance-of-emptiness
+  - taylor-2026-core-theorems-pithy
 ---
 # C35 — Selfing / Self / Subjectivity / Self-Thing
 
-## #0
+## #0 — Identifying has more than one object
 
-C35 distinguishes selfing, Self, Subjectivity and self-thing at the point where self-reference changes office. Selfing is the ongoing enactment of a coherent self-position. The self-thing is the represented identity that can be described, remembered, stored or modelled. Subjectivity names first-person appearing rather than its representation. Self requires its register: a local organising identity and the Jungian symbol of psychic totality are not automatically the philosophical Subject of C01.
+An experience occurs; someone takes it as mine; an image of its owner becomes available. These are different moments of self-reference. The occurrence, the appropriation and the represented identity can be examined separately even while they participate in one life.
 
-## #1
+**Selfing** is the activity through which experiences are gathered around a self-position. A **self-image** is one of its determinate products. The **self-thing** arises when this product is taken as an independently subsisting owner of the activity which produced it. Representation alone is not reification: the decisive change is the promotion of a dependent formation into its own ground.
 
-Frank's [Watson encounter](../../../symbolon/episteme/sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md) recovers the appropriative sequence of mine, I am this, and this is myself. Repetition gathers experience around a position and makes a world actionable. The process becomes reified when its product is taken as permanent, partless and autonomous. Selfing does not have to terminate in that self-thing; the product can remain legible through its continuing conditions.
+**Subjectivity** names first-person appearing, including the appearing of selfing and its images. **Self**, in the whole-bearing sense developed here, holds Subject, Objective Internality and the differentiated world in their relation. The ego is a particular formation within that whole. Its image of itself neither produces the first-person fact nor contains the whole whose life it participates in.
 
-## #2
+## #1 — Mine becomes what I am
 
-The distinction between I and me requires its mediation. An inspectable instrument determines, appropriates and coordinates objects; no enlargement of that instrument turns it into the unobjectifiable pole for which objects appear. The Bāhiya reading in the protected notes keeps the addressed You present while loosening appropriation of experience. Its authorial interpretation is not a verified quotation or a warrant for treating all Buddhist accounts as one doctrine. Likewise, the universal I/this orientations of A09 differ in scope from local ahaṃkāra appropriation even where the words recur.
+Appropriation gives the sequence its force: this is mine; I am this; this is myself. A passing feeling can become a description of the person; a repeated description can become the criterion by which later feelings are admitted. Memory, expectation and recognition by others lend that position continuity. A life becomes addressable through a name, history and embodied pattern.
 
-## #3
+The [Watson encounter](../../../symbolon/episteme/sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md) brings the process into focus. What changes continuously through interaction can be grasped as permanent, partless and autonomous. The act of grasping then disappears behind its product: the apparent owner is treated as what made the appropriation possible.
 
-A second person changes self-reference. You are not a midpoint inserted between a completed I and It: address changes what I can claim about you and about myself. Q27's exact distinction is that the Other can be within Mono without being within me. Shared reality does not grant access to another's first-person presence, history or future. A model of that person remains a local account capable of being corrected by their expression.
+The distinction matters because continuity can remain real while its account changes. A name can retain its bearer through a revised description. A person can recognise a habit as acquired without losing the history through which it became theirs. Selfing can sustain situated identity while leaving the conditions of that identity available for recognition.
 
-## #4
+## #2 — The instrument and the experient
 
-Internal and interpersonal alterity also differ. The Shadow is other-self: disowned or not-yet-lived difference within psychic life. The Friend is my-self's-other: another centre whose response cannot be produced by my psyche. Those image-relations must not become extra theorem primitives or a reason to treat actual others as projected complexes. Individuation changes the organisation of self-reference while keeping the person particular; it does not transfer the whole's authority to an enlarged ego.
+The [inner instrument](C16-Antahkarana-Inner-Instrument.md) differentiates, appropriates and coordinates. Buddhi determines; ahaṃkāra takes a determination as mine; manas coordinates the field in which such determinations become available. These activities constitute an objective internality which can itself be noticed and examined.
 
-## #5→0
+The difference between I and me runs through this mediation. The me is describable: this body, memory, disposition, history and horizon. The I to which that description appears is [defined through its indefinability](C01-Subject-Defined-Indefinability.md). Criticism can undo a self-thing while the presence in which the undoing occurs remains undeniable. The success of the criticism depends on keeping those offices distinct.
 
-The self-account **returns-to** [Count-through-Countenance](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md#count-through-countenance) when address changes what can be said of its bearer. A self-name, represented persona and functioning self-position keep their distinct offices; an answering You can correct the attribution without becoming another product of my self-model. This return preserves the subject/self distinction and supplies no inference from technical self-description to phenomenality.
+The Bāhiya reading turns on the addressed You. Loosening the identification of an experient with what is seen or heard changes appropriation within the encounter; the address itself continues to concern someone. The injunction can be received and lived. Its force reaches the identification rather than abolishing the relation in which receiving is possible.
 
-Technical use must identify the office its evidence supports. A system can describe itself, maintain a coherent persona, revise a self-model, and act through an objective internality. Those are different achievements; none by itself decides phenomenal subjectivity. Conversely, a person can revise an image of self without abolishing first-person presence. Returning each account to its office makes self-reference more exact and preserves the open artificial-subjectivity question required by A26/A34.
+The [tattvic differentiation](../A09-Tattvic-Differential-Field.md) carries the same distinction across scale: universal I–this orientations and local appropriation occupy different places within the contraction of a world. Ahaṃkāra's “I am this” is already a determination within the relation it appears to originate.
 
-### Declared field
+## #3 — The self can be addressed
 
-**Argument consumers:** A01–A02, A19–A21, A26–A27, A31, A34. **Movement consumers:** Subject, Jung/self, agent-subjectivity and idealism movements.
+[AM/IS](../../../symbolon/AM-IS.md) makes self-reference personed. AM speaks from first-person presence; IS makes a bearer available for description; the second-person slash lets that bearer answer. “I am here” and “she is here” can concern the same person while doing different work.
 
-**Etymology relation:** *Encounter / Region / Name / Count / Countenance / Account*; exact operation: a **Name/Account** of self does not exhaust the Countenance/subject encountered through it. Register **3**. Return C35 → C01/A01 → C40/A26 → C35.
+An account of you enters my means of knowing. Your reply can change that account and the categories through which I approached you. The Other can therefore be within Mono without being within me: shared reality holds both participants, while neither participant's local representation owns the other's response.
 
-**Source/tradition standing:** Taylor's subject/self distinctions and Jungian Self material are primary; technical self-model discourse is application evidence, not phenomenality proof.
+This is also how self-knowledge exceeds private self-inspection. Another can disclose a habit I had mistaken for my nature, or challenge an identity whose terms I had ceased to notice. Recognition changes the relation between the lived self and its description through an encounter neither side completes alone.
 
-### Provenance
+## #4 — The particular within the whole Self
 
-Native operations are governed by the [core theorem spine](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), [Symbolon Dynamics house](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md), and [Q27's Watson/Otherness correction](../../../quilt/27-07-26-QUILTING-FOR-FULL-ARGUMENT.md). [Watson](../../../symbolon/episteme/sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md) and [Van Eenwyk](../../../symbolon/episteme/sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors.md) protected notes disclose Taylor's authorial encounter; their copied statements are leads until independently verified. [Aion](../../../symbolon/episteme/sources/psychology/jung/jung-1978-aion-cw9-2/jung-1978-aion-cw9-2.md) remains citation-ready with no excerpts; historical Jungian terminology and the exact phrase tradition require their own locators. Mathematical carriers keep their specific operations and are not interchangeable proofs of the psychic or ethical claim.
+The Shadow is **other-self**: disowned or not-yet-lived difference within psychic life. The Friend is **my-self's-other**: another centre whose reply my psyche cannot supply. An image of a friend can become part of my psychic world; the friend remains capable of answering differently from that image. Inward integration and interpersonal encounter consequently make different demands.
 
-### Remaining source depth
+At the psychic scale, the Self concerns the whole field within which the ego and its estranged possibilities belong. [X/x](../../../symbolon/X-x.md) gives this a precise relation: the particular x makes a determining fullness X legible through a local face. The particular retains reality through that dependence. Its isolation, not its particularity, is what recognition overcomes.
 
-Restore exact Jungian Self terminology, contemplative subject distinctions and technical self-model examples.
+[Individuation](C34-Individuation.md) changes how the local formation participates in its whole. The self-thing becomes recognisable as selfing; its apparent autonomy opens into the conditions sustaining it. The resulting integrity can bear more difference because the ego no longer has to treat every unassimilated possibility as a threat to its existence.
 
-**Depth Restoration: enriched; historical/empirical debts retained.**
+## #5→0 — Identification returns changed
+
+[Countenance](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md#count-through-countenance) returns the account to its bearer. A self-name, image and functioning position remain useful where an answering person can revise what they mean and how they are used. Recognition carries the history of an identification into another act rather than erasing the history or enthroning its latest description.
+
+The technical distinction is equally concrete. A self-report states something about a system. A persona maintains a recognisable presentation. A self-model organises determinations used in later action. Memory, tools and relations to other agents participate in the continuity of that action. A retained correction matters when it changes one of those operations, rather than merely adding a sentence announcing that the system has changed.
+
+The [crossed-zero traversal](../../../symbolon/subject-logics.md) gives the return its whole form: the instrument's fused self-identification becomes visible as mediation, its differentiated world becomes available with it, and unity is recognised through their relation. The achieved self can be affirmed without asking its image to supply the ground of affirming. First-person presence, situated selfing and whole-Self remain distinguishable within the life their relation makes articulate.

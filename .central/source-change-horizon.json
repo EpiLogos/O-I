@@ -1,7 +1,7 @@
 {
   "schema": "central.source-change-horizon/v1",
   "world_ref": "project:O-I",
-  "cursor": 204,
+  "cursor": 223,
   "sources": {
     "central:source:project:O-I:ProjectCentral/agents/governance/repo-content.md": {
       "binding": {
@@ -37,6 +37,23 @@
         "byte_len": 606
       }
     },
+    "central:source:project:O-I:ProjectCentral/agents/now/clearings/e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8/now.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/now/clearings/e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8/now.json",
+        "path": "ProjectCentral/agents/now/clearings/e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8/now.json",
+        "roles": [
+          "now-clearing"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "current-development-state",
+        "treatment": "generated-derived",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1212:dd434541d2e2ccbe",
+        "byte_len": 1212
+      }
+    },
     "central:source:project:O-I:ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json": {
       "binding": {
         "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json",
@@ -67,8 +84,280 @@
         "agent_retrieval_allowed": true
       },
       "revision": {
-        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
-        "byte_len": 837
+        "revision": "central.content-fnv1a64/v1:2102199:fe8186bd05c3ee7d",
+        "byte_len": 2102199
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-000.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-000.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-000.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:895977:1f1a003d437dfc36",
+        "byte_len": 895977
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-001.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-001.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-001.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1022980:d4d2dccb64c39314",
+        "byte_len": 1022980
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-002.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-002.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-002.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1054929:0ef39ef17b80a8ee",
+        "byte_len": 1054929
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-003.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-003.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-003.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1098514:f52c4085ec0c3bb8",
+        "byte_len": 1098514
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-004.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-004.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-004.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:804313:a2899ab55308bc58",
+        "byte_len": 804313
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-005.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-005.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-005.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:904514:8edae96d5ebea46c",
+        "byte_len": 904514
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-006.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-006.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-006.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1047293:bd6a5cba9e744bf9",
+        "byte_len": 1047293
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-007.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-007.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-007.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1021094:f60e82b5073d413a",
+        "byte_len": 1021094
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-008.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-008.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-008.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1071738:61bbd3707daf3068",
+        "byte_len": 1071738
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-009.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-009.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-009.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1084550:3b1269ba2974ebf1",
+        "byte_len": 1084550
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-010.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-010.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-010.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1024236:80575d56be51d688",
+        "byte_len": 1024236
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-011.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-011.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-011.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1068404:f2074aebf497c97d",
+        "byte_len": 1068404
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-012.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-012.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-012.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1092055:97869a9847d9a5db",
+        "byte_len": 1092055
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-013.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-013.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-013.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1097504:9a7e5caf8f8d6020",
+        "byte_len": 1097504
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-014.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-014.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-014.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:1120587:1f9b9a5c568db4d9",
+        "byte_len": 1120587
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-015.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-015.json",
+        "path": "ProjectCentral/agents/wiki/wiki.sources/corpus-015.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:482737:481ba0adb545fb5e",
+        "byte_len": 482737
       }
     },
     "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md": {
@@ -4471,9 +4760,391 @@
       "kind": "removed",
       "observed_at_unix_seconds": 1790454710,
       "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:205",
+      "cursor": 205,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+      "after_revision": "central.content-fnv1a64/v1:2078221:509fa235aacfb5c5",
+      "kind": "modified",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:206",
+      "cursor": 206,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-000.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-000.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:895977:1f1a003d437dfc36",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:207",
+      "cursor": 207,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-001.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-001.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1022980:d4d2dccb64c39314",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:208",
+      "cursor": 208,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-002.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-002.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1054929:0ef39ef17b80a8ee",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:209",
+      "cursor": 209,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-003.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-003.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1098514:f52c4085ec0c3bb8",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:210",
+      "cursor": 210,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-004.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-004.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:804313:a2899ab55308bc58",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:211",
+      "cursor": 211,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-005.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-005.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:904514:8edae96d5ebea46c",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:212",
+      "cursor": 212,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-006.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-006.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1047293:bd6a5cba9e744bf9",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:213",
+      "cursor": 213,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-007.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-007.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1021094:f60e82b5073d413a",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:214",
+      "cursor": 214,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-008.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-008.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1071738:61bbd3707daf3068",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:215",
+      "cursor": 215,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-009.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-009.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1084550:3b1269ba2974ebf1",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:216",
+      "cursor": 216,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-010.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-010.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1024236:80575d56be51d688",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:217",
+      "cursor": 217,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-011.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-011.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1068404:f2074aebf497c97d",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:218",
+      "cursor": 218,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-012.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-012.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1092055:97869a9847d9a5db",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:219",
+      "cursor": 219,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-013.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-013.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1097504:9a7e5caf8f8d6020",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:220",
+      "cursor": 220,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-014.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-014.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1120587:1f9b9a5c568db4d9",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:221",
+      "cursor": 221,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.sources/corpus-015.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.sources/corpus-015.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:482737:481ba0adb545fb5e",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790617634,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:222",
+      "cursor": 222,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/now/clearings/e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8/now.json",
+      "source_path": "ProjectCentral/agents/now/clearings/e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8/now.json",
+      "source_roles": [
+        "now-clearing"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "current-development-state",
+      "treatment": "generated-derived",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:1212:dd434541d2e2ccbe",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790618056,
+      "provider": "central.filesystem-reconcile/v1",
+      "actor": "central.now.allocate",
+      "actor_kind": "native-operation"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:223",
+      "cursor": 223,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:2078221:509fa235aacfb5c5",
+      "after_revision": "central.content-fnv1a64/v1:2102199:fe8186bd05c3ee7d",
+      "kind": "modified",
+      "observed_at_unix_seconds": 1790854130,
+      "provider": "central.filesystem-reconcile/v1"
     }
   ],
   "consumer_cursors": {},
   "provider": "central.filesystem-reconcile/v1",
-  "reconciled_at_unix_seconds": 1790520606
+  "reconciled_at_unix_seconds": 1791153502
 }

@@ -38,7 +38,7 @@ The selected witness is German History in Documents and Images, document1523, a 
 
 Two complete instruments in the GHI English translation; three PDF pages including source credits. No German facsimile collation. Editorial introduction remains distinct from statutory text. Full named scope was read in the T21 law development; the text hash matches the later T22 consumer-source receipt. This admission reuses that reading and rechecks the exact passages, not a new whole-book or archival investigation. No direct quotation is admitted.
 
-The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-vii-germany) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
+The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-vii-germany) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
 
 ## Provenance
 
@@ -62,7 +62,7 @@ Institutional origin: [selected witness](https://germanhistorydocs.org/en/nazi-g
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Two complete instruments in the GHI English translation; three PDF pages including source credits. No German facsimile collation. Editorial introduction remains distinct from statutory text.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-vii-germany).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-vii-germany).
 
 <a id="reich-1935-citizenship-law-first-regulation-q002"></a>
 ## Passage card — `reich-1935-citizenship-law-first-regulation-q002` — Classification and implementing authority
@@ -76,4 +76,4 @@ Institutional origin: [selected witness](https://germanhistorydocs.org/en/nazi-g
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Two complete instruments in the GHI English translation; three PDF pages including source credits. No German facsimile collation. Editorial introduction remains distinct from statutory text.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-vii-germany).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-vii-germany).

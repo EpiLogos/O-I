@@ -15,15 +15,15 @@ source_relation: "Extracted internal derivation; Argued philosophical developmen
 
 “What is this?” begins within an encounter. The asking has already distinguished something sufficiently to address it, while leaving what it is unsettled. The word *this* takes a provisional mark; the question gives that mark a future in which it can be answered, corrected, or found inadequate. Inquiry receives both the appearance and the activity through which it has become noticeable.
 
-[0/1](0-1.md) grounds this conscious circumstance: something appears, its appearing is known, and the knowing occurs through a relation that can itself become a question. The [slash](the-slash.md) grounds the differentiating activity. At `?/!`, that activity undertakes an account. The mark now has to answer for the distinction it makes.
+In [the conscious circumstance](0-1.md), something appears, its appearing is known, and the knowing occurs through a relation that can itself become a question. The [differentiating slash](the-slash.md) makes the distinction available. At `?/!`, that activity undertakes an account. The mark now has to answer for the distinction it makes.
 
 ## #1 — The question takes a mark
 
 `?` names openness to determination. `!` names the act of asserting enough for a determination to stand. The slash holds them in one operation: the question has asserted a provisional *this*, and an assertion carries the question whether it has said truly what this is. Each makes the other's work possible. Without something provisionally distinguished, the question has nothing to ask about; without answerability, the assertion's force would supply its own criterion.
 
-Taylor's [Binary Explication](episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §5, sources this derivation through the line “What allows for an essence is essentially inessential.” The enabling condition cannot simply be another essence alongside the one being defined: that would place a further object where the question concerns what enables objectification. The line performs its distinction by giving a definite answer whose content prevents that answer from claiming the enabling office for itself.
+“What allows for an essence is essentially inessential.” The line states the turn precisely. The condition that lets an essence be determined cannot simply be another essence alongside the one being defined; another object would repeat the question at the level of what enables objectification. The answer therefore becomes faithful by making its own enabling limit part of what it says. [Binary Explication](episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) carries the full derivation.
 
-Definition therefore makes a real commitment. It selects a name or account under which the appearance can be recognised again. Its precision lies partly in retaining what would make that selection answerable. [A01, Faithful Definition](../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md), derives the longer movement in which an account succeeds through making its failure of final enclosure active in what it says.
+Definition therefore makes a real commitment. It selects a name or account under which the appearance can be recognised again. Its precision lies partly in retaining what would make that selection answerable. [Faithful definition](../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md) succeeds through making its failure of final enclosure active in what it says.
 
 ## #2 — A mark makes a difference
 
@@ -35,7 +35,7 @@ A claim cannot retain this relation merely by decorating itself with doubt. The 
 
 ## #3 — Four ways the account meets its condition
 
-File 1's Catuṣkoṭi crossing tests the relation with the proposition **0 is and/or is not equal to 1**. Its terms have already been earned: `0` marks the unobjectifiable fact of awareness, `1` the appearing determination. The crossing belongs here as Taylor's native use of the four corners and their return.
+File 1's Catuṣkoṭi crossing tests the relation with the proposition **0 is and/or is not equal to 1**. Its terms have already been earned: `0` marks the unobjectifiable fact of awareness, `1` the appearing determination. The crossing belongs here because each corner tests what an answer can and cannot close while remaining inside the same act of predication.
 
 **IS** affirms that the appearing belongs to awareness. The phenomenon is given in the very event of knowing it. Taken as exhaustive identity, however, that affirmation loses the distinction through which something can appear.
 
@@ -45,13 +45,13 @@ File 1's Catuṣkoṭi crossing tests the relation with the proposition **0 is a
 
 **NEITHER** turns the account upon that remaining claim. Neither identity nor difference, nor their conjunction as a completed formula, contains the condition under which the formula is now understood. The fourth makes the whole predicative movement available together, including its dependence on what it has failed to capture.
 
-The four corners preserve their determinate work through this crossing. The shift beyond them concerns the relation of the one who takes these positions to the circumstance in which position-taking occurs. The [self-identity root](self-identity.md) grounds the copula's ability to relate through difference; the [subject-logics root](subject-logics.md) extends the recognition of the medium through which the account has been made.
+The four corners preserve their determinate work through this crossing. The shift beyond them concerns the relation of the one who takes these positions to the circumstance in which position-taking occurs. [The copula relates through difference](self-identity.md); [the medium through which the account has been made can itself become recognisable](subject-logics.md).
 
 ## #4 — The assertion encounters its own limit
 
 `?/!` also appears at **#3 in the processual slash-form table**, where the inverse `1/0` meets incomputability. This is a second placement in a different reading. The qualitative determination at #1 names questioning-and-asserting; the processual #3 localises the limit that makes the achieved account turn back upon its condition. Keeping both placements lets the same sign conduct their relation without exchanging their offices.
 
-Ordinary arithmetic supplies an exact boundary: division by zero has no value in the ordinary field operations. QL uses that boundary to articulate the return of the determined towards what determination presupposes. The [core-theorems spine](episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), §II(b–c), sources these two placements. Its formal-limit comparisons do not turn every inquiry into an instance of a mathematical incompleteness theorem. [A03](../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md) qualifies that passage by distinguishing the constraint within a formal operation from the recurrent non-coincidence of a determination and its determining condition.
+Ordinary arithmetic supplies the exact pressure: division by zero has no value in the ordinary field operations. In the QL traversal, the inverse 1/0 is therefore where the achieved determination cannot close by assigning a further value to its own ground. The question reappears at the point of formal failure because the account has reached the condition it cannot make one more result. [Immutable Gap / Formal Limit](../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md) develops the same non-coincidence at argument scale.
 
 This is why an answer can remain exact while opening another question. What it has successfully determined becomes available for further thought; the act by which it has become available remains implicated in that thought. Answerability belongs to successful determination as well as to its correction.
 
@@ -61,4 +61,4 @@ This is why an answer can remain exact while opening another question. What it h
 
 The inquiry “What am I?” makes that return intimate. Asking already manifests the capacity whose nature is in question. The answer cannot acquire that capacity as an additional object, yet the asking can become transparent to the presence in which it occurs. `?/!` conducts this double movement: a determinate self-account and the continuing answerability of the one making it.
 
-This root returns-to [A18](../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) and [§3 · #0, Eight Determinations](../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md), where its operation passes into force, recurrence, personed context, differential horizon, and return. The [spine-index](eight-determinations.md) gathers that sequence. The [definition register](matheme/definition/README.md) extends the worked crossing; [1/0](1-0.md) returns the achieved account towards its ground. The mark has said something. It can now be asked what its saying has made possible.
+Within [the complete eight determinations](../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), [the question's commitment passes into force, recurrence, personed context, differential horizon, and return](../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md). [Each turn](eight-determinations.md) retains the preceding operation while changing what it can do. [The worked crossing](matheme/definition/README.md) preserves affirmation, denial, both and neither within their lived condition; [the achieved account turns towards its ground](1-0.md) without adding a further answer-object. The mark has said something. It can now be asked what its saying has made possible.

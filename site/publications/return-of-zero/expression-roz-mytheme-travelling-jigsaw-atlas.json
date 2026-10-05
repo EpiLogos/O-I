@@ -1,0 +1,4087 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-travelling-jigsaw-atlas",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+  "revision": 1,
+  "title": "The travelling jigsaw — from box-lid to atlas",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid",
+    "revision": 1,
+    "title": "The picture arrives before the pieces",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel",
+    "revision": 1,
+    "title": "Travel changes what it means to fit",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle",
+    "revision": 1,
+    "title": "A crossing has a rule — the circle's two charts",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus",
+    "revision": 1,
+    "title": "The torus loop returns with its winding",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble",
+    "revision": 1,
+    "title": "The planet appears, and the making of the picture returns",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return",
+    "revision": 1,
+    "title": "The atlas travels with the means to revise it",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296",
+     "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272",
+    "revision": 1,
+    "title": "the box lid — the destination already visible",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.27,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5835,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273",
+    "revision": 1,
+    "title": "the edge frame — built first",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.27,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4725,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274",
+    "revision": 1,
+    "title": "sorted pieces — awaiting their place",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.35,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275",
+    "revision": 1,
+    "title": "the lid's silent power — it decides which anomaly is merely misplaced",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.52,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276",
+    "revision": 1,
+    "title": "the flat assembly — meeting a turn it cannot preserve",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.4,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.537,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277",
+    "revision": 1,
+    "title": "the travelled world — curvature beyond the frame",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.15,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.8,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278",
+    "revision": 1,
+    "title": "the question reaching the frame: what relation was lost in this rendering?",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279",
+    "revision": 1,
+    "title": "recording how a view was made — from where, across which region, under what projection",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280",
+    "revision": 1,
+    "title": "the circle covered by two charts — opposite poles omitted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.41,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.678,
+      "automation": null
+     },
+     "share": {
+      "value": 1.8,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281",
+    "revision": 1,
+    "title": "the shared point (x,y)=(3/5,4/5)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.18,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282",
+    "revision": 1,
+    "title": "v = 1/u — the declared transformation on the overlap",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.37,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283",
+    "revision": 1,
+    "title": "du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": -0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284",
+    "revision": 1,
+    "title": "height 4/5 in either account",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.19,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285",
+    "revision": 1,
+    "title": "the flat quotient — one surface address, infinitely many plane representatives",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.626,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286",
+    "revision": 1,
+    "title": "the loop γ(t)=[2t,−t]",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5065,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287",
+    "revision": 1,
+    "title": "the lifted endpoint (2,−1) — displacement retained",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": 0.55,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288",
+    "revision": 1,
+    "title": "the disk abstraction — every loop contractible; the winding classes are what it lacks",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289",
+    "revision": 1,
+    "title": "four sides, two generators, one vertex, one face — counts with distinct offices",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.6,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290",
+    "revision": 1,
+    "title": "the planetary view — Earth gathered around a shared frame",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.522,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291",
+    "revision": 1,
+    "title": "as box-lid — \"planetary\" the unexamined scale under which lives are counted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292",
+    "revision": 1,
+    "title": "whose planet, computed by whom, on whose gauge?",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293",
+    "revision": 1,
+    "title": "the diaphanous turn — location, time, production and transformations inspectable",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.55,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294",
+    "revision": 1,
+    "title": "the atlas — charts, transitions, obstructions",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.55,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.509,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295",
+    "revision": 1,
+    "title": "the first picture reopened — its achievement retained, frame now visible",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.45,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296",
+    "revision": 1,
+    "title": "Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.29,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297",
+    "revision": 1,
+    "title": "A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.55,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-travelling-jigsaw-atlas.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The travelling jigsaw — from box-lid to atlas</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas\" data-expression-revision=\"1\"><h1>The travelling jigsaw — from box-lid to atlas</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid\" aria-label=\"The picture arrives before the pieces\"><h2>The picture arrives before the pieces</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.70%;font-size:1.75rem;opacity:1.00\" title=\"the box lid — the destination already visible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.70%;font-size:1.42rem;opacity:1.00\" title=\"the edge frame — built first\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:1.05rem;opacity:1.00\" title=\"sorted pieces — awaiting their place\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.20%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"the lid&#39;s silent power — it decides which anomaly is merely misplaced\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel\" aria-label=\"Travel changes what it means to fit\"><h2>Travel changes what it means to fit</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:46.00%;top:53.20%;font-size:1.61rem;opacity:1.00\" title=\"the flat assembly — meeting a turn it cannot preserve\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:54.50%;top:48.50%;font-size:2.40rem;opacity:1.00\" title=\"the travelled world — curvature beyond the frame\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"the question reaching the frame: what relation was lost in this rendering?\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"recording how a view was made — from where, across which region, under what projection\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle\" aria-label=\"A crossing has a rule — the circle&#39;s two charts\"><h2>A crossing has a rule — the circle&#39;s two charts</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:2.03rem;opacity:1.00\" title=\"the circle covered by two charts — opposite poles omitted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:54.50%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"the shared point (x,y)=(3/5,4/5)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"v = 1/u — the declared transformation on the overlap\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.60%;top:51.00%;font-size:0.66rem;opacity:1.00\" title=\"du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"height 4/5 in either account\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus\" aria-label=\"The torus loop returns with its winding\"><h2>The torus loop returns with its winding</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:1.88rem;opacity:1.00\" title=\"the flat quotient — one surface address, infinitely many plane representatives\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.52rem;opacity:1.00\" title=\"the loop γ(t)=[2t,−t]\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.20%;top:44.50%;font-size:0.81rem;opacity:1.00\" title=\"the lifted endpoint (2,−1) — displacement retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"the disk abstraction — every loop contractible; the winding classes are what it lacks\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.00%;font-size:1.08rem;opacity:1.00\" title=\"four sides, two generators, one vertex, one face — counts with distinct offices\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble\" aria-label=\"The planet appears, and the making of the picture returns\"><h2>The planet appears, and the making of the picture returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:1.57rem;opacity:1.00\" title=\"the planetary view — Earth gathered around a shared frame\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.00%;font-size:1.20rem;opacity:1.00\" title=\"as box-lid — &quot;planetary&quot; the unexamined scale under which lives are counted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.20%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"whose planet, computed by whom, on whose gauge?\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.00%;top:44.50%;font-size:0.90rem;opacity:1.00\" title=\"the diaphanous turn — location, time, production and transformations inspectable\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return\" aria-label=\"The atlas travels with the means to revise it\"><h2>The atlas travels with the means to revise it</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.50%;font-size:1.53rem;opacity:1.00\" title=\"the atlas — charts, transitions, obstructions\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.35rem;opacity:1.00\" title=\"the first picture reopened — its achievement retained, frame now visible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.87rem;opacity:1.00\" title=\"Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.00%;top:44.50%;font-size:0.66rem;opacity:1.00\" title=\"A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-travelling-jigsaw-atlas",
+  "world_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+  "revision": 1,
+  "title": "The travelling jigsaw — from box-lid to atlas",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "The travelling jigsaw — from box-lid to atlas"
+      },
+      "fallback": {
+       "title": "The travelling jigsaw — from box-lid to atlas"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The travelling jigsaw — from box-lid to atlas</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas\" data-expression-revision=\"1\"><h1>The travelling jigsaw — from box-lid to atlas</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid\" aria-label=\"The picture arrives before the pieces\"><h2>The picture arrives before the pieces</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.70%;font-size:1.75rem;opacity:1.00\" title=\"the box lid — the destination already visible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.70%;font-size:1.42rem;opacity:1.00\" title=\"the edge frame — built first\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:1.05rem;opacity:1.00\" title=\"sorted pieces — awaiting their place\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.20%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"the lid&#39;s silent power — it decides which anomaly is merely misplaced\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel\" aria-label=\"Travel changes what it means to fit\"><h2>Travel changes what it means to fit</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:46.00%;top:53.20%;font-size:1.61rem;opacity:1.00\" title=\"the flat assembly — meeting a turn it cannot preserve\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:54.50%;top:48.50%;font-size:2.40rem;opacity:1.00\" title=\"the travelled world — curvature beyond the frame\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"the question reaching the frame: what relation was lost in this rendering?\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"recording how a view was made — from where, across which region, under what projection\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle\" aria-label=\"A crossing has a rule — the circle&#39;s two charts\"><h2>A crossing has a rule — the circle&#39;s two charts</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:2.03rem;opacity:1.00\" title=\"the circle covered by two charts — opposite poles omitted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:54.50%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"the shared point (x,y)=(3/5,4/5)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"v = 1/u — the declared transformation on the overlap\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.60%;top:51.00%;font-size:0.66rem;opacity:1.00\" title=\"du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"height 4/5 in either account\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus\" aria-label=\"The torus loop returns with its winding\"><h2>The torus loop returns with its winding</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:1.88rem;opacity:1.00\" title=\"the flat quotient — one surface address, infinitely many plane representatives\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.52rem;opacity:1.00\" title=\"the loop γ(t)=[2t,−t]\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.20%;top:44.50%;font-size:0.81rem;opacity:1.00\" title=\"the lifted endpoint (2,−1) — displacement retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"the disk abstraction — every loop contractible; the winding classes are what it lacks\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.00%;font-size:1.08rem;opacity:1.00\" title=\"four sides, two generators, one vertex, one face — counts with distinct offices\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble\" aria-label=\"The planet appears, and the making of the picture returns\"><h2>The planet appears, and the making of the picture returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:1.57rem;opacity:1.00\" title=\"the planetary view — Earth gathered around a shared frame\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.00%;font-size:1.20rem;opacity:1.00\" title=\"as box-lid — &quot;planetary&quot; the unexamined scale under which lives are counted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.20%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"whose planet, computed by whom, on whose gauge?\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.00%;top:44.50%;font-size:0.90rem;opacity:1.00\" title=\"the diaphanous turn — location, time, production and transformations inspectable\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return\" aria-label=\"The atlas travels with the means to revise it\"><h2>The atlas travels with the means to revise it</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.50%;font-size:1.53rem;opacity:1.00\" title=\"the atlas — charts, transitions, obstructions\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.35rem;opacity:1.00\" title=\"the first picture reopened — its achievement retained, frame now visible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.87rem;opacity:1.00\" title=\"Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.00%;top:44.50%;font-size:0.66rem;opacity:1.00\" title=\"A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+        "revision": 1,
+        "title": "The travelling jigsaw — from box-lid to atlas",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid",
+          "revision": 1,
+          "title": "The picture arrives before the pieces",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel",
+          "revision": 1,
+          "title": "Travel changes what it means to fit",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle",
+          "revision": 1,
+          "title": "A crossing has a rule — the circle's two charts",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus",
+          "revision": 1,
+          "title": "The torus loop returns with its winding",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble",
+          "revision": 1,
+          "title": "The planet appears, and the making of the picture returns",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return",
+          "revision": 1,
+          "title": "The atlas travels with the means to revise it",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296",
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272",
+          "revision": 1,
+          "title": "the box lid — the destination already visible",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.27,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5835,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273",
+          "revision": 1,
+          "title": "the edge frame — built first",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.27,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4725,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274",
+          "revision": 1,
+          "title": "sorted pieces — awaiting their place",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.35,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275",
+          "revision": 1,
+          "title": "the lid's silent power — it decides which anomaly is merely misplaced",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.52,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276",
+          "revision": 1,
+          "title": "the flat assembly — meeting a turn it cannot preserve",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.4,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.537,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277",
+          "revision": 1,
+          "title": "the travelled world — curvature beyond the frame",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.15,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.8,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278",
+          "revision": 1,
+          "title": "the question reaching the frame: what relation was lost in this rendering?",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279",
+          "revision": 1,
+          "title": "recording how a view was made — from where, across which region, under what projection",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280",
+          "revision": 1,
+          "title": "the circle covered by two charts — opposite poles omitted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.41,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.678,
+            "automation": null
+           },
+           "share": {
+            "value": 1.8,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281",
+          "revision": 1,
+          "title": "the shared point (x,y)=(3/5,4/5)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.18,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282",
+          "revision": 1,
+          "title": "v = 1/u — the declared transformation on the overlap",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.37,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283",
+          "revision": 1,
+          "title": "du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": -0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284",
+          "revision": 1,
+          "title": "height 4/5 in either account",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.19,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285",
+          "revision": 1,
+          "title": "the flat quotient — one surface address, infinitely many plane representatives",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.626,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286",
+          "revision": 1,
+          "title": "the loop γ(t)=[2t,−t]",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5065,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287",
+          "revision": 1,
+          "title": "the lifted endpoint (2,−1) — displacement retained",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": 0.55,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288",
+          "revision": 1,
+          "title": "the disk abstraction — every loop contractible; the winding classes are what it lacks",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289",
+          "revision": 1,
+          "title": "four sides, two generators, one vertex, one face — counts with distinct offices",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.6,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290",
+          "revision": 1,
+          "title": "the planetary view — Earth gathered around a shared frame",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.522,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291",
+          "revision": 1,
+          "title": "as box-lid — \"planetary\" the unexamined scale under which lives are counted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292",
+          "revision": 1,
+          "title": "whose planet, computed by whom, on whose gauge?",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293",
+          "revision": 1,
+          "title": "the diaphanous turn — location, time, production and transformations inspectable",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.55,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294",
+          "revision": 1,
+          "title": "the atlas — charts, transitions, obstructions",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.55,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.509,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295",
+          "revision": 1,
+          "title": "the first picture reopened — its achievement retained, frame now visible",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.45,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296",
+          "revision": 1,
+          "title": "Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.29,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297",
+          "revision": 1,
+          "title": "A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.55,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-travelling-jigsaw-atlas.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "The travelling jigsaw — from box-lid to atlas"
+      },
+      "fallback": {
+       "title": "The travelling jigsaw — from box-lid to atlas",
+       "text": "The travelling jigsaw — from box-lid to atlas: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-travelling-jigsaw-atlas",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-travelling-jigsaw-atlas:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-travelling-jigsaw-atlas",
+    "world_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+    "revision": 1,
+    "title": "The travelling jigsaw — from box-lid to atlas",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "The travelling jigsaw — from box-lid to atlas"
+        },
+        "fallback": {
+         "title": "The travelling jigsaw — from box-lid to atlas"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The travelling jigsaw — from box-lid to atlas</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas\" data-expression-revision=\"1\"><h1>The travelling jigsaw — from box-lid to atlas</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid\" aria-label=\"The picture arrives before the pieces\"><h2>The picture arrives before the pieces</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.70%;font-size:1.75rem;opacity:1.00\" title=\"the box lid — the destination already visible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.70%;font-size:1.42rem;opacity:1.00\" title=\"the edge frame — built first\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:1.05rem;opacity:1.00\" title=\"sorted pieces — awaiting their place\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.20%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"the lid&#39;s silent power — it decides which anomaly is merely misplaced\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel\" aria-label=\"Travel changes what it means to fit\"><h2>Travel changes what it means to fit</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:46.00%;top:53.20%;font-size:1.61rem;opacity:1.00\" title=\"the flat assembly — meeting a turn it cannot preserve\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:54.50%;top:48.50%;font-size:2.40rem;opacity:1.00\" title=\"the travelled world — curvature beyond the frame\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"the question reaching the frame: what relation was lost in this rendering?\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:45.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"recording how a view was made — from where, across which region, under what projection\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle\" aria-label=\"A crossing has a rule — the circle&#39;s two charts\"><h2>A crossing has a rule — the circle&#39;s two charts</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.10%;font-size:2.03rem;opacity:1.00\" title=\"the circle covered by two charts — opposite poles omitted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:54.50%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"the shared point (x,y)=(3/5,4/5)\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.11rem;opacity:1.00\" title=\"v = 1/u — the declared transformation on the overlap\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.60%;top:51.00%;font-size:0.66rem;opacity:1.00\" title=\"du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:44.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"height 4/5 in either account\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus\" aria-label=\"The torus loop returns with its winding\"><h2>The torus loop returns with its winding</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:1.88rem;opacity:1.00\" title=\"the flat quotient — one surface address, infinitely many plane representatives\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.52rem;opacity:1.00\" title=\"the loop γ(t)=[2t,−t]\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.20%;top:44.50%;font-size:0.81rem;opacity:1.00\" title=\"the lifted endpoint (2,−1) — displacement retained\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.50%;font-size:1.20rem;opacity:1.00\" title=\"the disk abstraction — every loop contractible; the winding classes are what it lacks\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:56.00%;font-size:1.08rem;opacity:1.00\" title=\"four sides, two generators, one vertex, one face — counts with distinct offices\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble\" aria-label=\"The planet appears, and the making of the picture returns\"><h2>The planet appears, and the making of the picture returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:1.57rem;opacity:1.00\" title=\"the planetary view — Earth gathered around a shared frame\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:43.80%;top:55.00%;font-size:1.20rem;opacity:1.00\" title=\"as box-lid — &quot;planetary&quot; the unexamined scale under which lives are counted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.20%;top:55.00%;font-size:0.66rem;opacity:1.00\" title=\"whose planet, computed by whom, on whose gauge?\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.00%;top:44.50%;font-size:0.90rem;opacity:1.00\" title=\"the diaphanous turn — location, time, production and transformations inspectable\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return\" aria-label=\"The atlas travels with the means to revise it\"><h2>The atlas travels with the means to revise it</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:50.00%;top:55.50%;font-size:1.53rem;opacity:1.00\" title=\"the atlas — charts, transitions, obstructions\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:1.35rem;opacity:1.00\" title=\"the first picture reopened — its achievement retained, frame now visible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.87rem;opacity:1.00\" title=\"Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas\" data-presentation-role=\"thing\" style=\"left:56.00%;top:44.50%;font-size:0.66rem;opacity:1.00\" title=\"A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+          "revision": 1,
+          "title": "The travelling jigsaw — from box-lid to atlas",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid",
+            "revision": 1,
+            "title": "The picture arrives before the pieces",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel",
+            "revision": 1,
+            "title": "Travel changes what it means to fit",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle",
+            "revision": 1,
+            "title": "A crossing has a rule — the circle's two charts",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus",
+            "revision": 1,
+            "title": "The torus loop returns with its winding",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble",
+            "revision": 1,
+            "title": "The planet appears, and the making of the picture returns",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return",
+            "revision": 1,
+            "title": "The atlas travels with the means to revise it",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296",
+             "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272",
+            "revision": 1,
+            "title": "the box lid — the destination already visible",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.27,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5835,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e273",
+            "revision": 1,
+            "title": "the edge frame — built first",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.27,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4725,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e274",
+            "revision": 1,
+            "title": "sorted pieces — awaiting their place",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.35,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e275",
+            "revision": 1,
+            "title": "the lid's silent power — it decides which anomaly is merely misplaced",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.52,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e276",
+            "revision": 1,
+            "title": "the flat assembly — meeting a turn it cannot preserve",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.4,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.537,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e277",
+            "revision": 1,
+            "title": "the travelled world — curvature beyond the frame",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.15,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.8,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e278",
+            "revision": 1,
+            "title": "the question reaching the frame: what relation was lost in this rendering?",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-1-travel:e279",
+            "revision": 1,
+            "title": "recording how a view was made — from where, across which region, under what projection",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e280",
+            "revision": 1,
+            "title": "the circle covered by two charts — opposite poles omitted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.41,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.678,
+              "automation": null
+             },
+             "share": {
+              "value": 1.8,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e281",
+            "revision": 1,
+            "title": "the shared point (x,y)=(3/5,4/5)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.18,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e282",
+            "revision": 1,
+            "title": "v = 1/u — the declared transformation on the overlap",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.37,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e283",
+            "revision": 1,
+            "title": "du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": -0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2-circle:e284",
+            "revision": 1,
+            "title": "height 4/5 in either account",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.19,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e285",
+            "revision": 1,
+            "title": "the flat quotient — one surface address, infinitely many plane representatives",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.626,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e286",
+            "revision": 1,
+            "title": "the loop γ(t)=[2t,−t]",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5065,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e287",
+            "revision": 1,
+            "title": "the lifted endpoint (2,−1) — displacement retained",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": 0.55,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e288",
+            "revision": 1,
+            "title": "the disk abstraction — every loop contractible; the winding classes are what it lacks",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-2b-torus:e289",
+            "revision": 1,
+            "title": "four sides, two generators, one vertex, one face — counts with distinct offices",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.6,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e290",
+            "revision": 1,
+            "title": "the planetary view — Earth gathered around a shared frame",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.522,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e291",
+            "revision": 1,
+            "title": "as box-lid — \"planetary\" the unexamined scale under which lives are counted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e292",
+            "revision": 1,
+            "title": "whose planet, computed by whom, on whose gauge?",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-4-marble:e293",
+            "revision": 1,
+            "title": "the diaphanous turn — location, time, production and transformations inspectable",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.55,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e294",
+            "revision": 1,
+            "title": "the atlas — charts, transitions, obstructions",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.55,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.509,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e295",
+            "revision": 1,
+            "title": "the first picture reopened — its achievement retained, frame now visible",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.45,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e296",
+            "revision": 1,
+            "title": "Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.29,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-5-return:e297",
+            "revision": 1,
+            "title": "A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.55,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:scene:m-jig-0-lid:e272"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-travelling-jigsaw-atlas.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "The travelling jigsaw — from box-lid to atlas"
+        },
+        "fallback": {
+         "title": "The travelling jigsaw — from box-lid to atlas",
+         "text": "The travelling jigsaw — from box-lid to atlas: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-travelling-jigsaw-atlas",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-travelling-jigsaw-atlas.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-travelling-jigsaw-atlas"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-travelling-jigsaw-atlas:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "The travelling jigsaw — from box-lid to atlas",
+  "summary": "a living Expression · 6 scenes · 26 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-travelling-jigsaw-atlas"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-travelling-jigsaw-atlas:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-travelling-jigsaw-atlas",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-travelling-jigsaw-atlas",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "The travelling jigsaw — from box-lid to atlas",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-travelling-jigsaw-atlas:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-travelling-jigsaw-atlas:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-travelling-jigsaw-atlas",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-travelling-jigsaw-atlas"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

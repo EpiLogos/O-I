@@ -45,7 +45,7 @@ $$
 
 Let `r` abbreviate `R ∈ R`. If `r` holds, the forward implication yields `¬r`. Hence `¬r`; but the reverse implication then yields `r`. The assumptions derive both assertions. This is a proof of contradiction, not an unresolved choice between two possible membership values.
 
-The negative condition is perfectly explicit. The difficulty lies in permitting its unrestricted collection to count as another member of the same domain over which the condition ranges. [Russell's 1908 source house](../../episteme/sources/mathematics-logic/russell/russell-1908-theory-types/russell-1908-theory-types.md) sources his restriction of such circular definitions. At §IV, p.237, the vicious-circle principle prohibits a totality from containing members defined through that totality. The mathematical response changes what may be formed.
+The negative condition is perfectly explicit. The difficulty lies in permitting its unrestricted collection to count as another member of the same domain over which the condition ranges. [Russell’s vicious-circle principle](../../episteme/sources/mathematics-logic/russell/russell-1908-theory-types/russell-1908-theory-types.md), §IV, p.237, prohibits a totality from containing members defined through that totality. This restriction changes what may be formed; the displayed contradiction identifies the combined permissions it answers.
 
 ## #2 — A type restriction acts before evaluation
 
@@ -69,7 +69,7 @@ This simple hierarchy illustrates the type barrier. Russell's 1908 **ramified** 
 
 ## #3 — Typed formation still constructs new objects
 
-Let type0 contain two distinct individuals, `a⁰` and `b⁰`. Form
+Let the type0 domain consist of exactly two distinct individuals, `a⁰` and `b⁰`. Form
 
 $$
 A^1=\{a^0\},\qquad B^2=\{A^1\}.
@@ -104,14 +104,14 @@ $$
 
 If `R_S ∈ S`, the old contradiction returns. Consequently `R_S ∉ S`, and the displayed equivalence also gives `R_S ∉ R_S`. There is no inconsistency: separation did not promise that its result belonged to its input set. Here the definition remains meaningful, but the unrestricted collecting permission is absent. Typing blocks formation of the self-membership predicate; separation restricts the set over which the condition collects. These are different repairs.
 
-[A03, Formal Limit](../../../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md), compares the local change of permissions with the native determining-field argument. Representing a condition creates another determination whose present occurrence still has conditions. Russell's contradiction has its own displayed premises; the native non-coincidence has its own proposition. [A02, the Copula](../../../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md), qualifies any proposed sameness by asking which objects and which relation are being identified.
+[The determining-field argument](../../../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md) receives the change of permissions through its own operation: representing a condition creates another determination whose present occurrence still has conditions. Russell’s contradiction has its displayed premises; this native non-coincidence concerns determining and determined. Through [the copula](../../../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md), a proposed sameness specifies the objects and relation being identified.
 
-[A13, Dia/Syn](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), extends the practical distinction between a necessary cut and loss of the relation through which it operates. A type rule can make a cut precisely while retaining its rationale. [A18's native field](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) grounds the broader return through the slash and its determinations. Neither operation requires restoring unrestricted comprehension. [Homology and Analogy](../../episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md) keeps the comparison accountable to these differences.
+[Distinguishing and gathering](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md) retain the practical relation between a necessary cut and the field through which it operates. A type rule can make that cut precisely while retaining its rationale. The [native eight-determination traversal](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) carries this relation through the slash and its qualitative offices. The achieved distinction preserves restricted formation with its reason; it provides no demand to restore unrestricted comprehension. [Homology and analogy](../../episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md) state the corresponding operations and the differences through which this comparison holds.
 
 ## #5→0 — Return a restriction with its reason
 
-This record returns-to [§0/1 · #3, The Formal-Limit Genealogy](../../../section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md) with an actual contradiction and actual repairs. Russell's contribution is not a general declaration that reflection must stop. The contradiction identifies a combination of formation and substitution permissions that cannot all remain in force.
+The [formal-limit genealogy](../../../section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md) receives an actual contradiction and differentiated repairs. Formation and substitution jointly permit the problematic totality; typing or separation changes the specific permission implicated in it. The result makes the revised range and its remaining constructions available for further mathematical work.
 
-[A33, Operational Parity](../../../section-rooms/arguments/A33-Epistemic-Cultivation-Operational-Parity.md), tests a technical invocation of types accordingly: show the malformed expression, identify the conflicting argument positions, and exhibit a valid construction that remains available. A rejected input without a stated typing rule does not enact this distinction. [A01, Faithful Definition](../../../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md), receives the return as a definition answerable to its range and operation.
+[Operational parity](../../../section-rooms/arguments/A33-Epistemic-Cultivation-Operational-Parity.md) makes a technical invocation of types answerable through the actual malformed expression, conflicting argument positions, and valid construction that remains available. A rejected input without a stated typing rule has not performed this distinction. Through [faithful definition](../../../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md), the definition retains its range and operation wherever its result is carried.
 
 The restriction can itself become explicit knowledge. Its rationale, scope and consequences remain available for comparison with other formalisms. The formal work continues because the account now states which totality it formed and what that totality may contain.

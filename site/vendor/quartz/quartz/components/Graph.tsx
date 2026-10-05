@@ -37,7 +37,7 @@ const defaultOptions: GraphOptions = {
     linkDistance: 30,
     fontSize: 0.6,
     opacityScale: 1,
-    showTags: true,
+    showTags: false,
     removeTags: [],
     focusOnHover: false,
     enableRadial: false,
@@ -95,7 +95,8 @@ export default ((opts?: Partial<GraphOptions>) => {
             </svg>
           </button>
         </div>
-        <div class="global-graph-outer">
+        <div class="global-graph-outer" aria-label="Graph of the essay pages">
+          <button type="button" class="global-graph-close" aria-label="Close graph">Close graph</button>
           <div class="global-graph-container" data-cfg={JSON.stringify(globalGraph)}></div>
         </div>
       </div>

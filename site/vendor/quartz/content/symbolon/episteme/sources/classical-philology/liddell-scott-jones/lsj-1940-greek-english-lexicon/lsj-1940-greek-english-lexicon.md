@@ -27,7 +27,7 @@ passage_surface: '#passages'
 
 Liddell, Henry George, and Robert Scott. *A Greek-English Lexicon*. Revised by Henry Stuart Jones with Roderick McKenzie. 9th ed. Oxford: Clarendon Press, 1940. Selected LSJ entry transcriptions were read at the Berlin-Brandenburg Academy’s CLD and Scaife ATLAS on 8 September 2026. Other dictionaries displayed on the same page retain separate authorship. Cite headword, sense and the actual transcription. Primary passages cited inside a lexicon are leads until independently collated.
 
-The source **sources** lexical distinctions in [E2 Arbitration](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md) and [E3 Fides–Credere](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md). Those fields’ generated operations remain authorial register 3.
+The source **sources** lexical distinctions in [E2 Arbitration](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md) and [E3 Fides–Credere](../../../../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md). Those fields’ generated operations remain authorial register 3.
 
 <a id="passages"></a>
 ## Selected lexical witnesses
@@ -120,7 +120,7 @@ The source **sources** lexical distinctions in [E2 Arbitration](../../../../etym
 
 **Verification:** named senses read 2026-09-08 from the Scaife entry, retrieved via HTTP after the browsing tool's open error; no print-edition collation or exact quotation claim. **Consumer:** E5 analogy/Greek branches and C63's differentiated comparison grammars; evidence register 2, with the authorial coordination at register 3.
 
-The agreement and proportion entries **source** [E5’s Greek historical branch](../../../../etymologies/homology-and-analogy/HISTORICAL-BRANCHES.md#e5-greek). The corresponding [whole-field](../../../../etymologies/homology-and-analogy/WHOLE-FIELD.md) retains the project’s operational comparison at register 3.
+The agreement and proportion entries **source** [E5’s Greek historical branch](../../../../etymologies/homology-and-analogy/HISTORICAL-BRANCHES-homology-and-analogy.md#e5-greek). The corresponding [whole-field](../../../../etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md) retains the project’s operational comparison at register 3.
 
 <a id="lsj-1940-greek-english-lexicon-q009"></a>
 ### q009 — Νέμω — distribution and holding a portion
@@ -131,7 +131,7 @@ The agreement and proportion entries **source** [E5’s Greek historical branch]
 
 **Verification:** s.v. νέμω, distributive active and possessive middle senses; https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.04.0057%3Aentry%3Dne%2Fmw ; read 2026-09-08, raw witness retained in T21-E6-private-development-packet.json. Paraphrase-ready to the online entry; print not collated. E6 branch E6-names consumes register-2 distribution/possession distinctions; its institutional return is register 3.
 
-The entry **sources** [E6’s historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES.md) and its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD.md), with the institutional relation at register 3.
+The entry **sources** [E6’s historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES-apportionment-and-economy.md) and its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md), with the institutional relation at register 3.
 
 <a id="lsj-1940-greek-english-lexicon-q010"></a>
 ### q010 — Symbolon — counterpart, guarantee and civic token
@@ -146,4 +146,4 @@ The entry **sources** [E6’s historical branch](../../../../etymologies/apporti
 
 **Use boundary:** Register 2, selected senses only. The cited ancient passages are not independently collated. Correspondence does not establish justice, future performance or a historical derivation of native QL.
 
-The symbolon entry **sources** [E4’s token branch](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md#matching-tokens-and-institutional-recognition); [Symbol answering to source](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD.md#symbol-answers-to-source) develops the authorial operation at register 3.
+The symbolon entry **sources** [E4’s token branch](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md#matching-tokens-and-institutional-recognition); [Symbol answering to source](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md#symbol-answers-to-source) develops the authorial operation at register 3.

@@ -1,0 +1,814 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:material-study-0",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:material-study-0",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:material-study-0",
+  "revision": 1,
+  "title": "Ink",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0",
+    "revision": 1,
+    "title": "Ink",
+    "entity_refs": [
+     "expression:return-of-zero:material-study-0:scene:study-0:opening-o",
+     "expression:return-of-zero:material-study-0:scene:study-0:opening-i"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:material-study-0:scene:study-0:opening-o": {
+    "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-o",
+    "revision": 1,
+    "title": "O — opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:material-study-0",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/material/material-study-0.journey.json",
+       "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.22,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.53,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:material-study-0:scene:study-0:opening-i": {
+    "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-i",
+    "revision": 1,
+    "title": "I — interval",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:material-study-0",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/material/material-study-0.journey.json",
+       "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": 0.015,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.95,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0",
+   "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-o"
+  },
+  "provenance": [
+   {
+    "ref": "starters/material/material-study-0.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:material-study-0",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:material-study-0",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "starters/material/material-study-0.journey.json",
+      "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:material-study-0:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:material-study-0",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Ink</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:material-study-0\" data-expression-revision=\"1\"><h1>Ink</h1><p>Frozen reading of expression:return-of-zero:material-study-0 at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:material-study-0:scene:study-0\" aria-label=\"Ink\"><h2>Ink</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-0:scene:study-0:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:material-study-0\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-0:scene:study-0:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:material-study-0\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-material-study-0",
+  "world_ref": "expression:return-of-zero:material-study-0",
+  "revision": 1,
+  "title": "Ink",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:material-study-0",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Ink"
+      },
+      "fallback": {
+       "title": "Ink"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:material-study-0",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:material-study-0",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:material-study-0",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:material-study-0",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "starters/material/material-study-0.journey.json",
+            "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:material-study-0:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:material-study-0",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Ink</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:material-study-0\" data-expression-revision=\"1\"><h1>Ink</h1><p>Frozen reading of expression:return-of-zero:material-study-0 at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:material-study-0:scene:study-0\" aria-label=\"Ink\"><h2>Ink</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-0:scene:study-0:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:material-study-0\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-0:scene:study-0:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:material-study-0\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:material-study-0",
+        "revision": 1,
+        "title": "Ink",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0",
+          "revision": 1,
+          "title": "Ink",
+          "entity_refs": [
+           "expression:return-of-zero:material-study-0:scene:study-0:opening-o",
+           "expression:return-of-zero:material-study-0:scene:study-0:opening-i"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:material-study-0:scene:study-0:opening-o": {
+          "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-o",
+          "revision": 1,
+          "title": "O — opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:material-study-0",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/material/material-study-0.journey.json",
+             "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.22,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.53,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:material-study-0:scene:study-0:opening-i": {
+          "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-i",
+          "revision": 1,
+          "title": "I — interval",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:material-study-0",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/material/material-study-0.journey.json",
+             "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": 0.015,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.95,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0",
+         "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-o"
+        },
+        "provenance": [
+         {
+          "ref": "starters/material/material-study-0.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Ink"
+      },
+      "fallback": {
+       "title": "Ink",
+       "text": "Ink: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:material-study-0",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-material-study-0",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:material-study-0",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:material-study-0",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "starters/material/material-study-0.journey.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:material-study-0"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:material-study-0",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:material-study-0",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:material-study-0:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:material-study-0"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:material-study-0",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-material-study-0:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-material-study-0",
+    "world_ref": "expression:return-of-zero:material-study-0",
+    "revision": 1,
+    "title": "Ink",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:material-study-0",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Ink"
+        },
+        "fallback": {
+         "title": "Ink"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:material-study-0",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:material-study-0",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:material-study-0",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:material-study-0",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "starters/material/material-study-0.journey.json",
+              "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:material-study-0:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:material-study-0",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Ink</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:material-study-0\" data-expression-revision=\"1\"><h1>Ink</h1><p>Frozen reading of expression:return-of-zero:material-study-0 at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:material-study-0:scene:study-0\" aria-label=\"Ink\"><h2>Ink</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-0:scene:study-0:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:material-study-0\" data-presentation-role=\"thing\" style=\"left:47.80%;top:49.70%;font-size:4.59rem;opacity:1.00\" title=\"O — opening\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-0:scene:study-0:opening-i\" data-subject-ref=\"world:return-of-zero/wiki:material-study-0\" data-presentation-role=\"thing\" style=\"left:56.60%;top:49.85%;font-size:2.85rem;opacity:1.00\" title=\"I — interval\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:material-study-0",
+          "revision": 1,
+          "title": "Ink",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0",
+            "revision": 1,
+            "title": "Ink",
+            "entity_refs": [
+             "expression:return-of-zero:material-study-0:scene:study-0:opening-o",
+             "expression:return-of-zero:material-study-0:scene:study-0:opening-i"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:material-study-0:scene:study-0:opening-o": {
+            "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-o",
+            "revision": 1,
+            "title": "O — opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:material-study-0",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/material/material-study-0.journey.json",
+               "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.22,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.53,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:material-study-0:scene:study-0:opening-i": {
+            "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-i",
+            "revision": 1,
+            "title": "I — interval",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:material-study-0",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/material/material-study-0.journey.json",
+               "revision": "0e868063011b17e5796c6cad846eb527b9deff9d8e539bc50ebc2f8e7a7cb16f",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": 0.015,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.95,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:material-study-0:scene:study-0",
+           "entity_ref": "expression:return-of-zero:material-study-0:scene:study-0:opening-o"
+          },
+          "provenance": [
+           {
+            "ref": "starters/material/material-study-0.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Ink"
+        },
+        "fallback": {
+         "title": "Ink",
+         "text": "Ink: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:material-study-0",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-material-study-0",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:material-study-0",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:material-study-0",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "starters/material/material-study-0.journey.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:material-study-0"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:material-study-0",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:material-study-0",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-material-study-0:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:material-study-0",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Ink",
+  "summary": "a living Expression · 1 scene · 2 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:material-study-0:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:material-study-0",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Amaterial-study-0"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:material-study-0:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-material-study-0",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:material-study-0",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Ink",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-material-study-0:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-material-study-0:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:material-study-0",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:material-study-0"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

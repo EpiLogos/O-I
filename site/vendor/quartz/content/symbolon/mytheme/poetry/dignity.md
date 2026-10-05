@@ -10,11 +10,11 @@ type: _md_
 title: "Dignity"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c803aa4aeeab4f1ec9028
-source_id: 191a4797-123c-803a-a4ae-eab4f1ec9028
 notion_created: 2025-02-05T19:13:52Z
 notion_edited: 2025-02-05T19:14:08.307Z
 status: sorted
 kind: poem
+source_id: dignity
 ---
 Just a modicum of dignity is all it takes
 To break bread with the Spirit of The Greats.

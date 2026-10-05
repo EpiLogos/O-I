@@ -11,7 +11,7 @@ source_relation: "Explicit mathematical proof; argued native comparison"
 
 ## #0 — State the identity assumption
 
-Assume a unital ring with additive identity 0 and multiplicative identity 1, allowing the possibility `0=1`. Some definitions exclude that equality by requiring a nontrivial ring; this page states explicitly which convention is in use. The [admitted note](../../../section-rooms/arguments/concepts/reference-notes/trivial-ring.md) names the boundary, and the [core spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) supplies the distinct native relation of zero and one.
+Assume a unital ring with additive identity 0 and multiplicative identity 1, allowing the possibility `0=1`. Some definitions require a nontrivial ring and exclude that equality; the convention selected here permits the one-element ring. The [native zero–one relation](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) gives a distinct comparison whose generating and relational offices remain explicit.
 
 ## #1 — Derive multiplication by zero
 
@@ -39,10 +39,10 @@ A totalised inverse can instead assign a stipulated value at 0 while restricting
 
 The QL relational identity of `0/1` and `1/0` concerns obverse orientations of one ground–mark relation. It does not assert equality of the additive and multiplicative identities in a unital ring. The collapse theorem is therefore a precise boundary for a proposed algebraic interpretation, not a proof that the native relation collapses.
 
-The [Dutta source house](../../episteme/sources/mathematics-logic/dutta/dutta-2023-zero-divided-numbers-india/dutta-2023-zero-divided-numbers-india.md) likewise makes the historical algebraic regime a live source task. It does not license treating every zero-denominator expression as an ordinary field element.
+[Dutta’s historical corrective](../../episteme/sources/mathematics-logic/dutta/dutta-2023-zero-divided-numbers-india/dutta-2023-zero-divided-numbers-india.md) asks which cancellation and cross-multiplication rules a retained zero denominator permits. Their restriction changes the proposed algebraic regime; a written exceptional denominator alone supplies no ordinary field inverse.
 
 ## #5→0 — Return the theorem with its axioms
 
 The result is conditional and exact: ring axioms plus `0=1` force one element. A nontrivial formalisation must preserve distinct identities or change the relevant structure explicitly. The native field can use this limit without weakening it or extending it beyond its assumptions.
 
-This record returns-to [A13](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), and [translations](../mono-poly/translations.md). The operation remains available as a test of a particular algebraic claim, with its exact scope intact.
+Through [Dia/Syn](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), distinguishing identities and binding operations retain their relation. The [eight native determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) give zero and one their qualitative offices within that whole. A [translation](../mono-poly/translations.md) proposing a ring interpretation must specify the map and preserve its asserted operations; the displayed collapse then tests that particular proposal. The theorem returns with the assumptions under which its result holds.

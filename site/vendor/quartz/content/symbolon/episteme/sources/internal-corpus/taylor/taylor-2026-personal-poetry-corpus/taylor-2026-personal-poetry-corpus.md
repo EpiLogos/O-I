@@ -2,7 +2,6 @@
 aliases:
   - franki-taylor-personal-poetry
   - taylor-poetry-corpus
-  - Taylor — Personal Poetry Corpus (2026)
 record_type: manuscript
 source_role:
   - internal-primary-corpus
@@ -18,7 +17,7 @@ author:
   - Franki Taylor
 title_full: "Personal Poetry Corpus, March–June 2026 and Undated Earlier Work"
 year: 2026
-local_copy: /Users/admin/Documents/Nara-Personal/Antykathera-Essay-Work/submission-package/essay/symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-personal-poetry-corpus/taylor-2026-personal-poetry-corpus.md
+local_copy: /Users/admin/Documents/Nara-Personal/Antykathera-Essay-Work/submission-package/essay/symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-personal-poetry-corpus/SOURCE.md
 consumed_by_sections: []
 consumed_by_arguments: []
 tags:
@@ -509,4 +508,4 @@ The six poems below form one ordered P0→P5 composition. Their sequence and P-l
 
 Use this corpus to recover Franki Taylor's own images, rhythms, turns of phrase, and formal operations for *The Return of Zero*. Every poem establishes authorial provenance and may be quoted as first-person creative material. Any external attribution carried inside a poem still requires its own public source when the essay presents it as historical, mathematical, scientific, textual, or doctrinal fact.
 
-No section or argument consumers have been assigned yet. Add reciprocal links only when a specific movement actually uses a poem.
+The [Taylor — Poetry and Authored Images whole](../../../../../mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#taylor-authored-images-whole) directly receives all twenty-three complete passage cards, FT-P01–FT-P23, and develops their particular sounds, pronouns, turns and endings. Its `taylor-ft-p01`–`taylor-ft-p23` anchors correspond to q001–q023 here, preserving each full poem rather than reducing the corpus to excerpts. The whole's first-person, Two Ones and speaking-limit relations also enter the existing argument field through that Mytheme carrier. This indirect reception is distinct from a direct poem-source declaration: `consumed_by_arguments` and `consumed_by_sections` remain empty because this bounded comparison found no native argument or movement declaration of the poetry source. The present binding assigns no movement and supplies no new ratification; individual verse, locators, provenance and quotation readiness remain as received.

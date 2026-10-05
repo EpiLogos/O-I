@@ -11,21 +11,21 @@ source_relation: "Extracted internal derivation"
 
 ## #0 — Two marks before their names
 
-File 1 receives the earned `0/1` and strips its assigned meanings back to the minimal inscription `−/−`. Its inputs are two marks of the same kind, a difference of placement, and the relating stroke. The marks have no independently assigned positive or negative values at this stage.
+Strip the assigned meanings of `0/1` back to the minimal inscription `−/−`. Its inputs are two marks of the same kind, a difference of placement, and the relating stroke. The marks have no independently assigned positive or negative values at this stage.
 
-[The Matheme opening](the-matheme.md) grounds the operation; the [Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §0, sources its direct development. The [slash root](../../the-slash.md) gathers the relation this formal projection makes inspectable.
+The [experienced relation](the-matheme.md) remains active through this reduction. In [Taylor's Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §0, removing the terms' names makes the [relating stroke](../../the-slash.md) inspectable as the means of their distinction.
 
 ## #1 — Placement differentiates
 
 The two dashes can be recognised as the same mark because their identity survives their different positions. The slash makes that positional difference visible within one expression. The relation therefore has two simultaneous requirements: the marks remain identifiable, and their distinction remains operative.
 
-These requirements precede choosing names such as knower/known or ground/mark. Such names are determinations of the relation already operating in the inscription. The source calls this the bare logic of differentiation.
+These requirements precede choosing names such as knower/known or ground/mark. Such names are determinations of the relation already operating in the inscription. Differentiation is already operative before its terms acquire those names.
 
 ## #2 — OR and AND
 
 Read through **OR**, either position can be selected: this mark or that mark, this side of the relation or its other side. Read through **AND**, their co-presence is held as one relation. Selection does not manufacture the field of alternatives from which it selects; holding does not abolish their difference.
 
-The slash thus carries `AND/OR`. This names a native relational operation. It is not being assigned the truth table of an ordinary single Boolean connective. The formal neighbours of Boolean logic have their own definitions and warrants. Here the result is an inscription that can select and hold distinguishable aspects of itself.
+The slash thus carries `AND/OR`: selection among alternatives together with their holding in one relation. A Boolean connective instead returns a truth value under its specified truth table. Each operation retains the rule by which its result follows. Here the result is an inscription that can select and hold distinguishable aspects of itself.
 
 ## #3 — One letter, two cases
 
@@ -41,6 +41,6 @@ This transition earns the next formal development. It does not infer the truth o
 
 ## #5→0 — Relation returns enriched
 
-The result is a passage from bare distinction to intentional relation and its identifying operation. File 1's short-chain vantage remains `0/1 = 4+2 = 5→0 = 0/1`; the present step supplies the relation that the later count must unfold.
+Bare distinction has become intentional relation and identification. In the short definitional chain `0/1 = 4+2 = 5→0 = 0/1`, counting unfolds this retained relation into its operative pair and four appearances.
 
-This projection returns-to [A02](../../../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md), [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), and [Movement25](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md). The parent `−/−` remains outside the six interior determinations while giving their differentiations a common source.
+[Identification through difference](../../../section-rooms/arguments/A02-Copula-Self-Identity-through-Difference.md) holds the same across its distinct appearances. The [eight determinations](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) unfold the relation's qualitative body through an [ordered traversal](../../../section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md). The parent `−/−` remains outside the six interior determinations while giving their differentiations a common source.

@@ -10,11 +10,11 @@ type: _md_
 title: "Ode"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c8012b3f7dc6c6fe7ba3e
-source_id: 191a4797-123c-8012-b3f7-dc6c6fe7ba3e
 notion_created: 2025-02-05T20:42:00Z
 notion_edited: 2025-02-05T20:42:13.449Z
 status: sorted
 kind: poem
+source_id: ode
 ---
 Torrential potential held me close
 Before I rose to let it boast -

@@ -15,7 +15,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §2 · #0 — Difference Cannot Be Escaped
 
 <!-- reader-navigation -->
-Movement 19 of 48 · [This room](../ROOM.md) · [← Previous](../../02-return-of-zero/movements/18-s1-p5-loan-returns.md) · [Next →](20-s2-p1-dia-ballein.md)
+Movement 19 of 48 · [This room](../ROOM-03-two-logics.md) · [← Previous](../../02-return-of-zero/movements/18-s1-p5-loan-returns.md) · [Next →](20-s2-p1-dia-ballein.md)
 <!-- /reader-navigation -->
 
 ## Movement thesis
@@ -42,10 +42,9 @@ The first accounting writes two signed ones around a retained axial zero, then d
 
 The section must not sell superposition as a softer moral replacement for conflict. Dia-ballein is necessary for decision and boundary; sym-ballein is necessary for provenance and return. Their respective failures are severance and fusion. Their coordinated movement is differentiation capable of recognising its own ground.
 
-[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#operations) **grounds** the comparison in this opening difference: terms must enter a shared relation before they can oppose one another, yet that relation does not decide their claims in advance. What survives the crossing is comparability through retained difference. The move into Dia must therefore carry the field that made its signed alternatives possible. An agreed answer is a further event whose truth and conditions of assent require examination; it is not the mere existence of the common field.
+[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md#operations) **grounds** the comparison in this opening difference: terms must enter a shared relation before they can oppose one another, yet that relation does not decide their claims in advance. What survives the crossing is comparability through retained difference. The move into Dia must therefore carry the field that made its signed alternatives possible. An agreed answer is a further event whose truth and conditions of assent require examination; it is not the mere existence of the common field.
 
 ## Transition
 
 The classical accounting comes first because it is the dominant logic of modern formal and technical systems: [[20-s2-p1-dia-ballein|§2 · #1 — Dia-Ballein]].
 
-The [authored P1 route for M19](../P1-CANONICAL-ALIGNMENT.md#p1-m19) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

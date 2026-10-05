@@ -36,7 +36,7 @@ National Archives, Nazi War Crimes Interagency Working Group announcement, Colle
 
 Complete6-paragraph institutional announcement dated5October2000, with title/date/contact context; not the released intelligence archive or personnel files. Full named scope was read in the T21 law development; the text hash matches the later T22 consumer-source receipt. This admission reuses that reading and rechecks the exact passages, not a new whole-book or archival investigation. No direct quotation is admitted.
 
-The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xi-postwar) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
+The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xi-postwar) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
 
 ## Provenance
 
@@ -60,7 +60,7 @@ Institutional origin: [selected witness](https://www.archives.gov/iwg/about/pres
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Complete6-paragraph institutional announcement dated5October2000, with title/date/contact context; not the released intelligence archive or personnel files.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xi-postwar).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xi-postwar).
 
 <a id="nara-2000-gehlen-disclosure-q002"></a>
 ## Passage card — `nara-2000-gehlen-disclosure-q002` — Postwar institutional relationship
@@ -74,4 +74,4 @@ Institutional origin: [selected witness](https://www.archives.gov/iwg/about/pres
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Complete6-paragraph institutional announcement dated5October2000, with title/date/contact context; not the released intelligence archive or personnel files.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xi-postwar).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xi-postwar).

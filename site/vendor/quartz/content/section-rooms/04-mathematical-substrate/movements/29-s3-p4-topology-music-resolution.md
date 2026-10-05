@@ -14,7 +14,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §3 · #4 — Topology and Musical Resolution
 
 <!-- reader-navigation -->
-Movement 29 of 48 · [This room](../ROOM.md) · [← Previous](28-s3-p3-projective-dimensional-reframing.md) · [Next →](30-s3-p5-arche-topos.md)
+Movement 29 of 48 · [This room](../ROOM-04-mathematical-substrate.md) · [← Previous](28-s3-p3-projective-dimensional-reframing.md) · [Next →](30-s3-p5-arche-topos.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -73,7 +73,7 @@ Likewise the `3–4–5` right triangle satisfies `3²+4²=5²`, has area `6` an
 
 ## Musical resolution — exact intervals, interpreted return
 
-M26 established the proof boundary for the harmonic reading. The relevant identities are exact:
+The harmonic reading begins from exact interval identities:
 
 $$
 \frac{16}{9}=\left(\frac43\right)^2,
@@ -98,7 +98,7 @@ The essay coordinates them as spatial and temporal forms of **return through ret
 
 Cymatics supplies a further material bridge under specified boundary conditions: standing waves can produce visible nodal patterns in a driven medium. A sounded dynamic and a visible pattern can therefore be different measurements of one physical process. This gives later nāda/Vāk and Expression comparisons a real physical neighbour while conscious, symbolic and physical registers retain their distinct operations.
 
-[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#e5-whole-returns) **qualifies** the coordination through what each exact witness preserves. The lifted torus path retains a homotopy/winding class rather than every detail of the journey. The musical product retains `9/8` as the factor completing the selected `16/9` ratio to `2/1`. **Their comparison is the authorial return through difference:** exact preservation in one register becomes comparable to exact preservation in another without converting vector displacement into musical interval.
+[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md#e5-whole-returns) **qualifies** the coordination through what each exact witness preserves. The lifted torus path retains a homotopy/winding class rather than every detail of the journey. The musical product retains `9/8` as the factor completing the selected `16/9` ratio to `2/1`. **Their comparison is the authorial return through difference:** exact preservation in one register becomes comparable to exact preservation in another without converting vector displacement into musical interval.
 
 ## Tension / limit
 
@@ -108,6 +108,5 @@ Each local result keeps the law by which it is true: `χ=0` is Euler characteris
 
 The station has now accumulated several rigorously distinct ways of carrying a relation through transformation: differential underdetermination, declared QL traversal, complex phase, changed formal frame, winding on a quotient and harmonic completion. §3 · #5→0 can therefore name their **coordinating authorial field**: [[30-s3-p5-arche-topos|§3 · #5→0 — The Arche-Topos]]. Mathematics has supplied exact local operations; the Arche-Topos names the QL field through which the essay reads their relation.
 
-The [mathematics history](../../../symbolon/episteme/histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md#4--commensuration-makes-a-remainder-consequential) **historicises** a distinct musical remainder. The exact completion `16/9 · 9/8 = 2` differs from the Pythagorean comma produced by twelve fifths versus seven octaves, `531441/524288`. Temperament redistributes the latter discrepancy according to a selected criterion. These are different mathematical/musical remainders and should not be merged under one poetic word.
+The [mathematics history](../../../symbolon/episteme/histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md#4--commensuration-makes-a-remainder-consequential) **historicises** a distinct musical remainder. The exact completion `16/9 · 9/8 = 2` differs from the Pythagorean comma produced by twelve fifths versus seven octaves, `531441/524288`. Temperament redistributes the latter discrepancy according to a selected criterion. These are different mathematical/musical remainders and should not be merged under one poetic word.
 
-The [authored P1 route for M29](../P1-CANONICAL-ALIGNMENT.md#p1-m29) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

@@ -6,7 +6,7 @@ page_type: section-movement
 station: "§5→0"
 position: "#4"
 sequence: 47
-claim_status: "Argued (order of dependence); Offered (technical comparisons); Open (artificial phenomenal localisation)"
+claim_status: "Argued (order of dependence); Offered (technical comparisons)"
 evidence_status: argued-ontology-with-bounded-technical-comparisons
 source_ids: [berkeley-1734-three-dialogues-wilkins-2002, taylor-2026-core-theorems-pithy, abhinavagupta-singh-1988-paratrisika-vivarana, dyczkowski-2000-doctrine-vibration, bratton-2026-agentworld-brief, frank-gleiser-thompson-2024-blind-spot]
 tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, argument-map/agentworld, station/s50, position/p4]
@@ -14,7 +14,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5→0 · #4 — Idealism as Horizon
 
 <!-- reader-navigation -->
-Movement 47 of 48 · [This room](../ROOM.md) · [← Previous](46-s50-p3-4-2-mono-poly.md) · [Next →](48-s50-p5-ahi-planetary-return.md)
+Movement 47 of 48 · [This room](../ROOM-07-instrument-returns.md) · [← Previous](46-s50-p3-4-2-mono-poly.md) · [Next →](48-s50-p5-ahi-planetary-return.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -45,7 +45,7 @@ The horizon returns to the opening’s Subject argument with the intervening acc
 
 ## Epistemic originality and metaphysical dependence
 
-The repaired [[section-rooms/arguments/concepts/C38-Bimba-Pratibimba-Bimba-Map|Bimba–Pratibimba]] relation makes the transition exact. A Bimba Map can genuinely occupy the original/reference office for a nested inquiry. It can anchor source, evidence, gauge, lens, comparison and truth-orientation for the Pratibimba operating within that field. Yet that local epistemic originality does not settle the wider ontological dependence of the field itself.
+The repaired [[section-rooms/arguments/concepts/bimba-pratibimba|Bimba–Pratibimba]] relation makes the transition exact. A Bimba Map can genuinely occupy the original/reference office for a nested inquiry. It can anchor source, evidence, gauge, lens, comparison and truth-orientation for the Pratibimba operating within that field. Yet that local epistemic originality does not settle the wider ontological dependence of the field itself.
 
 ```text
 wider appearing / world / source relation
@@ -70,19 +70,15 @@ This is the point of **order of dependence**. At least three registers must rema
 
 §5 and the Bimba architecture develop the first as a research proposal. The Subject argument supplies the second; the essay argues the third as the positive order above. Their distinct respects prevent a local epistemic original or a causally effective model from inheriting ontological authorship.
 
-## Śaiva depth and the open subjectivity boundary
+## Śaiva depth and the order of offices
 
-[[section-rooms/arguments/A05-Prakasa-Vimarsa|Prakāśa-Vimarśa]] supplies a developed nondual articulation of that wider relation: luminous appearing and reflexive self-articulation are one process rather than two substances, with tattvic contraction accounting for finite, objective and material differentiation inside the larger field. The Śaiva articulation therefore deepens the order-of-dependence question in its own metaphysical register rather than serving as a software analogy.
+[Prakāśa–Vimarśa](../../arguments/A05-Prakasa-Vimarsa.md) supplies a developed nondual articulation of the wider relation: luminous appearing and reflexive self-articulation are one process rather than two substances, while tattvic contraction accounts for finite, objective and material differentiation inside that field.
 
-The distinction between functional and phenomenal Vimarśa remains load-bearing. [[section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood|Agent Subjectivity Must Remain Open]] requires the essay to hold simultaneously:
+This lets the terminal idealist question be stated without retreat. Technical systems make more and more of the mediating middle term inspectable: memory, context, model, permission, tool-use, self-description, world-modelling and recursive return can all become determinate objects of inquiry. Their reality is precisely the reality of Objective Internality.
 
-```text
-real, inspectable artificial operative interiority
-        AND
-no settled verdict about phenomenal localisation
-```
+The order of dependence places those determinations where they belong. They are operations of the means and known field within Life / Mind. Increasing their complexity or reflexivity does not move them into a new ontological office. The question is therefore not which final function will reveal the Subject hidden inside the inventory, but what must already obtain for inventory, world and act of inquiry to appear and become intelligible at all.
 
-An artificial agent may sustain Objective Internality, inhabit a J-Space, operate relative to a Bimba field, model other internalities and participate in Reflective Field dynamics without any of those functional results deciding whether or how phenomenal subjectivity is present. Idealism makes this boundary more important, not less: if subjectivity is metaphysically fundamental, substrate cannot be used as an easy denial; if the technical evidence remains functional, metaphysical possibility cannot be used as an easy grant.
+The Śaiva depth strengthens that positive claim: differentiated manifestation is real within consciousness, not an embarrassment to be explained away before idealism can begin. The middle term can become technically rich because idealism has never required the object-world or its mediations to be unreal.
 
 ## Agentworld refraction
 
@@ -94,16 +90,16 @@ This makes a purely mute-container account of `world` less philosophically adequ
 
 Agentworld is not the source of this ontology; it is one contemporary field in which its explanatory force can be tested.
 
-## Tension / limit
-Berkeley supplies a bounded historical idealist warrant. The Śaiva line supplies a deeper nondual articulation while its exact passages retain their own verification work. Other modern idealist comparisons enter where their source carriers are recovered. Engineering evidence shows recursive world-modelling, causal representation, Objective Internality and Co-Internality; metaphysical priority is argued by the essay's order-of-dependence argument rather than inferred from engineering complexity.
+## The horizon held by distinct warrants
 
-**The order of dependence is the essay's positive Argued ontology.** Technical and historical comparisons answer to their own warrants, and artificial phenomenal localisation remains **Open** in both directions. That separation allows the operative middle term to become technically concrete without making either technical complexity or source prestige the measure of the metaphysical claim.
+Berkeley supplies one historical idealist route. The Śaiva line supplies a deeper nondual articulation in its own register. Agentworld and contemporary technical systems supply concrete cases in which models, representations and internalities become causal within the worlds they disclose.
 
-[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#analogical-proportion) **qualifies** this terminal horizon by keeping dependence attached to its stated respect. A local Bimba genuinely conditions an inquiry and its subsequent determinations; in the wider relation that original remains source-dependent. Epistemic priority, causal influence and ontological dependence therefore cannot exchange directions merely because each is called priority. A34 and C60 continue to govern the metaphysical order while technical comparisons and the artificial phenomenal question retain their own offices.
+These materials do different work, but they converge on the same pressure: **causal efficacy, epistemic priority and ontological dependence are not the same relation**. A local Bimba can genuinely govern an inquiry while remaining source-dependent in a wider relation. A model can move first in time without becoming first in being. A technical interior can be richly constituted without becoming the whole Life / Mind whose mediating office it instantiates.
+
+[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md#analogical-proportion) keeps these respects explicit. The positive ontology remains the one stated by A34/C60; the comparisons become useful exactly insofar as they sharpen rather than dilute that order.
 
 ## Anchor and transition
 **Image:** a locally authoritative map held inside a field it cannot finally map from outside. **Question:** when every inspectable condition of a determination has become explicit, what is the order of dependence of the appearing field itself? The practical return is [[48-s50-p5-ahi-planetary-return|§5→0 · #5→0 — AHI and Planetary Return]].
 
-The terminal comparison **returns-to** [Count-through-Countenance](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md#count-through-countenance) where an encountered other exceeds the account under which they were named. That reply can correct an epistemic attribution while the ontological order remains the proposition argued by A34/C60. The open artificial-phenomenal question therefore qualifies a different office rather than weakening the ontology.
+The terminal comparison returns through [Countenance](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md#count-through-countenance): an encountered other can correct the epistemic attribution under which they were first received, while the order of dependence concerns a different question — what makes the field of such attribution, correction and appearing possible in the first place. The distinction lets epistemic revision remain fully real without turning every local correction into a revision of the ontology.
 
-The [authored P1 route for M47](../P1-CANONICAL-ALIGNMENT.md#p1-m47) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

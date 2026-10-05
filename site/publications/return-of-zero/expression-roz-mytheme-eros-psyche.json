@@ -1,0 +1,4747 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-eros-psyche",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+  "revision": 1,
+  "title": "Eros and Psyche",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle",
+    "revision": 1,
+    "title": "Worship displaced; the bridal exposure; Zephyr",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace",
+    "revision": 1,
+    "title": "The palace of invisible service",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp",
+    "revision": 1,
+    "title": "The lamp: truth seen, wound dealt",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours",
+    "revision": 1,
+    "title": "The four labours — help distributed across the world",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent",
+    "revision": 1,
+    "title": "The descent, the box, and the waking",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage",
+    "revision": 1,
+    "title": "Marriage without merger — and the possession idiom retained",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203",
+     "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174",
+    "revision": 1,
+    "title": "Psyche — worshipped, alone, unmarried",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.35,
+      "automation": null
+     },
+     "y": {
+      "value": 0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.35,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175",
+    "revision": 1,
+    "title": "Venus — the displaced honours",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.157,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176",
+    "revision": 1,
+    "title": "the rock — bridal exposure, a wedding like a funeral",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.24,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5315,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177",
+    "revision": 1,
+    "title": "Zephyr — receives and carries her down",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178",
+    "revision": 1,
+    "title": "Cupid — sent to punish, told to make her love degradation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.34,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179",
+    "revision": 1,
+    "title": "the palace — floors and walls giving their own light",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.37,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.86,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180",
+    "revision": 1,
+    "title": "the unseen household — voices without servants",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.184,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181",
+    "revision": 1,
+    "title": "the night husband — face unseen",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.42,
+      "automation": null
+     },
+     "y": {
+      "value": -0.25,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182",
+    "revision": 1,
+    "title": "the warning — danger in answering the sisters",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.68,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183",
+    "revision": 1,
+    "title": "the lamp opened",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.27,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184",
+    "revision": 1,
+    "title": "Cupid sleeping — the blade loses its object",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.15,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.31,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185",
+    "revision": 1,
+    "title": "the arrow-prick — she falls more deeply in love with Love",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.66,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186",
+    "revision": 1,
+    "title": "the hot oil — his right shoulder; he wakes in pain and flies",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.34,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.18,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187",
+    "revision": 1,
+    "title": "Pan and Echo — counsel against suicide",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.62,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188",
+    "revision": 1,
+    "title": "task one — the heap of mixed seeds, sorted by ants",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.11,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.146,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189",
+    "revision": 1,
+    "title": "task two — the golden fleece, gathered from branches at the reed's hour",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190",
+    "revision": 1,
+    "title": "task three — the water of Styx and Cocytus, fetched by Jupiter's eagle",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191",
+    "revision": 1,
+    "title": "Venus — Anxiety and Sorrow as gaolers; credit refused",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192",
+    "revision": 1,
+    "title": "Ceres and Juno — compassion stopping at allegiance",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.357,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193",
+    "revision": 1,
+    "title": "the tower — another route through Taenarum",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2305,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194",
+    "revision": 1,
+    "title": "two cakes, two coins — the exact reserves for return",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195",
+    "revision": 1,
+    "title": "Charon, the dog, the weavers, the floating dead — the traps refused",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.2,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196",
+    "revision": 1,
+    "title": "Proserpina's box — \"do not open it\"",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.39,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3145,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197",
+    "revision": 1,
+    "title": "the infernal sleep poured out — Psyche motionless beside the path",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198",
+    "revision": 1,
+    "title": "the waking — sleep wiped into the box; a harmless prick of the arrow",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.18,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199",
+    "revision": 1,
+    "title": "the assembly of the gods — Mercury summons under threat of fine",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.46,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.7055,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200",
+    "revision": 1,
+    "title": "the ambrosia — Psyche made immortal",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.25,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.089,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201",
+    "revision": 1,
+    "title": "the banquet — Vulcan cooks, Hours scatter flowers, Graces perfume, Muses sing, Apollo plays",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202",
+    "revision": 1,
+    "title": "Venus dancing — participation changed, no confession narrated",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203",
+    "revision": 1,
+    "title": "Voluptas — born at full term of a conception preceding the ordeals",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.33,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204",
+    "revision": 1,
+    "title": "sic rite Psyche convenit in manum Cupidinis — the legal idiom kept",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-eros-psyche.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-eros-psyche:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Eros and Psyche</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche\" data-expression-revision=\"1\"><h1>Eros and Psyche</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-eros-psyche at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle\" aria-label=\"Worship displaced; the bridal exposure; Zephyr\"><h2>Worship displaced; the bridal exposure; Zephyr</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:53.50%;top:47.20%;font-size:1.05rem;opacity:1.00\" title=\"Psyche — worshipped, alone, unmarried\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"Venus — the displaced honours\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:1.59rem;opacity:1.00\" title=\"the rock — bridal exposure, a wedding like a funeral\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.00%;top:53.80%;font-size:1.20rem;opacity:1.00\" title=\"Zephyr — receives and carries her down\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.40%;font-size:0.90rem;opacity:1.00\" title=\"Cupid — sent to punish, told to make her love degradation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace\" aria-label=\"The palace of invisible service\"><h2>The palace of invisible service</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.70%;font-size:2.58rem;opacity:1.00\" title=\"the palace — floors and walls giving their own light\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.00%;font-size:0.60rem;opacity:1.00\" title=\"the unseen household — voices without servants\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:54.20%;top:52.50%;font-size:0.72rem;opacity:1.00\" title=\"the night husband — face unseen\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.80%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the warning — danger in answering the sisters\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp\" aria-label=\"The lamp: truth seen, wound dealt\"><h2>The lamp: truth seen, wound dealt</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:47.00%;top:52.70%;font-size:1.06rem;opacity:1.00\" title=\"the lamp opened\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:53.00%;top:48.50%;font-size:0.93rem;opacity:1.00\" title=\"Cupid sleeping — the blade loses its object\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.60%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the arrow-prick — she falls more deeply in love with Love\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.20%;top:53.40%;font-size:0.60rem;opacity:1.00\" title=\"the hot oil — his right shoulder; he wakes in pain and flies\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.00%;font-size:0.66rem;opacity:1.00\" title=\"Pan and Echo — counsel against suicide\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours\" aria-label=\"The four labours — help distributed across the world\"><h2>The four labours — help distributed across the world</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"task one — the heap of mixed seeds, sorted by ants\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.84rem;opacity:1.00\" title=\"task two — the golden fleece, gathered from branches at the reed&#39;s hour\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"task three — the water of Styx and Cocytus, fetched by Jupiter&#39;s eagle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"Venus — Anxiety and Sorrow as gaolers; credit refused\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:1.07rem;opacity:1.00\" title=\"Ceres and Juno — compassion stopping at allegiance\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent\" aria-label=\"The descent, the box, and the waking\"><h2>The descent, the box, and the waking</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.69rem;opacity:1.00\" title=\"the tower — another route through Taenarum\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:52.00%;top:45.00%;font-size:0.81rem;opacity:1.00\" title=\"two cakes, two coins — the exact reserves for return\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.00%;font-size:0.60rem;opacity:1.00\" title=\"Charon, the dog, the weavers, the floating dead — the traps refused\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.90%;font-size:0.94rem;opacity:1.00\" title=\"Proserpina&#39;s box — &quot;do not open it&quot;\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.96rem;opacity:1.00\" title=\"the infernal sleep poured out — Psyche motionless beside the path\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"the waking — sleep wiped into the box; a harmless prick of the arrow\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage\" aria-label=\"Marriage without merger — and the possession idiom retained\"><h2>Marriage without merger — and the possession idiom retained</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.12rem;opacity:1.00\" title=\"the assembly of the gods — Mercury summons under threat of fine\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.50%;font-size:0.60rem;opacity:1.00\" title=\"the ambrosia — Psyche made immortal\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.50%;font-size:0.72rem;opacity:1.00\" title=\"the banquet — Vulcan cooks, Hours scatter flowers, Graces perfume, Muses sing, Apollo plays\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"Venus dancing — participation changed, no confession narrated\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.99rem;opacity:1.00\" title=\"Voluptas — born at full term of a conception preceding the ordeals\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"sic rite Psyche convenit in manum Cupidinis — the legal idiom kept\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-eros-psyche",
+  "world_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+  "revision": 1,
+  "title": "Eros and Psyche",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Eros and Psyche"
+      },
+      "fallback": {
+       "title": "Eros and Psyche"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-eros-psyche:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Eros and Psyche</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche\" data-expression-revision=\"1\"><h1>Eros and Psyche</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-eros-psyche at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle\" aria-label=\"Worship displaced; the bridal exposure; Zephyr\"><h2>Worship displaced; the bridal exposure; Zephyr</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:53.50%;top:47.20%;font-size:1.05rem;opacity:1.00\" title=\"Psyche — worshipped, alone, unmarried\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"Venus — the displaced honours\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:1.59rem;opacity:1.00\" title=\"the rock — bridal exposure, a wedding like a funeral\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.00%;top:53.80%;font-size:1.20rem;opacity:1.00\" title=\"Zephyr — receives and carries her down\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.40%;font-size:0.90rem;opacity:1.00\" title=\"Cupid — sent to punish, told to make her love degradation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace\" aria-label=\"The palace of invisible service\"><h2>The palace of invisible service</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.70%;font-size:2.58rem;opacity:1.00\" title=\"the palace — floors and walls giving their own light\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.00%;font-size:0.60rem;opacity:1.00\" title=\"the unseen household — voices without servants\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:54.20%;top:52.50%;font-size:0.72rem;opacity:1.00\" title=\"the night husband — face unseen\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.80%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the warning — danger in answering the sisters\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp\" aria-label=\"The lamp: truth seen, wound dealt\"><h2>The lamp: truth seen, wound dealt</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:47.00%;top:52.70%;font-size:1.06rem;opacity:1.00\" title=\"the lamp opened\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:53.00%;top:48.50%;font-size:0.93rem;opacity:1.00\" title=\"Cupid sleeping — the blade loses its object\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.60%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the arrow-prick — she falls more deeply in love with Love\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.20%;top:53.40%;font-size:0.60rem;opacity:1.00\" title=\"the hot oil — his right shoulder; he wakes in pain and flies\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.00%;font-size:0.66rem;opacity:1.00\" title=\"Pan and Echo — counsel against suicide\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours\" aria-label=\"The four labours — help distributed across the world\"><h2>The four labours — help distributed across the world</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"task one — the heap of mixed seeds, sorted by ants\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.84rem;opacity:1.00\" title=\"task two — the golden fleece, gathered from branches at the reed&#39;s hour\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"task three — the water of Styx and Cocytus, fetched by Jupiter&#39;s eagle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"Venus — Anxiety and Sorrow as gaolers; credit refused\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:1.07rem;opacity:1.00\" title=\"Ceres and Juno — compassion stopping at allegiance\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent\" aria-label=\"The descent, the box, and the waking\"><h2>The descent, the box, and the waking</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.69rem;opacity:1.00\" title=\"the tower — another route through Taenarum\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:52.00%;top:45.00%;font-size:0.81rem;opacity:1.00\" title=\"two cakes, two coins — the exact reserves for return\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.00%;font-size:0.60rem;opacity:1.00\" title=\"Charon, the dog, the weavers, the floating dead — the traps refused\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.90%;font-size:0.94rem;opacity:1.00\" title=\"Proserpina&#39;s box — &quot;do not open it&quot;\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.96rem;opacity:1.00\" title=\"the infernal sleep poured out — Psyche motionless beside the path\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"the waking — sleep wiped into the box; a harmless prick of the arrow\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage\" aria-label=\"Marriage without merger — and the possession idiom retained\"><h2>Marriage without merger — and the possession idiom retained</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.12rem;opacity:1.00\" title=\"the assembly of the gods — Mercury summons under threat of fine\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.50%;font-size:0.60rem;opacity:1.00\" title=\"the ambrosia — Psyche made immortal\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.50%;font-size:0.72rem;opacity:1.00\" title=\"the banquet — Vulcan cooks, Hours scatter flowers, Graces perfume, Muses sing, Apollo plays\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"Venus dancing — participation changed, no confession narrated\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.99rem;opacity:1.00\" title=\"Voluptas — born at full term of a conception preceding the ordeals\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"sic rite Psyche convenit in manum Cupidinis — the legal idiom kept\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+        "revision": 1,
+        "title": "Eros and Psyche",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle",
+          "revision": 1,
+          "title": "Worship displaced; the bridal exposure; Zephyr",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace",
+          "revision": 1,
+          "title": "The palace of invisible service",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp",
+          "revision": 1,
+          "title": "The lamp: truth seen, wound dealt",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours",
+          "revision": 1,
+          "title": "The four labours — help distributed across the world",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent",
+          "revision": 1,
+          "title": "The descent, the box, and the waking",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage",
+          "revision": 1,
+          "title": "Marriage without merger — and the possession idiom retained",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203",
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174",
+          "revision": 1,
+          "title": "Psyche — worshipped, alone, unmarried",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.35,
+            "automation": null
+           },
+           "y": {
+            "value": 0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.35,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175",
+          "revision": 1,
+          "title": "Venus — the displaced honours",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.157,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176",
+          "revision": 1,
+          "title": "the rock — bridal exposure, a wedding like a funeral",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.24,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5315,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177",
+          "revision": 1,
+          "title": "Zephyr — receives and carries her down",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178",
+          "revision": 1,
+          "title": "Cupid — sent to punish, told to make her love degradation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.34,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179",
+          "revision": 1,
+          "title": "the palace — floors and walls giving their own light",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.37,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.86,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180",
+          "revision": 1,
+          "title": "the unseen household — voices without servants",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.184,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181",
+          "revision": 1,
+          "title": "the night husband — face unseen",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.42,
+            "automation": null
+           },
+           "y": {
+            "value": -0.25,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182",
+          "revision": 1,
+          "title": "the warning — danger in answering the sisters",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.68,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183",
+          "revision": 1,
+          "title": "the lamp opened",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.27,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184",
+          "revision": 1,
+          "title": "Cupid sleeping — the blade loses its object",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.15,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.31,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185",
+          "revision": 1,
+          "title": "the arrow-prick — she falls more deeply in love with Love",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.66,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186",
+          "revision": 1,
+          "title": "the hot oil — his right shoulder; he wakes in pain and flies",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.34,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.18,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187",
+          "revision": 1,
+          "title": "Pan and Echo — counsel against suicide",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.62,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188",
+          "revision": 1,
+          "title": "task one — the heap of mixed seeds, sorted by ants",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.11,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.146,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189",
+          "revision": 1,
+          "title": "task two — the golden fleece, gathered from branches at the reed's hour",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190",
+          "revision": 1,
+          "title": "task three — the water of Styx and Cocytus, fetched by Jupiter's eagle",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191",
+          "revision": 1,
+          "title": "Venus — Anxiety and Sorrow as gaolers; credit refused",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192",
+          "revision": 1,
+          "title": "Ceres and Juno — compassion stopping at allegiance",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.357,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193",
+          "revision": 1,
+          "title": "the tower — another route through Taenarum",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2305,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194",
+          "revision": 1,
+          "title": "two cakes, two coins — the exact reserves for return",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195",
+          "revision": 1,
+          "title": "Charon, the dog, the weavers, the floating dead — the traps refused",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.2,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196",
+          "revision": 1,
+          "title": "Proserpina's box — \"do not open it\"",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.39,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3145,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197",
+          "revision": 1,
+          "title": "the infernal sleep poured out — Psyche motionless beside the path",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198",
+          "revision": 1,
+          "title": "the waking — sleep wiped into the box; a harmless prick of the arrow",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.18,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199",
+          "revision": 1,
+          "title": "the assembly of the gods — Mercury summons under threat of fine",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.46,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.7055,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200",
+          "revision": 1,
+          "title": "the ambrosia — Psyche made immortal",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.25,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.089,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201",
+          "revision": 1,
+          "title": "the banquet — Vulcan cooks, Hours scatter flowers, Graces perfume, Muses sing, Apollo plays",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202",
+          "revision": 1,
+          "title": "Venus dancing — participation changed, no confession narrated",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203",
+          "revision": 1,
+          "title": "Voluptas — born at full term of a conception preceding the ordeals",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.33,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204",
+          "revision": 1,
+          "title": "sic rite Psyche convenit in manum Cupidinis — the legal idiom kept",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-eros-psyche.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Eros and Psyche"
+      },
+      "fallback": {
+       "title": "Eros and Psyche",
+       "text": "Eros and Psyche: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-eros-psyche",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-eros-psyche"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-eros-psyche:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-eros-psyche"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-eros-psyche:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-eros-psyche",
+    "world_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+    "revision": 1,
+    "title": "Eros and Psyche",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Eros and Psyche"
+        },
+        "fallback": {
+         "title": "Eros and Psyche"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-eros-psyche:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Eros and Psyche</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche\" data-expression-revision=\"1\"><h1>Eros and Psyche</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-eros-psyche at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle\" aria-label=\"Worship displaced; the bridal exposure; Zephyr\"><h2>Worship displaced; the bridal exposure; Zephyr</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:53.50%;top:47.20%;font-size:1.05rem;opacity:1.00\" title=\"Psyche — worshipped, alone, unmarried\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"Venus — the displaced honours\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.40%;font-size:1.59rem;opacity:1.00\" title=\"the rock — bridal exposure, a wedding like a funeral\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.00%;top:53.80%;font-size:1.20rem;opacity:1.00\" title=\"Zephyr — receives and carries her down\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.40%;font-size:0.90rem;opacity:1.00\" title=\"Cupid — sent to punish, told to make her love degradation\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace\" aria-label=\"The palace of invisible service\"><h2>The palace of invisible service</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.70%;font-size:2.58rem;opacity:1.00\" title=\"the palace — floors and walls giving their own light\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:50.00%;font-size:0.60rem;opacity:1.00\" title=\"the unseen household — voices without servants\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:54.20%;top:52.50%;font-size:0.72rem;opacity:1.00\" title=\"the night husband — face unseen\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.80%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the warning — danger in answering the sisters\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp\" aria-label=\"The lamp: truth seen, wound dealt\"><h2>The lamp: truth seen, wound dealt</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:47.00%;top:52.70%;font-size:1.06rem;opacity:1.00\" title=\"the lamp opened\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:53.00%;top:48.50%;font-size:0.93rem;opacity:1.00\" title=\"Cupid sleeping — the blade loses its object\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.60%;top:45.50%;font-size:0.60rem;opacity:1.00\" title=\"the arrow-prick — she falls more deeply in love with Love\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:56.20%;top:53.40%;font-size:0.60rem;opacity:1.00\" title=\"the hot oil — his right shoulder; he wakes in pain and flies\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:43.80%;top:54.00%;font-size:0.66rem;opacity:1.00\" title=\"Pan and Echo — counsel against suicide\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours\" aria-label=\"The four labours — help distributed across the world\"><h2>The four labours — help distributed across the world</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.10%;font-size:0.60rem;opacity:1.00\" title=\"task one — the heap of mixed seeds, sorted by ants\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.84rem;opacity:1.00\" title=\"task two — the golden fleece, gathered from branches at the reed&#39;s hour\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"task three — the water of Styx and Cocytus, fetched by Jupiter&#39;s eagle\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"Venus — Anxiety and Sorrow as gaolers; credit refused\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:1.07rem;opacity:1.00\" title=\"Ceres and Juno — compassion stopping at allegiance\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent\" aria-label=\"The descent, the box, and the waking\"><h2>The descent, the box, and the waking</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.69rem;opacity:1.00\" title=\"the tower — another route through Taenarum\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:52.00%;top:45.00%;font-size:0.81rem;opacity:1.00\" title=\"two cakes, two coins — the exact reserves for return\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.00%;font-size:0.60rem;opacity:1.00\" title=\"Charon, the dog, the weavers, the floating dead — the traps refused\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.90%;font-size:0.94rem;opacity:1.00\" title=\"Proserpina&#39;s box — &quot;do not open it&quot;\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.50%;font-size:0.96rem;opacity:1.00\" title=\"the infernal sleep poured out — Psyche motionless beside the path\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"the waking — sleep wiped into the box; a harmless prick of the arrow\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage\" aria-label=\"Marriage without merger — and the possession idiom retained\"><h2>Marriage without merger — and the possession idiom retained</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.60%;font-size:2.12rem;opacity:1.00\" title=\"the assembly of the gods — Mercury summons under threat of fine\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.50%;top:52.50%;font-size:0.60rem;opacity:1.00\" title=\"the ambrosia — Psyche made immortal\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.50%;font-size:0.72rem;opacity:1.00\" title=\"the banquet — Vulcan cooks, Hours scatter flowers, Graces perfume, Muses sing, Apollo plays\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"Venus dancing — participation changed, no confession narrated\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.99rem;opacity:1.00\" title=\"Voluptas — born at full term of a conception preceding the ordeals\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-eros-psyche\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"sic rite Psyche convenit in manum Cupidinis — the legal idiom kept\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+          "revision": 1,
+          "title": "Eros and Psyche",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle",
+            "revision": 1,
+            "title": "Worship displaced; the bridal exposure; Zephyr",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace",
+            "revision": 1,
+            "title": "The palace of invisible service",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp",
+            "revision": 1,
+            "title": "The lamp: truth seen, wound dealt",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours",
+            "revision": 1,
+            "title": "The four labours — help distributed across the world",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent",
+            "revision": 1,
+            "title": "The descent, the box, and the waking",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage",
+            "revision": 1,
+            "title": "Marriage without merger — and the possession idiom retained",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203",
+             "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174",
+            "revision": 1,
+            "title": "Psyche — worshipped, alone, unmarried",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.35,
+              "automation": null
+             },
+             "y": {
+              "value": 0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.35,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e175",
+            "revision": 1,
+            "title": "Venus — the displaced honours",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.157,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e176",
+            "revision": 1,
+            "title": "the rock — bridal exposure, a wedding like a funeral",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.24,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5315,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e177",
+            "revision": 1,
+            "title": "Zephyr — receives and carries her down",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e178",
+            "revision": 1,
+            "title": "Cupid — sent to punish, told to make her love degradation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.34,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e179",
+            "revision": 1,
+            "title": "the palace — floors and walls giving their own light",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.37,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.86,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e180",
+            "revision": 1,
+            "title": "the unseen household — voices without servants",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.184,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e181",
+            "revision": 1,
+            "title": "the night husband — face unseen",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.42,
+              "automation": null
+             },
+             "y": {
+              "value": -0.25,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-1-palace:e182",
+            "revision": 1,
+            "title": "the warning — danger in answering the sisters",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.68,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e183",
+            "revision": 1,
+            "title": "the lamp opened",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.27,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e184",
+            "revision": 1,
+            "title": "Cupid sleeping — the blade loses its object",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.15,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.31,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e185",
+            "revision": 1,
+            "title": "the arrow-prick — she falls more deeply in love with Love",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.66,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e186",
+            "revision": 1,
+            "title": "the hot oil — his right shoulder; he wakes in pain and flies",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.34,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.18,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-2-lamp:e187",
+            "revision": 1,
+            "title": "Pan and Echo — counsel against suicide",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.62,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e188",
+            "revision": 1,
+            "title": "task one — the heap of mixed seeds, sorted by ants",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.11,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.146,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e189",
+            "revision": 1,
+            "title": "task two — the golden fleece, gathered from branches at the reed's hour",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e190",
+            "revision": 1,
+            "title": "task three — the water of Styx and Cocytus, fetched by Jupiter's eagle",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e191",
+            "revision": 1,
+            "title": "Venus — Anxiety and Sorrow as gaolers; credit refused",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-3-labours:e192",
+            "revision": 1,
+            "title": "Ceres and Juno — compassion stopping at allegiance",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.357,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e193",
+            "revision": 1,
+            "title": "the tower — another route through Taenarum",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2305,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e194",
+            "revision": 1,
+            "title": "two cakes, two coins — the exact reserves for return",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e195",
+            "revision": 1,
+            "title": "Charon, the dog, the weavers, the floating dead — the traps refused",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.2,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e196",
+            "revision": 1,
+            "title": "Proserpina's box — \"do not open it\"",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.39,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3145,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e197",
+            "revision": 1,
+            "title": "the infernal sleep poured out — Psyche motionless beside the path",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-4-descent:e198",
+            "revision": 1,
+            "title": "the waking — sleep wiped into the box; a harmless prick of the arrow",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.18,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e199",
+            "revision": 1,
+            "title": "the assembly of the gods — Mercury summons under threat of fine",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.46,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.7055,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e200",
+            "revision": 1,
+            "title": "the ambrosia — Psyche made immortal",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.25,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.089,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e201",
+            "revision": 1,
+            "title": "the banquet — Vulcan cooks, Hours scatter flowers, Graces perfume, Muses sing, Apollo plays",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e202",
+            "revision": 1,
+            "title": "Venus dancing — participation changed, no confession narrated",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e203",
+            "revision": 1,
+            "title": "Voluptas — born at full term of a conception preceding the ordeals",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.33,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-5-marriage:e204",
+            "revision": 1,
+            "title": "sic rite Psyche convenit in manum Cupidinis — the legal idiom kept",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-eros-psyche:scene:m-psy-0-oracle:e174"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-eros-psyche.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Eros and Psyche"
+        },
+        "fallback": {
+         "title": "Eros and Psyche",
+         "text": "Eros and Psyche: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-eros-psyche",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-eros-psyche",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-eros-psyche.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-eros-psyche"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-eros-psyche:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Eros and Psyche",
+  "summary": "a living Expression · 6 scenes · 31 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-eros-psyche:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-eros-psyche",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-eros-psyche"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-eros-psyche:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-eros-psyche",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-eros-psyche",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Eros and Psyche",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-eros-psyche:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-eros-psyche:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-eros-psyche",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-eros-psyche"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

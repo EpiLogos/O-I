@@ -1,0 +1,3934 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-meal-epistemic-metabolism",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+  "revision": 1,
+  "title": "The Meal — Epistemic Metabolism and the Shared Table",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger",
+    "revision": 1,
+    "title": "Information without nourishment",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate",
+    "revision": 1,
+    "title": "The plate and its five preparations",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew",
+    "revision": 1,
+    "title": "Taste and chewing",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table",
+    "revision": 1,
+    "title": "The container; the shared table; companions are not food",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return",
+    "revision": 1,
+    "title": "Satiety, rest, renewed hunger — and the emptied rite",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576",
+     "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553",
+    "revision": 1,
+    "title": "the finished report — recallable, unchanged in its receiver",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.319,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554",
+    "revision": 1,
+    "title": "the continuous feed — attention occupied, the discrepancy unarticulated",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555",
+    "revision": 1,
+    "title": "the display case — cataloguing behind glass, untouched",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556",
+    "revision": 1,
+    "title": "the disposal — distinctions destroyed before consequence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557",
+    "revision": 1,
+    "title": "appetite — the question with standing as an opening",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.19,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.187,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558",
+    "revision": 1,
+    "title": "raw — the demanding texture of primary material",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.184,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559",
+    "revision": 1,
+    "title": "cooked — responsible interpretation making material accessible",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.172,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560",
+    "revision": 1,
+    "title": "processed — earlier transformations hard to recover",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561",
+    "revision": 1,
+    "title": "junk — stimulation after the relation to nourishment has fallen away",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562",
+    "revision": 1,
+    "title": "fermented — inherited practices having worked on what a newcomer receives",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.35,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563",
+    "revision": 1,
+    "title": "provenance — who produced it, what it says, what preparation it carries",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564",
+    "revision": 1,
+    "title": "the first taste — welcome or rejection before the material is worked through",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565",
+    "revision": 1,
+    "title": "chewing — distinguishing statement from evidence, event from interpretation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.4,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1.4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566",
+    "revision": 1,
+    "title": "the fourfold — affirm · reject · hold together · recognise a false alternative",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567",
+    "revision": 1,
+    "title": "the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568",
+    "revision": 1,
+    "title": "the container — a bounded interior able to sustain the work it permits",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3325,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569",
+    "revision": 1,
+    "title": "the changed criteria — a decisive distinction become incidental; an excluded condition become necessary",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570",
+    "revision": 1,
+    "title": "the shared table — companions from histories the others do not possess",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.44,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5525,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571",
+    "revision": 1,
+    "title": "the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572",
+    "revision": 1,
+    "title": "companions are not food — the contributor retains the capacity to contest use (A29/A30)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.28,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.098,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573",
+    "revision": 1,
+    "title": "satiety — nourishment recognisable in the change of capacity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.209,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574",
+    "revision": 1,
+    "title": "rest — the meal can be enough; no machinery of compulsory intake",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575",
+    "revision": 1,
+    "title": "renewed hunger — beginning from changed ground, unlike the uninterrupted demand",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576",
+    "revision": 1,
+    "title": "the coda — bread in the hands of companions; loaves and fishes as the outline's explicit wink, no derivation of 4+2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577",
+    "revision": 1,
+    "title": "the emptied rite — form continuing after the capacity to change relation has ceased",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.16,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.209,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Meal — Epistemic Metabolism and the Shared Table</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism\" data-expression-revision=\"1\"><h1>The Meal — Epistemic Metabolism and the Shared Table</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger\" aria-label=\"Information without nourishment\"><h2>Information without nourishment</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.96rem;opacity:1.00\" title=\"the finished report — recallable, unchanged in its receiver\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.96rem;opacity:1.00\" title=\"the continuous feed — attention occupied, the discrepancy unarticulated\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:1.20rem;opacity:1.00\" title=\"the display case — cataloguing behind glass, untouched\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.20%;font-size:0.78rem;opacity:1.00\" title=\"the disposal — distinctions destroyed before consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:0.60rem;opacity:1.00\" title=\"appetite — the question with standing as an opening\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate\" aria-label=\"The plate and its five preparations\"><h2>The plate and its five preparations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"raw — the demanding texture of primary material\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:48.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"cooked — responsible interpretation making material accessible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:52.00%;top:47.00%;font-size:0.84rem;opacity:1.00\" title=\"processed — earlier transformations hard to recover\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:56.00%;top:47.00%;font-size:0.84rem;opacity:1.00\" title=\"junk — stimulation after the relation to nourishment has fallen away\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:48.00%;top:54.00%;font-size:1.05rem;opacity:1.00\" title=\"fermented — inherited practices having worked on what a newcomer receives\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"provenance — who produced it, what it says, what preparation it carries\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew\" aria-label=\"Taste and chewing\"><h2>Taste and chewing</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.50%;top:50.30%;font-size:0.78rem;opacity:1.00\" title=\"the first taste — welcome or rejection before the material is worked through\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.50rem;opacity:1.00\" title=\"chewing — distinguishing statement from evidence, event from interpretation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:0.78rem;opacity:1.00\" title=\"the fourfold — affirm · reject · hold together · recognise a false alternative\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table\" aria-label=\"The container; the shared table; companions are not food\"><h2>The container; the shared table; companions are not food</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:1.00rem;opacity:1.00\" title=\"the container — a bounded interior able to sustain the work it permits\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:0.78rem;opacity:1.00\" title=\"the changed criteria — a decisive distinction become incidental; an excluded condition become necessary\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.40%;font-size:1.66rem;opacity:1.00\" title=\"the shared table — companions from histories the others do not possess\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.80%;font-size:0.60rem;opacity:1.00\" title=\"companions are not food — the contributor retains the capacity to contest use (A29/A30)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return\" aria-label=\"Satiety, rest, renewed hunger — and the emptied rite\"><h2>Satiety, rest, renewed hunger — and the emptied rite</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.63rem;opacity:1.00\" title=\"satiety — nourishment recognisable in the change of capacity\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.60rem;opacity:1.00\" title=\"rest — the meal can be enough; no machinery of compulsory intake\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:0.66rem;opacity:1.00\" title=\"renewed hunger — beginning from changed ground, unlike the uninterrupted demand\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the coda — bread in the hands of companions; loaves and fishes as the outline&#39;s explicit wink, no derivation of 4+2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.60%;font-size:0.63rem;opacity:1.00\" title=\"the emptied rite — form continuing after the capacity to change relation has ceased\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-meal-epistemic-metabolism",
+  "world_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+  "revision": 1,
+  "title": "The Meal — Epistemic Metabolism and the Shared Table",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "The Meal — Epistemic Metabolism and the Shared Table"
+      },
+      "fallback": {
+       "title": "The Meal — Epistemic Metabolism and the Shared Table"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Meal — Epistemic Metabolism and the Shared Table</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism\" data-expression-revision=\"1\"><h1>The Meal — Epistemic Metabolism and the Shared Table</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger\" aria-label=\"Information without nourishment\"><h2>Information without nourishment</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.96rem;opacity:1.00\" title=\"the finished report — recallable, unchanged in its receiver\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.96rem;opacity:1.00\" title=\"the continuous feed — attention occupied, the discrepancy unarticulated\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:1.20rem;opacity:1.00\" title=\"the display case — cataloguing behind glass, untouched\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.20%;font-size:0.78rem;opacity:1.00\" title=\"the disposal — distinctions destroyed before consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:0.60rem;opacity:1.00\" title=\"appetite — the question with standing as an opening\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate\" aria-label=\"The plate and its five preparations\"><h2>The plate and its five preparations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"raw — the demanding texture of primary material\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:48.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"cooked — responsible interpretation making material accessible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:52.00%;top:47.00%;font-size:0.84rem;opacity:1.00\" title=\"processed — earlier transformations hard to recover\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:56.00%;top:47.00%;font-size:0.84rem;opacity:1.00\" title=\"junk — stimulation after the relation to nourishment has fallen away\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:48.00%;top:54.00%;font-size:1.05rem;opacity:1.00\" title=\"fermented — inherited practices having worked on what a newcomer receives\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"provenance — who produced it, what it says, what preparation it carries\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew\" aria-label=\"Taste and chewing\"><h2>Taste and chewing</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.50%;top:50.30%;font-size:0.78rem;opacity:1.00\" title=\"the first taste — welcome or rejection before the material is worked through\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.50rem;opacity:1.00\" title=\"chewing — distinguishing statement from evidence, event from interpretation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:0.78rem;opacity:1.00\" title=\"the fourfold — affirm · reject · hold together · recognise a false alternative\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table\" aria-label=\"The container; the shared table; companions are not food\"><h2>The container; the shared table; companions are not food</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:1.00rem;opacity:1.00\" title=\"the container — a bounded interior able to sustain the work it permits\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:0.78rem;opacity:1.00\" title=\"the changed criteria — a decisive distinction become incidental; an excluded condition become necessary\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.40%;font-size:1.66rem;opacity:1.00\" title=\"the shared table — companions from histories the others do not possess\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.80%;font-size:0.60rem;opacity:1.00\" title=\"companions are not food — the contributor retains the capacity to contest use (A29/A30)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return\" aria-label=\"Satiety, rest, renewed hunger — and the emptied rite\"><h2>Satiety, rest, renewed hunger — and the emptied rite</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.63rem;opacity:1.00\" title=\"satiety — nourishment recognisable in the change of capacity\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.60rem;opacity:1.00\" title=\"rest — the meal can be enough; no machinery of compulsory intake\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:0.66rem;opacity:1.00\" title=\"renewed hunger — beginning from changed ground, unlike the uninterrupted demand\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the coda — bread in the hands of companions; loaves and fishes as the outline&#39;s explicit wink, no derivation of 4+2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.60%;font-size:0.63rem;opacity:1.00\" title=\"the emptied rite — form continuing after the capacity to change relation has ceased\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+        "revision": 1,
+        "title": "The Meal — Epistemic Metabolism and the Shared Table",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger",
+          "revision": 1,
+          "title": "Information without nourishment",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate",
+          "revision": 1,
+          "title": "The plate and its five preparations",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew",
+          "revision": 1,
+          "title": "Taste and chewing",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table",
+          "revision": 1,
+          "title": "The container; the shared table; companions are not food",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return",
+          "revision": 1,
+          "title": "Satiety, rest, renewed hunger — and the emptied rite",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576",
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553",
+          "revision": 1,
+          "title": "the finished report — recallable, unchanged in its receiver",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.319,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554",
+          "revision": 1,
+          "title": "the continuous feed — attention occupied, the discrepancy unarticulated",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555",
+          "revision": 1,
+          "title": "the display case — cataloguing behind glass, untouched",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556",
+          "revision": 1,
+          "title": "the disposal — distinctions destroyed before consequence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557",
+          "revision": 1,
+          "title": "appetite — the question with standing as an opening",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.19,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.187,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558",
+          "revision": 1,
+          "title": "raw — the demanding texture of primary material",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.184,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559",
+          "revision": 1,
+          "title": "cooked — responsible interpretation making material accessible",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.172,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560",
+          "revision": 1,
+          "title": "processed — earlier transformations hard to recover",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561",
+          "revision": 1,
+          "title": "junk — stimulation after the relation to nourishment has fallen away",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562",
+          "revision": 1,
+          "title": "fermented — inherited practices having worked on what a newcomer receives",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.35,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563",
+          "revision": 1,
+          "title": "provenance — who produced it, what it says, what preparation it carries",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564",
+          "revision": 1,
+          "title": "the first taste — welcome or rejection before the material is worked through",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565",
+          "revision": 1,
+          "title": "chewing — distinguishing statement from evidence, event from interpretation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.4,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1.4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566",
+          "revision": 1,
+          "title": "the fourfold — affirm · reject · hold together · recognise a false alternative",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567",
+          "revision": 1,
+          "title": "the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568",
+          "revision": 1,
+          "title": "the container — a bounded interior able to sustain the work it permits",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3325,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569",
+          "revision": 1,
+          "title": "the changed criteria — a decisive distinction become incidental; an excluded condition become necessary",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570",
+          "revision": 1,
+          "title": "the shared table — companions from histories the others do not possess",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.44,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5525,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571",
+          "revision": 1,
+          "title": "the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572",
+          "revision": 1,
+          "title": "companions are not food — the contributor retains the capacity to contest use (A29/A30)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.28,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.098,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573",
+          "revision": 1,
+          "title": "satiety — nourishment recognisable in the change of capacity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.209,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574",
+          "revision": 1,
+          "title": "rest — the meal can be enough; no machinery of compulsory intake",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575",
+          "revision": 1,
+          "title": "renewed hunger — beginning from changed ground, unlike the uninterrupted demand",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576",
+          "revision": 1,
+          "title": "the coda — bread in the hands of companions; loaves and fishes as the outline's explicit wink, no derivation of 4+2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577",
+          "revision": 1,
+          "title": "the emptied rite — form continuing after the capacity to change relation has ceased",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.16,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.209,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "The Meal — Epistemic Metabolism and the Shared Table"
+      },
+      "fallback": {
+       "title": "The Meal — Epistemic Metabolism and the Shared Table",
+       "text": "The Meal — Epistemic Metabolism and the Shared Table: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-meal-epistemic-metabolism",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-meal-epistemic-metabolism:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-meal-epistemic-metabolism:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-meal-epistemic-metabolism",
+    "world_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+    "revision": 1,
+    "title": "The Meal — Epistemic Metabolism and the Shared Table",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "The Meal — Epistemic Metabolism and the Shared Table"
+        },
+        "fallback": {
+         "title": "The Meal — Epistemic Metabolism and the Shared Table"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Meal — Epistemic Metabolism and the Shared Table</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism\" data-expression-revision=\"1\"><h1>The Meal — Epistemic Metabolism and the Shared Table</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger\" aria-label=\"Information without nourishment\"><h2>Information without nourishment</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.96rem;opacity:1.00\" title=\"the finished report — recallable, unchanged in its receiver\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:0.96rem;opacity:1.00\" title=\"the continuous feed — attention occupied, the discrepancy unarticulated\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:1.20rem;opacity:1.00\" title=\"the display case — cataloguing behind glass, untouched\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.20%;font-size:0.78rem;opacity:1.00\" title=\"the disposal — distinctions destroyed before consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:0.60rem;opacity:1.00\" title=\"appetite — the question with standing as an opening\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate\" aria-label=\"The plate and its five preparations\"><h2>The plate and its five preparations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"raw — the demanding texture of primary material\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:48.00%;top:51.20%;font-size:0.60rem;opacity:1.00\" title=\"cooked — responsible interpretation making material accessible\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:52.00%;top:47.00%;font-size:0.84rem;opacity:1.00\" title=\"processed — earlier transformations hard to recover\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:56.00%;top:47.00%;font-size:0.84rem;opacity:1.00\" title=\"junk — stimulation after the relation to nourishment has fallen away\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:48.00%;top:54.00%;font-size:1.05rem;opacity:1.00\" title=\"fermented — inherited practices having worked on what a newcomer receives\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"provenance — who produced it, what it says, what preparation it carries\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew\" aria-label=\"Taste and chewing\"><h2>Taste and chewing</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.50%;top:50.30%;font-size:0.78rem;opacity:1.00\" title=\"the first taste — welcome or rejection before the material is worked through\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:54.00%;top:47.00%;font-size:1.50rem;opacity:1.00\" title=\"chewing — distinguishing statement from evidence, event from interpretation\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.50%;font-size:0.78rem;opacity:1.00\" title=\"the fourfold — affirm · reject · hold together · recognise a false alternative\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:56.00%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table\" aria-label=\"The container; the shared table; companions are not food\"><h2>The container; the shared table; companions are not food</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.00%;font-size:1.00rem;opacity:1.00\" title=\"the container — a bounded interior able to sustain the work it permits\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:0.78rem;opacity:1.00\" title=\"the changed criteria — a decisive distinction become incidental; an excluded condition become necessary\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.40%;font-size:1.66rem;opacity:1.00\" title=\"the shared table — companions from histories the others do not possess\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.80%;font-size:0.60rem;opacity:1.00\" title=\"companions are not food — the contributor retains the capacity to contest use (A29/A30)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return\" aria-label=\"Satiety, rest, renewed hunger — and the emptied rite\"><h2>Satiety, rest, renewed hunger — and the emptied rite</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.63rem;opacity:1.00\" title=\"satiety — nourishment recognisable in the change of capacity\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.60rem;opacity:1.00\" title=\"rest — the meal can be enough; no machinery of compulsory intake\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:0.66rem;opacity:1.00\" title=\"renewed hunger — beginning from changed ground, unlike the uninterrupted demand\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the coda — bread in the hands of companions; loaves and fishes as the outline&#39;s explicit wink, no derivation of 4+2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.60%;font-size:0.63rem;opacity:1.00\" title=\"the emptied rite — form continuing after the capacity to change relation has ceased\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+          "revision": 1,
+          "title": "The Meal — Epistemic Metabolism and the Shared Table",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger",
+            "revision": 1,
+            "title": "Information without nourishment",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate",
+            "revision": 1,
+            "title": "The plate and its five preparations",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew",
+            "revision": 1,
+            "title": "Taste and chewing",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table",
+            "revision": 1,
+            "title": "The container; the shared table; companions are not food",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return",
+            "revision": 1,
+            "title": "Satiety, rest, renewed hunger — and the emptied rite",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576",
+             "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553",
+            "revision": 1,
+            "title": "the finished report — recallable, unchanged in its receiver",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.319,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e554",
+            "revision": 1,
+            "title": "the continuous feed — attention occupied, the discrepancy unarticulated",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e555",
+            "revision": 1,
+            "title": "the display case — cataloguing behind glass, untouched",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e556",
+            "revision": 1,
+            "title": "the disposal — distinctions destroyed before consequence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e557",
+            "revision": 1,
+            "title": "appetite — the question with standing as an opening",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.19,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.187,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e558",
+            "revision": 1,
+            "title": "raw — the demanding texture of primary material",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.184,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e559",
+            "revision": 1,
+            "title": "cooked — responsible interpretation making material accessible",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.172,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e560",
+            "revision": 1,
+            "title": "processed — earlier transformations hard to recover",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e561",
+            "revision": 1,
+            "title": "junk — stimulation after the relation to nourishment has fallen away",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e562",
+            "revision": 1,
+            "title": "fermented — inherited practices having worked on what a newcomer receives",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.35,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-1-plate:e563",
+            "revision": 1,
+            "title": "provenance — who produced it, what it says, what preparation it carries",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e564",
+            "revision": 1,
+            "title": "the first taste — welcome or rejection before the material is worked through",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e565",
+            "revision": 1,
+            "title": "chewing — distinguishing statement from evidence, event from interpretation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.4,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1.4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e566",
+            "revision": 1,
+            "title": "the fourfold — affirm · reject · hold together · recognise a false alternative",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-2-chew:e567",
+            "revision": 1,
+            "title": "the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e568",
+            "revision": 1,
+            "title": "the container — a bounded interior able to sustain the work it permits",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3325,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e569",
+            "revision": 1,
+            "title": "the changed criteria — a decisive distinction become incidental; an excluded condition become necessary",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e570",
+            "revision": 1,
+            "title": "the shared table — companions from histories the others do not possess",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.44,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5525,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e571",
+            "revision": 1,
+            "title": "the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-3-table:e572",
+            "revision": 1,
+            "title": "companions are not food — the contributor retains the capacity to contest use (A29/A30)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.28,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.098,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e573",
+            "revision": 1,
+            "title": "satiety — nourishment recognisable in the change of capacity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.209,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e574",
+            "revision": 1,
+            "title": "rest — the meal can be enough; no machinery of compulsory intake",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e575",
+            "revision": 1,
+            "title": "renewed hunger — beginning from changed ground, unlike the uninterrupted demand",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e576",
+            "revision": 1,
+            "title": "the coda — bread in the hands of companions; loaves and fishes as the outline's explicit wink, no derivation of 4+2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-5-return:e577",
+            "revision": 1,
+            "title": "the emptied rite — form continuing after the capacity to change relation has ceased",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.16,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.209,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism:scene:m-meal-0-hunger:e553"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "The Meal — Epistemic Metabolism and the Shared Table"
+        },
+        "fallback": {
+         "title": "The Meal — Epistemic Metabolism and the Shared Table",
+         "text": "The Meal — Epistemic Metabolism and the Shared Table: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-meal-epistemic-metabolism",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-meal-epistemic-metabolism.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-meal-epistemic-metabolism"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-meal-epistemic-metabolism:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "The Meal — Epistemic Metabolism and the Shared Table",
+  "summary": "a living Expression · 5 scenes · 25 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-meal-epistemic-metabolism:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-meal-epistemic-metabolism"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-meal-epistemic-metabolism:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-meal-epistemic-metabolism",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-meal-epistemic-metabolism",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "The Meal — Epistemic Metabolism and the Shared Table",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-meal-epistemic-metabolism:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-meal-epistemic-metabolism:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-meal-epistemic-metabolism",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-meal-epistemic-metabolism"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

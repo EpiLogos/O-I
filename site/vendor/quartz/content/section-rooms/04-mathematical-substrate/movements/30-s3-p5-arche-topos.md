@@ -15,7 +15,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §3 · #5→0 — The Arche-Topos
 
 <!-- reader-navigation -->
-Movement 30 of 48 · [This room](../ROOM.md) · [← Previous](29-s3-p4-topology-music-resolution.md) · [Next →](../../05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md)
+Movement 30 of 48 · [This room](../ROOM-04-mathematical-substrate.md) · [← Previous](29-s3-p4-topology-music-resolution.md) · [Next →](../../05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md)
 <!-- /reader-navigation -->
 
 ## Movement thesis
@@ -62,14 +62,13 @@ The local mathematical results retain their own Derived standing. Their coordina
 
 The [travelling-jigsaw whole](../../../symbolon/mytheme/worlds/frank-taylor/travelling-jigsaw-atlas/WHOLE.md#jigsaw-atlas-return) **figures** the mathematical return through charts, declared transitions and a lift retaining winding after local closure. Its reconstruction preserves the difference between the circle overlap, the torus quotient and the infinite cover. Those exact relations give the epistemic atlas a disciplined mathematical carrier; the atlas proposal remains answerable to whether its declared transitions actually preserve and transform situated knowledge.
 
-[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#e5-whole-returns) **qualifies** the braid as it returns into psyche. The native theorem coordination retains its Derived standing; the torus lift, musical factor and chart transition remain distinct exact operations through which it is articulated. The psychoid synthesis is the essay's Argued relation among those operations and the psyche–physis field. Empirical psychoid efficacy — a measured common process operating across domains — remains a further research claim and therefore requires its own observation. The passage into psychological life preserves these different warrants precisely so that psyche can return something the formal account did not already contain.
+[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md#e5-whole-returns) **qualifies** the braid as it returns into psyche. The native theorem coordination retains its Derived standing; the torus lift, musical factor and chart transition remain distinct exact operations through which it is articulated. The psychoid synthesis is the essay's Argued relation among those operations and the psyche–physis field. Empirical psychoid efficacy — a measured common process operating across domains — remains a further research claim and therefore requires its own observation. The passage into psychological life preserves these different warrants precisely so that psyche can return something the formal account did not already contain.
 
 ## Return into psyche
 
-The differential field **returns-to** [Topos — situated return](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md#topos-situated-return) through the conditions under which a placement, path or return is possible. A chart’s domain and transition rule belong to its account of position; the act of making that account remains situated. The attested place/position field supplies a semantic neighbour, while the native derivation and each topological construction keep their independent laws.
+The differential field **returns-to** [Topos — situated return](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md#topos-situated-return) through the conditions under which a placement, path or return is possible. A chart’s domain and transition rule belong to its account of position; the act of making that account remains situated. The attested place/position field supplies a semantic neighbour, while the native derivation and each topological construction keep their independent laws.
 
 The substrate now flowers psychologically. Jung and Pauli supply the psychoid question; \(X/x\), quaternity, senarius, and complexio oppositorum disclose individuation as a form becoming transparent to its ground. Continue to [[31-s4-p0-psychoid-problem|§4 · #0 — The Psychoid Problem]].
 
 The [complete stained-glass whole](../../../symbolon/mytheme/worlds/frank-taylor/stained-glass-refraction/WHOLE.md#stained-glass-atlas-complement) **figures** the atlas’s optical complement: light enters through a made aperture whose panes, seams and position remain answerable within the display. Transmission and chart transition retain their different operations. The Bimba Map’s recursive local original office remains available within this wider source-dependent relation.
 
-The [authored P1 route for M30](../P1-CANONICAL-ALIGNMENT.md#p1-m30) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

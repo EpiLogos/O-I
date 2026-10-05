@@ -15,7 +15,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5 · #4 — Workcell — Situated Existence
 
 <!-- reader-navigation -->
-Movement 41 of 48 · [This room](../ROOM.md) · [← Previous](40-s5-p3-preference-hidden-zero.md) · [Next →](42-s5-p5-research-vectors.md)
+Movement 41 of 48 · [This room](../ROOM-06-objective-internality.md) · [← Previous](40-s5-p3-preference-hidden-zero.md) · [Next →](42-s5-p5-research-vectors.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -24,7 +24,9 @@ Movement 41 of 48 · [This room](../ROOM.md) · [← Previous](40-s5-p3-preferen
 
 ## Warrant — thrownness, aperture and material answer
 
-The whole pair is **L4 Phenomenological × L1′ Phenomenal**. Phenomenological gives Being, Thrownness, Being-there, Temporality, Care and Releasement. Phenomenal gives Introversion, Sensation, Feeling, Thinking, Intuition and Extroversion. Together they describe situated life and the aperture through which that situation becomes experience and action. In the technical refraction, telemetry, input, inference, latency, resource and failure make the material situation operationally inspectable; the distinct question of phenomenal sensation or feeling retains its own warrant.
+The whole pair is **L4 Phenomenological × L1′ Phenomenal**. Phenomenological gives Being, Thrownness, Being-there, Temporality, Care and Releasement. Phenomenal gives Introversion, Sensation, Feeling, Thinking, Intuition and Extroversion. Together they hold situated existence and the aperture through which situation becomes experience and action.
+
+In the technical refraction, telemetry, input, inference, latency, resource and failure make the **material situation** increasingly inspectable. The strength of the pair is not that telemetry becomes experience, but that the workcell can expose how a concrete here conditions what can appear, matter and be done. Material resistance and reported experience remain different offices inside one situated field.
 
 This is why the older “materialisation” gloss was too thin. VM, host, process, network, filesystem, browser and service matter because they place an actor in a real horizon of availability and resistance. Two nominally identical processes can inhabit different practical worlds because latency, data, topology, authority and human proximity differ. Situation is relational before it is geometric.
 
@@ -38,10 +40,10 @@ Gebser’s positive psychic-fact office also survives this movement. Situated ex
 
 ## Tension / limit
 
-**Workcell holds material actuality and experienced/reportable situation in one situated field while preserving their difference.** Latency, failure, scarcity, changed files, human interruption and unexpected affordance can answer intention materially. Those events establish real resistance in the execution-world; they do not decide the separate question of phenomenal experience in an artificial actor. Likewise, telemetry is one aperture on situation rather than the criterion of everything that can count as experience or consequence. The psychic-fact office keeps the field open to what the current material model has not yet explained.
+**Workcell holds material actuality and experienced/reportable situation in one situated field while preserving their difference.** Latency, failure, scarcity, changed files, human interruption and unexpected affordance can answer intention materially. Telemetry supplies one aperture on that situation; report, interpretation and consequence supply others. The workcell becomes philosophically useful where the technical model can be corrected by what its present instrumentation failed to anticipate, because situation exceeds any one aperture through which it is inspected.
 
 ## Return
 
 Workcell establishes the actual here from which every act proceeds. The final movement asks how each local here, act, capacity, transformation and ground remains related to larger wholes without losing its differentiation: [Quaternal Logic — Transcendent Relation](42-s5-p5-research-vectors.md).
 
-**Owning product:** [S4 — Workcell](../../arguments/products/S4-Workcell.md). **Whole field:** [S — World and Life](../../arguments/products/S-World-and-Life.md). The [authored P1 route for M41](../P1-CANONICAL-ALIGNMENT.md#p1-m41) carries the explicit S and A/C alignment.
+[Workcell](../../arguments/products/S4-Workcell.md) gives this movement its technical body within the wider [World and Life](../../arguments/products/S-World-and-Life.md) field. Situated existence is the point at which intention meets a world it did not wholly author and has to carry the answer of material consequence back into the next act.

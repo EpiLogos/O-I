@@ -25,7 +25,7 @@ local_copy: working/sources-texts-references/primary-texts/aristotle/politics.ht
 
 Aristotle. *Politics*. Translated by Benjamin Jowett. [Internet Classics Archive witness](https://classics.mit.edu/Aristotle/politics.1.one.html). Selected sections read on 8 September 2026: I.3, I.8–10. The host identifies the translator; this receipt does not identify or collate a specific printed edition, Greek text or full work.
 
-The selected account **sources** [the historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES.md) and **qualifies** its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD.md). The historical proposition and Taylor’s relational operation retain distinct authority.
+The selected account **sources** [the historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES-apportionment-and-economy.md) and **qualifies** its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md). The historical proposition and Taylor’s relational operation retain distinct authority.
 
 <a id="passages"></a>
 ## Selected passages

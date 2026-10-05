@@ -13,7 +13,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §1 · #3 — The Crossed Zero
 
 <!-- reader-navigation -->
-Movement 16 of 48 · [This room](../ROOM.md) · [← Previous](15-s1-p2-empty-set-generates-one.md) · [Next →](17-s1-p4-zero-outside-math.md)
+Movement 16 of 48 · [This room](../ROOM-02-return-of-zero.md) · [← Previous](15-s1-p2-empty-set-generates-one.md) · [Next →](17-s1-p4-zero-outside-math.md)
 <!-- /reader-navigation -->
 
 ## Movement thesis
@@ -42,20 +42,20 @@ The figure carries three distinguishable terms even before all three are explici
 
 The error of `Ø` is not that mediation exists. It is that mediation has become invisible in its success. “I see the world” contracts into an apparent `I / world` opposition because the seeing itself has disappeared into the first term. §0 already gave that hidden middle a positive anatomy; the crossed zero now gives the occlusion a compact sign.
 
-## Writing payload
+## The gap is constitutive, not a reserve of unexplained functions
 
-This is the place for the humanity/God-of-the-gaps reversal. Once the immutable gap is recognised as the constitutive interval between ground and mark, empirical gaps no longer need to shelter a supernatural object or an irreducibly human remainder. They can be closed by knowledge without threatening the Subject-pole, because Subject was never one missing object among others.
+The crossed zero changes the meaning of the gap. Once the slash is recognised as mediation, the gap between ground and mark is no longer a dark interval waiting to be filled by one more object. Empirical gaps can close, mechanisms can become inspectable, and capacities can migrate across substrates without touching the distinction at issue. What becomes clearer is the **means**: how a determination is produced, inherited, revised and returned.
 
-The same guard applies to artificial intelligence. A capacity migrating from human performance into a machine does not reduce Subject by shrinking a list of uniquely human functions. It changes the objective account of mediation. The phenomenal location of Subjective Immediacy remains a different question.
+This reverses both the God-of-the-gaps and humanity-of-the-gaps strategies. Neither divinity nor humanity needs to occupy an unexplained remainder in the inventory of functions. Subject was never the final unmeasured function. It is the knower-pole whose objectification the crossed-zero traversal is teaching the reader to recognise as a category error.
 
-## Tension / limit
+## Symbol and formal neighbour
 
-The crossed zero is a **native authorial symbolic operation**, not a standard mathematical identity and not a proof supplied by set theory, Lacan or Wittgenstein. Lacan's first signifier becomes a serious comparison later, in §4, where Matheme and Mytheme explicitly meet. It is withheld here so that the native operation is not made to depend on a psychoanalytic vocabulary introduced before its station has earned it. Likewise, recognising the slash as mediation does not yet complete the whole recognition series; `Ø/X`, `(0/Ø)/(1/X)` and the returned `0/1` must still be earned.
+The crossed zero belongs to the essay's Symbolon/Matheme field. Set theory supplies the immediately preceding exact formal neighbour in which zero and successor are related; the crossed zero changes register and gives mediation an imaginal body. Later Lacanian material supplies another distinct comparison when the signifying bar and quilting point enter the argument.
+
+The sequence itself has further work to do. Recognition is not complete at Ø. The world-side X, the visible medium Ø/X, the relation-of-relations (0/Ø)/(1/X), and the affirmed 1 must still be traversed before the return to 0/1. The sign matters because it is one arrested moment inside that larger movement.
 
 ## Transition
 
 The stroke has now become a problem in its own right. When a determinate `1` returns toward zero, ordinary arithmetic makes the formal boundary explicit: what happens to `1/0` depends on the containing mathematical structure. See [[17-s1-p4-zero-outside-math|§1 · #4 — Zero Keeps One Foot Outside Mathematics]].
 
-The crossed-zero operation is native authorial work; Wittgenstein’s limit supplies no derivation of its positive return; the [language history](../../../symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/DEVELOPMENT.md#language-practice) **qualifies** this historical attribution.
 
-The [authored P1 route for M16](../P1-CANONICAL-ALIGNMENT.md#p1-m16) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

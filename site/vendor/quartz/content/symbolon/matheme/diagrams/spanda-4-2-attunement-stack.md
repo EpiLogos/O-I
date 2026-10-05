@@ -16,7 +16,7 @@ rights: "Original work, created for the essay. No third-party image material."
 tags: [epi-logos/antikythera-essay, argument-map/live, register/matheme, domain/diagrams, spanda, 4-plus-2]
 ---
 
-# The Vertical Accounting — 100% to the 4+2 Base Frame
+# The Vertical Accounting — 100% to the `4+2` Base Frame
 
 ## Proposition
 
@@ -63,7 +63,7 @@ The standing identity `0/1 + 1/0 = 1/1 = 100%` appears only with its rule stated
 
 ## Essay blocks
 
-- `04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md` — *§3 · #1 — The Spanda Equations and 4+2*. This movement performs the vertical accounting, fixes the four-warrant table the bands reproduce, and demands that a publication display "mark that operator typographically or state the rule immediately beside the expression". The diagram is that display. It resolves the legacy brief *image-08 — 4+2 and attunement stack* (sixfold, 4+2, ratio residue, ground-governed accounting) at its live home.
+- `04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md` — *§3 · #1 — The Spanda Equations and `4+2`*. This movement performs the vertical accounting, fixes the four-warrant table the bands reproduce, and demands that a publication display "mark that operator typographically or state the rule immediately beside the expression". The diagram is that display. It resolves the legacy brief *image-08 — 4+2 and attunement stack* (sixfold, 4+2, ratio residue, ground-governed accounting) at its live home.
 
 ## Asset
 

@@ -1,24 +1,18 @@
 ---
-title: "The Return of Zero — Mytheme"
+title: "Mytheme"
 record_id: register-mytheme
 record_type: register-root
 register: mytheme
 claim_status: Derived
 ---
 
-# The Return of Zero — Mytheme
+# Mytheme
 
-**Where you are:** [Reading root](../../README.md) › [Symbolon](../README.md) › Mytheme
+**Where you are:** [Reading root](../../README.md) › [#1 Symbolon](../README.md) › `#3` Mytheme
 
-**Mytheme** carries the lived images of *The Return of Zero* — whole stories, scenes, and artworks in which a relation can be seen, heard, suffered, remembered and transformed. Myth, narrative, poetry, media, art and music belong here when their **whole form** performs a movement of the argument. Images are operations, not decorations for equations.
+Mytheme carries the forms in which a relation can be seen, heard, suffered, remembered and transformed. Myth, narrative, poetry, media, art and music belong here when their **whole form** performs a movement of the argument. In the Vāk layering of the registers this is **madhyamā**: the formed visual and narrative operations built through the visionary logic that [Matheme](../matheme/README.md) carries.
 
-It sits inside the [symbolon](../README.md) beside [Matheme](../matheme/README.md) and [Episteme](../episteme/README.md), and beside the [rooms](../../section-rooms/README.md) and the [manuscript](../../THE-RETURN-OF-ZERO.md). It is imaginal depth when a room points to a WHOLE or a plate — **not the first door**.
-
-Much of this field is generated or provisional. Interpretive amplifications may be human-ratified or still awaiting Frank's encounter; the record marks the difference. Quilt material, NOTES, and navigation JSON are not publication surfaces.
-
-**If you are new:** return to the [rooms](../../section-rooms/README.md) and begin there. Enter Mytheme when a room or movement points to a WHOLE, a plate, or a lived image.
-
-The primary carrier is not a detachable character, object or symbol but the **whole relational image / story / scene / artwork** in which those elements act together. The Ares–Aphrodite–Hephaestus–Poseidon field is one whole before “Hephaestus” becomes a technē index; Apollo–Eros–Daphne–Peneus is one whole before “Daphne” becomes an alterity/tree index; Job's divine council, losses, friends, Wisdom, whirlwind and restoration remain one whole before Leviathan, Satan or Sophia are amplified separately.
+The primary Mytheme carrier is therefore not a detachable character, object or symbol but the **whole relational image / story / scene / artwork** in which those elements act together. The Ares–Aphrodite–Hephaestus–Poseidon field is one whole before “Hephaestus” becomes a technē index; Apollo–Eros–Daphne–Peneus is one whole before “Daphne” becomes an alterity/tree index; Job's divine council, losses, friends, Wisdom, whirlwind and restoration remain one whole before Leviathan, Satan or Sophia are amplified separately.
 
 ## Enter
 
@@ -105,4 +99,4 @@ The formal structure made perceptible by a mytheme opens into [Matheme](../mathe
 
 ## Standing
 
-The whole-first and human-amplification laws above are active. Worlds and atlas architecture follow the central plan; Neumann supplies shared archetypal structuration; geography and temporality are separate organising classes. A `constellations/` layer for figures, motifs and peoples gathered from exact whole occurrences is the ratified next surface — not yet instituted, and no index precedes the wholes it would be drawn from.
+The whole-first and human-amplification laws above are active. Their governing bodies are `[[working/final-argument-quilt-2026-08-23/MYTHEME-AND-DEEP-SOURCE-SEAMS|Native 020 — Whole Mythemes and Deep Source Seams]]`, which owns whole-form recovery, and `[[working/final-argument-quilt-2026-08-23/MYTHEME-WHOLE-STORY-AMPLIFICATION-LAW|Mytheme Whole-Story Amplification Law]]`, which governs how characters, animals, plants, elements, objects, places and higher-order archetypal fields may be abstracted **from** recovered wholes and integrated **across** them. The worlds/atlas architecture is bound by the central plan amendment of 2026-09-08 and executed through the T20–T21 world-register map, subordinate to the plan. Neumann supplies shared archetypal structuration; geography and temporality are separate organising classes; no inherited page count bounds recovery.

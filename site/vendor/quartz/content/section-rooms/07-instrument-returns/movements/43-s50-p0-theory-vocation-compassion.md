@@ -13,7 +13,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5→0 · #0 — From Theory to Vocation
 
 <!-- reader-navigation -->
-Movement 43 of 48 · [This room](../ROOM.md) · [← Previous](../../06-objective-internality/movements/42-s5-p5-research-vectors.md) · [Next →](44-s50-p1-ql-mef-bimba-harness.md)
+Movement 43 of 48 · [This room](../ROOM-07-instrument-returns.md) · [← Previous](../../06-objective-internality/movements/42-s5-p5-research-vectors.md) · [Next →](44-s50-p1-ql-mef-bimba-harness.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -37,10 +37,9 @@ The Antichrist/counterfeit-source field keeps the darkness direct without turnin
 
 ## Anchor and transition
 
-The achieved theoretical account **returns-to** [Epi-Logos — source return](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md#epilogos-source-return) as work offered into another life's conditions. Its speaker, instrument, addressee and exclusions remain recoverable as Logos. Natio asks how an inherited account becomes familiar ground for later participants; the vocational return lets those participants change its use instead of treating that inheritance as an unanswerable origin.
+The achieved theoretical account **returns-to** [Epi-Logos — source return](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md#epilogos-source-return) as work offered into another life's conditions. Its speaker, instrument, addressee and exclusions remain recoverable as Logos. Natio asks how an inherited account becomes familiar ground for later participants; the vocational return lets those participants change its use instead of treating that inheritance as an unanswerable origin.
 
-Vocation returns to [E2's resolution in reconciliation](../../../symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md#resolution-in-reconciliation) when regard for who bears an instrument's consequences can alter its work or withdraw its commission. Compassion's return is thus borne in what the practice permits the encountered person to change. The E-field articulates this answerability without attributing felt compassion to a technical instrument.
+Vocation returns to [E2's resolution in reconciliation](../../../symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md#resolution-in-reconciliation) when regard for who bears an instrument's consequences can alter its work or withdraw its commission. Compassion's return is thus borne in what the practice permits the encountered person to change. The E-field articulates this answerability without attributing felt compassion to a technical instrument.
 
 **Image:** Logos turning back without erasing its marks; the made instrument relinquishing the claim to be the source of what it coordinates. **Etymological resonance:** Hole Whole Holy Health. The vocation needs architecture in [[44-s50-p1-ql-mef-bimba-harness|§5→0 · #1 — QL, MEF, Bimba, and Harness]].
 
-The [authored P1 route for M43](../P1-CANONICAL-ALIGNMENT.md#p1-m43) **grounds** this movement's canonical A/C alignment within the phase bounds and dispositions stated there.

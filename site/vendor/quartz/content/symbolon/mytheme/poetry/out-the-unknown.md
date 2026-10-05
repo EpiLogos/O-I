@@ -10,11 +10,11 @@ type: _md_
 title: "Out the Unknown"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c80c9a5e3fc0b4ed884d4
-source_id: 191a4797-123c-80c9-a5e3-fc0b4ed884d4
 notion_created: 2025-02-05T18:55:22Z
 notion_edited: 2025-02-05T18:55:40.864Z
 status: sorted
 kind: poem
+source_id: out-the-unknown
 ---
 Out the Unknown
 You perpendicular flow.

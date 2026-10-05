@@ -87,28 +87,66 @@ test('founding positions carry the same positive world, authorship and collectiv
   assert.match(foundingPositions, /stable abstraction[\s\S]*native SDK \/ public contract[\s\S]*fixture \+ verification[\s\S]*Return to product and research/);
 });
 
-test('first-contact copy carries the world-making proposition and local-to-shared movement', () => {
-  assert.match(sectionBody('home', 'what'), /^### \[title\] A world to act within\. A way to understand it\.$/m);
-  assert.match(sectionBody('home', 'existing-world'), /^### \[title\] Start where you are\.$/m);
-  assert.match(sectionBody('home', 'existing-world'), /principles, preferences, project purposes, rules and ways of working/i);
-  assert.match(sectionBody('home', 'field'), /Minimal O:I: durable ground \+ actuated model capacity/);
-  assert.match(sectionBody('home', 'centres'), /Each product develops one of these relations/);
-  const shared = sectionBody('home', 'shared');
-  assert.match(shared, /Begin with a subject, enter its available Expression/);
-  assert.match(shared, /follow its permitted relations or source, and return to the same reading position/);
-  assert.match(shared, /without a local O:I installation or an Agent key/);
-  assert.match(shared, /not a live subscription/);
-  assert.match(shared, /Unpublished material remains unavailable rather than becoming sample content/);
+test('the home says what Objective Internality is, holds the six facets with their products, then the Cradle and the essay', () => {
+  const home = source.slice(source.indexOf('# [home] '), source.indexOf('\n# [oi] '));
+  const order = [...home.matchAll(/^## \[([a-z0-9-]+)\] /gm)].map(match => match[1]);
+  assert.deepEqual(order, ['hero', 'reading', 'what', 'cradle', 'essay', 'return']);
+  const oi = sectionBody('home', 'what');
+  assert.match(oi, /^## \[what\] What is O:I$/m);
+  assert.match(oi, /^### \[title\] The world an agent acts from\.$/m);
+  assert.match(oi, /^O:I stands for Objective : Internality: the means through which a life knows and acts within a world\./m);
+  assert.match(oi, /^An AI agent acts from such a world too, and it has six facets\./m);
+  assert.match(oi, /treat these facets as implicit, or bolt them on one at a time as features/);
+  assert.match(oi, /O:I differentiates them, giving each its own tool, its own records and its own contracts/);
+  assert.doesNotMatch(oi, /capable model|harness before the harness|Central|Actuation|AIKit|Workcell/);
+  // The facets and their products are one component: the facts that framed the old products section stay with it.
+  assert.match(oi, /^### \[facets\] /m);
+  assert.match(oi, /command-line tool and libraries in its own repository, usable alone or together, meeting the others through versioned contracts rather than a shared runtime/);
+  assert.match(oi, /All six are in use and still developing/);
+  assert.match(oi, /^### \[readme\] O:I README on GitHub\n\nhttps:\/\/github\.com\/EpiLogos\/O-I#readme$/m);
+  assert.ok(oi.slice(oi.indexOf('### [facets]')).includes('O:I README on GitHub gives their current state'));
+  const cradle = sectionBody('home', 'cradle');
+  assert.match(cradle, /^### \[title\] Before the harness\.$/m);
+  assert.match(cradle, /bootstraps the agent’s world as such/);
+  assert.match(cradle, /one situation that any harness can then act within/);
+  assert.match(cradle, /The Cradle is being built now\./);
+  assert.ok(cradle.split(/\n\n/).filter(p => p && !p.startsWith('#')).length <= 2, 'the Cradle runs to two paragraphs at most');
+  const what = sectionBody('home', 'essay');
+  assert.match(what, /^## \[essay\] The essay$/m);
+  assert.match(what, /^### \[title\] An essay on what knows, and the means through which it knows\.$/m);
+  assert.match(what, /^\*Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality\*/m);
+  assert.match(what, /Its foundation, §0\/1 “The Integral Threshold”, is submitted to \*Agentworld\*, the special issue of \*Antikythera\*/);
+  const ret = sectionBody('home', 'return');
+  assert.match(ret, /^## \[return\] A steward of relations$/m);
+  assert.match(ret, /The essay was written with AI agents/);
   assert.match(sectionBody('oi', 'name'), /constituted means through which a Life encounters and acts within a World/);
   assert.match(sectionBody('shared-field', 'intro'), /^### \[title\] A world, defined for agents\.$/m);
   assert.match(sectionBody('shared-field', 'co-internality'), /legibility without capture/);
 });
 
-test('current six-office wording and truthful local installation do not imply publication or verification', () => {
-  const centres = sectionBody('home', 'centres');
-  for (const office of ['Meaningful continuity', 'Living articulation', 'Potency', 'Transformation', 'Situated existence', 'Transcendent Relation']) assert.ok(centres.includes(office), office);
-  assert.match(centres, /constructed paradigm within Objective Internality/);
-  assert.match(centres, /not an exhaustive definition imposed on every World/);
+test('each facet is held by one product with its line, command and repository', () => {
+  const facets = [
+    ['central', 'Ground', 'ctrl', 'https://github.com/EpiLogos/Central', /ordinary files and changed through named actions/],
+    ['actuation', 'Agency', 'actuation', 'https://github.com/EpiLogos/Actuation', /on whose authority and within what bounds, with a record of what each act did/],
+    ['aikit', 'Capability', 'aikit', 'https://github.com/EpiLogos/ai-kit', /installed into the harness already in use/],
+    ['factory', 'Development', 'factory', 'https://github.com/EpiLogos/Factory', /runs, attempts and evidence, and the judgement/],
+    ['workcell', 'Environment', 'workcell', 'https://github.com/EpiLogos/Workcell', /made real on request, with a record of what was provided/],
+    ['ql', 'Reflection', 'ql', 'https://github.com/EpiLogos/QL-MEF', /what shaped an act and what should change, built as typed operations with the Meta-Epistemic Framework/],
+  ];
+  for (const [id, role, cli, repo, line] of facets) {
+    const body = sectionBody('products', id);
+    const roleBlock = body.slice(body.indexOf('### [role] '), body.indexOf('### [cli] '));
+    assert.match(roleBlock, new RegExp(`^### \\[role\\] ${role}\\n\\n[^\\n#]{40,170}\\n`, 'm'), `${id}: role and one line`);
+    assert.match(roleBlock, line, `${id}: facet line`);
+    assert.match(body, new RegExp(`^### \\[cli\\] ${cli}$`, 'm'), `${id}: cli`);
+    assert.match(body, new RegExp(`^### \\[repo\\] [^\\n]+\\n\\n${repo.replace(/[.]/g, '\\.')}$`, 'm'), `${id}: repo`);
+  }
+});
+
+test('each product carries its facet role and truthful local installation does not imply publication or verification', () => {
+  for (const [id, role] of [['central', 'Ground'], ['actuation', 'Agency'], ['aikit', 'Capability'], ['factory', 'Development'], ['workcell', 'Environment'], ['ql', 'Reflection']]) {
+    assert.match(sectionBody('products', id), new RegExp(`^### \\[role\\] ${role}$`, 'm'), id);
+  }
   assert.match(sectionBody('products', 'central'), /root meta-project/);
   const build = sectionBody('build', 'intro');
   assert.match(build, /immutable released artifacts from the current native-source suite/);
@@ -118,9 +156,19 @@ test('current six-office wording and truthful local installation do not imply pu
   assert.match(sectionBody('build', 'links'), /INSTALL-UPDATE-FLOW\.md/);
 });
 
-test('Objective : Internality is the authored title form', () => {
+test('the home reads through the essay alone and points to O:I on GitHub', () => {
+  const reading = sectionBody('home', 'reading');
+  assert.doesNotMatch(reading, /^### \[library\] /m, 'the Library is not a home reading entrance');
+  assert.match(reading, /^### \[essay\] Essay$/m);
+  assert.match(reading, /^Begin with the foundation, §0\/1, or enter the field of its arguments and sources\.$/m);
+  assert.match(reading, /^### \[github\] O:I on GitHub\n\nhttps:\/\/github\.com\/EpiLogos\/O-I$/m);
+  assert.doesNotMatch(source.slice(source.indexOf('# [home] '), source.indexOf('\n# [oi] ')), /Enter a product below|An open Library|A living field|capable model|The means can become a question|^## \[(existing-world|field|shared|build|centres)\] /m);
+});
+
+test('O:I keeps its authored brand and the essay carries its full authored title', () => {
   assert.match(source, /^### \[title\] Objective : Internality$/m);
-  assert.doesNotMatch(source, /^#{1,4} .*Objective Internality[.]*$/m);
+  assert.doesNotMatch(source, /^#{1,4} (?!\[essay-title\]).*Objective Internality[.]*$/m);
+  assert.match(source, /^### \[essay-title\] Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality\.$/m);
 });
 
 test('vite emits the structured public pages without replacing Explore', () => {

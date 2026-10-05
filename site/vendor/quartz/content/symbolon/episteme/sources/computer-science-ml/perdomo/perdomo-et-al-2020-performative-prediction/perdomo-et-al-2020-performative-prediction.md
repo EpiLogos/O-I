@@ -39,7 +39,7 @@ Juan Perdomo, Tijana Zrnic, Celestine Mendler-Dünner and Moritz Hardt, “Perfo
 
 Publisher proceedings abstract and bibliographic metadata only; no full article, supplementary material, proof or field-trial reading. Full named scope was read in the T21 law development; the text hash matches the later T22 consumer-source receipt. This admission reuses that reading and rechecks the exact passages, not a new whole-book or archival investigation. No direct quotation is admitted.
 
-The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xii-computation) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
+The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xii-computation) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
 
 ## Provenance
 
@@ -63,4 +63,4 @@ Institutional origin: [selected witness](https://proceedings.mlr.press/v119/perd
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Publisher proceedings abstract and bibliographic metadata only; no full article, supplementary material, proof or field-trial reading.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xii-computation).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xii-computation).

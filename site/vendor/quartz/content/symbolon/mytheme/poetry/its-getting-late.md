@@ -10,11 +10,11 @@ type: _md_
 title: "It’s getting late"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c807d88dde174bf991637
-source_id: 191a4797-123c-807d-88dd-e174bf991637
 notion_created: 2025-02-05T20:38:52Z
 notion_edited: 2025-02-05T20:42:12.283Z
 status: sorted
 kind: poem
+source_id: its-getting-late
 ---
 Could it be that all that waits is the solid truth of quiet fates
 Which elude us like the reasons why

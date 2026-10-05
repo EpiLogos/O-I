@@ -10,11 +10,11 @@ type: _md_
 title: "Practice"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c80e1b903c00c5fb79b1d
-source_id: 191a4797-123c-80e1-b903-c00c5fb79b1d
 notion_created: 2025-02-05T18:50:55Z
 notion_edited: 2025-02-05T18:51:11.471Z
 status: sorted
 kind: poem
+source_id: practice
 ---
 Gladly without lines
 Sitting as and with

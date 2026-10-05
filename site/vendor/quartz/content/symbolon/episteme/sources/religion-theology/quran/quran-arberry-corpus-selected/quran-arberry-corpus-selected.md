@@ -39,7 +39,7 @@ No sibling NOTES existed on admission; none was created. The full saved object d
 
 ## Licensed comparison and consumption
 
-The [Symbol / Account / Trust field](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD.md) **compares** this witness through its separately authored operations. Its [historical branches](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES.md#branches-kept-in-their-own-soils) **historicise** the existing comparative programme. Two developed branch and consumer proposals are retained privately for Laplace integration; this source admission does not assert that those returns are already installed. No shared descent, identity of languages or universal sacred accounting follows from translated glosses.
+The [Symbol / Account / Trust field](../../../../etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md) **compares** this witness through its separately authored operations. Its [historical branches](../../../../etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md#branches-kept-in-their-own-soils) **historicise** the existing comparative programme. Two developed branch and consumer proposals are retained privately for Laplace integration; this source admission does not assert that those returns are already installed. No shared descent, identity of languages or universal sacred accounting follows from translated glosses.
 
 <a id="passages"></a>
 ## Passages and excerpts

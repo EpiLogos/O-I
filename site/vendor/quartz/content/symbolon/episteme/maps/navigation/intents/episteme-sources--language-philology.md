@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -23,7 +23,7 @@ Group: `language-philology` · back to [Episteme · Source houses](episteme-sour
 
 **Implicates:** *consumed-by (declared)* → [A35 — Compassion / Sensitivity to Origins / Epi-Logos as Vocation](../../../../../section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md) · *unnamed* → [§5 · #3 — Software Factory — Transformation](../../../../../section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md)
 
-**Reached from:** *sources* ← [Genesis / Paradigm / Project / Epi-Logos — Source Routes](../../../etymologies/genesis-paradigm-project-epilogos/SOURCE-ROUTES.md), [Genesis / Paradigm / Project / Epi-Logos — Paradigmatic Disclosure and Return](../../../etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD.md) · *unnamed* ← [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
+**Reached from:** *sources* ← [Genesis / Paradigm / Project / Epi-Logos — Source Routes](../../../etymologies/genesis-paradigm-project-epilogos/SOURCE-ROUTES.md), [Genesis / Paradigm / Project / Epi-Logos — Paradigmatic Disclosure and Return](../../../etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos.md) · *unnamed* ← [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
 
 ### [LSJ — γένεσις](../../../sources/language-philology/liddell-scott-jones/lsj-genesis/lsj-genesis.md)
 
@@ -31,7 +31,7 @@ Group: `language-philology` · back to [Episteme · Source houses](episteme-sour
 
 **Implicates:** *consumed-by (declared)* → [A35 — Compassion / Sensitivity to Origins / Epi-Logos as Vocation](../../../../../section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md) · *unnamed* → [§5→0 · #0 — From Theory to Vocation](../../../../../section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md)
 
-**Reached from:** *sources* ← [Genesis / Paradigm / Project / Epi-Logos — Source Routes](../../../etymologies/genesis-paradigm-project-epilogos/SOURCE-ROUTES.md), [Genesis / Paradigm / Project / Epi-Logos — Paradigmatic Disclosure and Return](../../../etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD.md) · *unnamed* ← [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
+**Reached from:** *sources* ← [Genesis / Paradigm / Project / Epi-Logos — Source Routes](../../../etymologies/genesis-paradigm-project-epilogos/SOURCE-ROUTES.md), [Genesis / Paradigm / Project / Epi-Logos — Paradigmatic Disclosure and Return](../../../etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos.md) · *unnamed* ← [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
 
 ### [LSJ — παράδειγμα / παραδείκνυμι](../../../sources/language-philology/liddell-scott-jones/lsj-paradeigma-paradeiknumi/lsj-paradeigma-paradeiknumi.md)
 
@@ -39,4 +39,4 @@ Group: `language-philology` · back to [Episteme · Source houses](episteme-sour
 
 **Implicates:** *consumed-by (declared)* → [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md) · *unnamed* → [§0 · #5→0 — Objective Internality](../../../../../section-rooms/01-differentiating-mind/movements/12-s0-p5-objective-internality.md)
 
-**Reached from:** *sources* ← [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md), [C51 — Logos / Epi-Logos](../../../../../section-rooms/arguments/concepts/C51-Logos-Epi-Logos.md), [Genesis / Paradigm / Project / Epi-Logos — Source Routes](../../../etymologies/genesis-paradigm-project-epilogos/SOURCE-ROUTES.md), [Genesis / Paradigm / Project / Epi-Logos — Paradigmatic Disclosure and Return](../../../etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD.md) · *sources (declared)* ← [C41 — Objective Internality](../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md), [C51 — Logos / Epi-Logos](../../../../../section-rooms/arguments/concepts/C51-Logos-Epi-Logos.md) · *unnamed* ← [C41 — Objective Internality](../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)
+**Reached from:** *sources* ← [A06 — Vāk](../../../../../section-rooms/arguments/A06-Vak.md), [C51 — Logos / Epi-Logos](../../../../../section-rooms/arguments/concepts/C51-Logos-Epi-Logos.md), [Genesis / Paradigm / Project / Epi-Logos — Source Routes](../../../etymologies/genesis-paradigm-project-epilogos/SOURCE-ROUTES.md), [Genesis / Paradigm / Project / Epi-Logos — Paradigmatic Disclosure and Return](../../../etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos.md) · *sources (declared)* ← [C41 — Objective Internality](../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md), [C51 — Logos / Epi-Logos](../../../../../section-rooms/arguments/concepts/C51-Logos-Epi-Logos.md) · *unnamed* ← [C41 — Objective Internality](../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md), [Return of Zero — Canonical Source Index](../../../sources/SOURCE-INDEX.md)

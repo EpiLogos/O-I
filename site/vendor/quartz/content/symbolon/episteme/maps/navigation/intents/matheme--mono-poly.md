@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -14,7 +14,7 @@ source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571
 
 **Where you are:** [Reading root](../../../../../README.md) › [#4 Episteme](../../../README.md) › [Maps](../../README.md) › [Navigation](../MOC.md) › Matheme — exact operations
 
-Position #2. Entrance: [The Return of Zero — Matheme](../../../../matheme/README.md). Each entry names what the page **implicates** through its written relations and what **reaches** it. The relation word is the one the sentence around the link names; `unnamed` marks a link whose sentence names none. This is a mirror of the written graph, never its substitute.
+Position #2. Entrance: [Matheme](../../../../matheme/README.md). Each entry names what the page **implicates** through its written relations and what **reaches** it. The relation word is the one the sentence around the link names; `unnamed` marks a link whose sentence names none. This is a mirror of the written graph, never its substitute.
 Group: `mono-poly` · back to [Matheme — exact operations](matheme.md).
 
 ### [Mono — One Field through Its Notations](../../../../matheme/mono-poly/mono.md)
@@ -23,15 +23,15 @@ Group: `mono-poly` · back to [Matheme — exact operations](matheme.md).
 
 **Implicates:** *sources* → [Taylor — Binary Explication (four-file canonical-candidate set)](../../../sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) · *returns-to* → [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md) · *unnamed* → [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), [2 + 2² — Binary and Binary-of-Binary](../../../../matheme/ql/binary-and-binary-of-binary.md), [Poly — The Many Notations](../../../../matheme/mono-poly/poly.md), [Translations — Correspondence with Its Proof Boundary](../../../../matheme/mono-poly/translations.md), [C50 — Dia / Syn](../../../../../section-rooms/arguments/concepts/C50-Dia-Syn.md), [Mono/Poly — One through the Many](../../../../mono-poly.md)
 
-**Reached from:** *defines* ← [Indra’s jewel net — the whole within each reflection](../../../../mytheme/worlds/chinese-huayan/indra-net/WHOLE.md) · *unnamed* ← [Mono/Poly — the field of notations](../../../../matheme/mono-poly/README.md), [Poly — The Many Notations](../../../../matheme/mono-poly/poly.md), [Translations — Correspondence with Its Proof Boundary](../../../../matheme/mono-poly/translations.md)
+**Reached from:** *unnamed* ← [Mono/Poly — the field of notations](../../../../matheme/mono-poly/README.md), [Poly — The Many Notations](../../../../matheme/mono-poly/poly.md), [Translations — Correspondence with Its Proof Boundary](../../../../matheme/mono-poly/translations.md), [Indra’s jewel net — the whole within each reflection](../../../../mytheme/worlds/chinese-huayan/indra-net/WHOLE.md)
 
 ### [Mono/Poly — the field of notations](../../../../matheme/mono-poly/README.md)
 
 `matheme` · `register-domain` · `Argued`
 
-**Implicates:** *returns-to* → [The Return of Zero — Matheme](../../../../matheme/README.md) · *unnamed* → [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), [Mono — One Field through Its Notations](../../../../matheme/mono-poly/mono.md), [Poly — The Many Notations](../../../../matheme/mono-poly/poly.md), [Translations — Correspondence with Its Proof Boundary](../../../../matheme/mono-poly/translations.md), [Dia/Syn — the two logics of two](../../../../matheme/dia-syn/README.md)
+**Implicates:** *returns-to* → [Matheme](../../../../matheme/README.md) · *unnamed* → [A12 — Mono/Poly — One / All, Whole / Many](../../../../../section-rooms/arguments/A12-Mono-Poly-One-All-Whole-Many.md), [Mono — One Field through Its Notations](../../../../matheme/mono-poly/mono.md), [Poly — The Many Notations](../../../../matheme/mono-poly/poly.md), [Translations — Correspondence with Its Proof Boundary](../../../../matheme/mono-poly/translations.md), [Dia/Syn — the two logics of two](../../../../matheme/dia-syn/README.md)
 
-**Reached from:** *unnamed* ← [The Return of Zero — Reading Root](../../../../../README.md), [The Return of Zero — Matheme](../../../../matheme/README.md)
+**Reached from:** *unnamed* ← [Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.](../../../../../README.md), [Matheme](../../../../matheme/README.md)
 
 ### [Poly — The Many Notations](../../../../matheme/mono-poly/poly.md)
 

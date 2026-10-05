@@ -10,11 +10,11 @@ type: _md_
 title: "What of belief?"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c801a8256cef29a549090
-source_id: 191a4797-123c-801a-8256-cef29a549090
 notion_created: 2025-02-05T18:57:54Z
 notion_edited: 2025-02-05T18:58:05.476Z
 status: sorted
 kind: poem
+source_id: what-of-belief
 ---
 The fortitudes of belief
 Forthwith sell the gambler

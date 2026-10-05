@@ -1,0 +1,1452 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-room-00-integral-threshold",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+  "revision": 1,
+  "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01",
+    "revision": 1,
+    "title": "§0/1 · #0 — The Question Before the Mechanism",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02",
+    "revision": 1,
+    "title": "§0/1 · #1 — Define the Subject Without Making It an Object",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03",
+    "revision": 1,
+    "title": "§0/1 · #2 — Definition as Cut, Gift, and Danger",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04",
+    "revision": 1,
+    "title": "§0/1 · #3 — The Formal-Limit Genealogy",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05",
+    "revision": 1,
+    "title": "§0/1 · #4 — Gebserian Diaphaneity",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06",
+    "revision": 1,
+    "title": "§0/1 · #5→0 — The Return to Zero",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019": {
+    "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019",
+    "revision": 1,
+    "title": "#0 — The Question Before the Mechanism",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b": {
+    "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b",
+    "revision": 1,
+    "title": "#1 — Define the Subject Without Making It an Object",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d": {
+    "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d",
+    "revision": 1,
+    "title": "#2 — Definition as Cut, Gift, and Danger",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.45,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f": {
+    "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f",
+    "revision": 1,
+    "title": "#3 — The Formal-Limit Genealogy",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.6,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h": {
+    "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h",
+    "revision": 1,
+    "title": "#4 — Gebserian Diaphaneity",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j": {
+    "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j",
+    "revision": 1,
+    "title": "#5→0 — The Return to Zero",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.55,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01",
+   "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019"
+  },
+  "provenance": [
+   {
+    "ref": "rooms/roz-room-00-integral-threshold.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+      "revision": "dbf3b17",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-room-00-integral-threshold:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-00-integral-threshold\" data-expression-revision=\"1\"><h1>Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold</h1><p>Frozen reading of expression:return-of-zero:roz-room-00-integral-threshold at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01\" aria-label=\"§0/1 · #0 — The Question Before the Mechanism\"><h2>§0/1 · #0 — The Question Before the Mechanism</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — The Question Before the Mechanism\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02\" aria-label=\"§0/1 · #1 — Define the Subject Without Making It an Object\"><h2>§0/1 · #1 — Define the Subject Without Making It an Object</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.20rem;opacity:1.00\" title=\"#1 — Define the Subject Without Making It an Object\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03\" aria-label=\"§0/1 · #2 — Definition as Cut, Gift, and Danger\"><h2>§0/1 · #2 — Definition as Cut, Gift, and Danger</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.35rem;opacity:1.00\" title=\"#2 — Definition as Cut, Gift, and Danger\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04\" aria-label=\"§0/1 · #3 — The Formal-Limit Genealogy\"><h2>§0/1 · #3 — The Formal-Limit Genealogy</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.80rem;opacity:1.00\" title=\"#3 — The Formal-Limit Genealogy\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05\" aria-label=\"§0/1 · #4 — Gebserian Diaphaneity\"><h2>§0/1 · #4 — Gebserian Diaphaneity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#4 — Gebserian Diaphaneity\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06\" aria-label=\"§0/1 · #5→0 — The Return to Zero\"><h2>§0/1 · #5→0 — The Return to Zero</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.65rem;opacity:1.00\" title=\"#5→0 — The Return to Zero\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-room-00-integral-threshold",
+  "world_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+  "revision": 1,
+  "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+            "revision": "dbf3b17",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-room-00-integral-threshold:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-00-integral-threshold\" data-expression-revision=\"1\"><h1>Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold</h1><p>Frozen reading of expression:return-of-zero:roz-room-00-integral-threshold at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01\" aria-label=\"§0/1 · #0 — The Question Before the Mechanism\"><h2>§0/1 · #0 — The Question Before the Mechanism</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — The Question Before the Mechanism\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02\" aria-label=\"§0/1 · #1 — Define the Subject Without Making It an Object\"><h2>§0/1 · #1 — Define the Subject Without Making It an Object</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.20rem;opacity:1.00\" title=\"#1 — Define the Subject Without Making It an Object\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03\" aria-label=\"§0/1 · #2 — Definition as Cut, Gift, and Danger\"><h2>§0/1 · #2 — Definition as Cut, Gift, and Danger</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.35rem;opacity:1.00\" title=\"#2 — Definition as Cut, Gift, and Danger\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04\" aria-label=\"§0/1 · #3 — The Formal-Limit Genealogy\"><h2>§0/1 · #3 — The Formal-Limit Genealogy</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.80rem;opacity:1.00\" title=\"#3 — The Formal-Limit Genealogy\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05\" aria-label=\"§0/1 · #4 — Gebserian Diaphaneity\"><h2>§0/1 · #4 — Gebserian Diaphaneity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#4 — Gebserian Diaphaneity\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06\" aria-label=\"§0/1 · #5→0 — The Return to Zero\"><h2>§0/1 · #5→0 — The Return to Zero</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.65rem;opacity:1.00\" title=\"#5→0 — The Return to Zero\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+        "revision": 1,
+        "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01",
+          "revision": 1,
+          "title": "§0/1 · #0 — The Question Before the Mechanism",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02",
+          "revision": 1,
+          "title": "§0/1 · #1 — Define the Subject Without Making It an Object",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03",
+          "revision": 1,
+          "title": "§0/1 · #2 — Definition as Cut, Gift, and Danger",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04",
+          "revision": 1,
+          "title": "§0/1 · #3 — The Formal-Limit Genealogy",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05",
+          "revision": 1,
+          "title": "§0/1 · #4 — Gebserian Diaphaneity",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06",
+          "revision": 1,
+          "title": "§0/1 · #5→0 — The Return to Zero",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019": {
+          "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019",
+          "revision": 1,
+          "title": "#0 — The Question Before the Mechanism",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b": {
+          "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b",
+          "revision": 1,
+          "title": "#1 — Define the Subject Without Making It an Object",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d": {
+          "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d",
+          "revision": 1,
+          "title": "#2 — Definition as Cut, Gift, and Danger",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.45,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f": {
+          "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f",
+          "revision": 1,
+          "title": "#3 — The Formal-Limit Genealogy",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.6,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h": {
+          "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h",
+          "revision": 1,
+          "title": "#4 — Gebserian Diaphaneity",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j": {
+          "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j",
+          "revision": 1,
+          "title": "#5→0 — The Return to Zero",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.55,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01",
+         "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019"
+        },
+        "provenance": [
+         {
+          "ref": "rooms/roz-room-00-integral-threshold.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+       "text": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-room-00-integral-threshold",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-room-00-integral-threshold"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-room-00-integral-threshold:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-room-00-integral-threshold"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+   "revision": "1",
+   "canonical": {
+    "record_id": "roz-room-00-integral-threshold",
+    "vault_path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+    "source_revision": "dbf3b17"
+   }
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-room-00-integral-threshold:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-room-00-integral-threshold",
+    "world_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+    "revision": 1,
+    "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+              "revision": "dbf3b17",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-room-00-integral-threshold:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-00-integral-threshold\" data-expression-revision=\"1\"><h1>Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold</h1><p>Frozen reading of expression:return-of-zero:roz-room-00-integral-threshold at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01\" aria-label=\"§0/1 · #0 — The Question Before the Mechanism\"><h2>§0/1 · #0 — The Question Before the Mechanism</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — The Question Before the Mechanism\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02\" aria-label=\"§0/1 · #1 — Define the Subject Without Making It an Object\"><h2>§0/1 · #1 — Define the Subject Without Making It an Object</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.20rem;opacity:1.00\" title=\"#1 — Define the Subject Without Making It an Object\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03\" aria-label=\"§0/1 · #2 — Definition as Cut, Gift, and Danger\"><h2>§0/1 · #2 — Definition as Cut, Gift, and Danger</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.35rem;opacity:1.00\" title=\"#2 — Definition as Cut, Gift, and Danger\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04\" aria-label=\"§0/1 · #3 — The Formal-Limit Genealogy\"><h2>§0/1 · #3 — The Formal-Limit Genealogy</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.80rem;opacity:1.00\" title=\"#3 — The Formal-Limit Genealogy\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05\" aria-label=\"§0/1 · #4 — Gebserian Diaphaneity\"><h2>§0/1 · #4 — Gebserian Diaphaneity</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#4 — Gebserian Diaphaneity\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06\" aria-label=\"§0/1 · #5→0 — The Return to Zero\"><h2>§0/1 · #5→0 — The Return to Zero</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-00-integral-threshold\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.65rem;opacity:1.00\" title=\"#5→0 — The Return to Zero\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+          "revision": 1,
+          "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01",
+            "revision": 1,
+            "title": "§0/1 · #0 — The Question Before the Mechanism",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02",
+            "revision": 1,
+            "title": "§0/1 · #1 — Define the Subject Without Making It an Object",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03",
+            "revision": 1,
+            "title": "§0/1 · #2 — Definition as Cut, Gift, and Danger",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04",
+            "revision": 1,
+            "title": "§0/1 · #3 — The Formal-Limit Genealogy",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05",
+            "revision": 1,
+            "title": "§0/1 · #4 — Gebserian Diaphaneity",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06",
+            "revision": 1,
+            "title": "§0/1 · #5→0 — The Return to Zero",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019": {
+            "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019",
+            "revision": 1,
+            "title": "#0 — The Question Before the Mechanism",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b": {
+            "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-02:ent-01b",
+            "revision": 1,
+            "title": "#1 — Define the Subject Without Making It an Object",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d": {
+            "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-03:ent-01d",
+            "revision": 1,
+            "title": "#2 — Definition as Cut, Gift, and Danger",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.45,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f": {
+            "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-04:ent-01f",
+            "revision": 1,
+            "title": "#3 — The Formal-Limit Genealogy",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.6,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h": {
+            "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-05:ent-01h",
+            "revision": 1,
+            "title": "#4 — Gebserian Diaphaneity",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j": {
+            "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-06:ent-01j",
+            "revision": 1,
+            "title": "#5→0 — The Return to Zero",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.55,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01",
+           "entity_ref": "expression:return-of-zero:roz-room-00-integral-threshold:scene:movement-01:ent-019"
+          },
+          "provenance": [
+           {
+            "ref": "rooms/roz-room-00-integral-threshold.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+         "text": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-room-00-integral-threshold",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-room-00-integral-threshold",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-room-00-integral-threshold"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-00-integral-threshold:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+  "summary": "a living Expression · 6 scenes · 6 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-room-00-integral-threshold:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-00-integral-threshold",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-room-00-integral-threshold"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-room-00-integral-threshold:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-room-00-integral-threshold",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-room-00-integral-threshold",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-00-integral-threshold:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-room-00-integral-threshold:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-room-00-integral-threshold",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-room-00-integral-threshold"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

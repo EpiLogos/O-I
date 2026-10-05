@@ -135,3 +135,111 @@ The user-local reading carrier is the 1979 Princeton/Bollingen paperback reprint
 Jung’s quoted or reported Epiphanius, Hippolytus, Pistis Sophia, Jewish traditions, alchemical texts and Cathar material remain mediated witnesses here. Independent historical or textual attribution requires the corresponding source, edition and passage. His astrological interpretation, proposed transmission routes and reconstruction of the Shadow Quaternio do not become independently established history by being cited accurately. Taylor’s X/x, all eight determinations and recursive Bimba office remain native derivation; the new diagram-specific application in the whole is Offered and human-amplified: no. The “becoming indivisible” wording remains a separate provenance debt.
 
 The whole **returns-to** [Jung’s complete Aion telling](../../../../../mytheme/worlds/analytical-psychology/jung-aion-fishes-christ-antichrist-alchemy/WHOLE.md). That telling **compares** the psychological/historical operation with A19 and **returns-to** A21’s differentiated recognition; neither relation treats Jung as the source of QL notation.
+
+## Current §0/1 locator collation — 2026-10-04
+
+The actual user-local carrier and selected passage contexts were reopened. These additions preserve the existing source identity, passage IDs and historical reading. **Standing is locator-verified only; no new book quotation is admitted while rights provenance is unregistered.** Current working §0/1 consumers remain draft consumers.
+
+For these new cards, the consulted carrier is the **1979 Princeton/Bollingen paperback reprint**, ISBN 0-691-01826-X, as its copyright page states. Cite that carrier when using these locators: Jung, *Aion*, 2nd ed., trans. R. F. C. Hull (Princeton University Press, 1979), {paragraph/page}. The house's selected 1978 hardcover remains distinct; no independent collation to it is claimed.
+
+<a id="jung-1978-aion-cw9-2-p017"></a>
+### jung-1978-aion-cw9-2-p017 — Shadow and projection
+
+**Locator:** ¶¶14,16; 1979 consulted carrier PDF pages 20–21 (printed pp.8–9).
+
+**Located operation:** Moral recognition of the shadow and projection onto the other person are located.
+
+**Context and use boundary:** Recognition is a task involving resistance and affect; this does not certify every interpersonal conflict as a projection.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1979 paperback reprint PDF; SHA-256 `1c07abb4710caff6ceb85fc03248e567f058f5642940611151bbb178726fb073`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M03 note `s01-aion-shadow`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1978-aion-cw9-2-p018"></a>
+### jung-1978-aion-cw9-2-p018 — Privatio boni in the empirical register
+
+**Locator:** ¶¶74–75; 1979 consulted carrier PDF pages 53–54 (printed pp.41–42).
+
+**Located operation:** The contrast between theological privation and psychologically effective evil is located.
+
+**Context and use boundary:** The source is explicit about the plane of empirical psychology. Metaphysical endorsement remains a different claim.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1979 paperback reprint PDF; SHA-256 `1c07abb4710caff6ceb85fc03248e567f058f5642940611151bbb178726fb073`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M05 note `s01-privatio`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1978-aion-cw9-2-p019"></a>
+### jung-1978-aion-cw9-2-p019 — Antichrist as symbolic compensation
+
+**Locator:** ¶¶76–78; 1979 consulted carrier PDF pages 54–55 (printed pp.42–43).
+
+**Located operation:** Shadow of the Self, counterstroke and Christian psychological symbolism are located together.
+
+**Context and use boundary:** Jung's historical-theological reconstruction is an interpretation; it is not independent corroboration of every mediated ancient source.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1979 paperback reprint PDF; SHA-256 `1c07abb4710caff6ceb85fc03248e567f058f5642940611151bbb178726fb073`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M05 note `s01-aion-antichrist`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1978-aion-cw9-2-p020"></a>
+### jung-1978-aion-cw9-2-p020 — Antimimon in two contexts
+
+**Locator:** ¶67, PDF page 47 (printed p.35), and continuation of ¶75, PDF page 54 (printed p.42), in the 1979 carrier.
+
+**Located operation:** The contemporary false-spirit description and the Antichrist-as-imitating-spirit passage have distinct locations.
+
+**Context and use boundary:** Do not collapse the two passages or cite ¶75 for the ¶67 list. Greek OCR on page 54 is not a verified transcription.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1979 paperback reprint PDF; SHA-256 `1c07abb4710caff6ceb85fc03248e567f058f5642940611151bbb178726fb073`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M05 note `s01-antimimon`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1978-aion-cw9-2-p021"></a>
+### jung-1978-aion-cw9-2-p021 — Lucifer as a shared symbol
+
+**Locator:** ¶127; 1979 carrier PDF page 84 (printed p.72).
+
+**Located operation:** The Morning Star is reported as a Christ and devil symbol, in the chapter on fishes.
+
+**Context and use boundary:** The note refers to Church Fathers and symbol/allegory; it is not an identity claim about Christ and the devil.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1979 paperback reprint PDF; SHA-256 `1c07abb4710caff6ceb85fc03248e567f058f5642940611151bbb178726fb073`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M05 note `s01-lucifer`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.
+
+<a id="jung-1978-aion-cw9-2-p022"></a>
+### jung-1978-aion-cw9-2-p022 — The central archetype and dualism
+
+**Locator:** Chapter V, n.74; 1979 carrier PDF page 73 (printed p.61).
+
+**Located operation:** Jung's reply to Victor White stresses unity of the Self.
+
+**Context and use boundary:** The footnote distinguishes psychological argument from ecclesiastical metaphysics. It does not establish the essay's Śaiva/QL identification.
+
+**Status:** locator-verified; acquisition required before quotation admission.
+
+**Provenance:** Actual declared user-local 1979 paperback reprint PDF; SHA-256 `1c07abb4710caff6ceb85fc03248e567f058f5642940611151bbb178726fb073`; title/copyright and selected contexts read with pypdf by s01-apparatus, 2026-10-04. Rights provenance unregistered; extraction not a certified quotation transcription.
+
+**Relation:** source-specific locator support; the essay's philosophical continuation remains authorial.
+
+**Consumer:** Current working M06 note `s01-jung-self`. This is a final-read draft consumer; no accepted manuscript or movement body is changed.

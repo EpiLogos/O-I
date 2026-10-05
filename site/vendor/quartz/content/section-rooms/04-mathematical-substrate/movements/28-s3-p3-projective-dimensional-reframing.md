@@ -14,7 +14,7 @@ tags: [epi-logos/antykathera-essay, argument-map/live, argument-map/section, arg
 # §3 · #3 — Projective Completion and Dimensional Reframing
 
 <!-- reader-navigation -->
-Movement 28 of 48 · [This room](../ROOM.md) · [← Previous](27-s3-p2-mark-reentry-complex.md) · [Next →](29-s3-p4-topology-music-resolution.md)
+Movement 28 of 48 · [This room](../ROOM-04-mathematical-substrate.md) · [← Previous](27-s3-p2-mark-reentry-complex.md) · [Next →](29-s3-p4-topology-music-resolution.md)
 <!-- /reader-navigation -->
 
 ## Movement thesis
@@ -47,7 +47,7 @@ Jizang's iterated conventional/ultimate distinctions, Vimalakīrti's silence and
 
 The comparison is further gated by the debate Priest's reconstruction provokes. Kapsner rejects the fifth-value move; Siderits gives a presupposition-failure reading requiring no non-classical value; Westerhoff presses parsimony and contextual variation. That disagreement is philosophically useful: formal enlargement is not automatically the right response to every obstruction. The new frame must earn its necessity.
 
-[[section-rooms/arguments/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity|Division pluralisms]] make the same point algebraically. Undefinedness, projective infinity, signed infinities and totalised operations preserve different laws. The answer to a written `1/0` therefore discloses the chosen structure; it does not license free movement among them.
+[[dimensional-reframing-at-zero-and-infinity|Division pluralisms]] make the same point algebraically. Undefinedness, projective infinity, signed infinities and totalised operations preserve different laws. The answer to a written `1/0` therefore discloses the chosen structure; it does not license free movement among them.
 
 ## Argumentative consequence
 
@@ -55,10 +55,9 @@ Zero and infinity repeatedly function as useful **stress points** because attemp
 
 This is the exact formal neighbour of [[section-rooms/arguments/concepts/C64-Paradox-Transforming-the-Containing-Field|Paradox / Transforming the Containing Field]]. A paradox can sometimes be dissolved by correcting a mistake inside the current scheme; in other cases it exposes the scheme's own assumptions as part of the problem. Mathematics supplies disciplined examples of the second possibility without proving that every philosophical paradox demands a higher dimension.
 
-[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#e5-whole-returns) **qualifies** the formal comparison by keeping its generated objects countable. FDE's subsets of `{T,F}` give four values; QL's `2+2²` additionally retains the two initial terms and therefore gives six. Likewise, adjoining a point, moving from affine to projective geometry, compactifying a plane and changing an algebra have distinct hypotheses and preserved relations. The movement into topology and music carries only the stated operation of reframing and return.
+[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md#e5-whole-returns) **qualifies** the formal comparison by keeping its generated objects countable. FDE's subsets of `{T,F}` give four values; QL's `2+2²` additionally retains the two initial terms and therefore gives six. Likewise, adjoining a point, moving from affine to projective geometry, compactifying a plane and changing an algebra have distinct hypotheses and preserved relations. The movement into topology and music carries only the stated operation of reframing and return.
 
 ## Transition
 
 A changed frame is useful only if it supports an actual path, invariant or completion. The next movement therefore moves from formal enlargement to traversable return and exact interval: [[29-s3-p4-topology-music-resolution|§3 · #4 — Topology and Musical Resolution]].
 
-The [authored P1 route for M28](../P1-CANONICAL-ALIGNMENT.md#p1-m28) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

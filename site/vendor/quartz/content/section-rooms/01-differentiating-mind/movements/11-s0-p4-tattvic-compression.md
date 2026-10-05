@@ -13,7 +13,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §0 · #4 — The Sixfold Tattvic Compression
 
 <!-- reader-navigation -->
-Movement 11 of 48 · [This room](../ROOM.md) · [← Previous](10-s0-p3-apoha.md) · [Next →](12-s0-p5-objective-internality.md)
+Movement 11 of 48 · [This room](../ROOM-01-differentiating-mind.md) · [← Previous](10-s0-p3-apoha.md) · [Next →](12-s0-p5-objective-internality.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -30,7 +30,7 @@ Read through [[symbolon/episteme/dossiers/bohm|Bohm]], the full tattva field bec
 
 This movement compresses the tattvic field for §0; it does not confine that field to §0. The same meta-context remains active wherever later sections treat bounded cognition, exclusion, worldhood, phenomenological inquiry, operative interiority, or return. In particular, [[08-s0-p1-inner-instrument|antaḥkaraṇa]], [[09-s0-p2-vikalpa-samkalpa|vikalpa / saṃkalpa]] and [[10-s0-p3-apoha|apoha]] return technically in [[38-s5-p1-apoha-softmax|§5 · #1 — Actuation — Living Articulation]], where apoha, softmax and differential selection are investigated as depth inside an artificial operative event rather than treated as an isolated analogy.
 
-The current pre-architecture conformance rule is recorded in [PRE-39-SIGNAL-LINK-TATTVA-WORLD-AGENCY-CONFORMANCE].
+The current pre-architecture conformance rule is recorded in PRE-39-SIGNAL-LINK-TATTVA-WORLD-AGENCY-CONFORMANCE.
 
 ## Tension / limit
 Compression must preserve provenance and cannot substitute for the full tradition where detailed exegesis is at issue. The thirty-sixfold system remains available through a linked QL plate and further-reading note; the sixfold unit carries the argumentative turns the essay needs.
@@ -38,10 +38,9 @@ Compression must preserve provenance and cannot substitute for the full traditio
 ## Anchor and transition
 **QL anchor:** `#0 → #1 → #2 → #3 → #4 → #5→0`. **Image:** a hologram whose local unit retains the whole descent. Its contracted result is [[12-s0-p5-objective-internality|§0 · #5→0 — Objective Internality]].
 
-Finite contraction **returns-to** [Apportionment / Economy whole — Power becomes finite by apportionment](../../../symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md#power-becomes-finite-by-apportionment) at evidence register 3. The contraction makes finite knowledge, desire, time, order and agency effective within the field from which they arise. Recognition returns through those capacities without undoing their differentiation.
+Finite contraction **returns-to** [Apportionment / Economy whole — Power becomes finite by apportionment](../../../symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md#power-becomes-finite-by-apportionment) at evidence register 3. The contraction makes finite knowledge, desire, time, order and agency effective within the field from which they arise. Recognition returns through those capacities without undoing their differentiation.
 
-The [Indian philosophy companion](../../../symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/DEVELOPMENT.md#3--manifestation-gives-contraction-a-positive-anatomy) **historicises** the manifestation whose native compression operates here, preserving the distinction among six-turn contraction, eightfold traversal and thirty-sixfold research.
+The [Indian philosophy companion](../../../symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/DEVELOPMENT-indian-philosophy.md#3--manifestation-gives-contraction-a-positive-anatomy) **historicises** the manifestation whose native compression operates here, preserving the distinction among six-turn contraction, eightfold traversal and thirty-sixfold research.
 
 [Māyā — eye, veil, frame and horizon](../../../symbolon/mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md#maya-recognition-return): The complete Māyā descent **figures** this movement’s whole-bearing local unit. Manifesting power becomes effective measure, the five contractions give the bounded knower capacities, and the inner instrument lets that knower judge, remember and form alternatives. Recognition traverses those achieved relations again without deleting the inhabitable world. The holographic unit carries its descent and return through those relations; it supplies no claim that a physical fragment exhaustively stores a whole, and the sixfold compression does not renumber the native eight determinations.
 
-The [authored P1 route for M11](../P1-CANONICAL-ALIGNMENT.md#p1-m11) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

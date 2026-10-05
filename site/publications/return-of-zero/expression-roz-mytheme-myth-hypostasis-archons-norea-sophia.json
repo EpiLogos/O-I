@@ -1,0 +1,3406 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "revision": 1,
+  "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler",
+    "revision": 1,
+    "title": "The arrogant ruler mistakes a local realm for the entirety",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam",
+    "revision": 1,
+    "title": "A formed human exceeds the makers",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea",
+    "revision": 1,
+    "title": "Norea refuses the ancestry of possession",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth",
+    "revision": 1,
+    "title": "Eleleth: rescue and the rulers' own origin",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return",
+    "revision": 1,
+    "title": "The root disclosed; the ending still to come",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449",
+     "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430",
+    "revision": 1,
+    "title": "Samael / Yaldabaoth — the blind chief ruler",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.13,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.433,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431",
+    "revision": 1,
+    "title": "\"you are mistaken, Samael\" — the voice from incorruptibility",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.25,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432",
+    "revision": 1,
+    "title": "his field's edge — no visible superior inside it",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.27,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.798,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433",
+    "revision": 1,
+    "title": "Adam — formed after a perceived image; life exceeding their authority",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1845,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434",
+    "revision": 1,
+    "title": "spirit descending from the Adamantine Land",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.5,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435",
+    "revision": 1,
+    "title": "the spiritual woman — awakening Adam; escaping pursuit as a tree",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.2,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436",
+    "revision": 1,
+    "title": "the shadow — violated; materially necessary to Norea's later denial",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437",
+    "revision": 1,
+    "title": "the garden's prohibition; sleep becoming ignorance; expulsion and toil",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438",
+    "revision": 1,
+    "title": "Norea — daughter of Eve; refusing the imposed descent",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.08,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.253,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439",
+    "revision": 1,
+    "title": "the rulers' claim — authority through Eve; coercion attempted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.25,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440",
+    "revision": 1,
+    "title": "her cry to the higher divine reality",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441",
+    "revision": 1,
+    "title": "the ark refused, breathed aflame — her relation to the flood set against Noah's",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1935,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442",
+    "revision": 1,
+    "title": "Eleleth — golden appearance, snowy clothing; rescue and disclosure",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443",
+    "revision": 1,
+    "title": "Pistis Sophia — desiring to create without her consort; the veil between worlds",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.16,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.156,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444",
+    "revision": 1,
+    "title": "shadow → matter → the lion-faced ruler — the second horizon-mistake",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.23,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.318,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445",
+    "revision": 1,
+    "title": "seven offspring and the layered heavens; Sabaoth in the seventh below the veil",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.26,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446",
+    "revision": 1,
+    "title": "Zoe's rebuke; Yaldabaoth bound in Tartaros; Sabaoth's throne and Zoe teaching at his right",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447",
+    "revision": 1,
+    "title": "the root above — Norea's origin exceeding the rulers' universe",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1355,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448",
+    "revision": 1,
+    "title": "the promised disclosure after three generations — the immediate rescue is not the completion",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449",
+    "revision": 1,
+    "title": "the closing hymn — the collective voice before Father, Son and Holy Spirit",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.21,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.115,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450",
+    "revision": 1,
+    "title": "A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-expression-revision=\"1\"><h1>The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler\" aria-label=\"The arrogant ruler mistakes a local realm for the entirety\"><h2>The arrogant ruler mistakes a local realm for the entirety</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.30%;font-size:1.30rem;opacity:1.00\" title=\"Samael / Yaldabaoth — the blind chief ruler\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:0.75rem;opacity:1.00\" title=\"&quot;you are mistaken, Samael&quot; — the voice from incorruptibility\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:2.39rem;opacity:1.00\" title=\"his field&#39;s edge — no visible superior inside it\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam\" aria-label=\"A formed human exceeds the makers\"><h2>A formed human exceeds the makers</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.60rem;opacity:1.00\" title=\"Adam — formed after a perceived image; life exceeding their authority\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:53.00%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"spirit descending from the Adamantine Land\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.00%;font-size:0.81rem;opacity:1.00\" title=\"the spiritual woman — awakening Adam; escaping pursuit as a tree\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"the shadow — violated; materially necessary to Norea&#39;s later denial\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the garden&#39;s prohibition; sleep becoming ignorance; expulsion and toil\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea\" aria-label=\"Norea refuses the ancestry of possession\"><h2>Norea refuses the ancestry of possession</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.76rem;opacity:1.00\" title=\"Norea — daughter of Eve; refusing the imposed descent\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.50%;font-size:0.90rem;opacity:1.00\" title=\"the rulers&#39; claim — authority through Eve; coercion attempted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.00%;font-size:0.66rem;opacity:1.00\" title=\"her cry to the higher divine reality\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"the ark refused, breathed aflame — her relation to the flood set against Noah&#39;s\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth\" aria-label=\"Eleleth: rescue and the rulers&#39; own origin\"><h2>Eleleth: rescue and the rulers&#39; own origin</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:1.02rem;opacity:1.00\" title=\"Eleleth — golden appearance, snowy clothing; rescue and disclosure\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.60%;font-size:0.60rem;opacity:1.00\" title=\"Pistis Sophia — desiring to create without her consort; the veil between worlds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:0.95rem;opacity:1.00\" title=\"shadow → matter → the lion-faced ruler — the second horizon-mistake\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"seven offspring and the layered heavens; Sabaoth in the seventh below the veil\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"Zoe&#39;s rebuke; Yaldabaoth bound in Tartaros; Sabaoth&#39;s throne and Zoe teaching at his right\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return\" aria-label=\"The root disclosed; the ending still to come\"><h2>The root disclosed; the ending still to come</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the root above — Norea&#39;s origin exceeding the rulers&#39; universe\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.66rem;opacity:1.00\" title=\"the promised disclosure after three generations — the immediate rescue is not the completion\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"the closing hymn — the collective voice before Father, Son and Holy Spirit\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.69rem;opacity:1.00\" title=\"A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "world_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "revision": 1,
+  "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above"
+      },
+      "fallback": {
+       "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-expression-revision=\"1\"><h1>The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler\" aria-label=\"The arrogant ruler mistakes a local realm for the entirety\"><h2>The arrogant ruler mistakes a local realm for the entirety</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.30%;font-size:1.30rem;opacity:1.00\" title=\"Samael / Yaldabaoth — the blind chief ruler\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:0.75rem;opacity:1.00\" title=\"&quot;you are mistaken, Samael&quot; — the voice from incorruptibility\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:2.39rem;opacity:1.00\" title=\"his field&#39;s edge — no visible superior inside it\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam\" aria-label=\"A formed human exceeds the makers\"><h2>A formed human exceeds the makers</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.60rem;opacity:1.00\" title=\"Adam — formed after a perceived image; life exceeding their authority\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:53.00%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"spirit descending from the Adamantine Land\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.00%;font-size:0.81rem;opacity:1.00\" title=\"the spiritual woman — awakening Adam; escaping pursuit as a tree\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"the shadow — violated; materially necessary to Norea&#39;s later denial\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the garden&#39;s prohibition; sleep becoming ignorance; expulsion and toil\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea\" aria-label=\"Norea refuses the ancestry of possession\"><h2>Norea refuses the ancestry of possession</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.76rem;opacity:1.00\" title=\"Norea — daughter of Eve; refusing the imposed descent\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.50%;font-size:0.90rem;opacity:1.00\" title=\"the rulers&#39; claim — authority through Eve; coercion attempted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.00%;font-size:0.66rem;opacity:1.00\" title=\"her cry to the higher divine reality\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"the ark refused, breathed aflame — her relation to the flood set against Noah&#39;s\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth\" aria-label=\"Eleleth: rescue and the rulers&#39; own origin\"><h2>Eleleth: rescue and the rulers&#39; own origin</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:1.02rem;opacity:1.00\" title=\"Eleleth — golden appearance, snowy clothing; rescue and disclosure\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.60%;font-size:0.60rem;opacity:1.00\" title=\"Pistis Sophia — desiring to create without her consort; the veil between worlds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:0.95rem;opacity:1.00\" title=\"shadow → matter → the lion-faced ruler — the second horizon-mistake\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"seven offspring and the layered heavens; Sabaoth in the seventh below the veil\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"Zoe&#39;s rebuke; Yaldabaoth bound in Tartaros; Sabaoth&#39;s throne and Zoe teaching at his right\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return\" aria-label=\"The root disclosed; the ending still to come\"><h2>The root disclosed; the ending still to come</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the root above — Norea&#39;s origin exceeding the rulers&#39; universe\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.66rem;opacity:1.00\" title=\"the promised disclosure after three generations — the immediate rescue is not the completion\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"the closing hymn — the collective voice before Father, Son and Holy Spirit\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.69rem;opacity:1.00\" title=\"A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "revision": 1,
+        "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler",
+          "revision": 1,
+          "title": "The arrogant ruler mistakes a local realm for the entirety",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam",
+          "revision": 1,
+          "title": "A formed human exceeds the makers",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea",
+          "revision": 1,
+          "title": "Norea refuses the ancestry of possession",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth",
+          "revision": 1,
+          "title": "Eleleth: rescue and the rulers' own origin",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return",
+          "revision": 1,
+          "title": "The root disclosed; the ending still to come",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449",
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430",
+          "revision": 1,
+          "title": "Samael / Yaldabaoth — the blind chief ruler",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.13,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.433,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431",
+          "revision": 1,
+          "title": "\"you are mistaken, Samael\" — the voice from incorruptibility",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.25,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432",
+          "revision": 1,
+          "title": "his field's edge — no visible superior inside it",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.27,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.798,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433",
+          "revision": 1,
+          "title": "Adam — formed after a perceived image; life exceeding their authority",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1845,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434",
+          "revision": 1,
+          "title": "spirit descending from the Adamantine Land",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.5,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435",
+          "revision": 1,
+          "title": "the spiritual woman — awakening Adam; escaping pursuit as a tree",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.2,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436",
+          "revision": 1,
+          "title": "the shadow — violated; materially necessary to Norea's later denial",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437",
+          "revision": 1,
+          "title": "the garden's prohibition; sleep becoming ignorance; expulsion and toil",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438",
+          "revision": 1,
+          "title": "Norea — daughter of Eve; refusing the imposed descent",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.08,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.253,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439",
+          "revision": 1,
+          "title": "the rulers' claim — authority through Eve; coercion attempted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.25,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440",
+          "revision": 1,
+          "title": "her cry to the higher divine reality",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441",
+          "revision": 1,
+          "title": "the ark refused, breathed aflame — her relation to the flood set against Noah's",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1935,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442",
+          "revision": 1,
+          "title": "Eleleth — golden appearance, snowy clothing; rescue and disclosure",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443",
+          "revision": 1,
+          "title": "Pistis Sophia — desiring to create without her consort; the veil between worlds",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.16,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.156,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444",
+          "revision": 1,
+          "title": "shadow → matter → the lion-faced ruler — the second horizon-mistake",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.23,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.318,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445",
+          "revision": 1,
+          "title": "seven offspring and the layered heavens; Sabaoth in the seventh below the veil",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.26,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446",
+          "revision": 1,
+          "title": "Zoe's rebuke; Yaldabaoth bound in Tartaros; Sabaoth's throne and Zoe teaching at his right",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447",
+          "revision": 1,
+          "title": "the root above — Norea's origin exceeding the rulers' universe",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1355,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448",
+          "revision": 1,
+          "title": "the promised disclosure after three generations — the immediate rescue is not the completion",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449",
+          "revision": 1,
+          "title": "the closing hymn — the collective voice before Father, Son and Holy Spirit",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.21,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.115,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450",
+          "revision": 1,
+          "title": "A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above"
+      },
+      "fallback": {
+       "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+       "text": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-hypostasis-archons-norea-sophia:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "world_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "revision": 1,
+    "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above"
+        },
+        "fallback": {
+         "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-expression-revision=\"1\"><h1>The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler\" aria-label=\"The arrogant ruler mistakes a local realm for the entirety\"><h2>The arrogant ruler mistakes a local realm for the entirety</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.30%;font-size:1.30rem;opacity:1.00\" title=\"Samael / Yaldabaoth — the blind chief ruler\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.20%;font-size:0.75rem;opacity:1.00\" title=\"&quot;you are mistaken, Samael&quot; — the voice from incorruptibility\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.70%;font-size:2.39rem;opacity:1.00\" title=\"his field&#39;s edge — no visible superior inside it\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam\" aria-label=\"A formed human exceeds the makers\"><h2>A formed human exceeds the makers</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.60rem;opacity:1.00\" title=\"Adam — formed after a perceived image; life exceeding their authority\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:53.00%;top:45.00%;font-size:0.60rem;opacity:1.00\" title=\"spirit descending from the Adamantine Land\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:48.00%;font-size:0.81rem;opacity:1.00\" title=\"the spiritual woman — awakening Adam; escaping pursuit as a tree\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"the shadow — violated; materially necessary to Norea&#39;s later denial\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"the garden&#39;s prohibition; sleep becoming ignorance; expulsion and toil\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea\" aria-label=\"Norea refuses the ancestry of possession\"><h2>Norea refuses the ancestry of possession</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:0.76rem;opacity:1.00\" title=\"Norea — daughter of Eve; refusing the imposed descent\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.50%;font-size:0.90rem;opacity:1.00\" title=\"the rulers&#39; claim — authority through Eve; coercion attempted\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.00%;font-size:0.66rem;opacity:1.00\" title=\"her cry to the higher divine reality\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:51.40%;font-size:0.60rem;opacity:1.00\" title=\"the ark refused, breathed aflame — her relation to the flood set against Noah&#39;s\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth\" aria-label=\"Eleleth: rescue and the rulers&#39; own origin\"><h2>Eleleth: rescue and the rulers&#39; own origin</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.00%;font-size:1.02rem;opacity:1.00\" title=\"Eleleth — golden appearance, snowy clothing; rescue and disclosure\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.60%;font-size:0.60rem;opacity:1.00\" title=\"Pistis Sophia — desiring to create without her consort; the veil between worlds\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:0.95rem;opacity:1.00\" title=\"shadow → matter → the lion-faced ruler — the second horizon-mistake\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.00%;font-size:0.78rem;opacity:1.00\" title=\"seven offspring and the layered heavens; Sabaoth in the seventh below the veil\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.66rem;opacity:1.00\" title=\"Zoe&#39;s rebuke; Yaldabaoth bound in Tartaros; Sabaoth&#39;s throne and Zoe teaching at his right\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return\" aria-label=\"The root disclosed; the ending still to come\"><h2>The root disclosed; the ending still to come</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"the root above — Norea&#39;s origin exceeding the rulers&#39; universe\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:46.50%;font-size:0.66rem;opacity:1.00\" title=\"the promised disclosure after three generations — the immediate rescue is not the completion\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:44.50%;top:52.10%;font-size:0.60rem;opacity:1.00\" title=\"the closing hymn — the collective voice before Father, Son and Holy Spirit\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.69rem;opacity:1.00\" title=\"A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+          "revision": 1,
+          "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler",
+            "revision": 1,
+            "title": "The arrogant ruler mistakes a local realm for the entirety",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam",
+            "revision": 1,
+            "title": "A formed human exceeds the makers",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea",
+            "revision": 1,
+            "title": "Norea refuses the ancestry of possession",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth",
+            "revision": 1,
+            "title": "Eleleth: rescue and the rulers' own origin",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return",
+            "revision": 1,
+            "title": "The root disclosed; the ending still to come",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449",
+             "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430",
+            "revision": 1,
+            "title": "Samael / Yaldabaoth — the blind chief ruler",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.13,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.433,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e431",
+            "revision": 1,
+            "title": "\"you are mistaken, Samael\" — the voice from incorruptibility",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.25,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e432",
+            "revision": 1,
+            "title": "his field's edge — no visible superior inside it",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.27,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.798,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e433",
+            "revision": 1,
+            "title": "Adam — formed after a perceived image; life exceeding their authority",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1845,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e434",
+            "revision": 1,
+            "title": "spirit descending from the Adamantine Land",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.5,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e435",
+            "revision": 1,
+            "title": "the spiritual woman — awakening Adam; escaping pursuit as a tree",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.2,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e436",
+            "revision": 1,
+            "title": "the shadow — violated; materially necessary to Norea's later denial",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-1-adam:e437",
+            "revision": 1,
+            "title": "the garden's prohibition; sleep becoming ignorance; expulsion and toil",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e438",
+            "revision": 1,
+            "title": "Norea — daughter of Eve; refusing the imposed descent",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.08,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.253,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e439",
+            "revision": 1,
+            "title": "the rulers' claim — authority through Eve; coercion attempted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.25,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e440",
+            "revision": 1,
+            "title": "her cry to the higher divine reality",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-2-norea:e441",
+            "revision": 1,
+            "title": "the ark refused, breathed aflame — her relation to the flood set against Noah's",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1935,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e442",
+            "revision": 1,
+            "title": "Eleleth — golden appearance, snowy clothing; rescue and disclosure",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e443",
+            "revision": 1,
+            "title": "Pistis Sophia — desiring to create without her consort; the veil between worlds",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.16,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.156,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e444",
+            "revision": 1,
+            "title": "shadow → matter → the lion-faced ruler — the second horizon-mistake",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.23,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.318,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e445",
+            "revision": 1,
+            "title": "seven offspring and the layered heavens; Sabaoth in the seventh below the veil",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.26,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-3-eleleth:e446",
+            "revision": 1,
+            "title": "Zoe's rebuke; Yaldabaoth bound in Tartaros; Sabaoth's throne and Zoe teaching at his right",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e447",
+            "revision": 1,
+            "title": "the root above — Norea's origin exceeding the rulers' universe",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1355,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e448",
+            "revision": 1,
+            "title": "the promised disclosure after three generations — the immediate rescue is not the completion",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e449",
+            "revision": 1,
+            "title": "the closing hymn — the collective voice before Father, Son and Holy Spirit",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.21,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.115,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-5-return:e450",
+            "revision": 1,
+            "title": "A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:scene:m-hyp-0-ruler:e430"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above"
+        },
+        "fallback": {
+         "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+         "text": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-myth-hypostasis-archons-norea-sophia.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-myth-hypostasis-archons-norea-sophia"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-hypostasis-archons-norea-sophia:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+  "summary": "a living Expression · 5 scenes · 21 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-myth-hypostasis-archons-norea-sophia"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-myth-hypostasis-archons-norea-sophia",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-hypostasis-archons-norea-sophia:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-myth-hypostasis-archons-norea-sophia:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-myth-hypostasis-archons-norea-sophia"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

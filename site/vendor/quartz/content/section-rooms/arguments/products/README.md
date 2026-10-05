@@ -3,8 +3,8 @@ title: "Episteme — S Product Field"
 record_id: episteme-products
 record_type: domain-index
 register: episteme
-domain: products
 status: T25-developed-T26-pending
+domain: products
 ---
 # S — World and Life / six product offices
 

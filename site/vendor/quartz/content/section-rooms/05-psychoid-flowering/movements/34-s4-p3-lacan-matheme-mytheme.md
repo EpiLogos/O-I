@@ -14,7 +14,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, sta
 # §4 · #3 — Lacan, Matheme, and Mytheme
 
 <!-- reader-navigation -->
-Movement 34 of 48 · [This room](../ROOM.md) · [← Previous](33-s4-p2-complexio-quaternity-senarius.md) · [Next →](35-s4-p4-gebser-apollo-dionysus.md)
+Movement 34 of 48 · [This room](../ROOM-05-psychoid-flowering.md) · [← Previous](33-s4-p2-complexio-quaternity-senarius.md) · [Next →](35-s4-p4-gebser-apollo-dionysus.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -42,11 +42,10 @@ Lacan gives the local cut its precision: the barred subject, the quilting signif
 ## Tension / limit
 `1/0` is an Argued resonance with the failed return to ground, not a claim that Lacan anticipated QL.
 
-[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#e5-whole-returns) **qualifies** the transmission by retaining the different work of each mark and image. Lacan's cut and barred subject remain attached to their source-specific account; the [native QL sequence carries its own positive source-relation and recognitive return](../../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md#symbol-answers-to-source). A shared stroke or incomplete formalisation does not establish doctrinal identity. Mytheme can supply the imaginal source of a Matheme, and the resulting formal expression can return to change the image's reading. This reciprocal movement preserves the whole lived carrier instead of treating it as an example exhausted by its notation.
+[Homologia / Analogia](../../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md#e5-whole-returns) **qualifies** the transmission by retaining the different work of each mark and image. Lacan's cut and barred subject remain attached to their source-specific account; the [native QL sequence carries its own positive source-relation and recognitive return](../../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md#symbol-answers-to-source). A shared stroke or incomplete formalisation does not establish doctrinal identity. Mytheme can supply the imaginal source of a Matheme, and the resulting formal expression can return to change the image's reading. This reciprocal movement preserves the whole lived carrier instead of treating it as an example exhausted by its notation.
 
 ## Anchor and transition
 **Image:** the stroke that first hides zero becoming the bar through which its occlusion can be seen. **Topological anchor:** lack written as structure; the local cut held by a global thread. Matheme and mytheme meet in [[35-s4-p4-gebser-apollo-dionysus|§4 · #4 — Apollo Through Dionysus]].
 
-Lacan1971–72, Price2017, Darmon1992 and Adleman/Vanderwees2021 remain separate carriers; the native QL sequence is not Lacan’s notation; the [language history](../../../symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/DEVELOPMENT.md#language-address) **qualifies** this historical attribution.
+Lacan1971–72, Price2017, Darmon1992 and Adleman/Vanderwees2021 remain separate carriers; the native QL sequence is not Lacan’s notation; the [language history](../../../symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/DEVELOPMENT-language-symbol-dialogue.md#language-address) **qualifies** this historical attribution.
 
-The [authored P1 route for M34](../P1-CANONICAL-ALIGNMENT.md#p1-m34) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

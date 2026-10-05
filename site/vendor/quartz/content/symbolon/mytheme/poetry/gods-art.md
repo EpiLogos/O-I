@@ -10,11 +10,11 @@ type: _md_
 title: "God’s Art"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c801f9a7de35a99a8dd08
-source_id: 18fa4797-123c-801f-9a7d-e35a99a8dd08
 notion_created: 2025-02-03T13:58:20Z
 notion_edited: 2025-02-05T18:15:55.040Z
 status: sorted
 kind: poem
+source_id: gods-art
 ---
 God’s Art Is Eternally Made
 In The Making,

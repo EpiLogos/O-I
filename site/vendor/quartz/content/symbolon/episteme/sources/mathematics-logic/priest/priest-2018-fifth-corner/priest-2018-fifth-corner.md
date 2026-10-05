@@ -111,7 +111,7 @@ Priest's construction is not settled history of the catuṣkoṭi; the reception
 - **Source relation:** paraphrased.
 - **Evidential action:** supports.
 - **Argument function:** formal codification of the four explicit positions.
-- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history.
+- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history.
 - **Use boundary:** carries Priest's construction, not a historical consensus; cite with the reception gates.
 
 <a id="priest-2018-fifth-corner-q002"></a>
@@ -141,7 +141,7 @@ Priest's construction is not settled history of the catuṣkoṭi; the reception
 - **Source relation:** paraphrased.
 - **Evidential action:** supports.
 - **Argument function:** the tradition performing the return — hierarchy as enacted 5→0, not written value-theory.
-- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history.
+- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history.
 - **Use boundary:** the "performed return" reading is the essay's; Priest presents an iteration, not a return to a generative ground.
 
 <a id="priest-2018-fifth-corner-q004"></a>
@@ -186,7 +186,7 @@ Priest's construction is not settled history of the catuṣkoṭi; the reception
 - **Source relation:** quoted (via review).
 - **Evidential action:** supports.
 - **Argument function:** Priest's structuralist gloss on emptiness — a Western formal neighbour of the essay's relational reading; adjacent to [[symbolon/episteme/sources/mathematics-logic/priest/priest-2014-one/priest-2014-one.md|priest-2014-one]].
-- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history.
+- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history.
 - **Use boundary:** a footnote gloss, not the book's central thesis; weight it accordingly.
 
 ## Open acquisition and verification

@@ -10,11 +10,11 @@ type: _md_
 title: "Know - Unknown"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c806680a3cea1366d05c3
-source_id: 18fa4797-123c-8066-80a3-cea1366d05c3
 notion_created: 2025-02-03T13:46:06Z
 notion_edited: 2025-02-03T13:46:37.559Z
 status: sorted
 kind: poem
+source_id: know-unknown
 ---
 Mystery is infinitely deeper than the simply unknown or unknowable;
 It is the relative knowability of the Unknown

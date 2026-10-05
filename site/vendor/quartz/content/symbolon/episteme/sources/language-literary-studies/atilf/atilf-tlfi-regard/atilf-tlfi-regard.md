@@ -24,7 +24,7 @@ url: https://www.cnrtl.fr/etymologie/regard
 
 ATILF. *Trésor de la langue française informatisé*, s.v. “regard,” Étymologie et histoire. CNRTL. Consulted 8 September 2026. Cite the actual online entry; the portal’s copyright date does not date composition of each dictionary statement.
 
-The entry **sources** the French branch of [E2’s Regard operation](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md). English borrowing and Anglo-French history require their own witnesses.
+The entry **sources** the French branch of [E2’s Regard operation](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md). English borrowing and Anglo-French history require their own witnesses.
 
 <a id="passages"></a>
 ## Lexical witness

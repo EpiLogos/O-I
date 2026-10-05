@@ -2,7 +2,6 @@
 aliases:
   - Watson — Resonance of Emptiness
   - Resonance of Emptiness (1998)
-  - "Gay Watson — The Resonance of Emptiness (1998)"
 record_type: book
 source_role:
   - buddhist-psychology
@@ -29,7 +28,11 @@ isbn:
 doi: "10.4324/9781315027371"
 accessed: "2026-07-28"
 consumed_by_sections: []
-consumed_by_arguments: []
+consumed_by_arguments:
+  - A01
+  - A06
+  - A26
+  - A33
 tags:
   - epi-logos/antikythera-essay
   - source-bank/record
@@ -56,7 +59,7 @@ The selected object is Gay Watson's *The Resonance of Emptiness: A Buddhist Insp
 
 Watson's 1996 SOAS doctoral thesis, *A Buddhist Inspiration for a Contemporary Psychotherapy*, is the publicly accessible precursor consulted for the present passage work. Its indexed full text verifies the wording and footnotes gathered below at thesis pp. 112–13, but the corresponding pages have not yet been collated against the selected 1998 book. The source house therefore distinguishes the book's bibliographic identity from the thesis surface through which these passages were recovered.
 
-The sibling `watson-1998-resonance-of-emptiness-NOTES.md` is Frank G. Taylor's authorial encounter with Watson. It was read in full for the present source work and remains untouched. Its copied formulations were treated as leads until checked against the thesis index and, where possible, against the nested primary or secondary referent.
+The sibling `NOTES.md` is Frank G. Taylor's authorial encounter with Watson. It was read in full for the present source work and remains untouched. Its copied formulations were treated as leads until checked against the thesis index and, where possible, against the nested primary or secondary referent.
 
 ## Chicago 18 forms
 
@@ -104,6 +107,12 @@ Gans's reading turns upon Emmanuel Levinas's *Totality and Infinity: An Essay on
 
 Watson supplies a sustained comparative setting in which Buddhist selfing, psychotherapy, Lacanian lack, and Levinasian exteriority already meet. The Gans passage gives the thread its interpersonal hinge: totalisation is the ego's conversion of difference into availability for itself, and ethical or therapeutic transformation changes the desire through which a world and another person are approached.
 
+### Current receiving operations
+
+The authorial encounter and the external passage chain have distinct consumers. [Faithful definition](../../../../../../section-rooms/arguments/A01-Subject-God-and-Faithful-Definition.md), [defined indefinability](../../../../../../section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md), [individuation](../../../../../../section-rooms/arguments/concepts/C34-Individuation.md) and [selfing](../../../../../../section-rooms/arguments/concepts/C35-Selfing-Self-Subjectivity-Self-Thing.md) receive Taylor’s distinction between a fabricated self-thing, situated selfing and the non-objectifiable experient. These are uses of the protected notes and Taylor’s subsequent argument, rather than quotation-level uses of q001–q007. [Objective Internality](../../../../../../section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md), [its constituting means](../../../../../../section-rooms/arguments/concepts/C41-Objective-Internality.md) and [epistemic cultivation](../../../../../../section-rooms/arguments/A33-Epistemic-Cultivation-Operational-Parity.md) receive his discontinuity→objective internality→harness elements→objective immortality development: an achieved result becomes available as a condition of a later act. Watson is the encounter’s provenance; this native process sequence is Taylor’s development.
+
+[Personed articulation](../../../../../../section-rooms/arguments/A06-Vak.md) receives the interpersonal chain in #2; [the eye, veil and frame](../../../../../mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md) develops it in #3; [Regard](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md) and its [historical branch](../../../../etymologies/arbitration-hybris-regard-anamnesis/HISTORICAL-BRANCHES-arbitration-hybris-regard-anamnesis.md) retain the face’s excess over its representation and the difference between an ontological call and face-to-face address. The [Indian philosophy comparison](../../../../dossiers/indian-philosophy.md) preserves the Buddhist–psychotherapeutic encounter and nested ethical chain in #2. [The symmetry and conservation comparison](../../../../../matheme/formal-neighbours/noether-symmetry-conservation.md) uses the encounter’s challenge to an inherited economy in #4, keeping ethical scale, psychic energy and a mathematical conservation law distinct. These receiving operations are identified below only where the current passage actually does that work. A related theme alone does not establish consumption of a particular card.
+
 ### Licensed development after quilting review
 
 - Deepen the existing Watson selfing contribution by carrying the movement from aggregates and the self-thing into encounter, otherness, need, and desire.
@@ -129,7 +138,6 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 
 <a id="watson-1998-resonance-of-emptiness-q001"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q001` — difference made “for me”
-^watson-1998-resonance-of-emptiness-q001
 
 > “the ego's reduction of difference (the ‘not me’) to the same (the ‘for me’) is the totalisation process par excellence”
 
@@ -139,12 +147,11 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** quoted by Watson from or closely through Gans; double transmission.
 - **Evidential action:** supports.
 - **Argument function:** states the egoic totalisation operation that the project places beside deficient Mono and the fall from `0/1` into a self-grounding signed economy.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** [Eye / veil / frame #3](../../../../../mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md); [Vāk #2](../../../../../../section-rooms/arguments/A06-Vak.md); [Regard](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md) — egoic availability and the interruption of that appropriation; retained authorial quilt.
 - **Use boundary:** do not print as a direct Gans quotation until p. 84 has been collated.
 
 <a id="watson-1998-resonance-of-emptiness-q002"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q002` — egoic need into interpersonal desire
-^watson-1998-resonance-of-emptiness-q002
 
 > “both show the way toward the transformation of egoic need into interpersonal desire”
 
@@ -154,12 +161,11 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** Watson quoting Gans.
 - **Evidential action:** supports.
 - **Argument function:** joins Levinasian ethics and psychotherapeutic practice through a transformation in the structure of desire.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** [Eye / veil / frame #3](../../../../../mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md) — changed economy of need and interpersonal desire; retained authorial quilt.
 - **Use boundary:** Levinasian Desire is not interchangeable with Buddhist craving, Freudian drive, Lacanian desire, Whiteheadian appetition, or the Śaiva powers; each comparison requires an operational account.
 
 <a id="watson-1998-resonance-of-emptiness-q003"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q003` — egoic interiority as an economy of control
-^watson-1998-resonance-of-emptiness-q003
 
 **Source-matched paraphrase:** Gans describes Western egoic interiority as an invisible centre that represents and constitutes a world in order to penetrate, manipulate, control, accumulate power, satisfy need, and defend against loss.
 
@@ -169,11 +175,10 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** paraphrase of Watson quoting Gans.
 - **Evidential action:** supports.
 - **Argument function:** makes totalisation an energetic and economic operation, preparing comparison with world-model selection, political power, and the management of loss.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** [Eye / veil / frame #3](../../../../../mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md); [Regard](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md) — the representation’s economy of appropriation and control; retained authorial quilt.
 
 <a id="watson-1998-resonance-of-emptiness-q004"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q004` — ethics of love and interrelatedness
-^watson-1998-resonance-of-emptiness-q004
 
 > “move toward an ethics of love, toward the celebration of our interrelatedness”
 
@@ -183,11 +188,10 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** Watson quoting Gans.
 - **Evidential action:** supports.
 - **Argument function:** provides the source-side ethical movement that the project develops as an eros of Logos and a logic capable of carrying love without making interrelatedness erase otherness.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** Retained authorial Watson–Gans–Levinas quilt. No passage-specific canonical receiving operation was established for this card in the present binding comparison.
 
 <a id="watson-1998-resonance-of-emptiness-q005"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q005` — Heidegger and the face-to-face
-^watson-1998-resonance-of-emptiness-q005
 
 **Source-matched paraphrase:** Watson suggests a proximity between Levinas and Heidegger's call of Being, while recording Levinas's judgment that Heidegger's priority of Being remains theoretical rather than face-to-face.
 
@@ -197,11 +201,10 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** paraphrased from Watson's comparison.
 - **Evidential action:** qualifies and redirects.
 - **Argument function:** opens the difference between an ontological call and second-person encounter, and supplies the interpersonal pressure needed to deepen `AM/IS`.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** [Regard historical branch](../../../../etymologies/arbitration-hybris-regard-anamnesis/HISTORICAL-BRANCHES-arbitration-hybris-regard-anamnesis.md) — Watson’s retained disagreement between theoretical priority and face-to-face encounter; retained authorial quilt.
 
 <a id="watson-1998-resonance-of-emptiness-q006"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q006` — the face exceeds its idea
-^watson-1998-resonance-of-emptiness-q006
 
 > “The way in which the other presents himself, exceeding the idea of the other in me, we here name face.”
 
@@ -211,11 +214,10 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** quoted from the nested primary source.
 - **Evidential action:** supports and deepens.
 - **Argument function:** gives the exact phenomenological form of the excess that Watson and Gans carry into psychotherapy.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** [Vāk #2](../../../../../../section-rooms/arguments/A06-Vak.md); [Eye / veil / frame #3](../../../../../mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md); [Regard and its historical branch](../../../../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis.md); [Indian philosophy #2](../../../../dossiers/indian-philosophy.md) — the Other exceeds the available image; retained authorial quilt.
 
 <a id="watson-1998-resonance-of-emptiness-q007"></a>
 ## Passage card — `watson-1998-resonance-of-emptiness-q007` — encounter incommensurate with power
-^watson-1998-resonance-of-emptiness-q007
 
 **Source-matched paraphrase:** The face invites a relation incommensurate with the exercise of power, whether that power operates as enjoyment or knowledge.
 
@@ -225,7 +227,7 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - **Source relation:** paraphrased from the nested primary source.
 - **Evidential action:** supports and limits.
 - **Argument function:** prevents generalized energetics from translating ethical excess into a stronger quantity of force on an unchanged scale; the encounter can change the scale and economy through which force is reckoned.
-- **Consumers:** pre-canonical Watson–Gans–Levinas quilt; no canonical consumer declared yet.
+- **Consumers:** [Eye / veil / frame #3](../../../../../mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md); [Regard historical branch](../../../../etymologies/arbitration-hybris-regard-anamnesis/HISTORICAL-BRANCHES-arbitration-hybris-regard-anamnesis.md); [Symmetry and conservation #4](../../../../../matheme/formal-neighbours/noether-symmetry-conservation.md) — the encounter can question the scale of power rather than merely add force on it; retained authorial quilt.
 
 ## Open acquisition and verification
 
@@ -233,17 +235,17 @@ Watson and Gans warrant a Buddhist–psychotherapeutic reception of Levinas. Lev
 - Read Gans's 1988 chapter directly at pp. 83–90; collate q001–q004 and recover the immediate context of “void in the heart of interiority.”
 - Read Gans's 1997 “Lacan and Levinas” article before using it to strengthen the Lacanian psychoanalysis branch.
 - Fix the exact Lingis edition used by Watson and collate Levinas pp. 49–51 and 197–201 against that object.
-- Decide after quilt review whether Gans 1988 and Levinas 1969 require separate canonical source houses; until then they remain explicitly nested referents here.
+- The separate [Totality and Infinity source house](../../../phenomenology-continental-philosophy/levinas/levinas-1961-totality-and-infinity/levinas-1961-totality-and-infinity.md) now retains its own primary-edition collation debt. Gans 1988 remains an explicitly nested referent here; direct chapter collation is still required before treating Watson’s transmission as a direct Gans quotation.
 - Acquire the source sequence behind Watson's Buddhist comparison—especially the relevant David Loy passage—before attributing her “lack” synthesis beyond the present source chain.
 
 ### Passage metadata register
 
 | passage_id | source_id | locator | status | movement consumers | argument consumers | function |
 |---|---|---|---|---|---|---|
-| `watson-1998-resonance-of-emptiness-q001` | `watson-1998-resonance-of-emptiness` | thesis p. 112; Gans p. 84 | index-corroborated; double-transmission; collation pending | pre-canonical quilt | — | totalisation as difference made “for me” |
-| `watson-1998-resonance-of-emptiness-q002` | `watson-1998-resonance-of-emptiness` | thesis p. 112; Gans p. 83 | thesis wording verified; double-transmission | pre-canonical quilt | — | need transformed into interpersonal desire |
-| `watson-1998-resonance-of-emptiness-q003` | `watson-1998-resonance-of-emptiness` | thesis p. 112; Gans p. 84 | verified paraphrase; double-transmission | pre-canonical quilt | — | egoic economy of control |
-| `watson-1998-resonance-of-emptiness-q004` | `watson-1998-resonance-of-emptiness` | thesis p. 113; Gans p. 89 | thesis wording verified; double-transmission | pre-canonical quilt | — | ethics of love and interrelatedness |
-| `watson-1998-resonance-of-emptiness-q005` | `watson-1998-resonance-of-emptiness` | thesis p. 113 | thesis comparison verified; book collation pending | pre-canonical quilt | — | Heidegger/Levinas face-to-face pressure |
-| `watson-1998-resonance-of-emptiness-q006` | `watson-1998-resonance-of-emptiness` | Levinas p. 50 | primary wording verified; edition collation pending | pre-canonical quilt | — | face as excess of idea |
-| `watson-1998-resonance-of-emptiness-q007` | `watson-1998-resonance-of-emptiness` | Levinas pp. 197–98 | primary movement verified; paraphrased | pre-canonical quilt | — | relation incommensurate with power |
+| `watson-1998-resonance-of-emptiness-q001` | `watson-1998-resonance-of-emptiness` | thesis p. 112; Gans p. 84 | index-corroborated; double-transmission; collation pending | —; retained authorial quilt | A06 #2; Māyā #3; E2 Regard | totalisation as difference made “for me” |
+| `watson-1998-resonance-of-emptiness-q002` | `watson-1998-resonance-of-emptiness` | thesis p. 112; Gans p. 83 | thesis wording verified; double-transmission | —; retained authorial quilt | Māyā #3 | need transformed into interpersonal desire |
+| `watson-1998-resonance-of-emptiness-q003` | `watson-1998-resonance-of-emptiness` | thesis p. 112; Gans p. 84 | verified paraphrase; double-transmission | —; retained authorial quilt | Māyā #3; E2 Regard | egoic economy of control |
+| `watson-1998-resonance-of-emptiness-q004` | `watson-1998-resonance-of-emptiness` | thesis p. 113; Gans p. 89 | thesis wording verified; double-transmission | —; retained authorial quilt | —; retained authorial quilt | ethics of love and interrelatedness |
+| `watson-1998-resonance-of-emptiness-q005` | `watson-1998-resonance-of-emptiness` | thesis p. 113 | thesis comparison verified; book collation pending | —; retained authorial quilt | E2 Regard historical branch | Heidegger/Levinas face-to-face pressure |
+| `watson-1998-resonance-of-emptiness-q006` | `watson-1998-resonance-of-emptiness` | Levinas p. 50 | primary wording verified; edition collation pending | —; retained authorial quilt | A06 #2; Māyā #3; E2 Regard; Indian dossier #2 | face as excess of idea |
+| `watson-1998-resonance-of-emptiness-q007` | `watson-1998-resonance-of-emptiness` | Levinas pp. 197–98 | primary movement verified; paraphrased | —; retained authorial quilt | Māyā #3; E2 historical branch; Noether #4 | relation incommensurate with power |

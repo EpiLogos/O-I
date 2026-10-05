@@ -14,11 +14,11 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5→0 · #2 — Antikythera as Attunement Instrument
 
 <!-- reader-navigation -->
-Movement 45 of 48 · [This room](../ROOM.md) · [← Previous](44-s50-p1-ql-mef-bimba-harness.md) · [Next →](46-s50-p3-4-2-mono-poly.md)
+Movement 45 of 48 · [This room](../ROOM-07-instrument-returns.md) · [← Previous](44-s50-p1-ql-mef-bimba-harness.md) · [Next →](46-s50-p3-4-2-mono-poly.md)
 <!-- /reader-navigation -->
 
 ## Claim
-The Antikythera mechanism is finally earned as an image of situated coordination: [its gears render heterogeneous celestial cycles mutually readable for an observer while the heavens remain beyond the instrument](../../../symbolon/episteme/histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md#ancient-craft-and-release).
+The Antikythera mechanism is finally earned as an image of situated coordination: [its gears render heterogeneous celestial cycles mutually readable for an observer while the heavens remain beyond the instrument](../../../symbolon/episteme/histories/traditions-and-disciplines/technology-politics/DEVELOPMENT-technology-politics.md#ancient-craft-and-release).
 
 ## Warrant
 The essay has already established retained ground, multiple orientations, harmonic interval, lens refraction, and institutional return. The mechanism now images their coordination across agents, models, timescales, and values.
@@ -34,17 +34,16 @@ The comparison is technically bounded and Offered. The ancient device is neither
 
 The [Antikythera attunement whole](../../../symbolon/mytheme/worlds/frank-taylor/antikythera-attunement/WHOLE.md#antikythera-instrument-returns) **figures** this late attunement through the complete passage from coordinated cycles to damaged inheritance, reconstruction and renewed use. The 2006 primary abstract and the bounded 2021 front-display proposal have distinct warrants; lost evidence still limits reconstruction. A reader can use an exact indication while retaining the source, residual and judgment on which its significance depends.
 
-The [myth historical development](../../../symbolon/episteme/histories/encounters-and-transmissions/myth/DEVELOPMENT.md#50--the-inherited-instrument-changes-the-next-encounter) **historicises** the material instrument’s changed reception: the 2006 abstract and 2021 reconstruction have separate warrants, while capture, attunement and initiated return perform different technical offices.
+The [myth historical development](../../../symbolon/episteme/histories/encounters-and-transmissions/myth/DEVELOPMENT-myth.md#50--the-inherited-instrument-changes-the-next-encounter) **historicises** the material instrument’s changed reception: the 2006 abstract and 2021 reconstruction have separate warrants, while capture, attunement and initiated return perform different technical offices.
 
 
 
 ## Anchor and transition
 **Image:** a late instrument whose dial becomes readable only after the cosmology is understood. Its governance form is [[46-s50-p3-4-2-mono-poly|§5→0 · #3 — 4:2 Technē and the Sovereign Commons]].
 
-The instrument’s material inheritance **returns-to** [Apportionment / Economy whole — Planetary computation exposes hidden economy](../../../symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md#planetary-computation-exposes-hidden-economy) at evidence register 3. The instrument inherits craft, material capacity and a situated measure. Its contemporary return must expose who supplies those conditions and who can change their distribution, without treating the ancient mechanism as an implemented governance system.
+The instrument’s material inheritance **returns-to** [Apportionment / Economy whole — Planetary computation exposes hidden economy](../../../symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md#planetary-computation-exposes-hidden-economy) at evidence register 3. The instrument inherits craft, material capacity and a situated measure. Its contemporary return must expose who supplies those conditions and who can change their distribution, without treating the ancient mechanism as an implemented governance system.
 
-Attunement **returns-to** [Logos — articulated account](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md#logos-articulated-account) through the relation among instrument, situated reader and represented cycle. The display makes something legible under selected inscriptions and mechanical relations; its account carries what was coordinated and what remains outside that coordination. Topos retains the reader’s bounded situation, while the ancient mechanism and the proposed technical application keep separate evidential tasks.
+Attunement **returns-to** [Logos — articulated account](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md#logos-articulated-account) through the relation among instrument, situated reader and represented cycle. The display makes something legible under selected inscriptions and mechanical relations; its account carries what was coordinated and what remains outside that coordination. Topos retains the reader’s bounded situation, while the ancient mechanism and the proposed technical application keep separate evidential tasks.
 
-The [mathematics history](../../../symbolon/episteme/histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md#4--commensuration-makes-a-remainder-consequential) **historicises** this operation. The Freeth 2006 selected primary abstract and the 2021 constrained front-display model bear different evidential loads. Nine outputs and nested arrangements belong to the reconstruction, not to an intact surviving device. The instrument’s indication returns to the reader’s account of fragments, inscriptions and reconstruction; coordination of cycles does not remove those source boundaries.
+The [mathematics history](../../../symbolon/episteme/histories/traditions-and-disciplines/mathematics/DEVELOPMENT-mathematics.md#4--commensuration-makes-a-remainder-consequential) **historicises** this operation. The Freeth 2006 selected primary abstract and the 2021 constrained front-display model bear different evidential loads. Nine outputs and nested arrangements belong to the reconstruction, not to an intact surviving device. The instrument’s indication returns to the reader’s account of fragments, inscriptions and reconstruction; coordination of cycles does not remove those source boundaries.
 
-The [authored P1 route for M45](../P1-CANONICAL-ALIGNMENT.md#p1-m45) **grounds** this movement’s canonical A/C alignment within the phase bounds and dispositions stated there.

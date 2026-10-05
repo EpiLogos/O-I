@@ -11,9 +11,9 @@ source_relation: "Explicit geometric construction; argued native return"
 
 ## #0 — Specify an orientation-changing traversal
 
-The native trust revision places inversion-capacity inside Syn itself: gathering can fail by fusion as well as division by severance. Its [housed authorial source](../../episteme/sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md) relates this pressure to Möbius/Klein return. The mathematical construction below states which loop reverses orientation and which covering map holds both orientations.
+Gathering can fail by fusion as well as division by severance. Syn therefore carries its own inversion-capacity: treating its returned other face as a foreign substance would reproduce the opposition it was meant to hold. [Taylor's trust revision](../../episteme/sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md) develops this native pressure through Möbius/Klein return. The construction below states which loop reverses orientation and which covering map holds both orientations.
 
-The [Hatcher house](../../episteme/sources/mathematics-logic/hatcher/hatcher-2002-algebraic-topology/hatcher-2002-algebraic-topology.md) is the topology reference; its exact quotation locators remain pending. The quotient and deck transformations are supplied directly here.
+[Hatcher's selected quotient and glide-reflection constructions](../../episteme/sources/mathematics-logic/hatcher/hatcher-2002-algebraic-topology/hatcher-2002-algebraic-topology.md) distinguish the plane-to-torus cover from the torus-to-Klein double cover. The quotient and deck transformations are supplied directly here. Those selected passages remain paraphrase-only; no new quotation or complete surface-classification survey is established.
 
 ## #1 — Construct the Möbius strip
 
@@ -35,7 +35,7 @@ This subgroup has index 2, so the torus maps two-to-one onto the Klein bottle. T
 
 ## #4 — Keep the covers distinct
 
-This is an orientation double cover of the Klein bottle. The plane's universal cover of the torus is instead infinite-sheeted. Both surfaces have Euler characteristic 0, but that shared number does not identify their orientability or fundamental groups. The [torus winding page](torus-cover-winding.md) retains its two commuting generators; the Klein relation above is noncommutative.
+This is an orientation double cover of the Klein bottle. The plane's universal cover of the torus is instead infinite-sheeted. Both surfaces have Euler characteristic 0, but that shared number does not identify their orientability or fundamental groups. The [two torus winding generators](torus-cover-winding.md) commute; the Klein relation above is noncommutative.
 
 The native reading holds a real inversion without mistaking its returned other face for a foreign substance. The mathematics demonstrates orientation behaviour under these exact maps. It does not by itself decide an ethical relation or prove that every act of reflection must follow the same loop. Syn's fusion risk remains an authorial operation with this precise formal carrier.
 
@@ -43,4 +43,4 @@ The native reading holds a real inversion without mistaking its returned other f
 
 The result is a doubled traversal with its condition stated: along the orientation-reversing class, one pass reverses and two restore orientation. Holding both sheets gives the exact torus/Klein relation, while the surfaces remain distinct objects.
 
-This record returns-to [Syn](../dia-syn/syn.md), [A13](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md), [A17](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md), and [Movement29](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md). The native return retains its seam because the formal construction has not fused its different spaces or traversals.
+[Syn](../dia-syn/syn.md) receives gathering which retains its inversion rather than fusing the returned orientations. [The two logics of two](../../../section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md) keep severance and fusion as different failures; [toroidal circulation](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md) keeps its independent windings beside this orientation double cover. [Topological and musical resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) can carry the doubled traversal onward with the reversing class specified. The seam remains consequential because the return holds different orientations without identifying their spaces or every possible loop.

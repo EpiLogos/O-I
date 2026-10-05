@@ -43,4 +43,4 @@ The source's rhythm-to-pitch relation concerns temporal organisation becoming au
 
 The result records both what returned and what moved: class can repeat while frequency rises, a formal pattern can recur while the particular traversal remains different. This is the exact musical carrier for the native account of return with retained difference.
 
-This record returns-to [Movement29](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md), [topological quilt](../quilt/topology.md) and [whole-tone return](whole-tone-return.md). The full process/music chain states its inverse phase explicitly; a cyclic residue alone does not provide that entire native traversal.
+This record returns-to [Movement29](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md), topological quilt and [whole-tone return](whole-tone-return.md). The full process/music chain states its inverse phase explicitly; a cyclic residue alone does not provide that entire native traversal.

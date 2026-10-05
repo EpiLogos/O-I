@@ -5,7 +5,7 @@ page_type: navigation-intents
 generated: true
 generator: "tools/build-navigation.py v1.2.0"
 authority: generated-locator
-source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571"
+source_digest: "9426276062c15ab75b6e2b7810eef94824c518e9baf15552646ef7926166a886"
 ---
 
 <!-- Generated from authored links in the publication body. Do not edit by hand; edit the pages, then rebuild. -->
@@ -14,7 +14,7 @@ source_digest: "99aef9767a9d74cfba985adf75bac6a7a197f4a9604581dd21f1a5371e2ee571
 
 **Where you are:** [Reading root](../../../../../README.md) › [#4 Episteme](../../../README.md) › [Maps](../../README.md) › [Navigation](../MOC.md) › Matheme — exact operations
 
-Position #2. Entrance: [The Return of Zero — Matheme](../../../../matheme/README.md). Each entry names what the page **implicates** through its written relations and what **reaches** it. The relation word is the one the sentence around the link names; `unnamed` marks a link whose sentence names none. This is a mirror of the written graph, never its substitute.
+Position #2. Entrance: [Matheme](../../../../matheme/README.md). Each entry names what the page **implicates** through its written relations and what **reaches** it. The relation word is the one the sentence around the link names; `unnamed` marks a link whose sentence names none. This is a mirror of the written graph, never its substitute.
 Group: `diagrams` · back to [Matheme — exact operations](matheme.md).
 
 ### [An Atlas of Two Charts on the Unit Circle](../../../../matheme/diagrams/atlas-two-chart-circle.md)
@@ -29,9 +29,9 @@ Group: `diagrams` · back to [Matheme — exact operations](matheme.md).
 
 `matheme` · `register-domain`
 
-**Implicates:** *figures* → [Episteme Figures](../../../figures/README.md) · *unnamed* → [Mytheme Plates](../../../../mytheme/plates/README.md), [The Return of Zero — Matheme](../../../../matheme/README.md), [An Atlas of Two Charts on the Unit Circle](../../../../matheme/diagrams/atlas-two-chart-circle.md), [The Crossed-Zero Recognition Chain](../../../../matheme/diagrams/crossed-zero-recognition-chain.md), [The QL Unit as Concentric Mandala — the Eight Determinations](../../../../matheme/diagrams/ql-unit-mandala-eight-determinations.md), [Re-entry and the Projective Fork](../../../../matheme/diagrams/re-entry-projective-fork.md), [NOR Functional Completeness and the Seam](../../../../matheme/diagrams/sheffer-nor-reduction.md), [The Vertical Accounting — 100% to the 4+2 Base Frame](../../../../matheme/diagrams/spanda-4-2-attunement-stack.md)
+**Implicates:** *figures* → [Episteme Figures](../../../figures/README.md) · *unnamed* → [Mytheme Plates](../../../../mytheme/plates/README.md), [The square quotient and the returning path](../../../../matheme/diagrams/torus-square-quotient-and-winding.md), [Matheme](../../../../matheme/README.md), [An Atlas of Two Charts on the Unit Circle](../../../../matheme/diagrams/atlas-two-chart-circle.md), [The Crossed-Zero Recognition Chain](../../../../matheme/diagrams/crossed-zero-recognition-chain.md), [The QL Unit as Concentric Mandala — the Eight Determinations](../../../../matheme/diagrams/ql-unit-mandala-eight-determinations.md), [Re-entry and the Projective Fork](../../../../matheme/diagrams/re-entry-projective-fork.md), [NOR Functional Completeness and the Seam](../../../../matheme/diagrams/sheffer-nor-reduction.md), [The Vertical Accounting — 100% to the 4+2 Base Frame](../../../../matheme/diagrams/spanda-4-2-attunement-stack.md)
 
-**Reached from:** *figures* ← [Topology](../../../../matheme/topology/README.md) · *unnamed* ← [Episteme Figures](../../../figures/README.md), [The Return of Zero — Matheme](../../../../matheme/README.md), [Mytheme Plates](../../../../mytheme/plates/README.md)
+**Reached from:** *figures* ← [Topology](../../../../matheme/topology/README.md) · *unnamed* ← [Episteme Figures](../../../figures/README.md), [Matheme](../../../../matheme/README.md), [Mytheme Plates](../../../../mytheme/plates/README.md)
 
 ### [NOR Functional Completeness and the Seam](../../../../matheme/diagrams/sheffer-nor-reduction.md)
 
@@ -62,6 +62,14 @@ Group: `diagrams` · back to [Matheme — exact operations](matheme.md).
 `matheme` · `diagram-record` · `Derived (the eight-turn traversal within the theorem field) / Argued (cross-register names); the layout itself is the canonical QL-unit arrangement, its geometry derived`
 
 **Implicates:** *sources* → [Taylor — Core Theorems Pithy (2026)](../../../sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md)
+
+**Reached from:** *unnamed* ← [Matheme Diagrams](../../../../matheme/diagrams/README.md)
+
+### [The square quotient and the returning path](../../../../matheme/diagrams/torus-square-quotient-and-winding.md)
+
+`matheme` · `diagram-record` · `Derived (quotient and winding facts); Argued (M02's 4+2 coordination)`
+
+**Implicates:** *sources* → [Hatcher — Algebraic Topology (2002)](../../../sources/mathematics-logic/hatcher/hatcher-2002-algebraic-topology/hatcher-2002-algebraic-topology.md) · *unnamed* → [§0/1 · #1 — Define the Subject Without Making It an Object](../../../../../section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject.md), [Torus, covering, winding and retained displacement](../../../../matheme/topology/torus-cover-winding.md)
 
 **Reached from:** *unnamed* ← [Matheme Diagrams](../../../../matheme/diagrams/README.md)
 

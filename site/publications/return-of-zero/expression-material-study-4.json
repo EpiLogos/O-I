@@ -1,0 +1,682 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:material-study-4",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:material-study-4",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:material-study-4",
+  "revision": 1,
+  "title": "Language",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4",
+    "revision": 1,
+    "title": "Language",
+    "entity_refs": [
+     "expression:return-of-zero:material-study-4:scene:study-4:opening-o"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:material-study-4:scene:study-4:opening-o": {
+    "entity_ref": "expression:return-of-zero:material-study-4:scene:study-4:opening-o",
+    "revision": 1,
+    "title": "Ampersand",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:material-study-4",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "starters/material/material-study-4.journey.json",
+       "revision": "9a1605c193f751b4c85bebc9c1c76ba04b3b98958d3628f821b619043e44ee05",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.1,
+      "automation": null
+     },
+     "y": {
+      "value": 0.03,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.375,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4",
+   "entity_ref": "expression:return-of-zero:material-study-4:scene:study-4:opening-o"
+  },
+  "provenance": [
+   {
+    "ref": "starters/material/material-study-4.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:material-study-4",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:material-study-4",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "starters/material/material-study-4.journey.json",
+      "revision": "9a1605c193f751b4c85bebc9c1c76ba04b3b98958d3628f821b619043e44ee05",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:material-study-4:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:material-study-4",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Language</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:material-study-4\" data-expression-revision=\"1\"><h1>Language</h1><p>Frozen reading of expression:return-of-zero:material-study-4 at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:material-study-4:scene:study-4\" aria-label=\"Language\"><h2>Language</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-4:scene:study-4:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:material-study-4\" data-presentation-role=\"thing\" style=\"left:51.00%;top:49.70%;font-size:4.13rem;opacity:1.00\" title=\"Ampersand\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-material-study-4",
+  "world_ref": "expression:return-of-zero:material-study-4",
+  "revision": 1,
+  "title": "Language",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:material-study-4",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Language"
+      },
+      "fallback": {
+       "title": "Language"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:material-study-4",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:material-study-4",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:material-study-4",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:material-study-4",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "starters/material/material-study-4.journey.json",
+            "revision": "9a1605c193f751b4c85bebc9c1c76ba04b3b98958d3628f821b619043e44ee05",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:material-study-4:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:material-study-4",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Language</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:material-study-4\" data-expression-revision=\"1\"><h1>Language</h1><p>Frozen reading of expression:return-of-zero:material-study-4 at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:material-study-4:scene:study-4\" aria-label=\"Language\"><h2>Language</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-4:scene:study-4:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:material-study-4\" data-presentation-role=\"thing\" style=\"left:51.00%;top:49.70%;font-size:4.13rem;opacity:1.00\" title=\"Ampersand\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:material-study-4",
+        "revision": 1,
+        "title": "Language",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4",
+          "revision": 1,
+          "title": "Language",
+          "entity_refs": [
+           "expression:return-of-zero:material-study-4:scene:study-4:opening-o"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:material-study-4:scene:study-4:opening-o": {
+          "entity_ref": "expression:return-of-zero:material-study-4:scene:study-4:opening-o",
+          "revision": 1,
+          "title": "Ampersand",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:material-study-4",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "starters/material/material-study-4.journey.json",
+             "revision": "9a1605c193f751b4c85bebc9c1c76ba04b3b98958d3628f821b619043e44ee05",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.1,
+            "automation": null
+           },
+           "y": {
+            "value": 0.03,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.375,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4",
+         "entity_ref": "expression:return-of-zero:material-study-4:scene:study-4:opening-o"
+        },
+        "provenance": [
+         {
+          "ref": "starters/material/material-study-4.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Language"
+      },
+      "fallback": {
+       "title": "Language",
+       "text": "Language: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:material-study-4",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-material-study-4",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:material-study-4",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:material-study-4",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "starters/material/material-study-4.journey.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:material-study-4"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:material-study-4",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:material-study-4",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:material-study-4:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:material-study-4"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:material-study-4",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-material-study-4:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-material-study-4",
+    "world_ref": "expression:return-of-zero:material-study-4",
+    "revision": 1,
+    "title": "Language",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:material-study-4",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Language"
+        },
+        "fallback": {
+         "title": "Language"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:material-study-4",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:material-study-4",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:material-study-4",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:material-study-4",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "starters/material/material-study-4.journey.json",
+              "revision": "9a1605c193f751b4c85bebc9c1c76ba04b3b98958d3628f821b619043e44ee05",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:material-study-4:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:material-study-4",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Language</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:material-study-4\" data-expression-revision=\"1\"><h1>Language</h1><p>Frozen reading of expression:return-of-zero:material-study-4 at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:material-study-4:scene:study-4\" aria-label=\"Language\"><h2>Language</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:material-study-4:scene:study-4:opening-o\" data-subject-ref=\"world:return-of-zero/wiki:material-study-4\" data-presentation-role=\"thing\" style=\"left:51.00%;top:49.70%;font-size:4.13rem;opacity:1.00\" title=\"Ampersand\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:material-study-4",
+          "revision": 1,
+          "title": "Language",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4",
+            "revision": 1,
+            "title": "Language",
+            "entity_refs": [
+             "expression:return-of-zero:material-study-4:scene:study-4:opening-o"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:material-study-4:scene:study-4:opening-o": {
+            "entity_ref": "expression:return-of-zero:material-study-4:scene:study-4:opening-o",
+            "revision": 1,
+            "title": "Ampersand",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:material-study-4",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "starters/material/material-study-4.journey.json",
+               "revision": "9a1605c193f751b4c85bebc9c1c76ba04b3b98958d3628f821b619043e44ee05",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.1,
+              "automation": null
+             },
+             "y": {
+              "value": 0.03,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.375,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:material-study-4:scene:study-4",
+           "entity_ref": "expression:return-of-zero:material-study-4:scene:study-4:opening-o"
+          },
+          "provenance": [
+           {
+            "ref": "starters/material/material-study-4.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Language"
+        },
+        "fallback": {
+         "title": "Language",
+         "text": "Language: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:material-study-4",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-material-study-4",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:material-study-4",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:material-study-4",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "starters/material/material-study-4.journey.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:material-study-4"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:material-study-4",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:material-study-4",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-material-study-4:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:material-study-4",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Language",
+  "summary": "a living Expression · 1 scene · 1 entity",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:material-study-4:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:material-study-4",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Amaterial-study-4"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:material-study-4:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-material-study-4",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:material-study-4",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Language",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-material-study-4:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-material-study-4:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:material-study-4",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:material-study-4"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

@@ -35,8 +35,6 @@ tags:
   - source-bank/neumann
   - source-bank/psychoanalysis
 title: Neumann — The Origins and History of Consciousness (1954)
-aliases:
-  - Neumann — The Origins and History of Consciousness (1954)
 source_id: neumann-1954-origins-history-consciousness
 primary_domain: psychology
 node_type: source-house
@@ -45,6 +43,8 @@ schema_version: 1
 passage_surface: '#passages'
 main_source_for:
   - §4 · post-Jungian history of ego formation
+aliases:
+- Neumann — The Origins and History of Consciousness (1954)
 ---
 
 # Neumann — The Origins and History of Consciousness (1954)
@@ -67,7 +67,7 @@ Erich Neumann's *The Origins and History of Consciousness*, translated from the 
 
 ## Source scholarship
 
-Neumann's work is the post-Jungian historical morphology of ego formation: a phylogenetic account in which the individual ego's development recapitulates the history of consciousness as it is carried in myth. The mythic sequence — uroboros → Great Mother → separation of the world parents → birth of the hero → slaying of the mother → slaying of the father → transformation → liberation of the captive — is read as the progressive differentiation of ego-consciousness from the maternal-unconscious ground. Part II maps the same sequence onto the historical stages of ego-consciousness proper.
+Neumann's work is the post-Jungian historical morphology of ego formation: a phylogenetic account in which the individual ego's development recapitulates the history of consciousness as it is carried in myth. The mythic sequence — uroboros → Great Mother → separation of the world parents → birth of the hero → slaying of the mother → slaying of the father → liberation of the captive and treasure → Osiris transformation — is read as the progressive differentiation of ego-consciousness from the maternal-unconscious ground. Part II maps the same sequence onto the historical stages of ego-consciousness proper.
 
 Relevant operations for this essay:
 
@@ -82,9 +82,11 @@ Neighbouring series: Neumann's stadial morphology and Gebser's structures of con
 
 **Claim boundary:** no selected-edition passage has yet been promoted. The source is citation-ready for bibliographic identification and its declared argument role only; quotations enter only after Frank's reading supplies excerpts, each collated against the physical 2014 copy and verified before promotion.
 
-## Argument relations (candidate)
+## Authorial encounter and received relations
 
-All relations below are candidates for the harmonisation pass. No placement is decided at house level.
+The [complete Neumann whole](../../../../../mytheme/archetypal-ground/neumann-images/WHOLE.md) **consumes** the page-anchored authorial encounter through nourishment, world-parent separation, heroic differentiation, captive release, transformation and changed return. Its paper/mark/slash/erasure, self-rolling wheel, cut/bond and love/war operations are Taylor's developments beside the transmitted source leads. It preserves the consulted book's captive/treasure-before-Osiris order.
+
+The initial scaffold map below remains encounter history. Its unratified Taoist, gender and blanket stadial equivalences remain candidates; they remain distinct from the whole's received nourishment, separation, erasure and changed-return operations. The whole retains each relation's source and claim standing without promoting copied NOTES wording into externally verified quotation.
 
 | Candidate relation | Register | Neumann locus | Essay-side target | Gate |
 |---|---|---|---|---|
@@ -114,14 +116,14 @@ No passage is quotation-ready. These are collation targets for Frank's reading o
 <a id="passages"></a>
 ## Passages and excerpts
 
-No passage has yet been gathered for this source. Frank's reading notes and excerpts live in the protected `neumann-1954-origins-history-consciousness-NOTES.md` sibling; each becomes usable only after independent verification and promotion into this file.
+No passage has yet been gathered for this source. Frank's reading notes and excerpts live in the protected `NOTES.md` sibling; each becomes usable only after independent verification and promotion into this file.
 
 ## Open acquisition and verification
 
 1. Confirm the 2014 Princeton Classics pagination reproduces the 1954 Bollingen layout (affects all page-located citations).
 2. Collate the full table of contents and page ranges against the physical copy; correct the Part II chapter titles.
 3. As Frank's reading supplies excerpts, verify each (exact transcription, locator, edition, verifier/date) before promotion to `quotation-ready`.
-4. Weigh the six candidate relations at the harmonisation pass; none is placement until then.
+4. Keep the initial scaffold candidates distinct from the complete whole's received authorial relations. Further Taoist, gender or blanket stadial identifications need their own source-bound comparison; the existing nourishment, separation, erasure and changed-return operations retain their declared Argued standing.
 5. A [Gebser source house](../../../phenomenology-continental-philosophy/gebser/gebser-1985-ever-present-origin/gebser-1985-ever-present-origin.md) exists; the earlier absence claim was stale. Its own edition and passage standing govern any public comparison.
 
 ## Navigation verification — 2026-09-08

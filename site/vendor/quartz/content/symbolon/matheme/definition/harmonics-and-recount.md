@@ -5,6 +5,7 @@ record_type: matheme
 register: matheme
 claim_status: Derived
 source_relation: "Extracted internal derivation"
+source_ids: [taylor-2026-binary-explication, taylor-2026-core-theorems-pithy, taylor-2026-6174-ql-complete-mapping]
 ---
 
 # §2–§3 — 4+2 → (3+1)+2
@@ -13,13 +14,15 @@ source_relation: "Extracted internal derivation"
 
 [The copula](copula.md) supplies four appearances of identity and difference, composed through the two operative marks `/` and `=`. The input is the complete expression `/ = ( = =/≠ ≠ )`. The next operation holds the counted field as a field. It asks how the six can return to the relation from which its count was drawn.
 
-The [Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md), File 1 §§2–3, sources this recount. [Self-Identity](../../self-identity.md) grounds its whole-bearing office.
+[Self-identity](../../self-identity.md) requires the return. An inventory of the marks would leave their identifying activity outside the account; the count must be able to hold what it has distinguished as one relation again.
 
 ## #1 — Open the hinge for the count
 
 The middle `=/≠` yields two appearances when read analytically: identity exposed to difference, and difference remaining related to identity. Add the initial equality-pole and final difference-pole to obtain four. Retain `/` and `=` as the two operative marks to obtain `4+2`.
 
 The count distinguishes **appearances** from **operations**. Counting only the visible poles would lose the relation that composes them; counting the operators as unrelated extra content would lose how the four arise from the two.
+
+The complete [6174 as QL: The Complete Mapping](../../episteme/sources/internal-corpus/taylor/taylor-2026-6174-ql-complete-mapping/taylor-2026-6174-ql-complete-mapping.md) is retained as a deep source for this 4+2 field.
 
 ## #2 — Hold the hinge as one
 
@@ -29,7 +32,7 @@ $$
 4+2\longrightarrow(3+1)+2.
 $$
 
-This changes the level of accounting. It does not claim that four objects have become three while their counting criterion stays fixed. The two faces of the hinge remain available within the one relation now being held.
+The level of accounting has changed while the two faces remain available. The fourth is now the containing act: the brackets hold the three as one readable field. The original `/` and `=` remain operative, so no term has been discarded to obtain the new reading.
 
 ## #3 — Pair the terms with what holds them
 
@@ -39,18 +42,22 @@ $$
 (=\;/)\;:\;(=/\ne\;())\;:\;(\ne\;=).
 $$
 
-**Being** pairs identity with relation: something remains identifiable across the distance needed to recognise it. **Becoming** pairs the changing hinge with its contextual enclosure: movement remains readable as one field without being frozen. **Knowing/unKnowing** pairs distinction with gathering: the cut becomes knowledge when it is held in an identifying account, while the account remains answerable to what its distinction excludes.
+**Being — `=` with `/`.** To say “this is this” requires that something can be encountered again: a name finds its bearer, a mark keeps its character across repetition. The repetition takes place across a distance, so identity is held open by relation. Bond without that opening would have nothing across which to recognise the same.
 
-These three harmonics are derived from the worked relation. Their names do not assign mandatory prose headings to unrelated sixfold pages.
+**Becoming — `=/≠` with `()`.** The middle is identity exposed to alteration and alteration still answerable to identity. Context holds this changing hinge as one movement. It gives the difference a field in which to happen rather than fixing one presentation as the whole. Fitting becomes possible here: distinguishable parts can answer one another through the joint that lets them move.
+
+**Knowing/unKnowing — `≠` with `=`.** Distinguishing makes this available as not-that. Gathering lets the distinction become a name, judgment or account. The cut is known through the bond that makes it readable; the account also meets the field its cut has not exhausted. Knowing therefore carries its unKnowing as the relation that permits further determination.
+
+Each harmonic is a complete pairing because neither member performs the operation alone. Identity needs distance; change needs a holding context; distinction needs an identifying account. The count has become a fitting of relations, the first sense in which its harmonics can be sounded as more than three labels.
 
 ## #4 — Local return and wider counting
 
 The three harmonics give a local **3:3** reading: three terms paired with three operative/contextual marks. Holding their complete articulation in the brackets returns the count to the slash. This is the local `5→0` performed by the recount.
 
-The [process register](../process/README.md) extends other precise readings of the same field, including perspectival counting and complementary symmetries. The [curated spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) gives the primary subject-account in which `3:3` also means `3:1`. These are named operations at different grains; the local graphic packing does not replace the personed derivation.
+The personed reading gives `3:3` its primary subject-account. First-, second- and third-person perspectives are followed by voiding their isolation, recognising their unity and returning that unity to `0/1`. These latter three are one recognition in three operations; hence `3:1`. The graphic recount and the personed count meet through the operation of holding differentiated terms in one act. [Process](../process/README.md) carries their traversal, and the [core theorem](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) retains the specific derivation of each count.
 
 ## #5→0 — The counted relation can be lived again
 
-The result is the same relation carrying an explicit account of its internal composition. File 1 retains the short chain `0/1 = 4+2 = 5→0 = 0/1`. The [six determinations](six-determinations.md) extend its qualitative body from conscious circumstance to differential horizon.
+The result is the same relation carrying an explicit account of its internal composition. The definitional circuit is `0/1 = 4+2 = 5→0 = 0/1`. The [six determinations](six-determinations.md) extend its qualitative body from conscious circumstance to differential horizon.
 
-This projection returns-to [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) and [Movement24, Zero Changes Its Role](../../../section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md). Counting has made the relation transmissible; the return makes its account available within another act of determination.
+In the [primordial Symbolon](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), the counted relation becomes a qualitative field. In [zero's change of role](../../../section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md), the end of the account becomes the threshold through which it can begin again. Counting has made the relation transmissible; the return lets its account enter another act of determination.

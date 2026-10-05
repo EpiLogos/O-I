@@ -1,0 +1,2244 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-room-03-two-logics",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+  "revision": 1,
+  "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19",
+    "revision": 1,
+    "title": "§2 · #0 — Difference Cannot Be Escaped",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20",
+    "revision": 1,
+    "title": "§2 · #1 — Dia-Ballein",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i",
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k",
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21",
+    "revision": 1,
+    "title": "§2 · #2 — Sym-Ballein",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o",
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q",
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22",
+    "revision": 1,
+    "title": "§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u",
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w",
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23",
+    "revision": 1,
+    "title": "§2 · #4 — Complex Dynamism",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24",
+    "revision": 1,
+    "title": "§2 · #5→0 — Zero Changes Its Role",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g",
+    "revision": 1,
+    "title": "#0 — Difference Cannot Be Escaped",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i",
+    "revision": 1,
+    "title": "−1 — the excluded pole",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.35,
+      "automation": null
+     },
+     "y": {
+      "value": 0.62,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k",
+    "revision": 1,
+    "title": "+1 — the asserted pole",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.75,
+      "automation": null
+     },
+     "y": {
+      "value": 0.62,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.9,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m",
+    "revision": 1,
+    "title": "0 — retained axis of tension and connection",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0.62,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o",
+    "revision": 1,
+    "title": "0/1 — origin-to-expression",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q",
+    "revision": 1,
+    "title": "1/0 — expression-to-origin",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.7,
+      "automation": null
+     },
+     "y": {
+      "value": 0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s",
+    "revision": 1,
+    "title": "/ — the outer slash relating the conjugate orientations",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u",
+    "revision": 1,
+    "title": "Ares — war separates and spends difference",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.7,
+      "automation": null
+     },
+     "y": {
+      "value": -0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w",
+    "revision": 1,
+    "title": "Aphrodite — love attracts, joins, makes relation fertile",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 1.05,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y",
+    "revision": 1,
+    "title": "Harmonia — concord borne through the dangerous encounter",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030",
+    "revision": 1,
+    "title": "#4 — Complex Dynamism",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032": {
+    "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032",
+    "revision": 1,
+    "title": "4+2 — Zero Changes Its Role",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.425,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19",
+   "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g"
+  },
+  "provenance": [
+   {
+    "ref": "rooms/roz-room-03-two-logics.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+      "revision": "dbf3b17",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-room-03-two-logics:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-room-03-two-logics",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 4 of 8 · §2 — Two Logics of Two</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-03-two-logics\" data-expression-revision=\"1\"><h1>Return of Zero · Room 4 of 8 · §2 — Two Logics of Two</h1><p>Frozen reading of expression:return-of-zero:roz-room-03-two-logics at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-19\" aria-label=\"§2 · #0 — Difference Cannot Be Escaped\"><h2>§2 · #0 — Difference Cannot Be Escaped</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — Difference Cannot Be Escaped\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20\" aria-label=\"§2 · #1 — Dia-Ballein\"><h2>§2 · #1 — Dia-Ballein</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:46.50%;top:43.80%;font-size:2.70rem;opacity:1.00\" title=\"−1 — the excluded pole\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:57.50%;top:43.80%;font-size:2.70rem;opacity:1.00\" title=\"+1 — the asserted pole\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:43.80%;font-size:0.60rem;opacity:0.15\" title=\"0 — retained axis of tension and connection\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21\" aria-label=\"§2 · #2 — Sym-Ballein\"><h2>§2 · #2 — Sym-Ballein</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:47.00%;top:50.20%;font-size:3.60rem;opacity:1.00\" title=\"0/1 — origin-to-expression\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:57.00%;top:49.80%;font-size:3.60rem;opacity:1.00\" title=\"1/0 — expression-to-origin\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"/ — the outer slash relating the conjugate orientations\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22\" aria-label=\"§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus\"><h2>§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:43.00%;top:51.00%;font-size:0.60rem;opacity:0.15\" title=\"Ares — war separates and spends difference\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:60.50%;top:49.00%;font-size:0.60rem;opacity:0.15\" title=\"Aphrodite — love attracts, joins, makes relation fertile\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"Harmonia — concord borne through the dangerous encounter\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-23\" aria-label=\"§2 · #4 — Complex Dynamism\"><h2>§2 · #4 — Complex Dynamism</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#4 — Complex Dynamism\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-24\" aria-label=\"§2 · #5→0 — Zero Changes Its Role\"><h2>§2 · #5→0 — Zero Changes Its Role</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"4+2 — Zero Changes Its Role\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-room-03-two-logics",
+  "world_ref": "expression:return-of-zero:roz-room-03-two-logics",
+  "revision": 1,
+  "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-room-03-two-logics",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-03-two-logics",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+            "revision": "dbf3b17",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-room-03-two-logics:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-room-03-two-logics",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 4 of 8 · §2 — Two Logics of Two</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-03-two-logics\" data-expression-revision=\"1\"><h1>Return of Zero · Room 4 of 8 · §2 — Two Logics of Two</h1><p>Frozen reading of expression:return-of-zero:roz-room-03-two-logics at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-19\" aria-label=\"§2 · #0 — Difference Cannot Be Escaped\"><h2>§2 · #0 — Difference Cannot Be Escaped</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — Difference Cannot Be Escaped\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20\" aria-label=\"§2 · #1 — Dia-Ballein\"><h2>§2 · #1 — Dia-Ballein</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:46.50%;top:43.80%;font-size:2.70rem;opacity:1.00\" title=\"−1 — the excluded pole\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:57.50%;top:43.80%;font-size:2.70rem;opacity:1.00\" title=\"+1 — the asserted pole\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:43.80%;font-size:0.60rem;opacity:0.15\" title=\"0 — retained axis of tension and connection\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21\" aria-label=\"§2 · #2 — Sym-Ballein\"><h2>§2 · #2 — Sym-Ballein</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:47.00%;top:50.20%;font-size:3.60rem;opacity:1.00\" title=\"0/1 — origin-to-expression\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:57.00%;top:49.80%;font-size:3.60rem;opacity:1.00\" title=\"1/0 — expression-to-origin\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"/ — the outer slash relating the conjugate orientations\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22\" aria-label=\"§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus\"><h2>§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:43.00%;top:51.00%;font-size:0.60rem;opacity:0.15\" title=\"Ares — war separates and spends difference\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:60.50%;top:49.00%;font-size:0.60rem;opacity:0.15\" title=\"Aphrodite — love attracts, joins, makes relation fertile\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"Harmonia — concord borne through the dangerous encounter\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-23\" aria-label=\"§2 · #4 — Complex Dynamism\"><h2>§2 · #4 — Complex Dynamism</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#4 — Complex Dynamism\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-24\" aria-label=\"§2 · #5→0 — Zero Changes Its Role\"><h2>§2 · #5→0 — Zero Changes Its Role</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"4+2 — Zero Changes Its Role\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+        "revision": 1,
+        "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19",
+          "revision": 1,
+          "title": "§2 · #0 — Difference Cannot Be Escaped",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20",
+          "revision": 1,
+          "title": "§2 · #1 — Dia-Ballein",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i",
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k",
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21",
+          "revision": 1,
+          "title": "§2 · #2 — Sym-Ballein",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o",
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q",
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22",
+          "revision": 1,
+          "title": "§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u",
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w",
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23",
+          "revision": 1,
+          "title": "§2 · #4 — Complex Dynamism",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24",
+          "revision": 1,
+          "title": "§2 · #5→0 — Zero Changes Its Role",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g",
+          "revision": 1,
+          "title": "#0 — Difference Cannot Be Escaped",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i",
+          "revision": 1,
+          "title": "−1 — the excluded pole",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.35,
+            "automation": null
+           },
+           "y": {
+            "value": 0.62,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k",
+          "revision": 1,
+          "title": "+1 — the asserted pole",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.75,
+            "automation": null
+           },
+           "y": {
+            "value": 0.62,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.9,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m",
+          "revision": 1,
+          "title": "0 — retained axis of tension and connection",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0.62,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o",
+          "revision": 1,
+          "title": "0/1 — origin-to-expression",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q",
+          "revision": 1,
+          "title": "1/0 — expression-to-origin",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.7,
+            "automation": null
+           },
+           "y": {
+            "value": 0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s",
+          "revision": 1,
+          "title": "/ — the outer slash relating the conjugate orientations",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u",
+          "revision": 1,
+          "title": "Ares — war separates and spends difference",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.7,
+            "automation": null
+           },
+           "y": {
+            "value": -0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w",
+          "revision": 1,
+          "title": "Aphrodite — love attracts, joins, makes relation fertile",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 1.05,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y",
+          "revision": 1,
+          "title": "Harmonia — concord borne through the dangerous encounter",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030",
+          "revision": 1,
+          "title": "#4 — Complex Dynamism",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032": {
+          "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032",
+          "revision": 1,
+          "title": "4+2 — Zero Changes Its Role",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.425,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19",
+         "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g"
+        },
+        "provenance": [
+         {
+          "ref": "rooms/roz-room-03-two-logics.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+       "text": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-03-two-logics",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-room-03-two-logics",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-room-03-two-logics",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "submission-package/essay/section-rooms/03-two-logics/ROOM.md"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-room-03-two-logics"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-03-two-logics",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-03-two-logics",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-room-03-two-logics:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-room-03-two-logics"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-room-03-two-logics",
+   "revision": "1",
+   "canonical": {
+    "record_id": "roz-room-03-two-logics",
+    "vault_path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+    "source_revision": "dbf3b17"
+   }
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-room-03-two-logics:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-room-03-two-logics",
+    "world_ref": "expression:return-of-zero:roz-room-03-two-logics",
+    "revision": 1,
+    "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-room-03-two-logics",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-03-two-logics",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+              "revision": "dbf3b17",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-room-03-two-logics:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-room-03-two-logics",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 4 of 8 · §2 — Two Logics of Two</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-03-two-logics\" data-expression-revision=\"1\"><h1>Return of Zero · Room 4 of 8 · §2 — Two Logics of Two</h1><p>Frozen reading of expression:return-of-zero:roz-room-03-two-logics at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-19\" aria-label=\"§2 · #0 — Difference Cannot Be Escaped\"><h2>§2 · #0 — Difference Cannot Be Escaped</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#0 — Difference Cannot Be Escaped\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20\" aria-label=\"§2 · #1 — Dia-Ballein\"><h2>§2 · #1 — Dia-Ballein</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:46.50%;top:43.80%;font-size:2.70rem;opacity:1.00\" title=\"−1 — the excluded pole\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:57.50%;top:43.80%;font-size:2.70rem;opacity:1.00\" title=\"+1 — the asserted pole\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:43.80%;font-size:0.60rem;opacity:0.15\" title=\"0 — retained axis of tension and connection\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21\" aria-label=\"§2 · #2 — Sym-Ballein\"><h2>§2 · #2 — Sym-Ballein</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:47.00%;top:50.20%;font-size:3.60rem;opacity:1.00\" title=\"0/1 — origin-to-expression\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:57.00%;top:49.80%;font-size:3.60rem;opacity:1.00\" title=\"1/0 — expression-to-origin\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"/ — the outer slash relating the conjugate orientations\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22\" aria-label=\"§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus\"><h2>§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:43.00%;top:51.00%;font-size:0.60rem;opacity:0.15\" title=\"Ares — war separates and spends difference\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:60.50%;top:49.00%;font-size:0.60rem;opacity:0.15\" title=\"Aphrodite — love attracts, joins, makes relation fertile\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:0.60rem;opacity:0.15\" title=\"Harmonia — concord borne through the dangerous encounter\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-23\" aria-label=\"§2 · #4 — Complex Dynamism\"><h2>§2 · #4 — Complex Dynamism</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.50rem;opacity:1.00\" title=\"#4 — Complex Dynamism\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-24\" aria-label=\"§2 · #5→0 — Zero Changes Its Role\"><h2>§2 · #5→0 — Zero Changes Its Role</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-03-two-logics\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"4+2 — Zero Changes Its Role\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-03-two-logics",
+          "revision": 1,
+          "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19",
+            "revision": 1,
+            "title": "§2 · #0 — Difference Cannot Be Escaped",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20",
+            "revision": 1,
+            "title": "§2 · #1 — Dia-Ballein",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i",
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k",
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21",
+            "revision": 1,
+            "title": "§2 · #2 — Sym-Ballein",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o",
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q",
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22",
+            "revision": 1,
+            "title": "§2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u",
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w",
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23",
+            "revision": 1,
+            "title": "§2 · #4 — Complex Dynamism",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24",
+            "revision": 1,
+            "title": "§2 · #5→0 — Zero Changes Its Role",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g",
+            "revision": 1,
+            "title": "#0 — Difference Cannot Be Escaped",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02i",
+            "revision": 1,
+            "title": "−1 — the excluded pole",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.35,
+              "automation": null
+             },
+             "y": {
+              "value": 0.62,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02k",
+            "revision": 1,
+            "title": "+1 — the asserted pole",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.75,
+              "automation": null
+             },
+             "y": {
+              "value": 0.62,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.9,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-20:ent-02m",
+            "revision": 1,
+            "title": "0 — retained axis of tension and connection",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0.62,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02o",
+            "revision": 1,
+            "title": "0/1 — origin-to-expression",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02q",
+            "revision": 1,
+            "title": "1/0 — expression-to-origin",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.7,
+              "automation": null
+             },
+             "y": {
+              "value": 0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-21:ent-02s",
+            "revision": 1,
+            "title": "/ — the outer slash relating the conjugate orientations",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02u",
+            "revision": 1,
+            "title": "Ares — war separates and spends difference",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.7,
+              "automation": null
+             },
+             "y": {
+              "value": -0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02w",
+            "revision": 1,
+            "title": "Aphrodite — love attracts, joins, makes relation fertile",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 1.05,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-22:ent-02y",
+            "revision": 1,
+            "title": "Harmonia — concord borne through the dangerous encounter",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-23:ent-030",
+            "revision": 1,
+            "title": "#4 — Complex Dynamism",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032": {
+            "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-24:ent-032",
+            "revision": 1,
+            "title": "4+2 — Zero Changes Its Role",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.425,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19",
+           "entity_ref": "expression:return-of-zero:roz-room-03-two-logics:scene:movement-19:ent-02g"
+          },
+          "provenance": [
+           {
+            "ref": "rooms/roz-room-03-two-logics.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+         "text": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-03-two-logics",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-room-03-two-logics",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-03-two-logics",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-room-03-two-logics",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "submission-package/essay/section-rooms/03-two-logics/ROOM.md"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-room-03-two-logics"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-03-two-logics",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-room-03-two-logics",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-03-two-logics:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-room-03-two-logics",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+  "summary": "a living Expression · 6 scenes · 12 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-room-03-two-logics:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-03-two-logics",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-room-03-two-logics"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-room-03-two-logics:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-room-03-two-logics",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-room-03-two-logics",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-03-two-logics:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-room-03-two-logics:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-room-03-two-logics",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-room-03-two-logics"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

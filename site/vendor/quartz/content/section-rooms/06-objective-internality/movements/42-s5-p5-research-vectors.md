@@ -15,7 +15,7 @@ tags: [epi-logos/antikythera-essay, argument-map/live, argument-map/section, arg
 # §5 · #5 — Quaternal Logic — Transcendent Relation
 
 <!-- reader-navigation -->
-Movement 42 of 48 · [This room](../ROOM.md) · [← Previous](41-s5-p4-bimba-energy-fields.md) · [Next →](../../07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md)
+Movement 42 of 48 · [This room](../ROOM-06-objective-internality.md) · [← Previous](41-s5-p4-bimba-energy-fields.md) · [Next →](../../07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md)
 <!-- /reader-navigation -->
 
 ## Claim
@@ -38,7 +38,9 @@ Transcendent Relation reaches its ethical strength in co-internality. Self and O
 
 ## Tension / limit
 
-**QL is faithful to Transcendent Relation only insofar as the differences it relates remain capable of answering it.** Traditions, persons and technical systems retain their own source standing, refusal and consequence inside the relation. Para Vāk and the Archetypal-Numerical lens are the commissioned whole-pair through which this product is disclosed; historical Kashmir Śaivism retains its own genealogy, and the authorial QL derivation retains its own. Recursive and nested technical architecture can instantiate relational operations while phenomenal subjectivity remains a separate question. The operational and ethical test is whether the relation preserves real difference and returned consequence or converts every Other into a legible term of its own frame.
+**QL is faithful to Transcendent Relation only insofar as the differences it relates remain capable of answering it.** Traditions, persons and technical systems retain source, refusal and consequence within the relation. Para Vāk and the Archetypal-Numerical lens give this product its vertical and formal disclosure; historical Kashmir Śaivism and the QL derivation remain distinct grounds whose relation is carried through the operations they make available.
+
+Recursive and nested technical architecture becomes a genuine refraction of Transcendent Relation where local terms can retain integrity, enter larger wholes, and return consequences capable of changing the relation itself. The operational and ethical test is therefore whether difference remains consequential, or whether every Other is merely translated into a legible term of one enclosing frame.
 
 ## 5→0 return
 
@@ -46,4 +48,4 @@ The section now returns through its parent field. Central gave meaningful contin
 
 This is the product field’s Epi-Logos: philosophy reflected in technology strongly enough that actual technological encounter can answer back, refine the philosophical mapping and alter what is built next. The next station therefore begins not with another product but with the instrument returning into the World and Life whose means it has learned to recognise.
 
-**Owning product:** [S5 — Quaternal Logic](../../arguments/products/S5-Quaternal-Logic.md). **Whole field:** [S — World and Life](../../arguments/products/S-World-and-Life.md). The [authored P1 route for M42](../P1-CANONICAL-ALIGNMENT.md#p1-m42) records the canonical six-product alignment and the inherited research-vector depth.
+[Quaternal Logic](../../arguments/products/S5-Quaternal-Logic.md) gives this movement its technical body within the wider [World and Life](../../arguments/products/S-World-and-Life.md) field. Its return is the achieved relation becoming ground for another relation without installing itself as the final exterior from which all scales are judged.

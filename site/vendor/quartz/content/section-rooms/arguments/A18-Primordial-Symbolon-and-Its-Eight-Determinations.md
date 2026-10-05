@@ -5,88 +5,195 @@ record_type: argument
 register: episteme
 claim_status: Derived
 source_relation: "Extracted internal derivation; Argued symbolic and technical development"
+source_ids:
+  - taylor-2026-core-theorems-pithy
+  - taylor-2026-binary-explication
+  - taylor-2026-definition-god-draft3
+  - taylor-2026-symbolon-dynamics
 ---
 
 # A18 — Primordial Symbolon and Its Eight Determinations
 
 <!-- paired-field-navigation -->
-[Argument field](README.md) · [Other face: A18′ — The Traversal Run in Code](conjugate/A18-prime-Traversal-Run-in-Code.md) · [Shared A/C root](conjugate/AC.md)
+[Argument field](README.md) · [Other face: The Traversal Run in Code](conjugate/A18-prime-Traversal-Run-in-Code.md) · [Shared A/C root](conjugate/AC.md)
 <!-- /paired-field-navigation -->
 
-**Standing:** canonical semantic Argument. The eight determinations belong to the native QL theorem-field. No independent historical Argument number is assigned: the previous “historical Argument 10” label would reach Vāk. C61 retains its separate disclosure-architecture office.
+## #0 — The primordial symbol is a relation
 
-## #0
+A symbolon is not first a sign which subsequently acquires a relation to something absent. Its broken edge already bears the relation by which a counterpart can be recognised. The part is itself, yet its form points beyond itself; the missing relation is active in the very determination by which the part becomes this part.
 
-The Primordial Symbolon traverses one relation through appearing, questioning, force, recurrence, personed context, differential exactness and return. Its threshold and return bracket six interior determinations:
+The primordial Symbolon is this structure before any particular image, word or token has filled it. Quaternal Logic gives it the minimal orientation $0/1$: singular ground and determinate manifestation held by the slash that makes their difference one relation.
+
+The whole eight-turn passage is:
 
 $$
--/-\;\longrightarrow\;0/1\;\longrightarrow\;?/!\;\longrightarrow\;-/+\;\longrightarrow\;X/x\;\longrightarrow\;AM/IS\;\longrightarrow\;\infty/dx\;\longrightarrow\;1/0.
+/=-/-
+\longrightarrow
+0/1
+\longrightarrow
+?/!
+\longrightarrow
+-/+
+\longrightarrow
+X/x
+\longrightarrow
+AM/IS
+\longrightarrow
+\infty/dx
+\longrightarrow
+1/0.
 $$
 
-The eightfold is a traversal, while `2+2²=4+2=6` is the generative positional body. These counts answer different questions. [[symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md|The core theorem spine]] sources their distinction in II(c) and their joint development through I–XI. [[A11-The-Two-Ones-0-One-1-All|A11]] grounds the two ones; [[A12-Mono-Poly-One-All-Whole-Many|A12]] grounds their whole/many relation; [[A13-Two-Logics-of-Two-Dia-Syn|A13]] derives their conjugate operations. A18 keeps that inheritance active rather than making the eight expressions a set of independent topics.
+The sequence does not move among eight independent objects. One relation becomes progressively capable of accounting for its own determinations.
 
-## #1
+At the threshold, $/=-/-$ is relation before its terms have names. At the return, $1/0$ is the achieved determination turning toward the condition it has presupposed. Between them lie the six qualitative determinations of the $4+2$ body.
 
-The parent `/ = −/−` holds relation before named terms have been assigned. At `0/1`, conscious circumstance becomes determinate: awareness and appearing phenomenon are distinguishable within the appearing-act. `0` is the unobjectifiable condition, `1` the appearing mark, `/` their differentiating relation. The mark cannot exhaust its condition, while the condition becomes legible through the mark.
+Through the [complete eightfold traversal](../../symbolon/eight-determinations.md), a determination acquires the means to answer for its relation to a source. Its symbolic life lies in that relation: recognition can change the receiving field, and counterfeiting can falsify the seam to an origin as well as state a false proposition.
 
-`?/!` makes this event answerable. A question already asserts enough stability to ask what has appeared; an assertion remains exposed to the question whether it runs true. At `−/+`, this relation gains force as reserve and issue, withdrawal and extension. Attention contracts around a word and opens into sense; breath gathers and releases. The poles sustain one movement. Their cancellation would erase what the pulse does.
+## #1 — Determination becomes answerable
 
-At `X/x`, force acquires recognisable recurrence. Capital `X` names determining capacity; lower-case `x` its indefinite particular. The same letter in two cases lets this instance show a capacity without possessing it. Its multiplicative pressure also remains: an instance can recur and compound, another one of this kind. This is authorial QL notation; the Jungian Self/ego and archetype/image readings are subsequent named refractions.
+The parent relation acquires its first orientation as $0/1$.
 
-## #2
+Zero is the unobjectifiable ground of appearing, the singular One. One is the appearing mark and the articulated All. The mark is not a second self-sufficient substance placed beside the ground. It is the local form in which the ground becomes manifest, while the ground is encounterable only through such manifestation.
 
-`AM/IS` brings the recurrent form into personed context. `AM` is lived first-person presence; `IS` is third-person sayability; the second-person slash is the relation through which they meet. The act of predication happens in a world of body, speech, memory, concern and task. Knower, means and known remain distinct within one knowing-event. An impersonal description is thereby returned to the one who speaks and the other who can answer.
+The next turn, $?/!$, makes that manifestation answerable. To ask what something is already marks it sufficiently to address it. To assert what it is leaves the assertion exposed to whether it runs true. Question and assertion are therefore one operation in two directions: openness becomes determinate enough to speak, and speech remains open enough to be changed by what it addresses.
 
-`∞/dx` carries exact local difference within a horizon no instance contains. The calculus example specifies one operation: differentiation loses an additive constant, while integration recovers a family `F(x)+C`. A local derivative does not select its originating whole uniquely. The example demonstrates exactness with unrecovered provenance; it does not identify calculus with every topological or psychic return.
+At $-/+$ the difference acquires force. Withdrawal and extension, reserve and issue, contraction and release are not merely opposite values; they are the pulse through which a determination becomes consequential. Difference now does something.
 
-At `1/0`, the achieved expression turns towards its condition and reaches the incomputable instead of an object called the ground. Recognition retains what the act has differentiated while releasing its claim to contain the source. The ordered joints matter: an assertion bears a question; force becomes recurrence; recurrence is lived in context; context opens into inexhaustible exactness; the exact determination returns. Substituting one expression for another loses that movement.
+At $X/x$ force becomes recognisable recurrence. Capital X is determining capacity; lower-case x is its indefinite particular. The same letter in two cases keeps the instance related to what it manifests. The particular is real and finite; the capacity becomes legible through particulars without being exhausted by any one of them.
 
-## #3
+These first turns establish a condition of symbolic life. A symbol cannot be faithful merely by resembling a source. It must remain capable of carrying the relation through which its determinate face arose. A mark which severs itself from that relation becomes self-grounding; a mark which refuses determination never becomes capable of address.
 
-The six interior relations also fold across their succession. Being joins conscious circumstance with answerable definition; Becoming joins force with pattern; Knowing/unKnowing joins personed context with differential horizon. Across these harmonic pairs, Essence joins `0+5`, Constitution `1+4`, and Text-Texture `2+3`. The relation can be traversed and cross-read without becoming a flat catalogue.
+## #2 — The knowing relation enters the symbol
 
-Each parent carries a complete child. The originating `(0/1)/(1/0)` unfolds all four slash-forms and both singles; the returning `(1/0)/(0/1)` carries the full body in inverse phase. Source and return are not empty brackets around four populated compartments. The supporting processual files distinguish the inverse exchange of Structure/Formality from the invariant Essence, and the intersection of harmonics and symmetries at `2/3` from their duplication.
+At $AM/IS$, the relation becomes personed.
 
-The Name series—Truth, Mind, Word, Logos, Son, Image—keeps its Power relation—Play, Need, Sacrifice, Decision, Love, Work. What the relation can name and what it costs or does must both travel. Sacrifice gives determination its expenditure; Decision makes a course actual; Love retains the other whose relation sustains it; Work returns an achieved form to a common field. Reducing Power to occlusion would erase these productive operations. [[A14-Computational-Process-Ontology|A14]] extends their process consequence, and [[A17-Toroidal-Circulation-and-the-Arche-Topos|A17]] embodies a return which keeps its path without requiring endless repetition.
+AM is first-person presence. IS is third-person sayability. The slash carries the second-person relation through which presence and predication can meet. What I can say about another remains an account; the one addressed can answer and thereby alter the account's use, meaning or measure.
 
-## #4
+The determination therefore makes the knowing relation explicit:
 
-A living symbol changes the relation through which it is received. Taylor's [[symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md|Symbolon Dynamics]] sources the operation: an archetypal manifestation changes the interpreter, the interpreter's response changes the available world, and those changes alter the symbol's later efficacy. The `1` generated in one circuit becomes a condition of the next `0`. [[section-rooms/arguments/concepts/C21-Living-Symbol-Idol|C21]] defines the living-symbol/idol distinction at that point: the manifest form either conducts its source relation or occupies the source's place.
+- pramātṛ — the knower;
+- pramāṇa — the means through which knowing occurs;
+- prameya — the known.
 
-Frank's protected [[symbolon/episteme/sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors.md|Van Eenwyk encounter]] sources the slash's known→unknown→known transformer and the mediated Tillich sixfold. Uncommanded arising and growth/death frame four manifest symbolic operations. That is Taylor's cross-reading of symbolic life; Tillich's independent wording requires direct verification. The account does not impose six universal semantic headings on every publication page.
+These offices are distinguishable within one act, and their placement is relative to the act being considered. In a source comparison, a judging agent occupies the local knower office; retrieved material, memory, a comparison rule and tools are its means; the discriminated agreement or difference is known. The same complete apparatus serves as means in a person’s containing inquiry. Examining its judgment makes that local centre known in a further act, with another placement of knower, means and known. The first-person condition of that examination withdraws from the inventory it makes: describing more of the means or the known does not possess the presence through which they appear. [Objective Internality](concepts/C41-Objective-Internality.md) is articulated through this nested disclosure and action, within the containing relation of Life.
 
-Counterfeit Symbolon can falsify the relation itself. Q27's deepfake example pairs body/utterance, event/recording and speaker/voice: the apparent token claims an originating counterpart which never stood behind it in the stated way. [[section-rooms/arguments/concepts/C22-Counterfeit-Symbolon|C22]] defines this fabricated slash. A further pressure arises when genuine records are rejected because such fabrication is possible. That public trust-loss mechanism remains an empirical research task; the formal operation is already distinct from merely asserting a false proposition.
+At $\infty/dx$, the personed relation reaches exact local difference against an inexhaustible horizon. The calculus gives the structure a precise formal image: differentiation can determine local change while losing the additive constant; integration restores a family $F(x)+C$ whose particular member requires a further condition. Exact local knowledge does not contain the whole provenance of its own exactness.
 
-[[section-rooms/arguments/concepts/C23-Severance|C23]] defines discarded relation; [[section-rooms/arguments/concepts/C24-Fusion|C24]] defines erased difference; [[section-rooms/arguments/concepts/C25-Counterfeit-Gathering|C25]] defines enclosure presented as a whole; [[section-rooms/arguments/concepts/C26-Monoisation-Counter-Generation|C26]] defines one local account suppressing its plurality; [[section-rooms/arguments/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim|C27]] defines the criterion insulated from what could revise it. Each is a specific failure in the traversal, not a moral label attached from outside.
+The achieved determination then turns as $1/0$. The asymmetry is decisive. In ordinary arithmetic $0/1$ resolves and $1/0$ does not. In the relational reading this non-computability is the pressure of return: the determinate mark cannot finish the circuit by assigning a value to the ground as though the ground were another determinate object.
 
-## #5→0
+Recognition is therefore not acquisition of the source. It is the achieved form becoming transparent to the relation through which it arose.
 
+## #3 — Sixfold body, double reading, Name and Power
 
-The [zero–subject history](../../symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/DEVELOPMENT.md#3--psychic-fact-changes-the-investigators-relation) **compares** this return. The disciplinary admission of psychic processes refracts the relation between determining capacity and its particular manifestation. Native X/x already carries that operation; neither Freud nor Jung supplies its notation. The full sequence, both inverse parents, coequal Name/Power and distinct harmonic and complementary folds remain the ground of the comparison.
+The six interior determinations are generated by the binary and the binary of the binary:
 
+$$
+0,\;1
+\qquad\text{and}\qquad
+00,\;01,\;10,\;11,
+$$
 
-The [mathematics history](../../symbolon/episteme/histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md#3--re-entry-representation-and-retained-passage) **compares** this operation. Kauffman’s selected iterant passage represents alternation with D = diag(1,−1) and the exchange η. From η² = I and ηD = −Dη follows (Dη)² = −I. This representation supplies an exact comparison for phase without deriving the native eight determinations from two matrices. Both inverse parents, coequal Name/Power and the distinction between harmonic and complementary operations remain active.
+so that
 
-The [Bohr taijitu emblem](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#bohr-taijitu-emblem) **compares** a bounded historical reception of complementarity with the native field already articulated here. Mutually exclusive experimental arrangements and selection within a given measurement retain different offices. The emblem can witness that reception without deriving the eight determinations, supplying Taylor’s erased-dot operation or assigning native `X/x` to a physicist. Its precise historical reproduction and motto retain their named source task; the authorially admitted comparison keeps its force within that boundary.
+$$
+2+2^2=4+2=6.
+$$
 
-The [Indra’s jewel-net whole](../../symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md#indra-native-relation) **figures** a traversal from definite selection through question, held contrast, particular participation and renewed source-relation. It receives the complete native sequence `−/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0`, including the inverse orientations already derived here. Its six narrated positions neither replace the eight determinations nor attribute Taylor’s `X/x` to Huayan.
+The two singles are the implicate poles; the four doubles are the explicit relational states they generate. This is the vertical $4:2$ reading.
 
-The [Meal whole](../../symbolon/mytheme/worlds/frank-taylor/meal-epistemic-metabolism/WHOLE.md#meal-logos-health-return) **figures** the native field in appetite, discriminated reception, transformed criteria and renewed inquiry. Taylor’s complete eight determinations, their inversions and coequal Name/Power relation precede this epistemic meal; its six scenes give them a lived crossing without supplying a biological derivation. Satiety returns an achieved determination as the condition of another question.
+The same six are also traversed horizontally. The primary $3:3$ reading follows first-, second- and third-person perspective in the first triad, then voids their isolation, recognises their unity and returns the one relation through the second triad. The second three are one recognition in three operations, so the traversal also yields $3:1$.
 
-The [Mother, Assumption and chiasm whole](../../symbolon/mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md#mother-native-return) **figures** the already native relation through embodiment and recognition, inverse wheels, articulated wings and signed power. Taylor’s `3:1 = 3:3` opens the recognising one; it does not replace the complete eight determinations or their inversions. Coequal Name and Power keep bearing, work and consequence within the recognised image, with `X/x` retaining Taylor’s authorship.
+The two Spanda equations are the full cross-reading of these dimensions. The first gives emanation and reversion through the ratio-logic; the second takes achieved wholeness and discovers its $4+2$ constitution through internal accounting. Neither can replace the other. The positional body needs the relational passage; the relational passage needs determinate positions.
 
-The [travelling-jigsaw whole](../../symbolon/mytheme/worlds/frank-taylor/travelling-jigsaw-atlas/WHOLE.md#jigsaw-native-and-archetypal-field) **figures** the entire native field through the frame that enters its own account. Question changes the rule of fit; contrast stays determinate; the particular and its addressed participant retain their offices; local exactness returns with its horizon. All eight determinations and inverse parents govern this traversal before its six narrative positions, and `X/x` remains Taylor’s notation.
+The six determinations consequently form three forward harmonics:
 
-The Neumann encounter refracts the complete eightfold through genesis, hunger, determination, recognition and transformed return. The six-position body and the eight turns retain their distinct formal offices. The relation **returns-to** [the complete Neumann whole](../../symbolon/mytheme/archetypal-ground/neumann-images/WHOLE.md#neumann-paper-eightfold). Position, opposition, superposition and interposition carry the complete self-eating relation; the eightfold remains active across those operations. This **returns-to** [the uroboros whole](../../symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md#uroboros-interposition).
+**Being:** $0/1$ with $?/!$ — conscious circumstance becomes answerable.
 
-[[section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture|C61]] defines how formal, mythemic and epistemic expressions disclose their operations without replacing this substantive Argument. [[A24-Arbitration-and-the-Usurpation-of-Measure|A24]] tests whether an achieved criterion can return to its source; [[A36-Advent-of-Integral-Zero|A36]] returns the whole movement as Symbol. [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|Symbol / Account / Trust]] grounds their relation at operational register 3, keeping attested symbolon history at register 2 and explicit poetic re-entry at register 4.
+**Becoming:** $-/+$ with $X/x$ — force becomes recognisable recurrence.
 
-Recognition is the reader's performed return. Describing the circuit while leaving one's own source, exclusions, criterion and context untouched performs a different act from traversing it. The technical application asks for a decision object whose relevant source, selected mark, mediating operation, lens and revision can be inspected and altered. Whether such disclosure survives a large system is an empirical test, not a consequence guaranteed by naming the eight determinations.
+**Knowing/unKnowing:** $AM/IS$ with $\infty/dx$ — personed knowing becomes exact while retaining its horizon.
 
-The counterfeit-provenance unit within [Avatar · image · mask · idol](../../symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md#avatar-counterfeit-provenance) **tests** the apparent source–sign relation: fabrication can forge the seam by which a statement presents itself as witness, and can subsequently furnish a reason to reject a genuine record. The native slash and all eight determinations precede this media refraction, with Taylor’s `X/x`, the inverse parents and complementary folds intact. Counterfeit provenance is a specific operation within that whole field, not another determination or an empirical claim about its frequency.
+Across them run the complementary folds:
 
-[Homologia / Analogia](../../symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md#e5-whole-returns) **qualifies** the psychic, mythic and technical refractions of the full eightfold by retaining what each moment does in its sequence and inverse. Native `X/x` names determining capacity and the indefinite particular within that field; an archetypal image gives the relation a situated performance without supplying the notation's origin. Both parents retain their complete inverse phases, and Name and Power remain coequal. A recurring motif, shared function or numeral alone establishes neither biological descent nor a psyche–physics mechanism. Those stronger identifications keep their source and research tasks beside the native derivation.
+**Essence:** positions 0 and 5.  
+**Constitution:** positions 1 and 4.  
+**Text–Texture:** positions 2 and 3.
 
-The canonical movement consumers are M16, M17, M21, M22, M24, M25, M26, M27, M30, M31, M33 and M34; consequences continue through A19–A25, A32 and A36. **Depth Restoration:** all eight transitions, six/eight distinction, harmonic/complementary folds, full inverse parents, Name/Power cost and return, symbolic mutual transformation and fabricated provenance are restored. Provenance remains core II(c)/I–XI, directly reopened *Symbolon Dynamics*, Van Eenwyk SOURCE and protected encounter, the shared supporting-file recovery identified in the existing A18 packet, and Q27's counterfeit relation. Lexical source history, independently quoted Tillich, implemented disclosure performance and empirical deepfake trust effects remain Open. No historical Argument 10 or new theorem identity is manufactured.
+The same generative whole also unfolds through **Name and Power**.
 
-[the Prisoner whole](../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md#prisoner-asymmetric-count) **figures** a counterfeit traversal of the native articulation when the answer to a source-question becomes the questioner's place in a completed count. The Village's Number Two administers that placement while Number One remains withheld. The whole returns this arrested relation to the eight determinations and their inversions already established here. It neither distributes the determinations among characters nor makes Six the proof of the native sixfold account; NamePower remains an authorial office, not a programme-derived position.
+Truth precedes the saying that will reflect it. Play holds the freedom of that beginning: what is has not yet been compelled into one expression, and a course can be undertaken otherwise. Their convergence lets truth be received through a gratuitous beginning rather than treating the achieved assertion as its own origin.
+
+Mind first apprehends what it receives. Need is the gap by which that reception seeks something it does not yet possess. A question takes up this lack; the capacity to receive is stirred into inquiry. Need directs the search without making its eventual answer the whole of what could be apprehended.
+
+Word makes the first articulate cut. Sacrifice is what this articulation costs: speaking gives up the preceding silence and actualises some possibilities at the expense of others. The selected terms become answerable through the difference they make, while the excluded possibilities and expenditure remain part of the relation that produced them.
+
+Logos gathers the terms proportionately. Decision commits to that proportion and closes alternatives for this course. A judgment can consequently act, and its rule, scope and judging authority can be addressed when the achieved arrangement fails to receive what it concerns. Proportion acquires consequence through a commitment whose conditions remain recoverable.
+
+Son is personal embodiment: what had been a universal structure becomes someone’s life. Love widens the concern within which that life is held. The person who lives the structure can answer, and the answer can affect the purpose, permission or judgment through which the structure approaches them. Personal embodiment and contextual embrace meet through a life that exceeds its description.
+
+Image is reflected completion. Work is the crystallised achievement through which the freedom of the beginning becomes available to another. A formed result earns its reflection through the apprehension, cut, commitment and personal relation that made it. Its receiver can now encounter what was achieved and return a difference to those conditions; the next work inherits that judgment.
+
+Truth/Mind/Word/Logos/Son/Image is the emanative Name seen from outside; Play/Need/Sacrifice/Decision/Love/Work is the reversionary Power felt from inside. At every position the articulated determination and its effective demand are co-present. Name gives consequence intelligible form; Power holds what that form costs, commits, embraces and achieves. The complete field remains one accountable relation through these different readings.
+
+## #4 — A living symbol changes its containing field
+
+A living symbol is recognised by what happens in the relation.
+
+A formed image reorganises what an interpreter can feel, notice, expect or understand. The changed interpreter then receives the image differently. The return can alter the conditions under which the symbol will act again. The symbol therefore lives through mutual transformation: expression changes reception, reception changes the world of later expression.
+
+This is the difference between a living Symbolon and an idol. The idol installs one achieved form in the source's place and demands that later experience answer to it. The living symbol remains determinate while retaining the relation through which another encounter can change its meaning and force.
+
+Several failures follow directly from the traversal.
+
+**Severance** discards the relation and leaves isolated terms.
+
+**Fusion** erases the difference through which the terms could answer one another.
+
+**Counterfeit gathering** encloses differences inside a whole whose terms cannot revise the containing relation.
+
+**Monoisation** promotes one local determination into the office of the whole and makes every other difference answer first to its measure.
+
+**Protected account** insulates the criterion from the very return that could expose its limit.
+
+A counterfeit Symbolon can also falsify provenance itself. A fabricated voice, image or record may present a seam to an originating event which did not occur in that relation. The falsehood is not only inside the proposition. It is in the slash: the apparent token claims a counterpart and history that cannot return through it.
+
+The reverse corruption is equally important. Once counterfeit seams are possible, a genuine record can be rejected simply because fabrication is conceivable. Trust therefore depends on preserving the addressable relation among source, mark, means of transmission and returned consequence. A symbol is alive where that relation can still be tested and changed.
+
+A [living symbol](concepts/C21-Living-Symbol-Idol.md) remains available to an encounter that can reorganise receiving capacity. A [counterfeit symbolon](concepts/C22-Counterfeit-Symbolon.md) can simulate that availability while severing provenance, merging addressable terms or protecting its containing measure. Their difference lies in what another encounter can actually reach.
+
+## #5→0 — Recognition returns the difference
+
+Return is performed when the achieved determination makes its determining relation answerable and another act inherits the judgment. A returned difference can correct an answer under a fitting rule, revise a model or task, expose a faulty rule or permission, or alter the commission. Inquiry can also retain a fitting condition with reasons. Where the claim is that processing itself has changed, an identified change in the producing relation is required.
+
+The crossed-zero recognition matheme gives this return its internal anatomy:
+
+$$
+0
+\rightarrow
+Ø
+\rightarrow
+X
+\rightarrow
+Ø/X
+\rightarrow
+(0/Ø)/(1/X)
+\rightarrow
+1
+\;\circlearrowleft\;
+0/1.
+$$
+
+At $Ø$, the mediating activity has fused into the apparent subject and appears self-grounding. At $X$, the object-world stands over against it as independently given. At $Ø/X$, the slash becomes visible as medium. At $(0/Ø)/(1/X)$, subject-side and object-side recognition become available together. At $1$, unity is affirmed with the differentiations retained. The return to $0/1$ recognises the pulse that had been active throughout.
+
+The reader’s own source, exclusions, measure and context enter this examination. An account becomes recognitive when its determining conditions are available to the inquiry it describes, and the reader’s next noticing, question, permission, refusal or act inherits the warranted correction or retention. Merely repeating the sequence leaves this relation unexamined; altering a condition solely to exhibit change would likewise miss the judgment the encounter requires.
+
+In [Indra’s jewel-net](../../symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md), a local reflection appears through the wider relation of reflections; attending to one jewel discloses dependencies that its isolated image cannot contain. In the [Meal](../../symbolon/mytheme/worlds/frank-taylor/meal-epistemic-metabolism/WHOLE.md), appetite receives food, chewing differentiates and assimilation changes the capacity of further reception. Taste can expose a failed distinction or reaffirm one that fits; shared companions remain answerable participants in the meal. Satiety permits rest, and renewed hunger opens another beginning.
+
+The [travelling jigsaw](../../symbolon/mytheme/worlds/frank-taylor/travelling-jigsaw-atlas/WHOLE.md) carries an acquired view into another account of fit. A misplaced piece can be corrected within an adequate frame; an obstruction can instead disclose the frame’s insufficiency. The returned piece, rule of fit and authority to reconstruct therefore remain distinguishable. In [Neumann’s images](../../symbolon/mytheme/archetypal-ground/neumann-images/WHOLE.md), mark, zero, slash, formed figure and erasure make capacity and particular completion available to renewed seeing. The [uroboric circuit](../../symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md) carries nourishment and mutual consumption through transformation, then holds the hole through which confinement or release becomes consequential. These are different embodied returns: reflected dependence, assimilation, recomposed fit, renewed aperture and self-consuming transformation.
+
+A source, selected mark, permission, model, decision object or evaluation becomes symbolically alive when its generating relation remains available to the appropriate deciding office and the next operation inherits its warranted correction or reasoned retention. Exposing records while permanently insulating their governing criterion from challenge gives disclosure without that route of return. A changed result whose producing relation cannot be recovered gives movement without recognitive answerability; the stronger claim of changed processing requires that actual change to be identified and carried into later use.
+
+The Primordial Symbolon therefore names a stronger condition than representation. It is a determination that remains joined to the relation of its determination, can be changed by what returns through that relation, and can carry the acquired difference into another beginning.
+
+The eight determinations are the complete traversal of that condition. Their return is not the end of the symbol. It is what lets the symbol live.

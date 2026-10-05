@@ -10,11 +10,11 @@ type: _md_
 title: "Every Field is a Way"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c8008a547e011908b9c29
-source_id: 18fa4797-123c-8008-a547-e011908b9c29
 notion_created: 2025-02-03T13:50:13Z
 notion_edited: 2025-02-03T13:50:22.701Z
 status: sorted
 kind: poem
+source_id: every-field-is-a-way
 ---
 Every field is a way,
 Every way a field

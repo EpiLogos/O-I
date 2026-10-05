@@ -13,7 +13,7 @@ source_relation: "Extracted internal QL development of the four-corner crossing"
 
 The input is the conscious circumstance: something appears, its appearing is known, and that knowing is not one further object beside the appearance. The symbols are already earned: `0` marks unobjectifiable awareness, `1` the appearing determination, `/` their mediating relation.
 
-File 1 §5→0 in the [Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) sources the crossing of **0 IS AND/OR IS-NOT EQUAL TO 1**. This is the author's native development using the four corners; it does not claim that an external Buddhist source supplies QL's notation or positional derivation. The [?/! root](../../question-assertion.md) grounds the relation of inquiry and assertion.
+File 1 `§5→0` in the [Binary Explication](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) sources the crossing of **0 IS AND/OR IS-NOT EQUAL TO 1**. This is the author's native development using the four corners; it does not claim that an external Buddhist source supplies QL's notation or positional derivation. The [?/! root](../../question-assertion.md) grounds the relation of inquiry and assertion.
 
 ## #1 — IS and IS-NOT
 
@@ -39,7 +39,7 @@ File 1 places `1/0` at this constitutive limit. Ordinary arithmetic's undefined 
 
 **SILENCE** names the recognition through which the four corners become one lived movement. It is not a fifth truth value appended to their list. Affirmation, denial, their co-presence, and their suspension remain available, while the person recognises the circumstance in which all four occur.
 
-File 1 locates this recognition at #5. [∞/dx](../../infinity-dx.md) embodies its exactness: the field can be articulated locally without being enclosed by its articulation. [The six determinations](six-determinations.md) can now be read as the source's reflected ways of becoming legible within the conscious circumstance, rather than descriptions imposed from outside it.
+File 1 locates this recognition at #5. [`∞/dx`](../../infinity-dx.md) embodies its exactness: the field can be articulated locally without being enclosed by its articulation. [The six determinations](six-determinations.md) can now be read as the source's reflected ways of becoming legible within the conscious circumstance, rather than descriptions imposed from outside it.
 
 ## #5→0 — Encounter again
 

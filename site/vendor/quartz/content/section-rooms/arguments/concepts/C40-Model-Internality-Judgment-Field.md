@@ -1,63 +1,74 @@
 ---
+title: C40 — Model Internality / Judgment Field
 record_id: C40
-register: "episteme"
-claim_status: "Argued"
-source_relation: "Argued from authorial Model Internality and MEF/J-Space research; Offered design inscriptions and implementation evidence remain distinct"
+record_type: concept
+register: episteme
+claim_status: Argued
+source_relation: Argued from the native theorem, accepted product commission and model-revising encounter; proposed experiments retain their design status
+source_ids:
+  - taylor-2026-core-theorems-pithy
+  - taylor-2026-oi-product-field-commission
+  - taylor-2026-mef-twelve-lenses
+generating_material:
+  - submission-package/essay/quilt/27-07-26-QUILTING-FOR-FULL-ARGUMENT.md
+  - working/pre-manuscript-refinement-2026-09-10/RELATIONAL-LOGOS-EXPLORATION.md
 ---
 # C40 — Model Internality / Judgment Field
 
-## #0
+## #0 — A judgment has a field of formation
 
-Model Internality / Judgment Field makes the production of a determination an inspectable epistemic object. It includes sources, representations, memories, gauges, evaluators, intermediate judgments, alternatives and revisions insofar as they actually condition an output. J-Space is one subordinate research object within this broader field.
+A determination is formed through relations that its finished expression can conceal. A source supplies evidence; a representation makes something available; memory retains a prior encounter; an evaluator gives a comparison its criterion; a permission gives an intended act its reach. **The judgment field is an inspectable articulation of these conditioning relations.** It lets the production of a judgment become an object of inquiry, including the alternatives and revisions which materially affected it.
 
-Its boundary is now especially important. [C41 — Objective Internality](C41-Objective-Internality.md) names the broader **lived/enacted paradigm** through which a Life encounters and acts within a World. C40 is an inspectable articulation **within** that paradigm: a model of some of the conditions of judgment. It can become extraordinarily rich without thereby becoming the whole world-disclosing structure, the knower, or the World.
+[Objective Internality](C41-Objective-Internality.md) is the means through which a Life encounters and acts within a World. The judgment field makes some of those means available for examination. The examination itself remains an act within the whole relation of knower, means and known. Its greater detail can disclose more of how a world became available without turning the resulting model into the World, or the model's integrated standpoint into Subjective Immediacy.
 
-## #1
+## #1 — Distinguish what the answer inherits
 
-A finished answer hides the selections that made it possible. The process test recovered in A14/A33 asks what was inherited, what was excluded, which rule stabilised the branch, what retains its counter-reading, what the result changes, and whether it can enter revisable common data. Observing only the final text cannot answer those questions.
+An answer begins within an inherited field. It takes up a task, a history, available sources and possibilities of action. Examining its formation recovers what was inherited and excluded, which rule stabilised the branch, and the source relation through which a counter-reading remains available. The achieved result then meets its consequence: what did it change, and how can [that completed form become revisable common data](../A14-Computational-Process-Ontology.md)? This inquiry locates the making of the judgment through the relations which actually conditioned it.
 
-A paradigm-model sharpens this demand rather than relaxing it. The model must expose which mediating relations it is actually representing and which remain outside its observation. A beautiful or comprehensive representation that cannot be related to actual conditioning remains an account of the paradigm, not evidence that the paradigm itself has become inspectable.
+A source's statement, a report of that statement, an observation and an inference from it have different offices. So do the person claiming something, the person receiving it and the current act of interpretation. The same words can be present in each relation. Their presence alone cannot establish which relation produced the present claim. The [relational Logos of Actuation](../products/S1-Actuation.md#4--relational-logos-this-act-addresses-someone) makes these positions explicit so a response can carry a source's meaning without silently turning it into its own observation.
 
-## #2
+What belongs to the field is established through actual conditioning. A named source that was never consulted and a rule that did not govern selection cannot explain this judgment merely because a later narration mentions them. The inquiry must connect the represented condition to the act it is supposed to explain.
 
-The judgment field must distinguish its sites of causation. A source changes available evidence; a gauge changes what an evaluator measures; a permission changes available action; an inherited context changes what can count as salient. Recording these differences lets a correction target the cause of divergence. A narrative about reasoning is not automatically evidence of the process it describes.
+## #2 — A difference reaches its cause
 
-This is also the minimum seam for [C51 — Epi-Logos](C51-Logos-Epi-Logos.md). An articulated paradigm can be compared with enactment only if the relevant relation between representation and conditioning is recoverable. Where the represented source, permission, evaluator or context can be varied and the changed judgment observed, the model has an operational foothold. Where no such relation exists, the paradigm language remains philosophical description rather than implemented reflexivity.
+The sites of change remain distinct. Changing a source changes available evidence. Changing an evaluator's criterion changes how alternatives are compared. Changing a permission changes which action is available; changing inherited context can alter what becomes salient. A returned objection can therefore call for a different repair even when the resulting answer changes in the same words.
 
-## #3
+A comparison can vary a represented source, permission, criterion or contextual condition while keeping the other relevant conditions fixed. The next judgment then supplies evidence about that relation. A system may also change several conditions together; its account must retain that dependence rather than attributing the result to one selected cause. Where a causal connection has not been established, the representation remains a proposal for investigation.
 
-A locally governed Bimba field can anchor comparison while itself remaining a constructed reflection relative to wider sources. This makes model positions, trajectories and judgments comparable without treating the model field as the world. Objective Internality is broader still: collaborators, institutions, material supports and lived conditions can constitute agency beyond what a model inspection captures.
+This is a tractable office for [computational Vimarśa](C43-Computational-Vimarsa.md): a produced determination becomes available with a route to what can change its production. The return makes the connection consequential. A record can be accurate about an earlier act while remaining powerless to alter a later one; reflexivity completes the route when the returned difference reaches an operative condition.
 
-The paradigm distinction prevents recursive inspection from becoming a final map. A model can model its own judgment field; another model can inspect that model; the resulting recursion remains within the mediating field. The gain is not an omniscient view but a more exact account of which determinations and relations are available for return.
+## #3 — Map the relations under a declared reference
 
-## #4
+**J-Space** proposes a representation of active judgments, alternatives, values, uncertainties, tools, memories and interlocutors. Distances, trajectories, attractors or transitions within that representation are research choices whose usefulness depends on the differences they make examinable. A sharp classification without its governing horizon is circumscription without circumstance: the boundary is explicit while the conditions under which it matters have disappeared.
 
-Q27 distinguishes searching for a better output inside a fixed evaluation from an encounter that changes `(m, θ, Eθ)` itself. The second is an Offered design inscription, not an executed training result: representation, parameters, evaluator or commission can change together. A system that records novel answers while protecting every original category has not demonstrated model-revising encounter.
+A [locally governed Bimba field](C38-Bimba-Pratibimba-Bimba-Map.md) supplies an explicit reference for comparing positions and trajectories. It serves as an original within that inquiry and remains a constructed reflection relative to its wider sources. The reference can itself be revised. This recursive relation makes drift or disagreement accountable to a declared ground without requiring any one map to contain the world which supports it.
 
-The product field now differentiates the surrounding paradigm conditions. A changed C40 state may belong chiefly to [Actuation](../products/S1-Actuation.md), while its source or commission belongs to [Central](../products/S0-Central.md), its available means to [AIKit](../products/S2-AIKit.md), its integration to [Factory](../products/S3-Software-Factory.md), its material situation to [Workcell](../products/S4-Workcell.md), and the relation among frames to [QL](../products/S5-Quaternal-Logic.md). C40 need not contain these offices to remain answerable to them.
+A model can then model its own judgment field, and another can inspect that model. Within the judging operation, the interpreting agent is the local functional knower; its sources, representations, memory and comparison rules are means; the active claims and alternatives are the known field. In a further inspection, that local centre and its model become known through another interpreting act. Within the containing person’s inquiry, the judging and inspecting apparatus itself participates in the means. Life / Mind contains these nested relations, while Subjective Immediacy retains the unobjectifiable knower condition of their appearing. Each return makes a determinate relation available to correction without cancelling the office it held in the preceding act. [MEF](C39-Meta-Epistemic-Framework.md) keeps the lens and warrant of each reading distinct, so apparent agreement between maps does not conceal different sources or criteria.
 
-## #5→0
+## #4 — Encounter can change what counts as an answer
 
-The Judgment Field **returns-to** [Count-to-Account](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md#count-to-account) through actual conditioning: which source supplied evidence, which gauge measured it, which rule selected the branch and which permission enabled action. Their separation lets a correction reach the relevant cause. Reuse of the resulting account must retain this scope, since a model’s explanation of its formation is itself another determination requiring support.
+Searching under a fixed evaluator differs from letting the encounter revise the evaluator. A candidate represented within the current self/world model is selected under its governing criterion:
 
-The [Symbol / Account / Trust whole-field — Account does not replace source](../../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md#account-does-not-replace-source) **qualifies** this operation at evidence register 3. The exposed judgment field makes actual conditioning inspectable. Its resulting account retains its scope when reused as input, and cannot claim the whole world through that reuse. The resulting distinction **returns-to** that whole field with the consumer’s own source and evidential limits retained.
+$$
+y^*=\arg\min_y E_\theta(m,y).
+$$
 
-The returned judgment can become a source for later work only with its scope and provenance retained. C39 supplies the lens discipline, C43 computational self-return and C45 the check that a distinction made a discriminable operational difference. C41 supplies the paradigm boundary; C51 asks whether explicit articulation can return into the lived pattern. The result is an accountable model field, not possession of the world or a demonstration of subjectivity. Exact J-Space experiment history and observability requirements remain research tasks under this wider Concept.
+Here `m` is the current self/world model, `y` a candidate represented within it, and `E_θ` the criterion by which candidates are evaluated, with parameters `θ`. Search can admit many novel candidates while preserving what counts as desirable, costly or admissible. A different winning candidate leaves that organising relation intact.
 
-### Declared field
+The further transition puts those conditions themselves into play:
 
-**Argument consumers:** A14, A22, A26, A31, A33. **Product consumers:** S1 directly and S0/S2–S5 through returned conditioning. **Movement consumers:** model-internality, MEF, prompt, evaluation and Agentworld movements.
+$$
+(m,\theta,E_\theta)\longrightarrow(m',\theta',E_{\theta'}).
+$$
 
-**Etymology relation:** *Encounter / Region / Name / Count / Countenance / Account*; exact operation: the model exposes the **Account** by which inputs/regions were named, counted and judged. Register **3**. Return C40 → C39 → C45/A33 → C47/A31 → C41/C51.
+An address can challenge the representation, its parameters, the evaluation or the purpose governing the search. This inscription specifies a proposed scope of revision; it is not an executed learning rule. Its test must name which component changed, how the change was made and what later judgment depended on it. A better answer under a fixed measure and an encounter that revises the measure are different results.
 
-**Source/tradition standing:** Taylor MEF/J-Space/technical inquiry primary; interpretability/evaluation research supplies application evidence.
+[Deferential intelligence](C47-Deferential-Intelligence.md) gives that difference its interpersonal force. An interlocutor may challenge the categories in which a question placed them. Receiving the challenge as another candidate inside those unchanged categories would leave its actual address unanswered. The encounter becomes consequential where the representation or criterion can be revised, or where a reasoned reply states why it should be retained.
 
-### Provenance
+## #5→0 — The returned account becomes a later condition
 
-Direct carriers: [Symbolon Dynamics](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md), [Q27 with its Bimba correction](../../../quilt/27-07-26-QUILTING-FOR-FULL-ARGUMENT.md), [Objective Internality](../A26-Objective-Internality-Mind-as-Worldhood.md), and the [federated reflective-field carrier](../A32-Reflective-Field-The-Mirror-That-Moves-First.md). The [MEF source house](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-mef-twelve-lenses/taylor-2026-mef-twelve-lenses.md) has a recoverable [local twelve-lens reference] despite its stale unavailable statement. That reference is developmental architecture; its historical attributions and musical selection claims are not independently established by the compilation. [Dyczkowski](../../../symbolon/episteme/sources/indian-philosophy/dyczkowski/dyczkowski-2000-doctrine-vibration/dyczkowski-2000-doctrine-vibration.md) retains source-matched, not quotation-verified, reflection passages. The September 15 [paradigm / Epi-Logos minute] supplies the explicit later distinction between judgment model and enacted paradigm. Technical designs remain Offered until their own experiments establish functioning consequences.
+A returned judgment can become a source for later work. Its reuse must carry the relation under which it was produced: what supplied evidence, which criterion measured it, what selected the branch and which permission enabled action. [Count-to-Account](../../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md#count-to-account) makes those distinctions reachable by a correction. [Account and source](../../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust.md#account-does-not-replace-source) retain different offices even when an earlier account becomes a later input.
 
-### Remaining depth
+The six products give changed conditions different places to enter. [Actuation](../products/S1-Actuation.md) carries the judgment as an event; [Central](../products/S0-Central.md) can receive a revised source or commission; [AIKit](../products/S2-AIKit.md), altered means or permissions; [Factory](../products/S3-Software-Factory.md), a transformation to integrate; [Workcell](../products/S4-Workcell.md), changed material conditions; and [Quaternal Logic](../products/S5-Quaternal-Logic.md), a changed relation among frames. Their whole cannot be reduced to the part represented in this judgment field. The field becomes answerable through its routes to those offices.
 
-Restore exact J-Space experiments and specify the minimum observability needed for different classes of judgment. Test when a paradigm representation has enough causal/relational purchase to participate in Epi-Logos rather than merely visualize the field.
-
-**Depth Restoration: enriched; paradigm boundary and source/implementation debts retained.**
+[Operational parity](C45-Operational-Parity.md) tests whether an articulated distinction made a discriminable difference. [Epi-Logos](C51-Logos-Epi-Logos.md) asks whether the account can reach the lived pattern of mediation itself. A corrected answer can leave that pattern intact; a revised source hierarchy, criterion or commission can change the formation of many later answers. The result returns with its conditions available, able to change what another judgment begins from.

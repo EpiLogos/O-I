@@ -11,13 +11,13 @@ source_relation: "Exact construction; argued native reading and bounded source r
 
 ## #0 — Specify a medium and its equation
 
-The [recovered cymatics note](../../../section-rooms/arguments/concepts/reference-notes/cymatics-standing-waves.md) admits a bounded audible/visible bridge. The [musical derivation house](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md) proposes four nodal anchors beside eight articulating positions. The primary experimental source task remains open; this page first supplies an explicit mathematical standing-wave construction.
+The audible and visible bridge gives a material wave both sounded and patterned expression under specified conditions. The [musical derivation](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md) places four proposed nodal anchors beside eight articulating positions. No acquired primary experiment establishes that correspondence; the standing wave below is a separately worked mathematical construction.
 
 Assume an ideal uniform stretched string of length `L>0`, fixed at both ends, with transverse displacement `u(x,t)` satisfying the linear wave equation `u_tt=c²u_xx`, where `c>0`. These assumptions name the medium model and boundary conditions.
 
 ## #1 — Superpose the travelling components
 
-Let `u₁=A sin(kx−ωt)` and `u₂=A sin(kx+ωt)`, with `ω=ck`. Their sum is
+Take a nonzero real amplitude `A` and `k>0`. Let `u₁=A sin(kx−ωt)` and `u₂=A sin(kx+ωt)`, with `ω=ck`. Their sum is
 
 `u=2A sin(kx)cos(ωt)`.
 
@@ -37,7 +37,7 @@ Visible particle arrangements in a physical cymatic experiment are further obser
 
 ## #4 — Give the proposed anchor mapping a test
 
-The music candidate uses eight articulating positions as frequency content and four implicate positions as constraints for a visual rendering. That is an Offered design relation. To implement it, specify the map from those positions to oscillator frequencies and boundary parameters, the governing equation, and what the renderer computes.
+The proposed musical rendering assigns frequency content to eight articulating positions and constraints to four implicate positions. Its operative mapping must relate those positions to oscillator frequencies and boundary parameters under the governing equation; the rendered pattern then depends on that specified map. The 8+4 correspondence remains a design proposal alongside the derived string mode.
 
 A discriminating test varies the proposed anchors while holding forcing and medium fixed, then compares the predicted and observed node pattern. A shader that simply draws four chosen still points would demonstrate the drawing rule, not independent physical confirmation of the native architecture. The mathematical sound/shape relation remains meaningful with that distinction intact.
 
@@ -45,4 +45,4 @@ A discriminating test varies the proposed anchors while holding forcing and medi
 
 The result is a derived standing wave under explicit assumptions and a separate testable proposal for audible/visible coordination. Sound, light and consciousness have not been identified as one physical quantity. The native [ratio field](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) can be rendered in more than one modality while each rendering retains its causal account.
 
-This record returns-to [Movement29](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) and [music's observer/instrument](../music/observer-instrument.md). The physical source debt is specific to the experimental claims; it does not weaken the worked wave-equation construction or silently certify the proposed 8+4 correspondence.
+[Musical and spatial resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) keeps the visible pattern answerable to its medium, mode and forcing. [Music’s observer and instrument](../music/observer-instrument.md) lets the measured response return to the specified arrangement rather than taking the intended picture as its own confirmation. The physical source debt is specific to the experimental claims; it does not weaken the worked wave-equation construction or silently certify the proposed 8+4 correspondence.

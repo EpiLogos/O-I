@@ -74,7 +74,7 @@ The inclosure reading of Nāgārjuna: limit-contradictions with the Russell/Göd
 
 - Join Nāgārjuna to the essay's formal-limit genealogy in [[04-s01-p3-formal-limit-genealogy|04-s01-p3]], where the inclosure schema stands beside Russell and Gödel.
 - Carry the ontological paradox (no-nature as nature) and the Siderits slogan into the §3 catuṣkoṭi reconstruction at [[28-s3-p3-projective-dimensional-reframing]].
-- Use the rationality verdict to block deflationary readings of Nāgārjuna as mystic or sophist in the [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history strand.
+- Use the rationality verdict to block deflationary readings of Nāgārjuna as mystic or sophist in the [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history strand.
 
 ### Claim boundary
 
@@ -100,7 +100,7 @@ The inclosure reading is one contested interpretation of Nāgārjuna, not the fi
 - **Source relation:** quoted.
 - **Evidential action:** supports.
 - **Argument function:** the article's thesis statement — Nāgārjuna as limit-of-thought dialetheist.
-- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history.
+- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history.
 - **Use boundary:** a contested interpretation; cite as Garfield–Priest's reading, not as consensus.
 
 <a id="garfield-priest-2003-limits-of-thought-q002"></a>
@@ -130,7 +130,7 @@ The inclosure reading is one contested interpretation of Nāgārjuna, not the fi
 - **Source relation:** quoted (article quoting Nāgārjuna's autocommentary).
 - **Evidential action:** supports.
 - **Argument function:** the distinctively ontological paradox — emptiness as the nature of all things that is precisely the lack of nature.
-- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history.
+- **Consumers:** [[28-s3-p3-projective-dimensional-reframing]]; [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history.
 - **Use boundary:** double transmission (essay ← article ← autocommentary); the primary locator in the autocommentary must be traced before this is promoted beyond secondary quotation.
 
 <a id="garfield-priest-2003-limits-of-thought-q004"></a>
@@ -160,7 +160,7 @@ The inclosure reading is one contested interpretation of Nāgārjuna, not the fi
 - **Source relation:** quoted (close-verbatim).
 - **Evidential action:** supports.
 - **Argument function:** blocks the deflationary reading of Nāgārjuna as mystic or sophist.
-- **Consumers:** [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY|indian-philosophy]] history; [[28-s3-p3-projective-dimensional-reframing]].
+- **Consumers:** [[symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY-indian-philosophy]] history; [[28-s3-p3-projective-dimensional-reframing]].
 - **Use boundary:** do not print as exact quotation until journal collation fixes the wording.
 
 ## Open acquisition and verification

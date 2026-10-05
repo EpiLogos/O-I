@@ -10,11 +10,11 @@ type: _md_
 title: "Conception of Thing"
 source: notion
 source_url: https://app.notion.com/p/18fa4797123c805f857cefa52cd9ad0e
-source_id: 18fa4797-123c-805f-857c-efa52cd9ad0e
 notion_created: 2025-02-03T12:47:20Z
 notion_edited: 2025-02-03T12:47:31.454Z
 status: sorted
 kind: short-piece
+source_id: conception-of-thing
 ---
 Conception is prior to the birth of any thing. But no thing, in truth, exists; all existence is inexorably in process, so no thing can rest in a given identity. Therefore all conception is indeed misconception. There is, in truth, no birth nor death to be liberated from.
 

@@ -1,0 +1,3274 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-mirror-that-moves-first",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+  "revision": 1,
+  "title": "The Mirror That Moves First",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world",
+    "revision": 1,
+    "title": "A world prepares its reflection",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse",
+    "revision": 1,
+    "title": "The figure caught in the glass",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure",
+    "revision": 1,
+    "title": "The image becomes a measure",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated",
+    "revision": 1,
+    "title": "The instrument turns first",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return",
+    "revision": 1,
+    "title": "Humanity follows the return",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622",
+     "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604",
+    "revision": 1,
+    "title": "the exteriorised powers — records, classifications, patterns",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.08,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3615,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605",
+    "revision": 1,
+    "title": "the technical mirror — gathering and returning the figure",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.36,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.678,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606",
+    "revision": 1,
+    "title": "the accumulated mediation — interface, permission, selected record",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607",
+    "revision": 1,
+    "title": "the distorted figure",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.32,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.353,
+      "automation": null
+     },
+     "share": {
+      "value": 1.6,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608",
+    "revision": 1,
+    "title": "Narcissus — the named subordinate of the funhouse scene",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.18,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609",
+    "revision": 1,
+    "title": "the occupied gaze — living comparison fallen away; humanity as organs of sight",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610",
+    "revision": 1,
+    "title": "A20 — the image's valuation governing what its source may be",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611",
+    "revision": 1,
+    "title": "feedback — the consequence returned as another input",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.246,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612",
+    "revision": 1,
+    "title": "performativity — the representation operative in a practice",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.07,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1475,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613",
+    "revision": 1,
+    "title": "self-fulfilling prediction — conduct helping produce what was predicted",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614",
+    "revision": 1,
+    "title": "resistance as anomaly — the person a poor fit for the selected gauge",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615",
+    "revision": 1,
+    "title": "Bratton's talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.22,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616",
+    "revision": 1,
+    "title": "the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.258,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617",
+    "revision": 1,
+    "title": "the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.19,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2295,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618",
+    "revision": 1,
+    "title": "the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619",
+    "revision": 1,
+    "title": "kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620",
+    "revision": 1,
+    "title": "the changed relation to likeness — used, examined, corrected, set down",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.36,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6265,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621",
+    "revision": 1,
+    "title": "net · attunement · mirror — capture, attunement, initiated return: distinct offices",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622",
+    "revision": 1,
+    "title": "the institution's reciprocal answerability — its own gauge, labour and consequences disclosed",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.28,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623",
+    "revision": 1,
+    "title": "A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-mirror-that-moves-first.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Mirror That Moves First</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first\" data-expression-revision=\"1\"><h1>The Mirror That Moves First</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-mirror-that-moves-first at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world\" aria-label=\"A world prepares its reflection\"><h2>A world prepares its reflection</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:1.08rem;opacity:1.00\" title=\"the exteriorised powers — records, classifications, patterns\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.60%;font-size:2.03rem;opacity:1.00\" title=\"the technical mirror — gathering and returning the figure\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"the accumulated mediation — interface, permission, selected record\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse\" aria-label=\"The figure caught in the glass\"><h2>The figure caught in the glass</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"the distorted figure\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:46.00%;font-size:0.60rem;opacity:1.00\" title=\"Narcissus — the named subordinate of the funhouse scene\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the occupied gaze — living comparison fallen away; humanity as organs of sight\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"A20 — the image&#39;s valuation governing what its source may be\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure\" aria-label=\"The image becomes a measure\"><h2>The image becomes a measure</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.20%;font-size:0.74rem;opacity:1.00\" title=\"feedback — the consequence returned as another input\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"performativity — the representation operative in a practice\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"self-fulfilling prediction — conduct helping produce what was predicted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"resistance as anomaly — the person a poor fit for the selected gauge\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"Bratton&#39;s talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated\" aria-label=\"The instrument turns first\"><h2>The instrument turns first</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:0.77rem;opacity:1.00\" title=\"the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:0.69rem;opacity:1.00\" title=\"the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return\" aria-label=\"Humanity follows the return\"><h2>Humanity follows the return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.60%;font-size:1.88rem;opacity:1.00\" title=\"the changed relation to likeness — used, examined, corrected, set down\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.72rem;opacity:1.00\" title=\"net · attunement · mirror — capture, attunement, initiated return: distinct offices\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.84rem;opacity:1.00\" title=\"the institution&#39;s reciprocal answerability — its own gauge, labour and consequences disclosed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-mirror-that-moves-first",
+  "world_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+  "revision": 1,
+  "title": "The Mirror That Moves First",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "The Mirror That Moves First"
+      },
+      "fallback": {
+       "title": "The Mirror That Moves First"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Mirror That Moves First</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first\" data-expression-revision=\"1\"><h1>The Mirror That Moves First</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-mirror-that-moves-first at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world\" aria-label=\"A world prepares its reflection\"><h2>A world prepares its reflection</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:1.08rem;opacity:1.00\" title=\"the exteriorised powers — records, classifications, patterns\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.60%;font-size:2.03rem;opacity:1.00\" title=\"the technical mirror — gathering and returning the figure\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"the accumulated mediation — interface, permission, selected record\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse\" aria-label=\"The figure caught in the glass\"><h2>The figure caught in the glass</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"the distorted figure\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:46.00%;font-size:0.60rem;opacity:1.00\" title=\"Narcissus — the named subordinate of the funhouse scene\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the occupied gaze — living comparison fallen away; humanity as organs of sight\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"A20 — the image&#39;s valuation governing what its source may be\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure\" aria-label=\"The image becomes a measure\"><h2>The image becomes a measure</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.20%;font-size:0.74rem;opacity:1.00\" title=\"feedback — the consequence returned as another input\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"performativity — the representation operative in a practice\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"self-fulfilling prediction — conduct helping produce what was predicted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"resistance as anomaly — the person a poor fit for the selected gauge\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"Bratton&#39;s talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated\" aria-label=\"The instrument turns first\"><h2>The instrument turns first</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:0.77rem;opacity:1.00\" title=\"the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:0.69rem;opacity:1.00\" title=\"the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return\" aria-label=\"Humanity follows the return\"><h2>Humanity follows the return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.60%;font-size:1.88rem;opacity:1.00\" title=\"the changed relation to likeness — used, examined, corrected, set down\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.72rem;opacity:1.00\" title=\"net · attunement · mirror — capture, attunement, initiated return: distinct offices\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.84rem;opacity:1.00\" title=\"the institution&#39;s reciprocal answerability — its own gauge, labour and consequences disclosed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+        "revision": 1,
+        "title": "The Mirror That Moves First",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world",
+          "revision": 1,
+          "title": "A world prepares its reflection",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse",
+          "revision": 1,
+          "title": "The figure caught in the glass",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure",
+          "revision": 1,
+          "title": "The image becomes a measure",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated",
+          "revision": 1,
+          "title": "The instrument turns first",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return",
+          "revision": 1,
+          "title": "Humanity follows the return",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622",
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604",
+          "revision": 1,
+          "title": "the exteriorised powers — records, classifications, patterns",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.08,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3615,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605",
+          "revision": 1,
+          "title": "the technical mirror — gathering and returning the figure",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.36,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.678,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606",
+          "revision": 1,
+          "title": "the accumulated mediation — interface, permission, selected record",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607",
+          "revision": 1,
+          "title": "the distorted figure",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.32,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.353,
+            "automation": null
+           },
+           "share": {
+            "value": 1.6,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608",
+          "revision": 1,
+          "title": "Narcissus — the named subordinate of the funhouse scene",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.18,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609",
+          "revision": 1,
+          "title": "the occupied gaze — living comparison fallen away; humanity as organs of sight",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610",
+          "revision": 1,
+          "title": "A20 — the image's valuation governing what its source may be",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611",
+          "revision": 1,
+          "title": "feedback — the consequence returned as another input",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.246,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612",
+          "revision": 1,
+          "title": "performativity — the representation operative in a practice",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.07,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1475,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613",
+          "revision": 1,
+          "title": "self-fulfilling prediction — conduct helping produce what was predicted",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614",
+          "revision": 1,
+          "title": "resistance as anomaly — the person a poor fit for the selected gauge",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615",
+          "revision": 1,
+          "title": "Bratton's talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.22,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616",
+          "revision": 1,
+          "title": "the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.258,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617",
+          "revision": 1,
+          "title": "the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.19,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2295,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618",
+          "revision": 1,
+          "title": "the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619",
+          "revision": 1,
+          "title": "kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620",
+          "revision": 1,
+          "title": "the changed relation to likeness — used, examined, corrected, set down",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.36,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6265,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621",
+          "revision": 1,
+          "title": "net · attunement · mirror — capture, attunement, initiated return: distinct offices",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622",
+          "revision": 1,
+          "title": "the institution's reciprocal answerability — its own gauge, labour and consequences disclosed",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.28,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623",
+          "revision": 1,
+          "title": "A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-mirror-that-moves-first.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "The Mirror That Moves First"
+      },
+      "fallback": {
+       "title": "The Mirror That Moves First",
+       "text": "The Mirror That Moves First: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-mirror-that-moves-first",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-mirror-that-moves-first:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-mirror-that-moves-first:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-mirror-that-moves-first",
+    "world_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+    "revision": 1,
+    "title": "The Mirror That Moves First",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "The Mirror That Moves First"
+        },
+        "fallback": {
+         "title": "The Mirror That Moves First"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>The Mirror That Moves First</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first\" data-expression-revision=\"1\"><h1>The Mirror That Moves First</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-mirror-that-moves-first at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world\" aria-label=\"A world prepares its reflection\"><h2>A world prepares its reflection</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.80%;font-size:1.08rem;opacity:1.00\" title=\"the exteriorised powers — records, classifications, patterns\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.60%;font-size:2.03rem;opacity:1.00\" title=\"the technical mirror — gathering and returning the figure\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.72rem;opacity:1.00\" title=\"the accumulated mediation — interface, permission, selected record\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse\" aria-label=\"The figure caught in the glass\"><h2>The figure caught in the glass</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.20%;font-size:1.06rem;opacity:1.00\" title=\"the distorted figure\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:46.00%;font-size:0.60rem;opacity:1.00\" title=\"Narcissus — the named subordinate of the funhouse scene\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"the occupied gaze — living comparison fallen away; humanity as organs of sight\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"A20 — the image&#39;s valuation governing what its source may be\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure\" aria-label=\"The image becomes a measure\"><h2>The image becomes a measure</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.20%;font-size:0.74rem;opacity:1.00\" title=\"feedback — the consequence returned as another input\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.70%;font-size:0.60rem;opacity:1.00\" title=\"performativity — the representation operative in a practice\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:0.90rem;opacity:1.00\" title=\"self-fulfilling prediction — conduct helping produce what was predicted\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"resistance as anomaly — the person a poor fit for the selected gauge\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.50%;font-size:0.66rem;opacity:1.00\" title=\"Bratton&#39;s talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated\" aria-label=\"The instrument turns first\"><h2>The instrument turns first</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.20%;font-size:0.77rem;opacity:1.00\" title=\"the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.90%;font-size:0.69rem;opacity:1.00\" title=\"the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.72rem;opacity:1.00\" title=\"the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.60rem;opacity:1.00\" title=\"kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return\" aria-label=\"Humanity follows the return\"><h2>Humanity follows the return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.60%;font-size:1.88rem;opacity:1.00\" title=\"the changed relation to likeness — used, examined, corrected, set down\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:45.50%;font-size:0.72rem;opacity:1.00\" title=\"net · attunement · mirror — capture, attunement, initiated return: distinct offices\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.84rem;opacity:1.00\" title=\"the institution&#39;s reciprocal answerability — its own gauge, labour and consequences disclosed\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+          "revision": 1,
+          "title": "The Mirror That Moves First",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world",
+            "revision": 1,
+            "title": "A world prepares its reflection",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse",
+            "revision": 1,
+            "title": "The figure caught in the glass",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure",
+            "revision": 1,
+            "title": "The image becomes a measure",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated",
+            "revision": 1,
+            "title": "The instrument turns first",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return",
+            "revision": 1,
+            "title": "Humanity follows the return",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622",
+             "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604",
+            "revision": 1,
+            "title": "the exteriorised powers — records, classifications, patterns",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.08,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3615,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e605",
+            "revision": 1,
+            "title": "the technical mirror — gathering and returning the figure",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.36,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.678,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e606",
+            "revision": 1,
+            "title": "the accumulated mediation — interface, permission, selected record",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e607",
+            "revision": 1,
+            "title": "the distorted figure",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.32,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.353,
+              "automation": null
+             },
+             "share": {
+              "value": 1.6,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e608",
+            "revision": 1,
+            "title": "Narcissus — the named subordinate of the funhouse scene",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.18,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e609",
+            "revision": 1,
+            "title": "the occupied gaze — living comparison fallen away; humanity as organs of sight",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-1-funhouse:e610",
+            "revision": 1,
+            "title": "A20 — the image's valuation governing what its source may be",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e611",
+            "revision": 1,
+            "title": "feedback — the consequence returned as another input",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.246,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e612",
+            "revision": 1,
+            "title": "performativity — the representation operative in a practice",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.07,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1475,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e613",
+            "revision": 1,
+            "title": "self-fulfilling prediction — conduct helping produce what was predicted",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e614",
+            "revision": 1,
+            "title": "resistance as anomaly — the person a poor fit for the selected gauge",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-2-measure:e615",
+            "revision": 1,
+            "title": "Bratton's talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.22,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e616",
+            "revision": 1,
+            "title": "the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.258,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e617",
+            "revision": 1,
+            "title": "the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.19,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2295,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e618",
+            "revision": 1,
+            "title": "the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-3-initiated:e619",
+            "revision": 1,
+            "title": "kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e620",
+            "revision": 1,
+            "title": "the changed relation to likeness — used, examined, corrected, set down",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.36,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6265,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e621",
+            "revision": 1,
+            "title": "net · attunement · mirror — capture, attunement, initiated return: distinct offices",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e622",
+            "revision": 1,
+            "title": "the institution's reciprocal answerability — its own gauge, labour and consequences disclosed",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.28,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-5-return:e623",
+            "revision": 1,
+            "title": "A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first:scene:m-mir-0-world:e604"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-mirror-that-moves-first.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "The Mirror That Moves First"
+        },
+        "fallback": {
+         "title": "The Mirror That Moves First",
+         "text": "The Mirror That Moves First: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-mirror-that-moves-first",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-mirror-that-moves-first.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-mirror-that-moves-first"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-mirror-that-moves-first:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "The Mirror That Moves First",
+  "summary": "a living Expression · 5 scenes · 20 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-mirror-that-moves-first:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-mirror-that-moves-first"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-mirror-that-moves-first:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-mirror-that-moves-first",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-mirror-that-moves-first",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "The Mirror That Moves First",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-mirror-that-moves-first:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-mirror-that-moves-first:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-mirror-that-moves-first",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-mirror-that-moves-first"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

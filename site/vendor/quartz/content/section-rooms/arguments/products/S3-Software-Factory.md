@@ -4,12 +4,11 @@ record_id: S3
 record_type: product
 register: episteme
 claim_status: Argued
-source_relation: Reconstituted from the authorised authorial minute, retained paired-lens reading, A/C primitive constitution and existing Objective Internality field after loss of the original transfer payload
+source_relation: "Argued from A/C, Objective Internality and the paired product-lens relation"
 source_ids:
   - taylor-2026-oi-product-field-commission
   - taylor-2026-core-theorems-pithy
   - taylor-2026-mef-twelve-lenses
-refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 product_parent: S
 movement: 40
 mef_pair:
@@ -26,6 +25,7 @@ concept_relations:
   - C43
   - C45
   - C47
+refinement_status: T25 reconstituted; independent R5 review and T26 ratification pending
 ---
 # S3 — Software Factory: transformation
 
@@ -35,9 +35,9 @@ concept_relations:
 
 This makes Factory one aspect of Objective Internality rather than an external workshop applied to it. A Life develops because the means through which it inhabits a World can themselves change. New practices, revised concepts, repaired tools, transformed institutions and altered habits all belong to this office. Software development is a literal and unusually inspectable case of that more general becoming.
 
-The T25 paradigmatic field gives the word **project** its wider office before Factory specialises it. In the [Genesis / Paradigm / Project / Epi-Logos relation](../../../symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD.md), Project is a determination thrown forth through a paradigm into a World: a theory, image, institution, tool, policy, artwork or organised undertaking can all become projective when a formed possibility enters the world and begins to condition what can follow. **Software Factory is one literal technical instantiation of this general Projecthood, not its definition.** Its distinctive office is the deliberate transformation of projected forms and of the developmental paradigm through which further projects will be made.
+The [Genesis / Paradigm / Project / Epi-Logos relation](../../../symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos.md) gives the word **project** its wider office before Factory specialises it. Project is a determination thrown forth through a paradigm into a World: a theory, image, institution, tool, policy, artwork or organised undertaking can all become projective when a formed possibility enters the world and begins to condition what can follow. **Software Factory is one literal technical instantiation of this general Projecthood, not its definition.** Its distinctive office is the deliberate transformation of projected forms and of the developmental paradigm through which further projects will be made.
 
-The philosophical criterion is therefore stronger than “the artifact changed.” Transformation is complete only where returned experience reaches the source, criterion, method or commission able to alter subsequent becoming. A patch can change code while leaving the developmental relation untouched. A failed experiment can transform the process more deeply than a successful build if it changes what the field now understands itself to be doing.
+Transformation is complete when the attained or failed form enters the conditions of subsequent becoming. A corrected artifact can be inherited under a criterion which the encounter has confirmed: the next act then begins from the repaired form. Where the encounter exposes a defect in the source, method, criterion or commission, return must reach that condition rather than merely produce another candidate under it. A failed experiment can therefore transform the process more deeply than a successful build if it changes what the field now understands itself to be doing. The warranted depth comes from what the encounter disclosed.
 
 ## #1 — L3 Processual: desire enters actuality
 
@@ -49,7 +49,7 @@ This gives development its recursive structure. Intention alone is not transform
 
 The pair also preserves the difference between a project’s telos and a candidate solution. A candidate may satisfy its local specification while betraying the actual commission. An encounter can therefore require returning above the candidate to the purpose that generated it. This is why recognition must be able to revise the task rather than merely optimise within it.
 
-Projecthood makes the same distinction at wider scale. A Project is already a finite projection of a paradigm, not an unmediated expression of intention. Development can therefore revise either the projected determination or the pattern by which possibilities are being generated and judged. Replacing one candidate while leaving that pattern untouched is ordinary iteration; changing the mediating relation itself is the stronger paradigmatic transformation that R3 later names through Epi-Logos.
+Projecthood makes the same distinction at wider scale. A Project is already a finite projection of a paradigm, not an unmediated expression of intention. Development can therefore revise either the projected determination or the pattern by which possibilities are being generated and judged. Replacing one candidate while retaining a fitting pattern transforms the project's inherited form. Changing the mediating relation itself is paradigmatic transformation: [Epi-Logos](../../../symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos.md) receives the consequence of a projected determination back into the conditions which generated it.
 
 ## #2 — L2′ Alchemical-Elemental: transformation has a material grammar
 
@@ -63,9 +63,13 @@ The alchemical image also guards against the fantasy of frictionless transformat
 
 ## #3 — Gate, Recognition and the authority to change the commission
 
-A/C’s local constitution makes the process technically addressable. **S3/P0** identifies Project, developmental actor and Run identity. **S3/P1** carries Artifact, Claim, Decision, Candidate and HumanRequest. **S3/P2** gives Method, Capability, Action, Commission and developmental praxis. **S3/P3** is Run, RunMap, ProjectMap, ProjectDevelopment, SourceIntegration and the active developmental frontier. **S3/P4** is Execution, Checkout, Gate, Application and candidate experience. **S3/P5** returns Evidence, Event, Trace, Recognition, Project Canon and returned Ground.
+Software Factory's local sixfold begins from **project and developmental identity**; takes form as **artifact, claim, decision, candidate and human request**; receives potency through **method, capability, action and commission**; becomes a developmental trajectory through **runs, maps, source integration and the active frontier**; reaches actuality through **execution, checkout, gates and candidate experience**; and returns through **evidence, events, traces, recognition and changed project ground**.
+
+The six turns make development more than artifact production. A candidate becomes meaningful through the commission and sources from which it arose, the transformation it underwent, the world in which it was tested, and the evidence that returns to change what the project can next become.
 
 The distinction between **Gate** and **Recognition** is load-bearing. A Gate decides whether a candidate satisfies a declared condition. Recognition asks what the encounter means for the conditions themselves. A test can correctly reject an implementation without deciding whether the design is wrong. A test can pass while a human encounter reveals that the task was misframed. Development becomes reflective only where those differences are preserved.
+
+The [five sites of revision](../A31-Deferential-Intelligence.md#2--return-has-depths) make the return discriminating. If an implementation violates a fitting specification, its corrected form can pass the Gate and become the next inherited condition. If a passing implementation frustrates the purpose for which it was commissioned, repeating the same Gate cannot answer the encounter: task interpretation, world-model, evaluator or commission may need revision. Recognition locates that question and returns it to the authority able to judge it. It can confirm the existing criterion as well as expose a reason to change it. The occasion's Satisfaction/Perishing and the wider judgment of its meaning remain distinct operations.
 
 Recognition is thus the processual analogue of the essay’s crossed-zero return. The achieved `1` does not become its own ground. It returns to `0/1`: a formed determination held in relation to the condition from which it arose and which the encounter may now alter.
 
@@ -75,9 +79,9 @@ The holographic requirement follows. A project can carry, at its own scale, the 
 
 Factory is where the Power argument becomes difficult to ignore because transformation gathers and reallocates labour. Commission, implementation, review, use and consequence may belong to different people or agents. An apparently simple development can therefore conceal a field of entrusted power.
 
-[A29/A29′](../A29-Power-Delegated-Labour-Return.md) require the return of resistance, cost and dissent to the office able to change the next commission. If the worker can report a problem but the report cannot reach the criterion that governs the work, “feedback” remains extraction. If a user bears the consequence of a design while having no route by which that consequence can alter the design, development has become one-way inscription.
+[Delegated labour](../A29-Power-Delegated-Labour-Return.md) retains an answering relation when resistance, cost and dissent can reach the authority governing the condition they expose. Correction at the warranted depth, or retention of a fitting condition with reasons, enters the next developmental act. If the worker can report a problem but the report cannot reach the criterion that governs the work, “feedback” remains extraction. If a user bears the consequence of a design while having no route by which that consequence can alter the design, development has become one-way inscription.
 
-The complete Hephaestus/Poseidon relation matters here. Detection, capture, public proof and pricing do not themselves complete judgment. Release arrives through an entrusted pledge that assumes liability. In developmental terms, evidence and gatekeeping can make a failure visible without deciding who is authorised to change the condition, bear the cost or permit continuation. The pledge relation is therefore not reducible to a software-check metaphor; it exposes the human and institutional office that remains after every measurable condition has been satisfied.
+The complete Hephaestus/Poseidon relation matters here. Detection, capture, public proof and pricing do not themselves complete judgment. Release arrives when Hephaestus accepts Poseidon’s pledge to assume the debt if Ares evades it. The narration reports release and departure; it does not report later payment. In developmental terms, evidence and gatekeeping can make a failure visible without deciding who is authorised to change the condition, bear the cost or permit continuation. The pledge relation is therefore not reducible to a software-check metaphor; it exposes the human and institutional office that remains after every measurable condition has been satisfied.
 
 ## #5→0 — The product of development is a changed field
 
@@ -88,7 +92,3 @@ This is the positive meaning of return. The field does not circle back unchanged
 The wider Projecthood relation makes that inheritance reciprocal. A projected determination changes some part of the World into which it was thrown; the resulting consequence can disclose assumptions in the paradigm which projected it. Where that disclosure can alter the next developmental ground, Factory performs its transformative office at paradigm depth rather than merely producing another version of the same project. The project remains finite throughout: it can retain a holographic relation to its containing field without becoming the field's source.
 
 Factory therefore returns to [S — World and Life](S-World-and-Life.md) as Objective Internality’s aspect of **transformation**. Central carries what development inherits; Actuation gives the event in which work occurs; AIKit gives the powers brought to bear; Workcell gives the material situation and resistance; QL gives the relations through which a changed form can remain intelligible as part of a larger whole.
-
-### Standing
-
-This body reconstitutes the authorised R2 philosophical office from the retained authorial minute, paired-lens reading and canonical A/C S3 constitution. It also receives the R2 Projecthood correction without reducing that relation to software project management. It does not claim byte identity with the lost transfer. The independent R5 review must still test its full cross-register relations, technical standing and preservation of displaced §5 material before T26 ratification.

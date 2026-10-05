@@ -1,0 +1,3427 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-matheme-logics",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+  "revision": 1,
+  "title": "Matheme — The Two Logics",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia",
+    "revision": 1,
+    "title": "dia — the cut",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock",
+     "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn",
+    "revision": 1,
+    "title": "syn — the gathering",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main",
+     "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs",
+     "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic",
+    "revision": 1,
+    "title": "chronic — configuration and passage",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main",
+     "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg",
+     "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp",
+     "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono",
+    "revision": 1,
+    "title": "mono — one field through its notations",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short",
+     "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full",
+     "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly",
+    "revision": 1,
+    "title": "poly — the many notations",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1",
+     "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2",
+     "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1",
+     "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2",
+     "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations",
+    "revision": 1,
+    "title": "translations — correspondence with its proof boundary",
+    "entity_refs": [
+     "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact",
+     "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord",
+     "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar",
+     "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock",
+    "revision": 1,
+    "title": "the bare relation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": 0.55,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main",
+    "revision": 1,
+    "title": "the operator changes",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.32000000000000006,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.61,
+      "automation": null
+     },
+     "share": {
+      "value": 3,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main",
+    "revision": 1,
+    "title": "the held seam",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.8193,
+      "automation": null
+     },
+     "share": {
+      "value": 4,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs",
+    "revision": 1,
+    "title": "four ordered pairings",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.765,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt",
+    "revision": 1,
+    "title": "terms retained with their pairings",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.72,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.66,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main",
+    "revision": 1,
+    "title": "two trajectories, one organisation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.33000000000000007,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.72,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg",
+    "revision": 1,
+    "title": "another history",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 1.06,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.91,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp",
+    "revision": 1,
+    "title": "attracting fixed point",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 2,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule",
+    "revision": 1,
+    "title": "the configuration",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.75,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short",
+    "revision": 1,
+    "title": "definition/quilt chain",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.5822,
+      "automation": null
+     },
+     "share": {
+      "value": 3,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full",
+    "revision": 1,
+    "title": "process/music chain",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.008157040000000615,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.7431,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp",
+    "revision": 1,
+    "title": "Mono/Poly at Becoming {2,3}",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.68,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.605,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1",
+    "revision": 1,
+    "title": "qualitative ?/! at #1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5527999999999997,
+      "automation": null
+     },
+     "y": {
+      "value": 0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.432,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2",
+    "revision": 1,
+    "title": "processual ?/! at #3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6103999999999998,
+      "automation": null
+     },
+     "y": {
+      "value": 0.20439999999999997,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.462,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1",
+    "revision": 1,
+    "title": "pure ratio",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.732,
+      "automation": null
+     },
+     "y": {
+      "value": -0.05,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.395,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2",
+    "revision": 1,
+    "title": "tempered step",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.6039999999999999,
+      "automation": null
+     },
+     "y": {
+      "value": -0.414,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.56,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six",
+    "revision": 1,
+    "title": "three exact sixes",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.7,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.6348,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact",
+    "revision": 1,
+    "title": "exact reduction",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.7639999999999998,
+      "automation": null
+     },
+     "y": {
+      "value": 0.34,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.61,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord",
+    "revision": 1,
+    "title": "coordinatewise comparison",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5728851199999998,
+      "automation": null
+     },
+     "y": {
+      "value": 0.08880301500000003,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.915,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar",
+    "revision": 1,
+    "title": "scalar collapse — the lost pair",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.2,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.785,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn": {
+    "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn",
+    "revision": 1,
+    "title": "construction vs synthesis",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.7,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.771,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia",
+   "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock"
+  },
+  "provenance": [
+   {
+    "ref": "matheme/roz-matheme-logics.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-matheme-logics",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-matheme-logics:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-matheme-logics",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Matheme — The Two Logics</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-matheme-logics\" data-expression-revision=\"1\"><h1>Matheme — The Two Logics</h1><p>Frozen reading of expression:return-of-zero:roz-matheme-logics at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia\" aria-label=\"dia — the cut\"><h2>dia — the cut</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.50%;top:44.50%;font-size:1.08rem;opacity:1.00\" title=\"the bare relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:53.20%;top:51.20%;font-size:4.83rem;opacity:1.00\" title=\"the operator changes\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn\" aria-label=\"syn — the gathering\"><h2>syn — the gathering</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:2.46rem;opacity:1.00\" title=\"the held seam\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:2.29rem;opacity:1.00\" title=\"four ordered pairings\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.20%;font-size:1.98rem;opacity:1.00\" title=\"terms retained with their pairings\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic\" aria-label=\"chronic — configuration and passage\"><h2>chronic — configuration and passage</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:46.70%;top:47.00%;font-size:2.16rem;opacity:1.00\" title=\"two trajectories, one organisation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:60.60%;top:47.00%;font-size:2.73rem;opacity:1.00\" title=\"another history\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"attracting fixed point\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.50%;font-size:0.96rem;opacity:1.00\" title=\"the configuration\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono\" aria-label=\"mono — one field through its notations\"><h2>mono — one field through its notations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:1.75rem;opacity:1.00\" title=\"definition/quilt chain\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:49.92%;top:51.20%;font-size:2.23rem;opacity:1.00\" title=\"process/music chain\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:56.80%;font-size:1.81rem;opacity:1.00\" title=\"Mono/Poly at Becoming {2,3}\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly\" aria-label=\"poly — the many notations\"><h2>poly — the many notations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:44.47%;top:45.80%;font-size:1.30rem;opacity:1.00\" title=\"qualitative ?/! at #1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:56.10%;top:47.96%;font-size:1.39rem;opacity:1.00\" title=\"processual ?/! at #3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:42.68%;top:50.50%;font-size:1.19rem;opacity:1.00\" title=\"pure ratio\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:56.04%;top:54.14%;font-size:1.68rem;opacity:1.00\" title=\"tempered step\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-six\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.00%;font-size:1.90rem;opacity:1.00\" title=\"three exact sixes\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations\" aria-label=\"translations — correspondence with its proof boundary\"><h2>translations — correspondence with its proof boundary</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:42.36%;top:46.60%;font-size:1.83rem;opacity:1.00\" title=\"exact reduction\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.73%;top:49.11%;font-size:2.75rem;opacity:1.00\" title=\"coordinatewise comparison\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.00%;font-size:2.35rem;opacity:1.00\" title=\"scalar collapse — the lost pair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.00%;font-size:2.31rem;opacity:1.00\" title=\"construction vs synthesis\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-matheme-logics",
+  "world_ref": "expression:return-of-zero:roz-matheme-logics",
+  "revision": 1,
+  "title": "Matheme — The Two Logics",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-matheme-logics",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Matheme — The Two Logics"
+      },
+      "fallback": {
+       "title": "Matheme — The Two Logics"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-matheme-logics",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-matheme-logics",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-matheme-logics:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-matheme-logics",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Matheme — The Two Logics</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-matheme-logics\" data-expression-revision=\"1\"><h1>Matheme — The Two Logics</h1><p>Frozen reading of expression:return-of-zero:roz-matheme-logics at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia\" aria-label=\"dia — the cut\"><h2>dia — the cut</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.50%;top:44.50%;font-size:1.08rem;opacity:1.00\" title=\"the bare relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:53.20%;top:51.20%;font-size:4.83rem;opacity:1.00\" title=\"the operator changes\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn\" aria-label=\"syn — the gathering\"><h2>syn — the gathering</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:2.46rem;opacity:1.00\" title=\"the held seam\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:2.29rem;opacity:1.00\" title=\"four ordered pairings\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.20%;font-size:1.98rem;opacity:1.00\" title=\"terms retained with their pairings\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic\" aria-label=\"chronic — configuration and passage\"><h2>chronic — configuration and passage</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:46.70%;top:47.00%;font-size:2.16rem;opacity:1.00\" title=\"two trajectories, one organisation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:60.60%;top:47.00%;font-size:2.73rem;opacity:1.00\" title=\"another history\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"attracting fixed point\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.50%;font-size:0.96rem;opacity:1.00\" title=\"the configuration\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono\" aria-label=\"mono — one field through its notations\"><h2>mono — one field through its notations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:1.75rem;opacity:1.00\" title=\"definition/quilt chain\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:49.92%;top:51.20%;font-size:2.23rem;opacity:1.00\" title=\"process/music chain\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:56.80%;font-size:1.81rem;opacity:1.00\" title=\"Mono/Poly at Becoming {2,3}\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly\" aria-label=\"poly — the many notations\"><h2>poly — the many notations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:44.47%;top:45.80%;font-size:1.30rem;opacity:1.00\" title=\"qualitative ?/! at #1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:56.10%;top:47.96%;font-size:1.39rem;opacity:1.00\" title=\"processual ?/! at #3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:42.68%;top:50.50%;font-size:1.19rem;opacity:1.00\" title=\"pure ratio\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:56.04%;top:54.14%;font-size:1.68rem;opacity:1.00\" title=\"tempered step\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-six\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.00%;font-size:1.90rem;opacity:1.00\" title=\"three exact sixes\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations\" aria-label=\"translations — correspondence with its proof boundary\"><h2>translations — correspondence with its proof boundary</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:42.36%;top:46.60%;font-size:1.83rem;opacity:1.00\" title=\"exact reduction\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.73%;top:49.11%;font-size:2.75rem;opacity:1.00\" title=\"coordinatewise comparison\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.00%;font-size:2.35rem;opacity:1.00\" title=\"scalar collapse — the lost pair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.00%;font-size:2.31rem;opacity:1.00\" title=\"construction vs synthesis\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+        "revision": 1,
+        "title": "Matheme — The Two Logics",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia",
+          "revision": 1,
+          "title": "dia — the cut",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock",
+           "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn",
+          "revision": 1,
+          "title": "syn — the gathering",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main",
+           "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs",
+           "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic",
+          "revision": 1,
+          "title": "chronic — configuration and passage",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main",
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg",
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp",
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono",
+          "revision": 1,
+          "title": "mono — one field through its notations",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short",
+           "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full",
+           "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly",
+          "revision": 1,
+          "title": "poly — the many notations",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1",
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2",
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1",
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2",
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations",
+          "revision": 1,
+          "title": "translations — correspondence with its proof boundary",
+          "entity_refs": [
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact",
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord",
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar",
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock",
+          "revision": 1,
+          "title": "the bare relation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": 0.55,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main",
+          "revision": 1,
+          "title": "the operator changes",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.32000000000000006,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.61,
+            "automation": null
+           },
+           "share": {
+            "value": 3,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main",
+          "revision": 1,
+          "title": "the held seam",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.8193,
+            "automation": null
+           },
+           "share": {
+            "value": 4,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs",
+          "revision": 1,
+          "title": "four ordered pairings",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.765,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt",
+          "revision": 1,
+          "title": "terms retained with their pairings",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.72,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.66,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main",
+          "revision": 1,
+          "title": "two trajectories, one organisation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.33000000000000007,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.72,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg",
+          "revision": 1,
+          "title": "another history",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 1.06,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.91,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp",
+          "revision": 1,
+          "title": "attracting fixed point",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 2,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule",
+          "revision": 1,
+          "title": "the configuration",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.75,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short",
+          "revision": 1,
+          "title": "definition/quilt chain",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.5822,
+            "automation": null
+           },
+           "share": {
+            "value": 3,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full",
+          "revision": 1,
+          "title": "process/music chain",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.008157040000000615,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.7431,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp",
+          "revision": 1,
+          "title": "Mono/Poly at Becoming {2,3}",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.68,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.605,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1",
+          "revision": 1,
+          "title": "qualitative ?/! at #1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5527999999999997,
+            "automation": null
+           },
+           "y": {
+            "value": 0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.432,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2",
+          "revision": 1,
+          "title": "processual ?/! at #3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6103999999999998,
+            "automation": null
+           },
+           "y": {
+            "value": 0.20439999999999997,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.462,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1",
+          "revision": 1,
+          "title": "pure ratio",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.732,
+            "automation": null
+           },
+           "y": {
+            "value": -0.05,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.395,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2",
+          "revision": 1,
+          "title": "tempered step",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.6039999999999999,
+            "automation": null
+           },
+           "y": {
+            "value": -0.414,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.56,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six",
+          "revision": 1,
+          "title": "three exact sixes",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.7,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.6348,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact",
+          "revision": 1,
+          "title": "exact reduction",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.7639999999999998,
+            "automation": null
+           },
+           "y": {
+            "value": 0.34,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.61,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord",
+          "revision": 1,
+          "title": "coordinatewise comparison",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5728851199999998,
+            "automation": null
+           },
+           "y": {
+            "value": 0.08880301500000003,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.915,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar",
+          "revision": 1,
+          "title": "scalar collapse — the lost pair",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.2,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.785,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn": {
+          "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn",
+          "revision": 1,
+          "title": "construction vs synthesis",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.7,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.771,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia",
+         "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock"
+        },
+        "provenance": [
+         {
+          "ref": "matheme/roz-matheme-logics.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Matheme — The Two Logics"
+      },
+      "fallback": {
+       "title": "Matheme — The Two Logics",
+       "text": "Matheme — The Two Logics: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-matheme-logics",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-matheme-logics",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-matheme-logics",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-matheme-logics.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-matheme-logics"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-matheme-logics",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-matheme-logics",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-matheme-logics:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-matheme-logics"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-matheme-logics",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-matheme-logics:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-matheme-logics",
+    "world_ref": "expression:return-of-zero:roz-matheme-logics",
+    "revision": 1,
+    "title": "Matheme — The Two Logics",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-matheme-logics",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Matheme — The Two Logics"
+        },
+        "fallback": {
+         "title": "Matheme — The Two Logics"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-matheme-logics",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-matheme-logics",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-matheme-logics:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-matheme-logics",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Matheme — The Two Logics</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-matheme-logics\" data-expression-revision=\"1\"><h1>Matheme — The Two Logics</h1><p>Frozen reading of expression:return-of-zero:roz-matheme-logics at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia\" aria-label=\"dia — the cut\"><h2>dia — the cut</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.50%;top:44.50%;font-size:1.08rem;opacity:1.00\" title=\"the bare relation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:53.20%;top:51.20%;font-size:4.83rem;opacity:1.00\" title=\"the operator changes\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn\" aria-label=\"syn — the gathering\"><h2>syn — the gathering</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.00%;font-size:2.46rem;opacity:1.00\" title=\"the held seam\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:2.29rem;opacity:1.00\" title=\"four ordered pairings\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.20%;font-size:1.98rem;opacity:1.00\" title=\"terms retained with their pairings\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic\" aria-label=\"chronic — configuration and passage\"><h2>chronic — configuration and passage</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:46.70%;top:47.00%;font-size:2.16rem;opacity:1.00\" title=\"two trajectories, one organisation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:60.60%;top:47.00%;font-size:2.73rem;opacity:1.00\" title=\"another history\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:53.50%;font-size:0.60rem;opacity:1.00\" title=\"attracting fixed point\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.50%;font-size:0.96rem;opacity:1.00\" title=\"the configuration\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono\" aria-label=\"mono — one field through its notations\"><h2>mono — one field through its notations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:45.80%;font-size:1.75rem;opacity:1.00\" title=\"definition/quilt chain\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:49.92%;top:51.20%;font-size:2.23rem;opacity:1.00\" title=\"process/music chain\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:56.80%;font-size:1.81rem;opacity:1.00\" title=\"Mono/Poly at Becoming {2,3}\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly\" aria-label=\"poly — the many notations\"><h2>poly — the many notations</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:44.47%;top:45.80%;font-size:1.30rem;opacity:1.00\" title=\"qualitative ?/! at #1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:56.10%;top:47.96%;font-size:1.39rem;opacity:1.00\" title=\"processual ?/! at #3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:42.68%;top:50.50%;font-size:1.19rem;opacity:1.00\" title=\"pure ratio\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:56.04%;top:54.14%;font-size:1.68rem;opacity:1.00\" title=\"tempered step\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:poly:po-six\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.00%;font-size:1.90rem;opacity:1.00\" title=\"three exact sixes\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations\" aria-label=\"translations — correspondence with its proof boundary\"><h2>translations — correspondence with its proof boundary</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:42.36%;top:46.60%;font-size:1.83rem;opacity:1.00\" title=\"exact reduction\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.73%;top:49.11%;font-size:2.75rem;opacity:1.00\" title=\"coordinatewise comparison\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:52.00%;font-size:2.35rem;opacity:1.00\" title=\"scalar collapse — the lost pair\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn\" data-subject-ref=\"world:return-of-zero/wiki:roz-matheme-logics\" data-presentation-role=\"thing\" style=\"left:55.00%;top:57.00%;font-size:2.31rem;opacity:1.00\" title=\"construction vs synthesis\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-matheme-logics",
+          "revision": 1,
+          "title": "Matheme — The Two Logics",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia",
+            "revision": 1,
+            "title": "dia — the cut",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock",
+             "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn",
+            "revision": 1,
+            "title": "syn — the gathering",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main",
+             "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs",
+             "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic",
+            "revision": 1,
+            "title": "chronic — configuration and passage",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main",
+             "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg",
+             "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp",
+             "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono",
+            "revision": 1,
+            "title": "mono — one field through its notations",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short",
+             "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full",
+             "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly",
+            "revision": 1,
+            "title": "poly — the many notations",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1",
+             "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2",
+             "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1",
+             "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2",
+             "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations",
+            "revision": 1,
+            "title": "translations — correspondence with its proof boundary",
+            "entity_refs": [
+             "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact",
+             "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord",
+             "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar",
+             "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock",
+            "revision": 1,
+            "title": "the bare relation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": 0.55,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-main",
+            "revision": 1,
+            "title": "the operator changes",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.32000000000000006,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.61,
+              "automation": null
+             },
+             "share": {
+              "value": 3,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-main",
+            "revision": 1,
+            "title": "the held seam",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.8193,
+              "automation": null
+             },
+             "share": {
+              "value": 4,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-pairs",
+            "revision": 1,
+            "title": "four ordered pairings",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.765,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:syn:syn-cnt",
+            "revision": 1,
+            "title": "terms retained with their pairings",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.72,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.66,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-main",
+            "revision": 1,
+            "title": "two trajectories, one organisation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.33000000000000007,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.72,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-neg",
+            "revision": 1,
+            "title": "another history",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 1.06,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.91,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-fp",
+            "revision": 1,
+            "title": "attracting fixed point",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 2,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:chronic:ch-rule",
+            "revision": 1,
+            "title": "the configuration",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.75,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-short",
+            "revision": 1,
+            "title": "definition/quilt chain",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.5822,
+              "automation": null
+             },
+             "share": {
+              "value": 3,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-full",
+            "revision": 1,
+            "title": "process/music chain",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.008157040000000615,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.7431,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:mono:mo-mp",
+            "revision": 1,
+            "title": "Mono/Poly at Becoming {2,3}",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.68,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.605,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q1",
+            "revision": 1,
+            "title": "qualitative ?/! at #1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5527999999999997,
+              "automation": null
+             },
+             "y": {
+              "value": 0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.432,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-q2",
+            "revision": 1,
+            "title": "processual ?/! at #3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6103999999999998,
+              "automation": null
+             },
+             "y": {
+              "value": 0.20439999999999997,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.462,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r1",
+            "revision": 1,
+            "title": "pure ratio",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.732,
+              "automation": null
+             },
+             "y": {
+              "value": -0.05,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.395,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-r2",
+            "revision": 1,
+            "title": "tempered step",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.6039999999999999,
+              "automation": null
+             },
+             "y": {
+              "value": -0.414,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.56,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:poly:po-six",
+            "revision": 1,
+            "title": "three exact sixes",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.7,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.6348,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-exact",
+            "revision": 1,
+            "title": "exact reduction",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.7639999999999998,
+              "automation": null
+             },
+             "y": {
+              "value": 0.34,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.61,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-coord",
+            "revision": 1,
+            "title": "coordinatewise comparison",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5728851199999998,
+              "automation": null
+             },
+             "y": {
+              "value": 0.08880301500000003,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.915,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-scalar",
+            "revision": 1,
+            "title": "scalar collapse — the lost pair",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.2,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.785,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn": {
+            "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:translations:tr-vn",
+            "revision": 1,
+            "title": "construction vs synthesis",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-matheme-logics.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.7,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.771,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia",
+           "entity_ref": "expression:return-of-zero:roz-matheme-logics:scene:dia:dia-lock"
+          },
+          "provenance": [
+           {
+            "ref": "matheme/roz-matheme-logics.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Matheme — The Two Logics"
+        },
+        "fallback": {
+         "title": "Matheme — The Two Logics",
+         "text": "Matheme — The Two Logics: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-matheme-logics",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-matheme-logics",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-matheme-logics",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-matheme-logics",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-matheme-logics.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-matheme-logics"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-matheme-logics",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-matheme-logics",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-matheme-logics:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-matheme-logics",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Matheme — The Two Logics",
+  "summary": "a living Expression · 6 scenes · 21 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-matheme-logics:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-matheme-logics",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-matheme-logics"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-matheme-logics:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-matheme-logics",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-matheme-logics",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Matheme — The Two Logics",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-matheme-logics:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-matheme-logics:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-matheme-logics",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-matheme-logics"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

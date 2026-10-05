@@ -1,0 +1,1584 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-room-02-return-of-zero",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+  "revision": 1,
+  "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13",
+    "revision": 1,
+    "title": "§1 · #0 — A Sign Migrates Between Worlds",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14",
+    "revision": 1,
+    "title": "§1 · #1 — Śūnya Becomes Operational",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15",
+    "revision": 1,
+    "title": "§1 · #2 — The Empty Set Generates One",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16",
+    "revision": 1,
+    "title": "§1 · #3 — The Crossed Zero",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17",
+    "revision": 1,
+    "title": "§1 · #4 — Zero Keeps One Foot Outside Mathematics",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18",
+    "revision": 1,
+    "title": "§1 · #5→0 — The Loan Returns",
+    "entity_refs": [
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c",
+     "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x",
+    "revision": 1,
+    "title": "Traversal — A Sign Migrates Between Worlds",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021",
+    "revision": 1,
+    "title": "0 — Śūnya Becomes Operational",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.425,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023",
+    "revision": 1,
+    "title": "Traversal — The Empty Set Generates One",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.35,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028",
+    "revision": 1,
+    "title": "The crossed zero — one job",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.7,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a",
+    "revision": 1,
+    "title": "The exceptional return",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.2,
+      "automation": null
+     },
+     "y": {
+      "value": 0,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.6,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c",
+    "revision": 1,
+    "title": "0/1 — ground becoming legible through a mark",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.3,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e": {
+    "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e",
+    "revision": 1,
+    "title": "1/0 — the mark returning toward its ground",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+       "revision": "dbf3b17",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.7,
+      "automation": null
+     },
+     "y": {
+      "value": 0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13",
+   "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x"
+  },
+  "provenance": [
+   {
+    "ref": "rooms/roz-room-02-return-of-zero.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+      "revision": "dbf3b17",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-room-02-return-of-zero:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 3 of 8 · §1 — The Return of Zero</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-02-return-of-zero\" data-expression-revision=\"1\"><h1>Return of Zero · Room 3 of 8 · §1 — The Return of Zero</h1><p>Frozen reading of expression:return-of-zero:roz-room-02-return-of-zero at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13\" aria-label=\"§1 · #0 — A Sign Migrates Between Worlds\"><h2>§1 · #0 — A Sign Migrates Between Worlds</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:3.60rem;opacity:1.00\" title=\"Traversal — A Sign Migrates Between Worlds\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14\" aria-label=\"§1 · #1 — Śūnya Becomes Operational\"><h2>§1 · #1 — Śūnya Becomes Operational</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"0 — Śūnya Becomes Operational\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15\" aria-label=\"§1 · #2 — The Empty Set Generates One\"><h2>§1 · #2 — The Empty Set Generates One</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.05rem;opacity:1.00\" title=\"Traversal — The Empty Set Generates One\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16\" aria-label=\"§1 · #3 — The Crossed Zero\"><h2>§1 · #3 — The Crossed Zero</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:5.10rem;opacity:1.00\" title=\"The crossed zero — one job\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17\" aria-label=\"§1 · #4 — Zero Keeps One Foot Outside Mathematics\"><h2>§1 · #4 — Zero Keeps One Foot Outside Mathematics</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.80rem;opacity:1.00\" title=\"The exceptional return\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18\" aria-label=\"§1 · #5→0 — The Loan Returns\"><h2>§1 · #5→0 — The Loan Returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:47.00%;top:50.20%;font-size:3.60rem;opacity:1.00\" title=\"0/1 — ground becoming legible through a mark\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:57.00%;top:49.80%;font-size:3.60rem;opacity:1.00\" title=\"1/0 — the mark returning toward its ground\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-room-02-return-of-zero",
+  "world_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+  "revision": 1,
+  "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+            "revision": "dbf3b17",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-room-02-return-of-zero:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 3 of 8 · §1 — The Return of Zero</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-02-return-of-zero\" data-expression-revision=\"1\"><h1>Return of Zero · Room 3 of 8 · §1 — The Return of Zero</h1><p>Frozen reading of expression:return-of-zero:roz-room-02-return-of-zero at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13\" aria-label=\"§1 · #0 — A Sign Migrates Between Worlds\"><h2>§1 · #0 — A Sign Migrates Between Worlds</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:3.60rem;opacity:1.00\" title=\"Traversal — A Sign Migrates Between Worlds\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14\" aria-label=\"§1 · #1 — Śūnya Becomes Operational\"><h2>§1 · #1 — Śūnya Becomes Operational</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"0 — Śūnya Becomes Operational\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15\" aria-label=\"§1 · #2 — The Empty Set Generates One\"><h2>§1 · #2 — The Empty Set Generates One</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.05rem;opacity:1.00\" title=\"Traversal — The Empty Set Generates One\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16\" aria-label=\"§1 · #3 — The Crossed Zero\"><h2>§1 · #3 — The Crossed Zero</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:5.10rem;opacity:1.00\" title=\"The crossed zero — one job\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17\" aria-label=\"§1 · #4 — Zero Keeps One Foot Outside Mathematics\"><h2>§1 · #4 — Zero Keeps One Foot Outside Mathematics</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.80rem;opacity:1.00\" title=\"The exceptional return\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18\" aria-label=\"§1 · #5→0 — The Loan Returns\"><h2>§1 · #5→0 — The Loan Returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:47.00%;top:50.20%;font-size:3.60rem;opacity:1.00\" title=\"0/1 — ground becoming legible through a mark\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:57.00%;top:49.80%;font-size:3.60rem;opacity:1.00\" title=\"1/0 — the mark returning toward its ground\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+        "revision": 1,
+        "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13",
+          "revision": 1,
+          "title": "§1 · #0 — A Sign Migrates Between Worlds",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14",
+          "revision": 1,
+          "title": "§1 · #1 — Śūnya Becomes Operational",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15",
+          "revision": 1,
+          "title": "§1 · #2 — The Empty Set Generates One",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16",
+          "revision": 1,
+          "title": "§1 · #3 — The Crossed Zero",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17",
+          "revision": 1,
+          "title": "§1 · #4 — Zero Keeps One Foot Outside Mathematics",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18",
+          "revision": 1,
+          "title": "§1 · #5→0 — The Loan Returns",
+          "entity_refs": [
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c",
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x",
+          "revision": 1,
+          "title": "Traversal — A Sign Migrates Between Worlds",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021",
+          "revision": 1,
+          "title": "0 — Śūnya Becomes Operational",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.425,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023",
+          "revision": 1,
+          "title": "Traversal — The Empty Set Generates One",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.35,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028",
+          "revision": 1,
+          "title": "The crossed zero — one job",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.7,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a",
+          "revision": 1,
+          "title": "The exceptional return",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.2,
+            "automation": null
+           },
+           "y": {
+            "value": 0,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.6,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c",
+          "revision": 1,
+          "title": "0/1 — ground becoming legible through a mark",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.3,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e": {
+          "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e",
+          "revision": 1,
+          "title": "1/0 — the mark returning toward its ground",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+             "revision": "dbf3b17",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.7,
+            "automation": null
+           },
+           "y": {
+            "value": 0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13",
+         "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x"
+        },
+        "provenance": [
+         {
+          "ref": "rooms/roz-room-02-return-of-zero.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero"
+      },
+      "fallback": {
+       "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+       "text": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-room-02-return-of-zero",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-room-02-return-of-zero"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-room-02-return-of-zero:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-room-02-return-of-zero"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+   "revision": "1",
+   "canonical": {
+    "record_id": "roz-room-02-return-of-zero",
+    "vault_path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+    "source_revision": "dbf3b17"
+   }
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-room-02-return-of-zero:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-room-02-return-of-zero",
+    "world_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+    "revision": 1,
+    "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+              "revision": "dbf3b17",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-room-02-return-of-zero:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero · Room 3 of 8 · §1 — The Return of Zero</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-room-02-return-of-zero\" data-expression-revision=\"1\"><h1>Return of Zero · Room 3 of 8 · §1 — The Return of Zero</h1><p>Frozen reading of expression:return-of-zero:roz-room-02-return-of-zero at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13\" aria-label=\"§1 · #0 — A Sign Migrates Between Worlds\"><h2>§1 · #0 — A Sign Migrates Between Worlds</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:3.60rem;opacity:1.00\" title=\"Traversal — A Sign Migrates Between Worlds\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14\" aria-label=\"§1 · #1 — Śūnya Becomes Operational\"><h2>§1 · #1 — Śūnya Becomes Operational</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.28rem;opacity:1.00\" title=\"0 — Śūnya Becomes Operational\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15\" aria-label=\"§1 · #2 — The Empty Set Generates One\"><h2>§1 · #2 — The Empty Set Generates One</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.05rem;opacity:1.00\" title=\"Traversal — The Empty Set Generates One\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16\" aria-label=\"§1 · #3 — The Crossed Zero\"><h2>§1 · #3 — The Crossed Zero</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:5.10rem;opacity:1.00\" title=\"The crossed zero — one job\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17\" aria-label=\"§1 · #4 — Zero Keeps One Foot Outside Mathematics\"><h2>§1 · #4 — Zero Keeps One Foot Outside Mathematics</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:52.00%;top:50.00%;font-size:4.80rem;opacity:1.00\" title=\"The exceptional return\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18\" aria-label=\"§1 · #5→0 — The Loan Returns\"><h2>§1 · #5→0 — The Loan Returns</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:47.00%;top:50.20%;font-size:3.60rem;opacity:1.00\" title=\"0/1 — ground becoming legible through a mark\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e\" data-subject-ref=\"world:return-of-zero/wiki:roz-room-02-return-of-zero\" data-presentation-role=\"thing\" style=\"left:57.00%;top:49.80%;font-size:3.60rem;opacity:1.00\" title=\"1/0 — the mark returning toward its ground\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+          "revision": 1,
+          "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13",
+            "revision": 1,
+            "title": "§1 · #0 — A Sign Migrates Between Worlds",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14",
+            "revision": 1,
+            "title": "§1 · #1 — Śūnya Becomes Operational",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15",
+            "revision": 1,
+            "title": "§1 · #2 — The Empty Set Generates One",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16",
+            "revision": 1,
+            "title": "§1 · #3 — The Crossed Zero",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17",
+            "revision": 1,
+            "title": "§1 · #4 — Zero Keeps One Foot Outside Mathematics",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18",
+            "revision": 1,
+            "title": "§1 · #5→0 — The Loan Returns",
+            "entity_refs": [
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c",
+             "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x",
+            "revision": 1,
+            "title": "Traversal — A Sign Migrates Between Worlds",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-14:ent-021",
+            "revision": 1,
+            "title": "0 — Śūnya Becomes Operational",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.425,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-15:ent-023",
+            "revision": 1,
+            "title": "Traversal — The Empty Set Generates One",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.35,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-16:ent-028",
+            "revision": 1,
+            "title": "The crossed zero — one job",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.7,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-17:ent-02a",
+            "revision": 1,
+            "title": "The exceptional return",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.2,
+              "automation": null
+             },
+             "y": {
+              "value": 0,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.6,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02c",
+            "revision": 1,
+            "title": "0/1 — ground becoming legible through a mark",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.3,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e": {
+            "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-18:ent-02e",
+            "revision": 1,
+            "title": "1/0 — the mark returning toward its ground",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+               "revision": "dbf3b17",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.7,
+              "automation": null
+             },
+             "y": {
+              "value": 0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13",
+           "entity_ref": "expression:return-of-zero:roz-room-02-return-of-zero:scene:movement-13:ent-01x"
+          },
+          "provenance": [
+           {
+            "ref": "rooms/roz-room-02-return-of-zero.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero"
+        },
+        "fallback": {
+         "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+         "text": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-room-02-return-of-zero",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-room-02-return-of-zero",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-room-02-return-of-zero"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-02-return-of-zero:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+  "summary": "a living Expression · 6 scenes · 7 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-room-02-return-of-zero:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-room-02-return-of-zero",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-room-02-return-of-zero"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-room-02-return-of-zero:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-room-02-return-of-zero",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-room-02-return-of-zero",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-room-02-return-of-zero:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-room-02-return-of-zero:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-room-02-return-of-zero",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-room-02-return-of-zero"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

@@ -79,7 +79,7 @@ The Möbius turn is native to the field: `#5` gathering and recounting is the in
 
 ## Essay use
 
-The complete learning surface is [[symbolon/episteme/etymologies/encounter-region-name-count/HISTORY|Encounter, Region, Countenance, and Count — The With-Field Becomes an Account]]. Use it when the essay needs the history of encounter becoming opposition, domain, name, count, and account. The source establishes the authorial synthesis; the etymological history distinguishes lexical descent, semantic field, graphic history, and QL operation without diminishing any of them into a weaker kind of claim.
+The complete learning surface is [[symbolon/episteme/etymologies/encounter-region-name-count/HISTORY-encounter-region-name-count]]. Use it when the essay needs the history of encounter becoming opposition, domain, name, count, and account. The source establishes the authorial synthesis; the etymological history distinguishes lexical descent, semantic field, graphic history, and QL operation without diminishing any of them into a weaker kind of claim.
 
 <a id="passages"></a>
 ## Passages and excerpts

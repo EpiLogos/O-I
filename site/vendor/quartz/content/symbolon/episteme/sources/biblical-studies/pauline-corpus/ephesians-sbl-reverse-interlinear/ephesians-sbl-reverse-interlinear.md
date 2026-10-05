@@ -26,7 +26,7 @@ The title identifies the letter as Paul’s; this source house does not settle h
 
 [Acquired witness](https://www.sblgnt.com/download/revint/70-Ephesians.pdf). Retrieved and selected text checked on 8 September 2026. Local SHA-256: `c8a46b30d2a7febb1608140360420b9d411f80033eb2567a64c6b5f2670c4651`.
 
-The witness **sources** [the historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES.md) and **qualifies** the historical comparison in its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD.md). Taylor’s generated operation remains distinct from the historical proposition.
+The witness **sources** [the historical branch](../../../../etymologies/apportionment-and-economy/HISTORICAL-BRANCHES-apportionment-and-economy.md) and **qualifies** the historical comparison in its [whole-field](../../../../etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md). Taylor’s generated operation remains distinct from the historical proposition.
 
 <a id="passages"></a>
 ## Selected passages

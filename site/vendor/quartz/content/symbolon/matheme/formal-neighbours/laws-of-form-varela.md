@@ -27,7 +27,7 @@ $$
 C(M)=U\qquad\text{crossing}.
 $$
 
-Two marks beside one another retain the marked value. An enclosure around a mark returns the unmarked value. The same two visible marks have different effects according to their arrangement. [Spencer-Brown's source house](../../episteme/sources/mathematics-logic/spencer-brown/spencer-brown-1969-laws-form/spencer-brown-1969-laws-form.md) sources the calculus; these initials also appear in the appendix to Varela's 1975 paper, printed p.23. `C`, `U` and `M` are this record's transliteration of that spatial signature.
+Two marks beside one another retain the marked value. An enclosure around a mark returns the unmarked value. Their arrangement determines the different effects of the two visible marks. These initials of [Spencer-Brown’s calculus](../../episteme/sources/mathematics-logic/spencer-brown/spencer-brown-1969-laws-form/spencer-brown-1969-laws-form.md) also appear in the appendix to Varela’s 1975 paper, printed p.23. `C`, `U` and `M` transliterate that spatial signature here; the selected edition’s direct excerpt question remains separate.
 
 ## #1 — Finite depth permits an innermost reduction
 
@@ -71,7 +71,7 @@ The static equation has no two-valued solution; the delayed recurrence has two a
 
 ## #3 — Varela gives crossing a third possible value
 
-Varela's [1975 source house](../../episteme/sources/process-systems-theory/varela/varela-1975-calculus-self-reference/varela-1975-calculus-self-reference.md) sources the extension. His primary paper, printed pp.7–8, introduces the autonomous state and specifies its arithmetic. Write that state `A` in this transliteration. Crossing fixes it, `C(A)=A`; marked presence dominates juxtaposition; repeated autonomous indications condense. The resulting operations are:
+In his [1975 extension](../../episteme/sources/process-systems-theory/varela/varela-1975-calculus-self-reference/varela-1975-calculus-self-reference.md), printed pp.7–8, Varela introduces the autonomous state and specifies its arithmetic. Write that state `A` in this transliteration. Crossing fixes it, `C(A)=A`; marked presence dominates juxtaposition; repeated autonomous indications condense. The resulting operations are:
 
 | `E` | `C(E)` |
 |---|---|
@@ -101,18 +101,18 @@ Placement remains consequential. The autonomous state is not introduced as a num
 
 ## #4 — The native return changes the office of mediation
 
-[A18's native traversal](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) grounds the relation to QL. The parent slash differentiates into `0/1`, question/assertion, polarity, determining capacity and instance, personed presence and predication, differential horizon and `1/0` return. This whole field gives re-entry its authorial office: an achieved determination can enter a further account of the relation through which it arose.
+The [native eight-determination traversal](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) gives re-entry its QL relation. The parent slash differentiates into `0/1`, question/assertion, polarity, determining capacity and instance, personed presence and predication, differential horizon and `1/0` return. Through this whole field, an achieved determination enters a further account of the relation through which it arose.
 
 The crossed-zero sequence in the [core theorem spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), §IX, makes the changing mediation explicit:
 
 The native sequence is **`0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1`, returning to `0/1`**. Here `Ø` marks occluded ground: the slash is initially fused into apparent selfhood, then becomes explicit between terms, then available as a meta-relation. It is not the empty set or the unmarked value `U` of the preceding calculus. Recognition changes the mediation's office.
 
-[A03, Immutable Gap](../../../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md), qualifies the comparison: representing the determining condition adds another determination whose occurrence still has conditions. That native operation is not established by assigning `A` to an equation. [A21, Individuation and Recognition](../../../section-rooms/arguments/A21-Individuation-Recognition.md), extends return through the history of a life; a fixed arithmetic value does not itself carry that history. The shared pressure is exact enough: self-inclusion changes what must be retained for an account to work. The mathematical, native and recognitive operations remain distinguishable.
+Through [the determining-field limit](../../../section-rooms/arguments/A03-Immutable-Gap-Formal-Limit.md), representing the determining condition adds another determination whose occurrence still has conditions. Assigning `A` to the formal equation performs a different operation. [Individuation and recognition](../../../section-rooms/arguments/A21-Individuation-Recognition.md) carry return through the history of a life; a fixed arithmetic value alone holds no such history. Self-inclusion changes what an account must retain to work in each specific case. The mathematical, native and recognitive operations retain their respective objects and grounds.
 
 ## #5→0 — Carry the changed rule through the return
 
-This record returns-to [§3 · #2, Mark, Re-entry and Complex Orientation](../../../section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md) with three different achievements: terminating finite reduction, a declared delayed recurrence, and an extended arithmetic admitting an autonomous state. They cannot substitute for one another without a translation specifying the retained structure.
+[Mark and re-entry](../../../section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md) carry three different achievements: terminating finite reduction, a declared delayed recurrence, and an extended arithmetic admitting an autonomous state. Translation among them specifies which structure is retained, so that the resulting operation keeps its actual input and law.
 
-[A14, Computational Process Ontology](../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), extends the question into consequential transformations: what is inherited, what changes, and what becomes available to the next operation? [A33, Operational Parity](../../../section-rooms/arguments/A33-Epistemic-Cultivation-Operational-Parity.md), tests a technical implementation at those differences. An evaluator should expose whether it reduced a finite tree, updated a delayed loop, or evaluated a third-state expression. Each has a different input, state and result.
+Through [computational process](../../../section-rooms/arguments/A14-Computational-Process-Ontology.md), a transformation inherits a condition, produces a result and changes what becomes available to the next operation. [Operational parity](../../../section-rooms/arguments/A33-Epistemic-Cultivation-Operational-Parity.md) makes implementation answerable to the actual differences: reducing a finite tree, updating a delayed loop, and evaluating a third-state expression each take a different input and produce their specific state or result. An evaluator exposes the performed operation through that distinction.
 
 The mark returns with its rule visible. Calling preserves the value across repetition; crossing changes the value through enclosure; self-indication requires the account to specify how it has admitted its own operation. That is the formal material carried into the native relation, whose source and return remain its own.

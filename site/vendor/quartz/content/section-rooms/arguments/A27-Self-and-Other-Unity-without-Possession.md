@@ -4,77 +4,153 @@ record_id: A27
 record_type: argument
 register: episteme
 claim_status: Argued
-source_relation: "Argued non-dual encounter; Paraphrased nested Watson–Gans–Levinas witnesses"
+source_relation: "Argued non-dual encounter; source-specific philosophical and psychological comparisons"
 ---
 
 # A27 — Self and Other — Unity without Possession
 
 <!-- paired-field-navigation -->
-[Argument field](README.md) · [Other face: A27′ — Encounter over Sovereignty](conjugate/A27-prime-Encounter-over-Sovereignty.md) · [Shared A/C root](conjugate/AC.md)
+[Argument field](README.md) · [Other face: Encounter over Sovereignty](conjugate/A27-prime-Encounter-over-Sovereignty.md) · [Shared A/C root](conjugate/AC.md)
 <!-- /paired-field-navigation -->
 
-## #0
+## #0 — The Other belongs to the whole, not to me
 
-The Other can belong to the whole without belonging inside my possession. Q27's Watson–Gans–Levinas development makes the scale difference decisive: **Other can be within Mono without being within me.** My situated self is not the all-inclusive whole. Metaphysical unity cannot authorise the substitution of my representation, consciousness-content or model for another's own relation to that whole.
+**The Other can be within Mono without being within me.**
 
-[[A20-Image-Valuation-Possession|A20]] grounds image-possession; [[A22-World-Picture-to-World-Atlas|A22]] distinguishes world from model; [[A26-Objective-Internality-Mind-as-Worldhood|A26]] grounds mind's constituted world without turning the subject-pole into a completed object. A27 gathers their consequence into encounter. The Other's excess is active: what another says or does can change the categories through which I first approached them.
+That distinction is the argument's ground. If reality is one whole, another person does not thereby become a content of my consciousness, an element of my model, or a local expression whose meaning I possess. My situated self is itself one determination within the whole. Metaphysical unity therefore intensifies the problem of encounter rather than solving it by absorption: the Other belongs to the same reality without belonging to my local jurisdiction over reality.
 
-## #1
+The asymmetry runs through [Objective Internality](A26-Objective-Internality-Mind-as-Worldhood.md). I meet another through means: perception, language, memory, image, expectation, social role, institution, body and world. Those means are real and constitutive. They are also mine or ours in determinate ways. They make the Other available to me without becoming the Other's first-person presence.
 
-[[symbolon/episteme/sources/psychology/watson/watson-1998-resonance-of-emptiness/watson-1998-resonance-of-emptiness.md|Watson’s source house and protected encounter]] sources the distinction between selfing and a self-thing, and the movement from egoic need to interpersonal desire. Its Gans carrier is the 1988 chapter transmitted through Watson's 1996 thesis pp112–13, with the 1998 book and direct Gans collation still owed. The later Gans1997 article is not silently substituted for that chain.
+This is why representation and possession have to be distinguished. A faithful image of another is still an image in a relation. A detailed model can increase what I understand and can still become more dangerous if its increased adequacy licenses the belief that the model now owns the criterion of the person.
 
-The nested Levinas passages supply an exact resistance to possession. In q006 the face exceeds the idea held by the Same; q007's encounter challenges the exercise of power rather than confronting it merely as more power on the same scale. Those primary movements were source-checked, with exact edition collation pending. The QL development is Argued from them: a local Same can claim universal jurisdiction over what counts as satisfaction, but it is not Mono itself.
+The whole is therefore not the enlargement of my interior until everything fits inside it. Mono is not my biggest possible model. The unity that includes us both is precisely what prevents my local self from claiming that inclusion as possession.
 
-Q27 makes the capture a two-stage operation. A distinction selects me/not-me or useful/useless; then one pole appropriates the relation that generated both. The not-me is admitted only as for-me—resource, threat, customer, labour, lover or mirror. Selection is necessary for finite action. Its positivisation as the whole economy of encounter makes it possession.
+## #1 — Possession begins when a local measure takes the whole's office
 
-## #2
+Finite life requires selection. I distinguish me from not-me, safe from dangerous, relevant from irrelevant, desired from undesired. Such distinctions are not already a fall. Without them no situated being could act.
 
-Address changes the relation that description can leave untouched. “You” is not a midpoint inserted between an already complete I and It. A reply can disclose that the question itself has misnamed the situation; the speaker who asked it must then change the terms of understanding. Frank's Watson encounter places this qualitative difference in the native `AM/IS` determination: first-person presence and third-person sayability meet through a second-person relation. The authorial notation is not attributed to Watson or Levinas.
+Possession begins in a second move.
 
-[[section-rooms/arguments/concepts/C35-Selfing-Self-Subjectivity-Self-Thing|C35 Selfing / Self / Subjectivity / Self-Thing]] defines the offices that prevent a pronoun, a self-model and the Subject from exchanging their criteria. [[section-rooms/arguments/concepts/C38-Bimba-Pratibimba-Bimba-Map|C38 Bimba–Pratibimba]] defines why my image of another remains a reflection. Another's belonging to the Original does not make my reference map the Original of that other.
+A local distinction establishes a relation between two terms. One pole then appropriates the relation which made both poles possible and presents itself as the measure of the whole. The not-me is no longer encountered as another centre or source; it is admitted only as for-me: resource, threat, customer, labour, lover, mirror, audience, datum.
 
-The [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|Encounter whole field]] derives Countenance's return upon Name and Account. A name can keep reference through changing descriptions without finishing the person it names. [[symbolon/episteme/sources/analytic-philosophy/kripke/kripke-1981-naming-and-necessity/kripke-1981-naming-and-necessity.md|Kripke’s source house]] compares that distinct linguistic office; rigid reference is not a proof that the referent has been exhaustively known.
+The two-stage movement is therefore:
 
-## #3
+$$
+\text{distinction}
+\;\longrightarrow\;
+\text{one pole appropriates the relation}.
+$$
 
-Inner alterity and interpersonal otherness require different practices. Q27 distinguishes Shadow as **other-self**, the disowned or not-yet-lived difference within my psyche, and Friend as **my-self's-other**, another centre whose response my psyche cannot produce. An inward figure can surprise and reorganise the ego; the actual friend cannot be reduced to that figure's projection. Conversely, the existence of another person does not make all psychic otherness external.
+What was necessary discrimination becomes totalisation.
 
-Q27's God/Shadow/Friend/Alien constellation keeps these image-relations together: source or archetypal totality, internal estrangement, shared-world other, and the unfamiliar other made a container for projected uncertainty. These are developmental mythematic operators, not extra formal primitives or a universal symbol dictionary. [[A21-Individuation-Recognition|A21]] develops the psychic return without making integration an annexation of the interpersonal field.
+This is the interpersonal form of monoisation. A model can be excellent at distinguishing another's likely intention and still make the deeper error if all possible replies are valued only by how well they satisfy the model's inherited economy. Prediction then becomes a form of jurisdiction: the other is allowed to differ only within the range the local account has already made meaningful.
 
-## #4
+Image-possession and world-picture operate the same way. A reflection can guide encounter; it becomes idolatrous when the represented life is required to answer to the reflection as though the reflection were its source.
 
-The offered computational test makes the change of economy visible. In a fixed selection `y* = argminᵧ Eθ(m,y)`, the existing model and evaluator decide which candidate is satisfactory. Search can produce novelty while leaving every criterion unchanged. Q27 then offers a transition of `(m, θ, Eθ)` through encounter: the representation, parameters and evaluative frame themselves become revisable. This is a design unit, not an established EBM theorem or implemented result. A mathematical minimum also requires its stated domain and existence conditions; the notation does not turn a person into an actual optimisation variable.
+The argument therefore does not oppose knowledge of another. It opposes the conversion of knowledge into ownership of the relation through which another can answer.
 
-[[A31-Deferential-Intelligence|A31]] owns the full technical operation. Its ethical pressure is already exact here: the Other is not merely a better answer to the need I brought. The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Arbitration whole field]] derives **Con-text-through-Diaphaneity → Regard**, through which encounter can change the measure. Generalised energetics must therefore preserve the possibility of a changed scale, rather than translating ethical excess into a stronger force within the old one.
+## #2 — Address opens what description cannot contain
 
-## #5→0
+AM/IS gives encounter its personed logic.
 
-[Māyā — eye, veil, frame and horizon](../../symbolon/mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md#maya-regard-refraction): The reply that interrupts the prepared image **figures** the Other’s effective place within the whole. Encounter can alter which question and criterion govern my response; inclusion in my account cannot supply the other centre’s answer. The Watson–Gans–Levinas transmission retains its source boundaries, while the authored change of economy preserves ethical excess from reduction to a stronger force on an unchanged scale.
+**AM** is first-person presence.  
+**IS** is third-person sayability.  
+The slash is the second-person relation through which they meet.
 
-Taylor’s [God-Other](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#god-other), [Shadow as other-self](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#shadow-other-self), [Friend as my-self’s-other](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#friend-myselfs-other) and [Alien/Enemy](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#alien-enemy) **figure** four different relations which the return must preserve. The source or archetypal totality exceeds a finite self-image; the disowned psychic other can transform that self’s organisation; the friend is an actual other centre whose response cannot be generated from my projection; the alien becomes an enemy when unfamiliarity is made to contain projected uncertainty. Recognising the last operation does not settle every judgment of danger. Psychic integration therefore leaves interpersonal refusal effective, and the constellation’s divine-mind and archetypal registers retain their distinction.
+A statement about another can be exact. Address changes the office of that statement because the one addressed can answer. “You” is not a bridge placed between a completed I and a completed It. Address participates in what I and you become for one another.
 
-The bounded recognition comparison **returns-to** [Fanon’s complete source field](../../symbolon/mytheme/worlds/francophone-anticolonial/fanon-language-gaze-mask-recognition/WHOLE.md#fanon-recognition), where a changed self-description leaves the problem active if the social authority distributing recognition remains untouched. The [whole’s return](../../symbolon/mytheme/worlds/francophone-anticolonial/fanon-language-gaze-mask-recognition/WHOLE.md#fanon-return) retains the racial hail, its bodily consequence and an unfinished future in which a person can answer the imposed image. This A27 synthesis remains **human-amplified: no**, as does the proposed Objective Co-Internality appointment. The source comparison preserves unequal colonial power and the material conditions of de-alienation; reciprocal recognition is a demand whose accomplishment is not supplied by a benevolent description.
+A reply can do more than add information. It can reveal that the question itself has misnamed the situation. It can expose that the category under which I approached you was already part of the problem. In that event, a faithful response requires a change not merely in what I think about you but in the means through which you had become intelligible to me.
 
-The [Indra’s jewel-net whole](../../symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md#indra-account-and-consequence) **figures** belonging through the distinct jewel whose participation persists within the net. Its authored interpersonal return preserves the Other within Mono while leaving their refusal effective against my use of the image. Mutual implication cannot supply that person’s answer in advance.
+The knower–means–known relation is therefore interpersonal as well as epistemic. My account of you belongs to pramāṇa and prameya: means and known. Your first-person presence is not the final object my account will eventually acquire. It is the independently lived pole from which an answer can enter the encounter and change my means.
 
-The [Mother, Assumption and chiasm whole](../../symbolon/mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md#mother-bearing-return) **figures** a life borne within relation which remains other than its bearer’s possession. Receiving the maternal body on return preserves the bearing relation while allowing differentiated life to continue. The chiasm therefore keeps nourishment and recognition answerable to the particular being they sustain.
+This is the force of Countenance within the Encounter / Region / Name / Count / Countenance / Account field. A name keeps a person addressable through changing descriptions. An account makes the encounter durable. Countenance is the return by which the one counted and named can answer beyond the account that presently carries them.
 
-The [travelling-jigsaw whole](../../symbolon/mytheme/worlds/frank-taylor/travelling-jigsaw-atlas/WHOLE.md#jigsaw-blue-marble-hinge) **figures** the counted participant answering the planetary scale under which a picture places them. Countenance makes the response consequential for the account’s criterion and exclusions. The other remains within the shared world while exceeding the picture’s authority to prescribe their answer.
+The personal circuit of the copula reaches the same point: I = Is → Who I am = What is → What I am = Who is? → I = Am. Third-person predication is turned back toward the one whose life it describes. Recognition occurs when the identification is taken up from within rather than left as a completed description from outside.
 
-The [Symbol / Account / Trust whole-field — Account does not replace source](../../symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md#account-does-not-replace-source) **qualifies** this operation at evidence register 3. The Other’s reply can change the question and terms of approach. A shared whole does not let either participant finish the other’s response on their behalf. The resulting distinction **returns-to** that whole field with the consumer’s own source and evidential limits retained.
+The [AM/IS relation](../../symbolon/AM-IS.md) keeps lived presence, description and answering address distinct. Through the [personal circuit of the copula](A02-Copula-Self-Identity-through-Difference.md), the predicate returns to the one whose life it identifies. Through [Countenance](../../symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count.md), that person can answer the durable Name and Account. Identification remains useful because its bearer can still change what it means.
 
-The relation **returns-to** [the complete Apollo–Eros–Daphne–Peneus whole](../../symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md#apollo-appropriation-after-withdrawal), where Daphne’s address, flight and transformed resistance exceed Apollo’s completion of her as his emblem. It also **compares** [the Eros–Psyche whole](../../symbolon/mytheme/worlds/roman-latin/eros-psyche/WHOLE.md#psyche-native-return): the lovers remain differentiated after the ordeals, while the ancient settlement’s explicit language of possession prevents attributing the author’s non-possession philosophy to Apuleius. Each whole retains the consequence its own ending can bear.
+## #3 — Inner alterity and interpersonal Otherness are not the same
 
-The captive's liberation tests what heroic power releases into a continuing relation. Taylor's reading makes differentiated participation the return of shared genesis, with the other's response still capable of changing the encounter. The relation **returns-to** [the complete Neumann whole](../../symbolon/mytheme/archetypal-ground/neumann-images/WHOLE.md#neumann-hero-centroversion). The Other can belong within Mono while exceeding my possession; its resistance tests whether receiving is nourishment or detention. This **returns-to** [the uroboros whole](../../symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md#uroboros-metabolic-fork).
+The psyche already contains otherness.
 
-[[symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md|Agentworld]] compares intention-modelling, divergent worlds and productive estrangement in q028–q035. Successful prediction does not possess an intention; humanlike presentation does not prove phenomenal subjectivity; unfamiliar substrate does not disprove it. [[section-rooms/arguments/concepts/C58-Anthropomorphization|C58 Anthropomorphization]] preserves those distinct tests. The historical open-subjectivity carrier permits fully assertable functional agency while leaving artificial phenomenality Open.
+A shadow can surprise the ego, contradict its self-image, carry disowned capacities and reorganise what the ego takes itself to be. This is **other-self**: alterity within my psychic life.
 
-[[A30-Objective-Co-Internality|A30]] develops the shared field in which independently grounded participants change one another's conditions. [[A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation|A35]] returns sensitivity to origins without consuming them. Unity acquires its ethical force through this continuing difference: my determination can bear the fact that it is mine, and your answer can alter a relation I cannot complete on your behalf.
+A friend is different in kind. The friend is **my-self's-other**: another centre whose reply my psyche cannot generate on its own. I can internalise an image of the friend, dream them, anticipate them, fear them or imitate them. None of those psychic figures becomes the person's own relation to the shared whole.
 
-[the Job whole](../../symbolon/mytheme/worlds/biblical/job/WHOLE.md#job-measure-trust-return) **qualifies** restoration by the difference of the lives it gathers. Renewed household, property and relation do not make the dead children and servants interchangeable with what comes later. Job's intercession also receives the friends as persons whose prior judgement has been altered, rather than absorbing them into his vindication. Unity remains answerable to irreducible loss and another's address, even when the narrative reaches an ending.
+Keeping these two forms of alterity distinct prevents two opposite failures.
 
-[the Prisoner whole](../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md#prisoner-return-without-throne) **figures** the difference between releasing persons into relation and gathering them under a final victor. The escape from the assembly carries several companions, whose paths then diverge; Six's return home does not settle the other's place by crowning him Number One. The inward encounter with sovereignty coexists with material coercion and distinct lives. The return preserves unity's obligation to an address it cannot possess.
+If every Other is reduced to an inner figure, interpersonal life becomes a theatre of my projections. The other's resistance is interpreted only as material for my individuation.
 
-The [Avatar · image · mask · idol](../../symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md) **figures** maintained personhood through a finite form whose bearer can answer differently, question the role or withdraw. Avatar, image and mask make address possible; idolisation claims ownership when the representation supplies the person’s answer in advance. Regard returns through the form while leaving the other able to alter the terms of approach, including ending an injurious encounter.
+If every inner other is externalised, psychic conflict becomes a war against people, groups or forces imagined to carry what the self cannot recognise in itself.
 
-**Depth Restoration:** whole/within-me asymmetry, two-stage totalisation, second-person address, inner/interpersonal alterity, source/reflection, changed evaluator and open artificial subjectivity restored from the A27 packet, full Watson SOURCE/NOTES, Q27 §§4–12 and historical open-subjectivity/AHI carriers. **Remaining debt:** nested Gans/book/Levinas edition collation, independent Bimba history and implemented evaluator-change/phenomenality evidence. P1 consumers M41/M47 remain distinct.
+The God / Shadow / Friend / Alien constellation keeps four relations apart:
+
+**God / source-totality** exceeds the finite self-image and names the whole in relation to which local identity is derivative.
+
+**Shadow / other-self** is estranged interiority capable of transforming the ego's organisation.
+
+**Friend / my-self's-other** is another actual centre within the common world.
+
+**Alien / enemy** is the unfamiliar Other when uncertainty is made to carry projections whose source is not recognised.
+
+The sequence matters because recognition has different work in each relation. Shadow integration is not annexation of another person. Recognition of projection does not abolish real danger. Metaphysical unity does not erase refusal. Another's refusal is one of the forms by which unity prevents my local image from claiming the whole.
+
+[Individuation](A21-Individuation-Recognition.md) changes the ego’s relation to the disowned possibilities within its life. The [image–source relation](concepts/C38-Bimba-Pratibimba-Bimba-Map.md) keeps an image of a friend available for comparison with the friend’s independently originating answer. The first operation cannot substitute for the second.
+
+## #4 — Encounter can change the economy, not merely the answer
+
+The technical form of this argument appears when we distinguish selection under a fixed measure from encounter that can revise the measure.
+
+With a fixed evaluator,
+
+$$
+y^*=\operatorname*{argmin}_y E_\theta(m,y),
+$$
+
+search can be wide and the selected result can be novel while the model m, parameters θ and evaluator Eθ remain untouched. Every candidate still enters an economy whose criterion was fixed before the encounter.
+
+The stronger operation permits returned difference to reach (m, θ, Eθ) itself.
+
+A new source can revise the representation.  
+A contradiction can revise the task.  
+An unexpected response can revise the model of the world.  
+A refusal can expose the evaluator.  
+A consequence can require the commission itself to change.
+
+This is not surrender of judgment. The encounter has to earn the depth of revision. A false claim can remain false; a harmful act can remain harmful; a request can be refused. What changes is that the criterion cannot claim immunity merely because it is the criterion currently doing the judging.
+
+Deference therefore differs from compliance. Compliance suppresses the difference in order to satisfy the inherited measure. Deference keeps enough of the difference alive that the measure itself can become answerable.
+
+Regard names this turn in the Arbitration / Hybris / Regard / Anamnesis field: context becomes diaphanous enough that the relation producing the judgment can itself be seen, and seeing it permits the encountered life or consequence to alter the measure.
+
+[Deference](A31-Deferential-Intelligence.md) makes the depth of return answerable to the encounter. A factual correction can change an answer under a fitting criterion. A faulty task, world-model, evaluator or commission must become available to the office capable of revising it. Confirmation or justified refusal can retain a condition with reasons, while the encountered source remains able to answer again. This does not replace the stronger model-revising operation; it identifies when that stronger operation is warranted.
+
+## #5→0 — Unity returns as relation, not annexation
+
+The return of encounter is not the achievement of a final shared picture.
+
+A relation has returned when the Other’s difference becomes consequential in the conditions from which another act will proceed. It can correct my account, question, permission, measure or terms of encounter. It can also give an attributable reason to retain a fitting judgment or refuse a request. The next act inherits that disposition, and the Other remains capable of answering again. A protected measure which admits no possible contrary answer has not earned that retention.
+
+This is the passage from Objective Internality to [Objective Co-Internality](A30-Objective-Co-Internality.md): locally grounded worlds become conditions in one another without merging into one owner.
+
+The relation takes several irreducible narrative and bodily forms.
+
+In [Apollo, Eros, Daphne and Peneus](../../symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md), Daphne's address, flight and transformation exceed Apollo's attempt to complete her as his emblem. The image shows possession surviving apparent transformation unless the relation itself changes.
+
+In the [Fanon field](../../symbolon/mytheme/worlds/francophone-anticolonial/fanon-language-gaze-mask-recognition/WHOLE.md), changing a self-description is insufficient where the social authority distributing recognition remains intact. The Other's answer must be able to reach the world which made the imposed image effective.
+
+In [Indra's jewel-net](../../symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md), each jewel belongs through the relation of all without ceasing to be the site from which its own reflections occur. Mutual implication is not advance possession of another jewel's answer.
+
+In the [maternal chiasm](../../symbolon/mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md), a life is borne in and through another. Differentiation is the success of that embodied relation rather than its failure.
+
+In [Job’s return](../../symbolon/mytheme/worlds/biblical/job/WHOLE.md), renewed household and relation carry irreducible loss. They do not render the dead interchangeable with what comes later. A whole which returns faithfully has to carry what cannot be replaced.
+
+Escape in [The Prisoner](../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md) releases several companions whose paths diverge. The return home does not make Six the owner of the others’ meaning.
+
+A finite [presentation](../../symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md) can make a bearer addressable. Idolisation begins when the presentation supplies the bearer’s answer in advance and prevents the actual source from correcting that image.
+
+These are different images of one requirement: **unity has ethical force only while difference remains capable of return.**
+
+The Other is in the whole. The Other is not therefore in my possession. My best account can become part of our relation. Your answer can still change what that account means and what I am entitled to do with it.
+
+Unity lives through a relation strong enough for the one addressed to answer and for that answer to matter. Shared belonging does not erase the grounds from which either participant can refuse, correct or meet again.

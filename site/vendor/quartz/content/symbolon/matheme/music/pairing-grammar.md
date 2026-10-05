@@ -16,11 +16,11 @@ source_ids:
 
 ## #0 — A palette becomes relation
 
-The [two chromatic substrates](chromatic-substrates.md) **define** a twelve-state field: six position-indices `k=0,…,5`, each on a bimba or pratibimba face. A pitch assignment makes those states sound; a pairing rule determines which states enter relation. File 4's [“The Universal Pairing Grammar”](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) **sources** three families and one conjugating operator.
+The [two chromatic substrates](chromatic-substrates.md) give a twelve-state field: six position-indices `k=0,…,5`, each on a bimba or pratibimba face. A pitch assignment makes those states sound; a pairing rule determines which states enter relation. The [musical pairing derivation](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) distinguishes three families and one conjugating operator.
 
 A pair `(i,j)` first specifies positions, with its written order available for melodic traversal. An interval follows only after a basis, face and direction have been selected. This lets one grammar operate in both substrate maps while producing different intervals.
 
-The corrected family names are **A, Being; B, Becoming; C, Knowing/unKnowing**. They classify operations on pairs across the hexad. The [core-theorems spine](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) **grounds** the qualitative sixfold which they organise. Its Being/Becoming/Knowing harmonics name the three successive dyads; the music grammar uses those names at a further level, for three ways of pairing the field. These two applications remain distinct.
+The three families are **A, Being; B, Becoming; C, Knowing/unKnowing**. They classify operations on pairs across the hexad. The [qualitative sixfold](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) first names Being/Becoming/Knowing as three successive dyads; the music grammar uses those names at a further level, for three ways of pairing the field. These two applications remain distinct.
 
 ## #1 — Adjacent articulation, mirror, crossing
 
@@ -76,7 +76,7 @@ The C-family’s G→D and A→E are ascending fifths. They become descending fo
 
 The closing A♯→C can place C in the next octave. That is the return `5→0` within the selected face; it is not the conjugate pitch C♯ at `0′`. Octave register and conjugate position require different indications.
 
-The ten-semitone C→A♯ is the tempered minor seventh. Its frequency ratio is `2^(10/12)`, distinct from the pure doubled fourth `16/9`. The [foundational ratios](foundational-ratios.md) **derive** the latter and its `9/8` completion. Their musical coordination preserves which tuning supplies the actual pitches.
+The ten-semitone C→A♯ is the tempered minor seventh. Its frequency ratio is `2^(10/12)`, distinct from the [pure doubled fourth and its completion](foundational-ratios.md), `16/9` and `9/8`. Their musical coordination preserves which tuning supplies the actual pitches.
 
 ## #3 — D brings the conjugate face into a pair
 
@@ -94,7 +94,7 @@ File 4 calls the untransformed Day dyad **depth 2**, one conjugate term entering
 
 In the chromatic basis, start from A’s C–D. D-left gives C♯–D, D-right gives C–D♯, and D-both gives C♯–D♯. The upward displacements are respectively one, three and two semitones. The final pair preserves the original whole-tone interval while changing both faces.
 
-The minimal conjugate relation is `(n,n′)`, the **Spanda pulse**. It pairs a position with itself across the faces: a semitone in the chromatic basis and a tritone in the fifths basis. This same-position relation is distinct from the cross-position A/B/C dyads. [The slash](../../the-slash.md) **grounds** the cut-and-bond operation which both make audible.
+The minimal conjugate relation is `(n,n′)`, the **Spanda pulse**. It pairs a position with itself across the faces: a semitone in the chromatic basis and a tritone in the fifths basis. This same-position relation is distinct from the cross-position A/B/C dyads. [The slash’s cut and bond](../../the-slash.md) remain active in both: the terms are distinguished and their relation can be sounded.
 
 ## #4 — The 3×3 squares
 
@@ -128,7 +128,7 @@ D-both preserves every within-face family interval because it shifts both endpoi
 
 This is the grammar’s operative universality: A, B and C select positions, while the chosen projection supplies their pitches. A scale restriction or modal reading must still state which of those positions it retains. The family definitions remain available without implying that every pair is simultaneously present in every selected scale.
 
-The music record retains the full chain:
+The musical circuit retains both directed traversals:
 
 $$
 \frac01=4+2=(5\rightarrow0)=\frac10
@@ -137,4 +137,8 @@ $$
 
 Primes in this process chain mark inverse-phase positions; primes on the musical pairs mark the conjugate P′ face of File 3’s Night-pass projection. D acts in the latter office. Keeping the two uses explicit lets musical reflection conduct the full return without replacing one indexing system with the other.
 
-This page **returns-to** [A15](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) through an account whose selected pair, direction, tuning and transformation remain inspectable. [§3 · #4, Musical Resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) **embodies** the broader return through retained difference. The matrices are the housed candidate’s grammar; the current ql-mef implementation remains unrecovered. The exact pair operations stand here, ready to be sounded under their declared conditions.
+An [accountable interval](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) retains its selected pair, direction, tuning and transformation for inspection. [Musical resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) returns through this retained difference. The exact pair operations can be sounded under their declared conditions; the resulting performance must keep the transformation distinguishable from the source pair.
+## Source and implementation standing
+
+The matrices are the housed candidate’s grammar; the current ql-mef implementation remains unrecovered. The exact pair operations stand here, ready to be sounded under their declared conditions.
+

@@ -24,7 +24,7 @@ passage_surface: '#passages'
 
 Aristotle. *Metaphysics*. Translated by W. D. Ross. [Internet Classics Archive witness](https://classics.mit.edu/Aristotle/metaphysics.4.iv.html). Selected sections read on 8 September 2026: IV.2, opening health/medical/substance argument. The host identifies the translator; this receipt does not identify or collate a specific printed edition, Greek text or full work.
 
-The selected account **sources** [the historical branch](../../../../etymologies/homology-and-analogy/HISTORICAL-BRANCHES.md) and **qualifies** its [whole-field](../../../../etymologies/homology-and-analogy/WHOLE-FIELD.md). The historical proposition and Taylor’s relational operation retain distinct authority.
+The selected account **sources** [the historical branch](../../../../etymologies/homology-and-analogy/HISTORICAL-BRANCHES-homology-and-analogy.md) and **qualifies** its [whole-field](../../../../etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy.md). The historical proposition and Taylor’s relational operation retain distinct authority.
 
 <a id="passages"></a>
 ## Selected passages

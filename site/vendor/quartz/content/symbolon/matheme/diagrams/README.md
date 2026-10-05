@@ -14,6 +14,10 @@ Each diagram has a Markdown record and its editable or rendered asset together. 
 
 Narrative and artistic compositions belong in [[symbolon/mytheme/plates/README.md|Mytheme plates]]. Evidential timelines and source figures belong in [[symbolon/episteme/figures/README.md|Episteme figures]].
 
+## §0/1 formal construction
+
+[The quotient square and its two independent windings](torus-square-quotient-and-winding.md) makes the identification used in M02 inspectable, with its construction, source locators, caption and SVG together.
+
 Return to [[symbolon/matheme/README.md|Matheme]].
 
 

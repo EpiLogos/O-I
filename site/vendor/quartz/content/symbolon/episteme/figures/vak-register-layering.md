@@ -21,7 +21,7 @@ The four publication registers carry the levels of Vāk in straight order, ratif
 
 ## Declared data (inputs)
 
-- [Central plan](../../../../../the-return-of-zero-central-plan.md), mythic rule: "The straight Vāk layering ratified on September 7 governs: **Symbolon / parā; Matheme / paśyantī; Mytheme / madhyamā; Episteme / vaikharī**," with the register offices as stated there; and Amendment 2026-09-07, clause 2 (paśyantī "the visionary operative logic, more primordial than the mytheme"; madhyamā "formed visual/narrative operations built through the logic").
+- Central plan, mythic rule: "The straight Vāk layering ratified on September 7 governs: **Symbolon / parā; Matheme / paśyantī; Mytheme / madhyamā; Episteme / vaikharī**," with the register offices as stated there; and Amendment 2026-09-07, clause 2 (paśyantī "the visionary operative logic, more primordial than the mytheme"; madhyamā "formed visual/narrative operations built through the logic").
 - [A06 — Vāk](../../../section-rooms/arguments/A06-Vak.md): the descent from formative capacity to sign; the source-side offices of the levels (parā the Supreme Word from which letters and words derive; paśyantī and madhyamā formative and mental articulation; vaikharī the explicit utterance), sourced through the Singh / Abhinavagupta source house's introduction leads.
 - Register offices as carried by the four register roots (`symbolon/README.md`, `matheme`, `mytheme`, `episteme`) and their `register-domain` declarations.
 

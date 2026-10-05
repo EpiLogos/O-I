@@ -1,0 +1,4372 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-dossiers",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-dossiers",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-dossiers",
+  "revision": 1,
+  "title": "Return of Zero — Episteme dossiers",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit",
+    "revision": 1,
+    "title": "Formal Limit — Source-Specific Limits and Their Consequences",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm",
+    "revision": 1,
+    "title": "Bohm — Enfoldment, Dialogue and the Return of an Account",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid",
+    "revision": 1,
+    "title": "Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process",
+    "revision": 1,
+    "title": "Process — What an Achieved Form Makes Possible Next",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy",
+    "revision": 1,
+    "title": "Indian Philosophy — Articulation, Agency and the Sourceward Turn",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception",
+    "revision": 1,
+    "title": "Zero Reception — The Sign and the Practice That Receives It",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility",
+    "revision": 1,
+    "title": "O:I — Technical Responsibility, Authored Ground and Source Return",
+    "entity_refs": [
+     "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2",
+     "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate",
+    "revision": 1,
+    "title": "the dossier plate",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1",
+    "revision": 1,
+    "title": "section cell 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.12,
+      "automation": null
+     },
+     "y": {
+      "value": 0.14,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2",
+    "revision": 1,
+    "title": "section cell 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.3,
+      "automation": null
+     },
+     "y": {
+      "value": 0.1,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3": {
+    "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3",
+    "revision": 1,
+    "title": "section cell 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.16,
+      "automation": null
+     },
+     "y": {
+      "value": -0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit",
+   "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate"
+  },
+  "provenance": [
+   {
+    "ref": "episteme/roz-dossiers.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-dossiers",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-dossiers",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-dossiers:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-dossiers",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — Episteme dossiers</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-dossiers\" data-expression-revision=\"1\"><h1>Return of Zero — Episteme dossiers</h1><p>Frozen reading of expression:return-of-zero:roz-dossiers at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit\" aria-label=\"Formal Limit — Source-Specific Limits and Their Consequences\"><h2>Formal Limit — Source-Specific Limits and Their Consequences</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm\" aria-label=\"Bohm — Enfoldment, Dialogue and the Return of an Account\"><h2>Bohm — Enfoldment, Dialogue and the Return of an Account</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid\" aria-label=\"Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms\"><h2>Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process\" aria-label=\"Process — What an Achieved Form Makes Possible Next\"><h2>Process — What an Achieved Form Makes Possible Next</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy\" aria-label=\"Indian Philosophy — Articulation, Agency and the Sourceward Turn\"><h2>Indian Philosophy — Articulation, Agency and the Sourceward Turn</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception\" aria-label=\"Zero Reception — The Sign and the Practice That Receives It\"><h2>Zero Reception — The Sign and the Practice That Receives It</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility\" aria-label=\"O:I — Technical Responsibility, Authored Ground and Source Return\"><h2>O:I — Technical Responsibility, Authored Ground and Source Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-dossiers",
+  "world_ref": "expression:return-of-zero:roz-dossiers",
+  "revision": 1,
+  "title": "Return of Zero — Episteme dossiers",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-dossiers",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero — Episteme dossiers"
+      },
+      "fallback": {
+       "title": "Return of Zero — Episteme dossiers"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-dossiers",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-dossiers",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-dossiers",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-dossiers:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-dossiers",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — Episteme dossiers</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-dossiers\" data-expression-revision=\"1\"><h1>Return of Zero — Episteme dossiers</h1><p>Frozen reading of expression:return-of-zero:roz-dossiers at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit\" aria-label=\"Formal Limit — Source-Specific Limits and Their Consequences\"><h2>Formal Limit — Source-Specific Limits and Their Consequences</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm\" aria-label=\"Bohm — Enfoldment, Dialogue and the Return of an Account\"><h2>Bohm — Enfoldment, Dialogue and the Return of an Account</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid\" aria-label=\"Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms\"><h2>Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process\" aria-label=\"Process — What an Achieved Form Makes Possible Next\"><h2>Process — What an Achieved Form Makes Possible Next</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy\" aria-label=\"Indian Philosophy — Articulation, Agency and the Sourceward Turn\"><h2>Indian Philosophy — Articulation, Agency and the Sourceward Turn</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception\" aria-label=\"Zero Reception — The Sign and the Practice That Receives It\"><h2>Zero Reception — The Sign and the Practice That Receives It</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility\" aria-label=\"O:I — Technical Responsibility, Authored Ground and Source Return\"><h2>O:I — Technical Responsibility, Authored Ground and Source Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-dossiers",
+        "revision": 1,
+        "title": "Return of Zero — Episteme dossiers",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit",
+          "revision": 1,
+          "title": "Formal Limit — Source-Specific Limits and Their Consequences",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm",
+          "revision": 1,
+          "title": "Bohm — Enfoldment, Dialogue and the Return of an Account",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid",
+          "revision": 1,
+          "title": "Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process",
+          "revision": 1,
+          "title": "Process — What an Achieved Form Makes Possible Next",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy",
+          "revision": 1,
+          "title": "Indian Philosophy — Articulation, Agency and the Sourceward Turn",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception",
+          "revision": 1,
+          "title": "Zero Reception — The Sign and the Practice That Receives It",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility",
+          "revision": 1,
+          "title": "O:I — Technical Responsibility, Authored Ground and Source Return",
+          "entity_refs": [
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2",
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate",
+          "revision": 1,
+          "title": "the dossier plate",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1",
+          "revision": 1,
+          "title": "section cell 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.12,
+            "automation": null
+           },
+           "y": {
+            "value": 0.14,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2",
+          "revision": 1,
+          "title": "section cell 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.3,
+            "automation": null
+           },
+           "y": {
+            "value": 0.1,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3": {
+          "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3",
+          "revision": 1,
+          "title": "section cell 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.16,
+            "automation": null
+           },
+           "y": {
+            "value": -0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit",
+         "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate"
+        },
+        "provenance": [
+         {
+          "ref": "episteme/roz-dossiers.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero — Episteme dossiers"
+      },
+      "fallback": {
+       "title": "Return of Zero — Episteme dossiers",
+       "text": "Return of Zero — Episteme dossiers: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-dossiers",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-dossiers",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-dossiers",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-dossiers.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-dossiers"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-dossiers",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-dossiers",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-dossiers:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-dossiers"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-dossiers",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-dossiers:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-dossiers",
+    "world_ref": "expression:return-of-zero:roz-dossiers",
+    "revision": 1,
+    "title": "Return of Zero — Episteme dossiers",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-dossiers",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero — Episteme dossiers"
+        },
+        "fallback": {
+         "title": "Return of Zero — Episteme dossiers"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-dossiers",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-dossiers",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-dossiers",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-dossiers:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-dossiers",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — Episteme dossiers</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-dossiers\" data-expression-revision=\"1\"><h1>Return of Zero — Episteme dossiers</h1><p>Frozen reading of expression:return-of-zero:roz-dossiers at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit\" aria-label=\"Formal Limit — Source-Specific Limits and Their Consequences\"><h2>Formal Limit — Source-Specific Limits and Their Consequences</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm\" aria-label=\"Bohm — Enfoldment, Dialogue and the Return of an Account\"><h2>Bohm — Enfoldment, Dialogue and the Return of an Account</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid\" aria-label=\"Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms\"><h2>Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process\" aria-label=\"Process — What an Achieved Form Makes Possible Next\"><h2>Process — What an Achieved Form Makes Possible Next</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy\" aria-label=\"Indian Philosophy — Articulation, Agency and the Sourceward Turn\"><h2>Indian Philosophy — Articulation, Agency and the Sourceward Turn</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception\" aria-label=\"Zero Reception — The Sign and the Practice That Receives It\"><h2>Zero Reception — The Sign and the Practice That Receives It</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility\" aria-label=\"O:I — Technical Responsibility, Authored Ground and Source Return\"><h2>O:I — Technical Responsibility, Authored Ground and Source Return</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.06rem;opacity:1.00\" title=\"the dossier plate\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:48.80%;top:48.60%;font-size:0.60rem;opacity:1.00\" title=\"section cell 1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:53.00%;top:49.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3\" data-subject-ref=\"world:return-of-zero/wiki:roz-dossiers\" data-presentation-role=\"thing\" style=\"left:51.60%;top:53.00%;font-size:0.60rem;opacity:1.00\" title=\"section cell 3\">O</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-dossiers",
+          "revision": 1,
+          "title": "Return of Zero — Episteme dossiers",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit",
+            "revision": 1,
+            "title": "Formal Limit — Source-Specific Limits and Their Consequences",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm",
+            "revision": 1,
+            "title": "Bohm — Enfoldment, Dialogue and the Return of an Account",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid",
+            "revision": 1,
+            "title": "Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process",
+            "revision": 1,
+            "title": "Process — What an Achieved Form Makes Possible Next",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy",
+            "revision": 1,
+            "title": "Indian Philosophy — Articulation, Agency and the Sourceward Turn",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception",
+            "revision": 1,
+            "title": "Zero Reception — The Sign and the Practice That Receives It",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility",
+            "revision": 1,
+            "title": "O:I — Technical Responsibility, Authored Ground and Source Return",
+            "entity_refs": [
+             "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2",
+             "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-bohm:dossier-bohm-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-jung-pauli-psychoid:dossier-jung-pauli-psychoid-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-process:dossier-process-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-indian-philosophy:dossier-indian-philosophy-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-zero-reception:dossier-zero-reception-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-plate",
+            "revision": 1,
+            "title": "the dossier plate",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c1",
+            "revision": 1,
+            "title": "section cell 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.12,
+              "automation": null
+             },
+             "y": {
+              "value": 0.14,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c2",
+            "revision": 1,
+            "title": "section cell 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.3,
+              "automation": null
+             },
+             "y": {
+              "value": 0.1,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3": {
+            "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-oi-technical-responsibility:dossier-oi-technical-responsibility-c3",
+            "revision": 1,
+            "title": "section cell 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-dossiers.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.16,
+              "automation": null
+             },
+             "y": {
+              "value": -0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit",
+           "entity_ref": "expression:return-of-zero:roz-dossiers:scene:dossier-formal-limit:dossier-formal-limit-plate"
+          },
+          "provenance": [
+           {
+            "ref": "episteme/roz-dossiers.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero — Episteme dossiers"
+        },
+        "fallback": {
+         "title": "Return of Zero — Episteme dossiers",
+         "text": "Return of Zero — Episteme dossiers: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-dossiers",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-dossiers",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-dossiers",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-dossiers",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-dossiers.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-dossiers"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-dossiers",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-dossiers",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-dossiers:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-dossiers",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero — Episteme dossiers",
+  "summary": "a living Expression · 7 scenes · 28 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-dossiers:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-dossiers",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-dossiers"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-dossiers:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-dossiers",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-dossiers",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero — Episteme dossiers",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-dossiers:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-dossiers:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-dossiers",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-dossiers"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

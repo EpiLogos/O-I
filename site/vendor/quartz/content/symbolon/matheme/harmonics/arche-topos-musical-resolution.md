@@ -11,7 +11,7 @@ source_relation: "Extracted native derivation and exact musical constructions; A
 
 ## #0 — The foundational ratios: return through difference
 
-Arche-Topos gives observer and object their places together. [A16](../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md) derives that differential field from the whole theorem sequence; music renders its relations as intervals and traversals in time. The [curated core](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) fixes the resolving operation: the system reaches octave return through its remainder. [Musical v3](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md), especially §II-5, and [Binary Explication File Four](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) supply the ratio and instrument constructions.
+Arche-Topos gives observer and object their places together. [The differential field](../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md) holds the whole theorem sequence as differentiated placement; music renders its relations as intervals and traversals in time. In [musical resolution](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md), the system reaches octave return through its remainder. [Musical v3](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md), especially §II-5, and [Binary Explication File Four](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) supply the ratio and instrument constructions.
 
 The primary `3:3=3:1` is the subject-account: three sequential perspectives, `1–2–3`, answered by one recognition through `4–5–0`. Cross-reading its `3:3` with the explicate/implicate `4:2` gives the ordered ratios `(4/3,2/3)`. This is the declared QL componentwise comparison, not ordinary division of two scalar ratios. Inverting gives `3/4` and `3/2`. The [foundational-ratio development](../music/foundational-ratios.md) derives each operation, including the distinction between a 100-unit accounting, its component proportion `64/36=16/9`, and standing unity.
 
@@ -27,13 +27,13 @@ The remainder is a multiplicative interval. Its role is audible in a performance
 
 ## #1 — The two chromatic substrates: one position, two readings
 
-Let `k∈{0,…,5}` be a position and `e∈{0,1}` its Name/Power face. At the C anchor, the candidate's two maps into pitch classes modulo 12 are
+Let `k∈{0,…,5}` be a position and `e∈{0,1}` its Name/Power face. At the C anchor, the two authored maps into pitch classes modulo 12 are
 
 `p_c(k,e)=2k+e (mod 12)`,
 
 `p_f(k,e)=7k+6e (mod 12)`.
 
-The [substrate record](../music/chromatic-substrates.md) defines their complete matrices. Here their common positional content can be followed directly:
+The [chromatic and fifths substrates](../music/chromatic-substrates.md) place every position and face in their complete matrices. Here their common positional content can be followed directly:
 
 | k | Name / Power | Chromatic Name / Power | Fifths Name / Power |
 |---|---|---|---|
@@ -44,7 +44,7 @@ The [substrate record](../music/chromatic-substrates.md) defines their complete 
 | 4 | Son / Love | G♯ / A | E / A♯ |
 | 5 | Image / Work | A♯ / B | B / F |
 
-Each position bears both contents. Selecting a face articulates one direction through their relation; it does not allocate two unrelated substances. This is the candidate's musical enactment of Name and Power, whose phenomenological significance belongs to the native interpretation.
+Each position bears both contents. Selecting a face articulates one direction through their relation; it does not allocate two unrelated substances. This is the authored musical enactment of Name and Power, whose phenomenological significance belongs to the native interpretation.
 
 Chromatic Name and Power give the even and odd whole-tone sets, `WT₀={0,2,4,6,8,10}` and `WT₁={1,3,5,7,9,11}`. Stepping by 2 has two six-element orbits. Stepping by 7 has one twelve-element orbit because 7 and 12 are coprime. These finite maps specify class addresses. Their twelve-position closure does not assert that twelve pure `3/2` fifths close at seven octaves.
 
@@ -52,7 +52,7 @@ Chromatic Name and Power give the even and odd whole-tone sets, `WT₀={0,2,4,6,
 
 The same-position flip is `σ(k,e)=(k,1−e)`. In the chromatic map it raises a Name class by one semitone and lowers its Power partner by one. In the fifths map it moves by six semitones in either direction modulo 12. Thus Word/Sacrifice at `k=2` sounds as E/F in one basis and D/G♯ in the other. The position and complementary office survive the change of interval.
 
-The [pairing grammar](../music/pairing-grammar.md) extends this flip through declared pairs. Complementary return adds positional reversal: `R(k,e)=(5−k,1−e)`. Since `R²(k,e)=(k,e)`, both position and face return after two applications. The ascending modular displacement from a Name address to its reversed Power address is:
+The [pairing grammar](../music/pairing-grammar.md) composes this flip with the declared positional pairs. Complementary return adds positional reversal: `R(k,e)=(5−k,1−e)`. Since `R²(k,e)=(k,e)`, both position and face return after two applications. The ascending modular displacement from a Name address to its reversed Power address is:
 
 | k | 0 | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|---|
@@ -75,19 +75,19 @@ Parallel C minor changes the collection instead: E→E♭, A→A♭, B→B♭. I
 
 ## #4 — Invariance and topology: state what returns
 
-[Scholtz's tuning house](../../episteme/sources/mathematics-logic/scholtz/scholtz-1998-algorithms-diatonic-keyboard-tunings/scholtz-1998-algorithms-diatonic-keyboard-tunings.md) independently sources the Pythagorean interval construction and its comma. The relevant exact mismatch is
+In [Scholtz’s Pythagorean tuning construction](../../episteme/sources/mathematics-logic/scholtz/scholtz-1998-algorithms-diatonic-keyboard-tunings/scholtz-1998-algorithms-diatonic-keyboard-tunings.md), the pure-fifth cycle retains its comma. The relevant exact mismatch is
 
 `(3/2)¹² / 2⁷ = (9/8)⁶ / 2 = 531441/524288`.
 
 It exceeds unity. Equal temperament instead assigns a semitone `2^(1/12)`, making twelve such steps exactly an octave. Its fifth `2^(7/12)` and whole-tone `2^(2/12)` differ from `3/2` and `9/8`. The exact octave-completing epogdoon above and this much smaller tuning comma are different remainders of different operations.
 
-For continuous positive frequency, `u=log₂(f/f₀)` records height. Octave identification sends it to `u mod 1`; the 288→576 Hz example moves from 0 to 1 and returns to the same class. The covering coordinate retains the octave travelled. [A17](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md) develops another retained return, with two independent winding integers on a torus. Pitch's octave circle has one such coordinate. The two whole-tone orbits, two conjugate faces and two torus generators therefore cannot replace one another merely because each is counted as two.
+For continuous positive frequency, `u=log₂(f/f₀)` records height. Octave identification sends it to `u mod 1`; the 288→576 Hz example moves from 0 to 1 and returns to the same class. The covering coordinate retains the octave travelled. [Toroidal circulation](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md) retains another return, with two independent winding integers on a torus. Pitch's octave circle has one such coordinate. The two whole-tone orbits, two conjugate faces and two torus generators therefore cannot replace one another merely because each is counted as two.
 
 The arche-topological coordination joins these specified spatial and temporal returns. It preserves the information each carries, rather than making a frequency ratio identical to a topological opening. Its native ground is the complete determination field, not an ontology inferred from one numerical coincidence.
 
 ## #5→0 — Observer, instrument and recognition
 
-A player can move through the selected scale, re-ground its collection at D, return to C, and compare that returned hearing with the original. The score specifies frequencies or classes, timing, lens and selection; [the observer/instrument record](../music/observer-instrument.md) distinguishes these from spectral evidence, pitch-class aggregation and interpreted cadence. An actual instrument must return its sounding to that account. The housed candidate supplies the present derivation; its superseded implementation descriptions do not certify a current ql-mef run.
+A player can move through the selected scale, re-ground its collection at D, return to C, and compare that returned hearing with the original. The score specifies frequencies or classes, timing, lens and selection; [the observer and instrument](../music/observer-instrument.md) distinguish these from spectral evidence, pitch-class aggregation and interpreted cadence. An actual instrument must return its sounding to that account. The present ratios and maps give a recoverable derivation; the superseded implementation descriptions have no current ql-mef execution evidence.
 
 Operational return opens another performance. Telic return recognises the standing relation that the performance has enacted and can end in silence. Musical resolution holds these together: return remains possible without becoming a demand for endless sounding. Its claim is the native enacted relation; a particular listener's transformation still belongs to that encounter.
 
@@ -97,4 +97,4 @@ The full musical chain is
 
 Here the primes carry File Two's inverse phase. File Three's Night-pass primes, the instrument's conjugate position labels and an octave-height mark retain their separately declared meanings. The standing `0/1 + 1/0 = 1/1 ≡ 100%` expresses the two directed readings held as one relation; it is not ordinary arithmetic with division by zero.
 
-This record returns-to [Movement29](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md): the remainder completes the interval, and the return retains its conditions. It returns-to [A16](../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md) as a temporal operation of differential placement and to [A36](../../../section-rooms/arguments/A36-Advent-of-Integral-Zero.md) as an achieved articulation capable of returning through its ground.
+[Musical and spatial resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) carries the remainder through octave completion with its conditions retained. [The differential field](../../../section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md) lets that temporal operation retain its particular placement. [Integral Zero](../../../section-rooms/arguments/A36-Advent-of-Integral-Zero.md) returns the achieved articulation through its ground, with the exact interval still available for another sounding.

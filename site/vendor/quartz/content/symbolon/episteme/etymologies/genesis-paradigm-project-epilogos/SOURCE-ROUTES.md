@@ -1,14 +1,15 @@
 ---
 title: "Genesis / Paradigm / Project / Epi-Logos — Source Routes"
-source_id: genesis-paradigm-project-epilogos-source-routes
+record_id: etymology-genesis-paradigm-project-epilogos-source-routes
 page_type: etymology-source-shelf
 status: living
 register: episteme
+source_id: genesis-paradigm-project-epilogos-source-routes
 ---
 
 # Genesis / Paradigm / Project / Epi-Logos — Source Routes
 
-This shelf binds the lexical and cross-register sources used by the [whole field](WHOLE-FIELD.md) and [archaeology](HISTORY.md). It does not make every linked source a warrant for every relation.
+This shelf binds the lexical and cross-register sources used by the [whole field](WHOLE-FIELD-genesis-paradigm-project-epilogos.md) and [archaeology](HISTORY-genesis-paradigm-project-epilogos.md). It does not make every linked source a warrant for every relation.
 
 ## Lexical floor now materialised
 

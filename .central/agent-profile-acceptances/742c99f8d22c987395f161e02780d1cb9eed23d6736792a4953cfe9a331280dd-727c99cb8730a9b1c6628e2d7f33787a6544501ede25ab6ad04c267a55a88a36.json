@@ -1,0 +1,13 @@
+{
+  "schema": "central.agent-profile-acceptance/v1",
+  "acceptance_ref": "agent-profile-acceptance:dcb2c934a71c63822b38eb17bee0a446460cf3906aac30dd10d1e88afbef4e5f",
+  "profile_ref": "agent-profile:expressed-51c874391fb74f7da8aa38f75b9a1078",
+  "agent_ref": "agent:expressed-51c874391fb74f7da8aa38f75b9a1078",
+  "profile_revision": "r1",
+  "content_digest": "sha256:b0be02f4fabc0d2b89f27fb64f25bd5da7dbcdd3c85b9cef4e8699b84d3ae943",
+  "scope_ref": "project:O-I",
+  "principal_ref": "central:source:control:root:Control/user/identity",
+  "authority_ref": "central:source:control:root:Control/user/native-action-authority.json",
+  "authority_revision": "central.content-fnv1a64/v1:779:880b798c29277a45",
+  "accepted_at_unix_seconds": 1790558655
+}

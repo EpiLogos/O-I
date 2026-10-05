@@ -1,0 +1,3538 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-ac-root",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-ac-root",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-ac-root",
+  "revision": 1,
+  "title": "Return of Zero — A/C, Root of the Conjugate Field",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root",
+    "revision": 1,
+    "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+    "entity_refs": [
+     "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring",
+     "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01",
+     "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face",
+    "revision": 1,
+    "title": "A face — the ruling: Respect for Experience",
+    "entity_refs": [
+     "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate",
+     "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero",
+    "revision": 1,
+    "title": "The crossed-zero recognition sequence",
+    "entity_refs": [
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame",
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0",
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1",
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2",
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3",
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4",
+     "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face",
+    "revision": 1,
+    "title": "C face — the concept: the primitive field",
+    "entity_refs": [
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring",
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0",
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1",
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2",
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3",
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4",
+     "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close",
+    "revision": 1,
+    "title": "The shared close — thinging / conditioning",
+    "entity_refs": [
+     "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a",
+     "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c",
+     "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring",
+    "revision": 1,
+    "title": "the one field",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.12,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.5,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01",
+    "revision": 1,
+    "title": "the ruling sign",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.12,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.72,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin",
+    "revision": 1,
+    "title": "root gather",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.12,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.1,
+      "automation": null
+     },
+     "share": {
+      "value": 0,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate",
+    "revision": 1,
+    "title": "the frozen ethic",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2",
+    "revision": 1,
+    "title": "unfrozen ruling around it",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.66,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame",
+    "revision": 1,
+    "title": "the zero it crosses",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.42,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0",
+    "revision": 1,
+    "title": "sequence position 1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14000000000000007,
+      "automation": null
+     },
+     "y": {
+      "value": 0.8200000000000001,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1",
+    "revision": 1,
+    "title": "sequence position 2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.622102355330306,
+      "automation": null
+     },
+     "y": {
+      "value": 0.37999999999999995,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2",
+    "revision": 1,
+    "title": "sequence position 3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.622102355330306,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5000000000000001,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.23,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3",
+    "revision": 1,
+    "title": "sequence position 4",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.13999999999999985,
+      "automation": null
+     },
+     "y": {
+      "value": -0.94,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4",
+    "revision": 1,
+    "title": "sequence position 5",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.9021023553303058,
+      "automation": null
+     },
+     "y": {
+      "value": -0.5000000000000004,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.43,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5",
+    "revision": 1,
+    "title": "sequence position 6",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.902102355330306,
+      "automation": null
+     },
+     "y": {
+      "value": 0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.36,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring",
+    "revision": 1,
+    "title": "the constitutional envelope",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0",
+    "revision": 1,
+    "title": "constitutional #0",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14000000000000004,
+      "automation": null
+     },
+     "y": {
+      "value": 0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1",
+    "revision": 1,
+    "title": "constitutional #1",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.2583716857408418,
+      "automation": null
+     },
+     "y": {
+      "value": 0.16999999999999998,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2",
+    "revision": 1,
+    "title": "constitutional #2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.25837168574084174,
+      "automation": null
+     },
+     "y": {
+      "value": -0.29000000000000004,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3",
+    "revision": 1,
+    "title": "constitutional #3",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.13999999999999993,
+      "automation": null
+     },
+     "y": {
+      "value": -0.52,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4",
+    "revision": 1,
+    "title": "constitutional #4",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5383716857408417,
+      "automation": null
+     },
+     "y": {
+      "value": -0.2900000000000002,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5",
+    "revision": 1,
+    "title": "constitutional #5",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5383716857408418,
+      "automation": null
+     },
+     "y": {
+      "value": 0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a",
+    "revision": 1,
+    "title": "A face",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.08,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c",
+    "revision": 1,
+    "title": "C face",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.44,
+      "automation": null
+     },
+     "y": {
+      "value": -0.04,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 1.02,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign": {
+    "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign",
+    "revision": 1,
+    "title": "the return reading",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.14,
+      "automation": null
+     },
+     "y": {
+      "value": -0.06,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.75,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root",
+   "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring"
+  },
+  "provenance": [
+   {
+    "ref": "episteme/roz-ac-root.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-ac-root",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-ac-root",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-ac-root:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-ac-root",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — A/C, Root of the Conjugate Field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-ac-root\" data-expression-revision=\"1\"><h1>Return of Zero — A/C, Root of the Conjugate Field</h1><p>Frozen reading of expression:return-of-zero:roz-ac-root at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root\" aria-label=\"A/C — Argument / Concept — Root of the Conjugate Field\"><h2>A/C — Argument / Concept — Root of the Conjugate Field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:4.50rem;opacity:1.00\" title=\"the one field\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:2.16rem;opacity:1.00\" title=\"the ruling sign\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:0.60rem;opacity:0.15\" title=\"root gather\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face\" aria-label=\"A face — the ruling: Respect for Experience\"><h2>A face — the ruling: Respect for Experience</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.40%;font-size:3.06rem;opacity:1.00\" title=\"the frozen ethic\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.40%;font-size:4.98rem;opacity:1.00\" title=\"unfrozen ruling around it\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero\" aria-label=\"The crossed-zero recognition sequence\"><h2>The crossed-zero recognition sequence</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:4.26rem;opacity:1.00\" title=\"the zero it crosses\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:41.80%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:43.78%;top:46.20%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:43.78%;top:55.00%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:59.40%;font-size:0.90rem;opacity:1.00\" title=\"sequence position 4\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:59.02%;top:55.00%;font-size:1.29rem;opacity:1.00\" title=\"sequence position 5\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:59.02%;top:46.20%;font-size:1.08rem;opacity:1.00\" title=\"sequence position 6\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face\" aria-label=\"C face — the concept: the primitive field\"><h2>C face — the concept: the primitive field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.90rem;opacity:1.00\" title=\"the constitutional envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:46.00%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #0\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:47.42%;top:48.30%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:47.42%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:55.20%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #3\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:55.38%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #4\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:55.38%;top:48.30%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #5\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close\" aria-label=\"The shared close — thinging / conditioning\"><h2>The shared close — thinging / conditioning</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:48.60%;top:50.80%;font-size:3.06rem;opacity:1.00\" title=\"A face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.40%;font-size:3.06rem;opacity:1.00\" title=\"C face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:2.25rem;opacity:1.00\" title=\"the return reading\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-ac-root",
+  "world_ref": "expression:return-of-zero:roz-ac-root",
+  "revision": 1,
+  "title": "Return of Zero — A/C, Root of the Conjugate Field",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-ac-root",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Return of Zero — A/C, Root of the Conjugate Field"
+      },
+      "fallback": {
+       "title": "Return of Zero — A/C, Root of the Conjugate Field"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-ac-root",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-ac-root",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-ac-root",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-ac-root:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-ac-root",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — A/C, Root of the Conjugate Field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-ac-root\" data-expression-revision=\"1\"><h1>Return of Zero — A/C, Root of the Conjugate Field</h1><p>Frozen reading of expression:return-of-zero:roz-ac-root at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root\" aria-label=\"A/C — Argument / Concept — Root of the Conjugate Field\"><h2>A/C — Argument / Concept — Root of the Conjugate Field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:4.50rem;opacity:1.00\" title=\"the one field\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:2.16rem;opacity:1.00\" title=\"the ruling sign\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:0.60rem;opacity:0.15\" title=\"root gather\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face\" aria-label=\"A face — the ruling: Respect for Experience\"><h2>A face — the ruling: Respect for Experience</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.40%;font-size:3.06rem;opacity:1.00\" title=\"the frozen ethic\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.40%;font-size:4.98rem;opacity:1.00\" title=\"unfrozen ruling around it\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero\" aria-label=\"The crossed-zero recognition sequence\"><h2>The crossed-zero recognition sequence</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:4.26rem;opacity:1.00\" title=\"the zero it crosses\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:41.80%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:43.78%;top:46.20%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:43.78%;top:55.00%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:59.40%;font-size:0.90rem;opacity:1.00\" title=\"sequence position 4\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:59.02%;top:55.00%;font-size:1.29rem;opacity:1.00\" title=\"sequence position 5\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:59.02%;top:46.20%;font-size:1.08rem;opacity:1.00\" title=\"sequence position 6\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face\" aria-label=\"C face — the concept: the primitive field\"><h2>C face — the concept: the primitive field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.90rem;opacity:1.00\" title=\"the constitutional envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:46.00%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #0\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:47.42%;top:48.30%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:47.42%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:55.20%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #3\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:55.38%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #4\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:55.38%;top:48.30%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #5\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close\" aria-label=\"The shared close — thinging / conditioning\"><h2>The shared close — thinging / conditioning</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:48.60%;top:50.80%;font-size:3.06rem;opacity:1.00\" title=\"A face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.40%;font-size:3.06rem;opacity:1.00\" title=\"C face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:2.25rem;opacity:1.00\" title=\"the return reading\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-ac-root",
+        "revision": 1,
+        "title": "Return of Zero — A/C, Root of the Conjugate Field",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root",
+          "revision": 1,
+          "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+          "entity_refs": [
+           "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring",
+           "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01",
+           "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face",
+          "revision": 1,
+          "title": "A face — the ruling: Respect for Experience",
+          "entity_refs": [
+           "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate",
+           "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero",
+          "revision": 1,
+          "title": "The crossed-zero recognition sequence",
+          "entity_refs": [
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame",
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0",
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1",
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2",
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3",
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4",
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face",
+          "revision": 1,
+          "title": "C face — the concept: the primitive field",
+          "entity_refs": [
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring",
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0",
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1",
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2",
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3",
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4",
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close",
+          "revision": 1,
+          "title": "The shared close — thinging / conditioning",
+          "entity_refs": [
+           "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a",
+           "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c",
+           "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring",
+          "revision": 1,
+          "title": "the one field",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.12,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.5,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01",
+          "revision": 1,
+          "title": "the ruling sign",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.12,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.72,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin",
+          "revision": 1,
+          "title": "root gather",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.12,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.1,
+            "automation": null
+           },
+           "share": {
+            "value": 0,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate",
+          "revision": 1,
+          "title": "the frozen ethic",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2",
+          "revision": 1,
+          "title": "unfrozen ruling around it",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.66,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame",
+          "revision": 1,
+          "title": "the zero it crosses",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.42,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0",
+          "revision": 1,
+          "title": "sequence position 1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14000000000000007,
+            "automation": null
+           },
+           "y": {
+            "value": 0.8200000000000001,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1",
+          "revision": 1,
+          "title": "sequence position 2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.622102355330306,
+            "automation": null
+           },
+           "y": {
+            "value": 0.37999999999999995,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2",
+          "revision": 1,
+          "title": "sequence position 3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.622102355330306,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5000000000000001,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.23,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3",
+          "revision": 1,
+          "title": "sequence position 4",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.13999999999999985,
+            "automation": null
+           },
+           "y": {
+            "value": -0.94,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4",
+          "revision": 1,
+          "title": "sequence position 5",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.9021023553303058,
+            "automation": null
+           },
+           "y": {
+            "value": -0.5000000000000004,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.43,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5",
+          "revision": 1,
+          "title": "sequence position 6",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.902102355330306,
+            "automation": null
+           },
+           "y": {
+            "value": 0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.36,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring",
+          "revision": 1,
+          "title": "the constitutional envelope",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0",
+          "revision": 1,
+          "title": "constitutional #0",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14000000000000004,
+            "automation": null
+           },
+           "y": {
+            "value": 0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1",
+          "revision": 1,
+          "title": "constitutional #1",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.2583716857408418,
+            "automation": null
+           },
+           "y": {
+            "value": 0.16999999999999998,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2",
+          "revision": 1,
+          "title": "constitutional #2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.25837168574084174,
+            "automation": null
+           },
+           "y": {
+            "value": -0.29000000000000004,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3",
+          "revision": 1,
+          "title": "constitutional #3",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.13999999999999993,
+            "automation": null
+           },
+           "y": {
+            "value": -0.52,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4",
+          "revision": 1,
+          "title": "constitutional #4",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5383716857408417,
+            "automation": null
+           },
+           "y": {
+            "value": -0.2900000000000002,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5",
+          "revision": 1,
+          "title": "constitutional #5",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5383716857408418,
+            "automation": null
+           },
+           "y": {
+            "value": 0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a",
+          "revision": 1,
+          "title": "A face",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.08,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c",
+          "revision": 1,
+          "title": "C face",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.44,
+            "automation": null
+           },
+           "y": {
+            "value": -0.04,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 1.02,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign": {
+          "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign",
+          "revision": 1,
+          "title": "the return reading",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.14,
+            "automation": null
+           },
+           "y": {
+            "value": -0.06,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.75,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root",
+         "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring"
+        },
+        "provenance": [
+         {
+          "ref": "episteme/roz-ac-root.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Return of Zero — A/C, Root of the Conjugate Field"
+      },
+      "fallback": {
+       "title": "Return of Zero — A/C, Root of the Conjugate Field",
+       "text": "Return of Zero — A/C, Root of the Conjugate Field: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-ac-root",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-ac-root",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-ac-root",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-ac-root.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-ac-root"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-ac-root",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-ac-root",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-ac-root:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-ac-root"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-ac-root",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-ac-root:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-ac-root",
+    "world_ref": "expression:return-of-zero:roz-ac-root",
+    "revision": 1,
+    "title": "Return of Zero — A/C, Root of the Conjugate Field",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-ac-root",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Return of Zero — A/C, Root of the Conjugate Field"
+        },
+        "fallback": {
+         "title": "Return of Zero — A/C, Root of the Conjugate Field"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-ac-root",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-ac-root",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-ac-root",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-ac-root:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-ac-root",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Return of Zero — A/C, Root of the Conjugate Field</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-ac-root\" data-expression-revision=\"1\"><h1>Return of Zero — A/C, Root of the Conjugate Field</h1><p>Frozen reading of expression:return-of-zero:roz-ac-root at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root\" aria-label=\"A/C — Argument / Concept — Root of the Conjugate Field\"><h2>A/C — Argument / Concept — Root of the Conjugate Field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:4.50rem;opacity:1.00\" title=\"the one field\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:2.16rem;opacity:1.00\" title=\"the ruling sign\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.20%;top:50.60%;font-size:0.60rem;opacity:0.15\" title=\"root gather\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face\" aria-label=\"A face — the ruling: Respect for Experience\"><h2>A face — the ruling: Respect for Experience</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.40%;font-size:3.06rem;opacity:1.00\" title=\"the frozen ethic\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.40%;font-size:4.98rem;opacity:1.00\" title=\"unfrozen ruling around it\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero\" aria-label=\"The crossed-zero recognition sequence\"><h2>The crossed-zero recognition sequence</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:4.26rem;opacity:1.00\" title=\"the zero it crosses\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:41.80%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 1\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:43.78%;top:46.20%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 2\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:43.78%;top:55.00%;font-size:0.69rem;opacity:1.00\" title=\"sequence position 3\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:59.40%;font-size:0.90rem;opacity:1.00\" title=\"sequence position 4\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:59.02%;top:55.00%;font-size:1.29rem;opacity:1.00\" title=\"sequence position 5\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:59.02%;top:46.20%;font-size:1.08rem;opacity:1.00\" title=\"sequence position 6\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face\" aria-label=\"C face — the concept: the primitive field\"><h2>C face — the concept: the primitive field</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:3.90rem;opacity:1.00\" title=\"the constitutional envelope\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:46.00%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #0\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:47.42%;top:48.30%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #1\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:47.42%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #2\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:55.20%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #3\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:55.38%;top:52.90%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #4\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:55.38%;top:48.30%;font-size:0.60rem;opacity:1.00\" title=\"constitutional #5\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close\" aria-label=\"The shared close — thinging / conditioning\"><h2>The shared close — thinging / conditioning</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:48.60%;top:50.80%;font-size:3.06rem;opacity:1.00\" title=\"A face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:54.40%;top:50.40%;font-size:3.06rem;opacity:1.00\" title=\"C face\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign\" data-subject-ref=\"world:return-of-zero/wiki:roz-ac-root\" data-presentation-role=\"thing\" style=\"left:51.40%;top:50.60%;font-size:2.25rem;opacity:1.00\" title=\"the return reading\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-ac-root",
+          "revision": 1,
+          "title": "Return of Zero — A/C, Root of the Conjugate Field",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root",
+            "revision": 1,
+            "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+            "entity_refs": [
+             "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring",
+             "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01",
+             "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face",
+            "revision": 1,
+            "title": "A face — the ruling: Respect for Experience",
+            "entity_refs": [
+             "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate",
+             "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero",
+            "revision": 1,
+            "title": "The crossed-zero recognition sequence",
+            "entity_refs": [
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame",
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0",
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1",
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2",
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3",
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4",
+             "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face",
+            "revision": 1,
+            "title": "C face — the concept: the primitive field",
+            "entity_refs": [
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring",
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0",
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1",
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2",
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3",
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4",
+             "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close",
+            "revision": 1,
+            "title": "The shared close — thinging / conditioning",
+            "entity_refs": [
+             "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a",
+             "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c",
+             "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring",
+            "revision": 1,
+            "title": "the one field",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.12,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.5,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-01",
+            "revision": 1,
+            "title": "the ruling sign",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.12,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.72,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-pin",
+            "revision": 1,
+            "title": "root gather",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.12,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.1,
+              "automation": null
+             },
+             "share": {
+              "value": 0,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-plate",
+            "revision": 1,
+            "title": "the frozen ethic",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-a-face:ac-ring2",
+            "revision": 1,
+            "title": "unfrozen ruling around it",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.66,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-frame",
+            "revision": 1,
+            "title": "the zero it crosses",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.42,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t0",
+            "revision": 1,
+            "title": "sequence position 1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14000000000000007,
+              "automation": null
+             },
+             "y": {
+              "value": 0.8200000000000001,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t1",
+            "revision": 1,
+            "title": "sequence position 2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.622102355330306,
+              "automation": null
+             },
+             "y": {
+              "value": 0.37999999999999995,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t2",
+            "revision": 1,
+            "title": "sequence position 3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.622102355330306,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5000000000000001,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.23,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t3",
+            "revision": 1,
+            "title": "sequence position 4",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.13999999999999985,
+              "automation": null
+             },
+             "y": {
+              "value": -0.94,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t4",
+            "revision": 1,
+            "title": "sequence position 5",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.9021023553303058,
+              "automation": null
+             },
+             "y": {
+              "value": -0.5000000000000004,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.43,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-crossed-zero:ac-cz-t5",
+            "revision": 1,
+            "title": "sequence position 6",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.902102355330306,
+              "automation": null
+             },
+             "y": {
+              "value": 0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.36,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-ring",
+            "revision": 1,
+            "title": "the constitutional envelope",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-0",
+            "revision": 1,
+            "title": "constitutional #0",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14000000000000004,
+              "automation": null
+             },
+             "y": {
+              "value": 0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-1",
+            "revision": 1,
+            "title": "constitutional #1",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.2583716857408418,
+              "automation": null
+             },
+             "y": {
+              "value": 0.16999999999999998,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-2",
+            "revision": 1,
+            "title": "constitutional #2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.25837168574084174,
+              "automation": null
+             },
+             "y": {
+              "value": -0.29000000000000004,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-3",
+            "revision": 1,
+            "title": "constitutional #3",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.13999999999999993,
+              "automation": null
+             },
+             "y": {
+              "value": -0.52,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-4",
+            "revision": 1,
+            "title": "constitutional #4",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5383716857408417,
+              "automation": null
+             },
+             "y": {
+              "value": -0.2900000000000002,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-c-face:ac-six-5",
+            "revision": 1,
+            "title": "constitutional #5",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5383716857408418,
+              "automation": null
+             },
+             "y": {
+              "value": 0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-a",
+            "revision": 1,
+            "title": "A face",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.08,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-c",
+            "revision": 1,
+            "title": "C face",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.44,
+              "automation": null
+             },
+             "y": {
+              "value": -0.04,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 1.02,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign": {
+            "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-close:ac-close-sign",
+            "revision": 1,
+            "title": "the return reading",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-ac-root.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.14,
+              "automation": null
+             },
+             "y": {
+              "value": -0.06,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.75,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root",
+           "entity_ref": "expression:return-of-zero:roz-ac-root:scene:ac-root:ac-ring"
+          },
+          "provenance": [
+           {
+            "ref": "episteme/roz-ac-root.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Return of Zero — A/C, Root of the Conjugate Field"
+        },
+        "fallback": {
+         "title": "Return of Zero — A/C, Root of the Conjugate Field",
+         "text": "Return of Zero — A/C, Root of the Conjugate Field: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-ac-root",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-ac-root",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-ac-root",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-ac-root",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-ac-root.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-ac-root"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-ac-root",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-ac-root",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-ac-root:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-ac-root",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Return of Zero — A/C, Root of the Conjugate Field",
+  "summary": "a living Expression · 5 scenes · 22 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-ac-root:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-ac-root",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-ac-root"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-ac-root:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-ac-root",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-ac-root",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Return of Zero — A/C, Root of the Conjugate Field",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-ac-root:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-ac-root:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-ac-root",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-ac-root"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}

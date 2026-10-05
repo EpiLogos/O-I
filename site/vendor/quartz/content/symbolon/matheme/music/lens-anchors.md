@@ -17,11 +17,11 @@ source_ids:
 
 ## #0 — The field is heard from somewhere
 
-The [chromatic substrates](chromatic-substrates.md) **define** two maps from the same twelve position-and-face states into pitch classes. The [pairing grammar](pairing-grammar.md) **defines** relations which survive a common change of anchor. A lens now gives that anchor an epistemic office: it selects the mode through which the field becomes available to inquiry.
+The [chromatic substrates](chromatic-substrates.md) map the same twelve position-and-face states into pitch classes. The [pairing grammar](pairing-grammar.md) preserves relations through a common change of anchor. A lens gives that anchor an epistemic office: it selects the mode through which the field becomes available to inquiry.
 
-File 4's [“Invariance, Topology, and the Lens as Epistemic Anchor”](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) **sources** the operation. Its twelve lenses have stable IDs, assigned positions and tradition-bearing names. The [musical-v3 house](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md), §I-3, **sources** the complete Day/Night ledger where File 4 abbreviates it.
+The [epistemic anchor](../../episteme/sources/internal-corpus/taylor/taylor-2026-binary-explication/taylor-2026-binary-explication.md) retains a stable lens identity, an assigned position and a tradition-bearing mode. The [complete Day/Night lens sequence](../../episteme/sources/internal-corpus/taylor/taylor-2026-ql-musical-derivation-v3/taylor-2026-ql-musical-derivation-v3.md), §I-3, distinguishes the twelve offices through which the same field can be questioned, interpreted, tested and articulated.
 
-These are authorial QL/MEF assignments. A lens name identifies the instrument's declared mode; its associated philosopher or tradition does not thereby become the historical author of the musical map. The matrix can be exact while that historical relation retains its separate source task.
+Taylor’s QL/MEF assignments give each lens a declared mode. Its tradition-bearing name relates that mode to a philosophical operation; it does not assign the philosopher authorship of the musical map. The exact matrix and the philosopher’s own historical account retain different objects and warrants.
 
 ## #1 — Twelve lens identities and two anchor maps
 
@@ -69,7 +69,7 @@ $$
 
 This makes the limit of a merely musical shift precise. Within the declared instrument, choosing L2 also selects the logical crossing of affirmation, denial, both, neither and their lived return. Choosing L1 selects causal inquiry; choosing L4 selects lived situatedness. **Lens-modulation is epistemic-mode-modulation** because lens identity carries that operation along with its anchor. Transposing a phrase alone does not specify which of those modes has been undertaken.
 
-[AM/IS](../../AM-IS.md) **grounds** the personed distinction: a perspective has an office in a knowing-act, and the circumstance holding the perspectives is not one more pronoun. The lens gives a determinate route through that shared field.
+[Personed knowing](../../AM-IS.md) gives each perspective an office in a knowing-act; the circumstance holding the perspectives is not one more pronoun. The lens supplies a determinate route through that shared field.
 
 ## #3 — The architectural eight and four
 
@@ -97,7 +97,7 @@ The source’s “bebop scale” and cymatic language give different proposed re
 
 ## #4 — Reflection and the two readings of return
 
-Same-position conjugation sends `(k,ε)` to `(k,1−ε)`. The candidate also declares a complementary return from a lens to the opposite face of its mirror:
+Same-position conjugation sends `(k,ε)` to `(k,1−ε)`. A complementary return instead moves a lens to the opposite face of its mirror:
 
 $$
 R(k,ε)=(5-k,1-ε).
@@ -105,7 +105,7 @@ $$
 
 Thus L0 returns to L5′, L1 to L4′ and L2 to L3′; the reverse moves return to their starting lenses. Mirror and face-flip commute, so applying R twice restores both index and face. Same-position conjugation and complementary return perform different movements through the same twelve addresses.
 
-File 4 reads circulation through this field torically and its conjugate return through the Klein structure developed in the wider corpus. [A17](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md) **qualifies** the formal offices: independent continuous phase cycles can generate a torus, while a Klein construction requires the appropriate orientation-reversing identification. A finite pair of six-class collections supplies neither continuous surface nor gluing rule by itself. The lens table preserves the address and return operations which the broader topological reading coordinates; it does not substitute twelve labels for that construction.
+Independent continuous phase cycles can generate a torus, while a Klein construction requires the appropriate orientation-reversing identification. Their [distinct topological returns](../../../section-rooms/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md) coordinate the field’s circulation and conjugate return. A finite pair of six-class collections supplies neither continuous surface nor gluing rule by itself. The lens table preserves the address and return operations which the broader topological reading coordinates; it does not substitute twelve labels for that construction.
 
 The shift of epistemic ground remains operative through this distinction. A causal account can return through the Scientific lens to have its proposed operation tested; the Phenomenological lens can return through the Phenomenal lens to discriminate how experience is apprehended. The named relations identify work to perform, not merely intervals to hear.
 
@@ -120,6 +120,9 @@ $$
 
 Primes in this process chain denote inverse-phase positions. Primes in the lens table denote the Night lenses assigned to the P′ face; the Night-pass sequence is the distinct use carried by File 3. Keeping those offices explicit lets one glyph conduct the relation without merging the indices.
 
-The map is the housed candidate’s declared system. File 4 and v3 are superseded in practice by the actual ql-mef package, whose current lens mappings have not been recovered for this projection. The present record supplies exact IDs, anchors, coordinate operations and a partition which can be checked independently of that runtime debt.
+The map retains a lens identity together with its basis, anchor and sounding selection. Changing the reference makes the same tones differently available; changing the lens also undertakes a particular mode of inquiry. A comparison must retain both changes to show what its new perspective can disclose.
 
-It **returns-to** [A15](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) with the criterion of its account visible: lens, basis, anchor and selected sounding field. [§3 · #4, Musical Resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) **embodies** the passage into sounded relation. The anchor makes a field available from somewhere; its return includes the mode through which that availability became knowledge.
+[Accountable musical knowing](../../../section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md) keeps lens, basis, anchor and selected sounding field visible in its result. [Musical resolution](../../../section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md) makes that relation audible. The anchor makes a field available from somewhere; its return includes the mode through which that availability became knowledge.
+## Source and implementation standing
+
+The map is the housed candidate’s declared system. File 4 and v3 are superseded in practice by the actual ql-mef package, whose current lens mappings have not been recovered for this projection. The present record supplies exact IDs, anchors, coordinate operations and a partition which can be checked independently of that runtime debt.

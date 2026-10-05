@@ -3,7 +3,7 @@ title: "Return of Zero — Main Sources by Section"
 source_id: main-sources
 generated: true
 generator: tools/build-source-projections.py
-source_digest: "27a0c887f185f2024f41f667b3e19e7667aa94fd5b4a3bcba1b9c149b1cae1bd"
+source_digest: "d1b2ba27b53063eb59df8de44cdd7bababd60d613712e78be39055d0f75f4f04"
 ---
 
 <!-- Generated from canonical source houses (<source_id>.md). Do not edit by hand. -->
@@ -14,7 +14,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §0/1 — Integral Threshold
 
-[Open section room](../../../section-rooms/00-integral-threshold/ROOM.md)
+[Open section room](../../../section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md)
 
 - [Bratton — Antikythera Agentworld Brief (2026)](media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md) — `bratton-2026-agentworld-brief` — §0/1 · contemporary horizon and action–model problem
 - [Frank, Gleiser, and Thompson — The Blind Spot (2024)](history-philosophy-of-science/frank/frank-gleiser-thompson-2024-blind-spot/frank-gleiser-thompson-2024-blind-spot.md) — `frank-gleiser-thompson-2024-blind-spot` — §0/1 · experiencer and lifeworld counterpressure
@@ -25,7 +25,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §0 — Differentiating Mind
 
-[Open section room](../../../section-rooms/01-differentiating-mind/ROOM.md)
+[Open section room](../../../section-rooms/01-differentiating-mind/ROOM-01-differentiating-mind.md)
 
 - [Abhinavagupta — Parātrīśikā-vivaraṇa (Singh, 1988)](indian-philosophy/abhinavagupta/abhinavagupta-singh-1988-paratrisika-vivarana/abhinavagupta-singh-1988-paratrisika-vivarana.md) — `abhinavagupta-singh-1988-paratrisika-vivarana` — §0 · primary differentiation and recognition carrier
 - [Bohm — Wholeness and the Implicate Order (1980)](process-systems-theory/bohm/bohm-1980-wholeness-implicate-order/bohm-1980-wholeness-implicate-order.md) — `bohm-1980-wholeness-implicate-order` — §0 · implication–explication process bridge
@@ -38,7 +38,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §1 — Return of Zero
 
-[Open section room](../../../section-rooms/02-return-of-zero/ROOM.md)
+[Open section room](../../../section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md)
 
 - [Colebrooke — Brahmagupta and Bhāskara (1817)](mathematics-logic/brahmagupta/colebrooke-1817-brahmagupta-bhaskara/colebrooke-1817-brahmagupta-bhaskara.md) — `colebrooke-1817-brahmagupta-bhaskara` — §1 · primary zero arithmetic and zero-denominator verses
 - [Dutta — Zero-Divided Numbers in Indian Mathematics (2023)](mathematics-logic/dutta/dutta-2023-zero-divided-numbers-india/dutta-2023-zero-divided-numbers-india.md) — `dutta-2023-zero-divided-numbers-india` — §1 · specialist history and cancellation-regime corrective
@@ -47,7 +47,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §2 — Two Logics
 
-[Open section room](../../../section-rooms/03-two-logics/ROOM.md)
+[Open section room](../../../section-rooms/03-two-logics/ROOM-03-two-logics.md)
 
 - [Christopher G. Brown — Ares, Aphrodite, and the Laughter of the Gods (1989)](classical-philology/brown/brown-1989-ares-aphrodite-laughter/brown-1989-ares-aphrodite-laughter.md) — `brown-1989-ares-aphrodite-laughter` — §2 · shame-and-exposure control for the spectacle reading of Od. 8
 - [David D. Phillips — Moicheia and the Unity of Greek Law (venue unresolved)](classical-philology/phillips/phillips-moicheia-unity-greek-law/phillips-moicheia-unity-greek-law.md) — `phillips-moicheia-unity-greek-law` — §2 · juridical anatomy of the Od. 8 episode (self-help, moichagria, engyē)
@@ -69,7 +69,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §3 — Mathematical Substrate
 
-[Open section room](../../../section-rooms/04-mathematical-substrate/ROOM.md)
+[Open section room](../../../section-rooms/04-mathematical-substrate/ROOM-04-mathematical-substrate.md)
 
 - [Andreas Kapsner — Cutting Corners (2020)](mathematics-logic/kapsner/kapsner-2020-cutting-corners/kapsner-2020-cutting-corners.md) — `kapsner-2020-cutting-corners` — §3 · gate-source against Priest's fifth value
 - [Graham Priest — The Fifth Corner of Four (2018)](mathematics-logic/priest/priest-2018-fifth-corner/priest-2018-fifth-corner.md) — `priest-2018-fifth-corner` — §3 · Priest's five-valued catuṣkoṭi narrative, India to East Asia
@@ -84,7 +84,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §4 — Psychoid Flowering
 
-[Open section room](../../../section-rooms/05-psychoid-flowering/ROOM.md)
+[Open section room](../../../section-rooms/05-psychoid-flowering/ROOM-05-psychoid-flowering.md)
 
 - [Atmanspacher — The Pauli–Jung Conjecture and Its Relatives (2020)](physics/atmanspacher/atmanspacher-2020-pauli-jung-conjecture/atmanspacher-2020-pauli-jung-conjecture.md) — `atmanspacher-2020-pauli-jung-conjecture` — §4 · dual-aspect formulation and limit
 - [Darmon — Mathème (1992)](psychology/darmon/darmon-1992-matheme-ali/darmon-1992-matheme-ali.md) — `darmon-1992-matheme-ali` — §4 · matheme definition and transmission
@@ -99,7 +99,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §5 — Objective Internality
 
-[Open section room](../../../section-rooms/06-objective-internality/ROOM.md)
+[Open section room](../../../section-rooms/06-objective-internality/ROOM-06-objective-internality.md)
 
 - [Bradley and Terry — Rank Analysis of Incomplete Block Designs (1952)](mathematics-logic/bradley/bradley-terry-1952-paired-comparisons/bradley-terry-1952-paired-comparisons.md) — `bradley-terry-1952-paired-comparisons` — §5 · paired-comparison preference baseline
 - [Bratton — Antikythera Agentworld Brief (2026)](media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md) — `bratton-2026-agentworld-brief` — §5 · research target and agentworld constraint
@@ -113,7 +113,7 @@ Main source is a declared relation to an essay section, not a second copy of a w
 
 ## §5→0 — Instrument Returns
 
-[Open section room](../../../section-rooms/07-instrument-returns/ROOM.md)
+[Open section room](../../../section-rooms/07-instrument-returns/ROOM-07-instrument-returns.md)
 
 - [42 Techne — Sovereign Commons Architecture](media-technology-philosophy/42-techne/42-techne-2026-sovereign-commons/42-techne-2026-sovereign-commons.md) — `42-techne-2026-sovereign-commons` — §5→0 · applied 4:2 Technē architecture; report-only design witness
 - [Antikythera — Agentworld Site Copy (2026)](media-technology-philosophy/antikythera/antikythera-2026-site-copy/antikythera-2026-site-copy.md) — `antikythera-2026-site-copy` — §5→0 · venue logistics, submission frame, and emblem-return staging

@@ -39,7 +39,7 @@ Office of the Historian, Foreign Relations of the United States,1946, The Britis
 
 Cover memorandum, enclosure2a–b and editorial approval note89; navigation excluded. No complete personnel archive or compliance audit. Full named scope was read in the T21 law development; the text hash matches the later T22 consumer-source receipt. This admission reuses that reading and rechecks the exact passages, not a new whole-book or archival investigation. No direct quotation is admitted.
 
-The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xi-postwar) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
+The [language–law–nation history](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xi-postwar) consumes the bounded witness in its existing situated branch. Historical claim, legal prescription, authorial comparison and implementation evidence retain separate standing.
 
 ## Provenance
 
@@ -63,7 +63,7 @@ Institutional origin: [selected witness](https://history.state.gov/historicaldoc
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Cover memorandum, enclosure2a–b and editorial approval note89; navigation excluded. No complete personnel archive or compliance audit.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xi-postwar).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xi-postwar).
 
 <a id="us-1946-paperclip-policy-frus448-q002"></a>
 ## Passage card — `us-1946-paperclip-policy-frus448-q002` — Contract, custody and screening rules
@@ -77,4 +77,4 @@ Institutional origin: [selected witness](https://history.state.gov/historicaldoc
 - **Verification:** exact named scope read in the prior law packet; saved witness and extraction hashes rebound2026-09-08.
 - **Provenance:** institutional witness and immutable local-copy hashes above.
 - **Use boundary:** Cover memorandum, enclosure2a–b and editorial approval note89; navigation excluded. No complete personnel archive or compliance audit.
-- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xi-postwar).
+- **Consumer:** [owning historical branch](../../../../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT-language-law-nation-centralisation.md#branch-xi-postwar).

@@ -2,7 +2,7 @@
 source_id: 00-integral-threshold-p1-canonical-alignment
 ---
 
-# P1 Canonical Alignment — §0/1 Integral Threshold
+# P1 Canonical Alignment — `§0/1` Integral Threshold
 
 **Wave:** T10 / #11.  
 **Movements:** 01–06.  
@@ -12,7 +12,7 @@ This supplement is authored. `ROOM.md` remains a generated projection and is not
 
 ## Section burden after T09
 
-§0/1 opens the whole argument by making the Subject/formal-limit problem unavoidable before mechanism. Its canonical spine is **[A01](../arguments/A01-Subject-God-and-Faithful-Definition.md) Subject, God and Faithful Definition → [A02](../arguments/A02-Copula-Self-Identity-through-Difference.md) Copula → [A03](../arguments/A03-Immutable-Gap-Formal-Limit.md) Immutable Gap / Formal Limit**, with **[A04](../arguments/A04-Diaphaneity-Contextual-Transparency.md) Diaphaneity** providing the contextual method and **[A26](../arguments/A26-Objective-Internality-Mind-as-Worldhood.md) Objective Internality** already visible as the question of how a situated operative world can become reflexively legible.
+`§0/1` opens the whole argument by making the Subject/formal-limit problem unavoidable before mechanism. Its canonical spine is **[A01](../arguments/A01-Subject-God-and-Faithful-Definition.md) Subject, God and Faithful Definition → [A02](../arguments/A02-Copula-Self-Identity-through-Difference.md) Copula → [A03](../arguments/A03-Immutable-Gap-Formal-Limit.md) Immutable Gap / Formal Limit**, with **[A04](../arguments/A04-Diaphaneity-Contextual-Transparency.md) Diaphaneity** providing the contextual method and **[A26](../arguments/A26-Objective-Internality-Mind-as-Worldhood.md) Objective Internality** already visible as the question of how a situated operative world can become reflexively legible.
 
 The section does **not** make Subject into Antaḥkaraṇa, model internals, body, profile or world-model. It also does not import the terminal [A36](../arguments/A36-Advent-of-Integral-Zero.md) result. Movement 06 may point forward to the return of zero, but the first historical/formal advent remains [A10](../arguments/A10-Advent-of-Zero.md) and the integral Symbol-return must still be earned.
 

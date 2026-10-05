@@ -10,11 +10,11 @@ type: _md_
 title: "There is no truth coming"
 source: notion
 source_url: https://app.notion.com/p/191a4797123c8074a124f9b513cd5cd2
-source_id: 191a4797-123c-8074-a124-f9b513cd5cd2
 notion_created: 2025-02-05T20:32:20Z
 notion_edited: 2025-02-05T20:45:15.742Z
 status: sorted
 kind: poem
+source_id: there-is-no-truth-coming
 ---
 There is no truth coming
 Other than the truth that's here.

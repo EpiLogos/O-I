@@ -15,7 +15,7 @@ Let `ℤ/nℤ` denote integer residue classes modulo `n`. Define
 
 `φ:ℤ/6ℤ→ℤ/2ℤ×ℤ/3ℤ`, `φ([k]₆)=([k]₂,[k]₃)`.
 
-The [admitted reference note](../../../section-rooms/arguments/concepts/reference-notes/chinese-remainder-theorem-z6.md) locates this finite Chinese-remainder construction beside the [core's](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md) binary/ternary account. The proof below is explicit and does not borrow an unverified quotation from that note.
+This Chinese-remainder construction gives an exact finite counterpart to the [native binary/ternary account](../../episteme/sources/internal-corpus/taylor/taylor-2026-core-theorems-pithy/taylor-2026-core-theorems-pithy.md). Its relation is earned through the explicit map and proof below; historical quotation retains its separate source question.
 
 ## #1 — Enumerate all six images
 
@@ -52,4 +52,4 @@ The native sixfold can receive this as an exact binary/ternary decomposition. Th
 
 The result permits passage both ways without loss: one mod 6 address becomes two independent residues, and `3a+4b` recovers it. This gives [translations](../mono-poly/translations.md) a concrete bijective example alongside maps that discard information.
 
-This record returns-to [A18](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md), [perfect six](../harmonics/perfect-six.md), and [Movement26](../../../section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md). The modular construction keeps its own operations when returned to the native field.
+The [native sixfold](../../../section-rooms/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md) retains its qualitative assignments through the declared coordinate mapping. [Perfect six](../harmonics/perfect-six.md) gathers the proper divisors `1+2+3=6`, while [the Spanda relation](../../../section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md) has its own binary/ternary and ratio offices. The coprime product ring preserves its operations through these comparative returns.

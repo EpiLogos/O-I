@@ -1,0 +1,4087 @@
+{
+ "schema": "oi.expression-publication/v1",
+ "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+ "expression_revision": 1,
+ "world_ref": "world:return-of-zero",
+ "field_ref": "field:return-of-zero-expressions:roz-mytheme-valentinian-sophia-horos-achamoth",
+ "composition": {
+  "schema": "oi.expression-composition/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+  "revision": 1,
+  "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+  "scenes": [
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad",
+    "revision": 1,
+    "title": "The fullness in conjunction",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos",
+    "revision": 1,
+    "title": "Sophia reaches; Horos restores",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter",
+    "revision": 1,
+    "title": "Teaching, thanksgiving, and the common fruit",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth",
+    "revision": 1,
+    "title": "Achamoth receives form twice",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge",
+    "revision": 1,
+    "title": "A maker who does not know his mother",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599"
+    ]
+   },
+   {
+    "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return",
+    "revision": 1,
+    "title": "Bridal return and what remains outside",
+    "entity_refs": [
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602",
+     "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603"
+    ]
+   }
+  ],
+  "entities": {
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578",
+    "revision": 1,
+    "title": "the Ogdoad — the four primary conjunctions",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.31,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.679,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579",
+    "revision": 1,
+    "title": "the Decad and Duodecad — two branches of further generation",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580",
+    "revision": 1,
+    "title": "Sophia — youngest of the Duodecad, joined to Theletos",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.34,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581",
+    "revision": 1,
+    "title": "Nous alone comprehends the Father; the rest long and are restrained",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582",
+    "revision": 1,
+    "title": "Sophia's solitary reach — apart from Theletos, nearing dissolution in the Father's sweetness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.203,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583",
+    "revision": 1,
+    "title": "Horos / Stauros — the same power establishing and dividing",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.23,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.452,
+      "automation": null
+     },
+     "share": {
+      "value": 1.5,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584",
+    "revision": 1,
+    "title": "the enthymesis — the intention excluded with its passion; later called Achamoth",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585",
+    "revision": 1,
+    "title": "the amorphous-birth variant — a second articulation, not silently merged",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.31,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586",
+    "revision": 1,
+    "title": "the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.12,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.2455,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587",
+    "revision": 1,
+    "title": "the Holy Spirit — bringing thanksgiving and rest",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.135,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588",
+    "revision": 1,
+    "title": "the contributions — each Aeon's most beautiful, composing one common fruit",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": 0.25,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589",
+    "revision": 1,
+    "title": "the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.4,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.3,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590",
+    "revision": 1,
+    "title": "Achamoth in darkness and vacuity — formless, like an untimely birth",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.17,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.246,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591",
+    "revision": 1,
+    "title": "the first formation — according to substance; the odour of immortality left behind",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.33,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592",
+    "revision": 1,
+    "title": "the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.15,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.32,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593",
+    "revision": 1,
+    "title": "the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels' likeness",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594",
+    "revision": 1,
+    "title": "Horos stops her crossing back — her cry of Iao",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.42,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595",
+    "revision": 1,
+    "title": "Achamoth — moving him without making herself known",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.26,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.178,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596",
+    "revision": 1,
+    "title": "the Demiurge — ordering the substances, ruling the Hebdomas",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": 0.3,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.39,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597",
+    "revision": 1,
+    "title": "the seven heavens; Achamoth's Ogdoad dwelling above him, below the Pleroma",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0.45,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598",
+    "revision": 1,
+    "title": "the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": -0.5,
+      "automation": null
+     },
+     "y": {
+      "value": -0.38,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.4,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599",
+    "revision": 1,
+    "title": "the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": 0.02,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.16,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600",
+    "revision": 1,
+    "title": "the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.51,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601",
+    "revision": 1,
+    "title": "the Demiurge's reward — the intermediate dwelling; righteous psychic souls resting, not entering",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "O",
+      "automation": null
+     },
+     "x": {
+      "value": 0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.35,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602",
+    "revision": 1,
+    "title": "fire consuming matter and finally itself",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": -0.55,
+      "automation": null
+     },
+     "y": {
+      "value": -0.35,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.24,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   },
+   "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603": {
+    "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603",
+    "revision": 1,
+    "title": "the founding comparison — Offered; human-amplified: no: Sophia's reach, Horos's limit, the common fruit beside 0/1→4+2",
+    "subject": {
+     "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+     "native_owner": "return-of-zero",
+     "presentation_role": "thing",
+     "sources": [
+      {
+       "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+       "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+       "availability": "available"
+      }
+     ]
+    },
+    "parameters": {
+     "glyph": {
+      "value": "§",
+      "automation": null
+     },
+     "x": {
+      "value": 0,
+      "automation": null
+     },
+     "y": {
+      "value": -0.45,
+      "automation": null
+     },
+     "z": {
+      "value": 0,
+      "automation": null
+     },
+     "scale": {
+      "value": 0.27,
+      "automation": null
+     },
+     "share": {
+      "value": 1,
+      "automation": null
+     }
+    }
+   }
+  },
+  "relations": {},
+  "selection": {
+   "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad",
+   "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578"
+  },
+  "provenance": [
+   {
+    "ref": "mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.journey.json",
+    "revision": "track3-2026-09-19",
+    "availability": "available"
+   }
+  ],
+  "representations": []
+ },
+ "expression": {
+  "schema": "oi.expression-presentation/v1",
+  "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+  "expression_revision": 1,
+  "live_renderer_ref": "renderer:oi:expression-stage",
+  "live_availability": "available",
+  "subjects": [
+   {
+    "ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+    "revision": "1",
+    "availability": "available",
+    "sources": [
+     {
+      "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+      "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+      "availability": "available"
+     }
+    ]
+   }
+  ],
+  "representations": [
+   {
+    "kind": "html",
+    "representation": {
+     "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:frozen:1",
+     "revision": "1",
+     "availability": "available"
+    },
+    "provenance": [
+     {
+      "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+      "revision": "1",
+      "availability": "available"
+     }
+    ],
+    "media_type": "text/html",
+    "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Valentinian Sophia, Horos, Achamoth and Soter</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth\" data-expression-revision=\"1\"><h1>Valentinian Sophia, Horos, Achamoth and Soter</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad\" aria-label=\"The fullness in conjunction\"><h2>The fullness in conjunction</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.10%;font-size:2.04rem;opacity:1.00\" title=\"the Ogdoad — the four primary conjunctions\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.96rem;opacity:1.00\" title=\"the Decad and Duodecad — two branches of further generation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:1.02rem;opacity:1.00\" title=\"Sophia — youngest of the Duodecad, joined to Theletos\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"Nous alone comprehends the Father; the rest long and are restrained\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos\" aria-label=\"Sophia reaches; Horos restores\"><h2>Sophia reaches; Horos restores</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.70%;font-size:0.61rem;opacity:1.00\" title=\"Sophia&#39;s solitary reach — apart from Theletos, nearing dissolution in the Father&#39;s sweetness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:1.36rem;opacity:1.00\" title=\"Horos / Stauros — the same power establishing and dividing\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.96rem;opacity:1.00\" title=\"the enthymesis — the intention excluded with its passion; later called Achamoth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.93rem;opacity:1.00\" title=\"the amorphous-birth variant — a second articulation, not silently merged\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter\" aria-label=\"Teaching, thanksgiving, and the common fruit\"><h2>Teaching, thanksgiving, and the common fruit</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.20%;font-size:0.74rem;opacity:1.00\" title=\"the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the Holy Spirit — bringing thanksgiving and rest\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.50%;font-size:0.96rem;opacity:1.00\" title=\"the contributions — each Aeon&#39;s most beautiful, composing one common fruit\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth\" aria-label=\"Achamoth receives form twice\"><h2>Achamoth receives form twice</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.74rem;opacity:1.00\" title=\"Achamoth in darkness and vacuity — formless, like an untimely birth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:0.99rem;opacity:1.00\" title=\"the first formation — according to substance; the odour of immortality left behind\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.50%;font-size:0.96rem;opacity:1.00\" title=\"the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:0.81rem;opacity:1.00\" title=\"the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels&#39; likeness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"Horos stops her crossing back — her cry of Iao\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge\" aria-label=\"A maker who does not know his mother\"><h2>A maker who does not know his mother</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"Achamoth — moving him without making herself known\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:1.17rem;opacity:1.00\" title=\"the Demiurge — ordering the substances, ruling the Hebdomas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:53.50%;font-size:0.81rem;opacity:1.00\" title=\"the seven heavens; Achamoth&#39;s Ogdoad dwelling above him, below the Pleroma\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.80%;font-size:1.20rem;opacity:1.00\" title=\"the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:0.60rem;opacity:1.00\" title=\"the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return\" aria-label=\"Bridal return and what remains outside\"><h2>Bridal return and what remains outside</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.53rem;opacity:1.00\" title=\"the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:1.05rem;opacity:1.00\" title=\"the Demiurge&#39;s reward — the intermediate dwelling; righteous psychic souls resting, not entering\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"fire consuming matter and finally itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.81rem;opacity:1.00\" title=\"the founding comparison — Offered; human-amplified: no: Sophia&#39;s reach, Horos&#39;s limit, the common fruit beside 0/1→4+2\">§</span></div></section></main></body></html>"
+   }
+  ],
+  "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad"
+ },
+ "presentation": {
+  "schema": "oi.world-presentation/v1",
+  "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-valentinian-sophia-horos-achamoth",
+  "world_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+  "revision": 1,
+  "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+  "theme": {
+   "tokens": {}
+  },
+  "regions": [
+   {
+    "region_ref": "lede",
+    "role": "lede",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "lede",
+      "component_ref": "oi.presentation/lede/v1",
+      "subject_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+      "portable_renderer": "oi.presentation/lede/v1",
+      "props": {
+       "title": "Valentinian Sophia, Horos, Achamoth and Soter"
+      },
+      "fallback": {
+       "title": "Valentinian Sophia, Horos, Achamoth and Soter"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "body",
+    "role": "body",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "expression",
+      "component_ref": "oi.presentation/expression/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+      "portable_renderer": "oi.presentation/expression/v1",
+      "props": {
+       "expression": {
+        "schema": "oi.expression-presentation/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "expression_revision": 1,
+        "live_renderer_ref": "renderer:oi:expression-stage",
+        "live_availability": "available",
+        "subjects": [
+         {
+          "ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+          "revision": "1",
+          "availability": "available",
+          "sources": [
+           {
+            "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+            "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+            "availability": "available"
+           }
+          ]
+         }
+        ],
+        "representations": [
+         {
+          "kind": "html",
+          "representation": {
+           "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:frozen:1",
+           "revision": "1",
+           "availability": "available"
+          },
+          "provenance": [
+           {
+            "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+            "revision": "1",
+            "availability": "available"
+           }
+          ],
+          "media_type": "text/html",
+          "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Valentinian Sophia, Horos, Achamoth and Soter</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth\" data-expression-revision=\"1\"><h1>Valentinian Sophia, Horos, Achamoth and Soter</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad\" aria-label=\"The fullness in conjunction\"><h2>The fullness in conjunction</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.10%;font-size:2.04rem;opacity:1.00\" title=\"the Ogdoad — the four primary conjunctions\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.96rem;opacity:1.00\" title=\"the Decad and Duodecad — two branches of further generation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:1.02rem;opacity:1.00\" title=\"Sophia — youngest of the Duodecad, joined to Theletos\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"Nous alone comprehends the Father; the rest long and are restrained\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos\" aria-label=\"Sophia reaches; Horos restores\"><h2>Sophia reaches; Horos restores</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.70%;font-size:0.61rem;opacity:1.00\" title=\"Sophia&#39;s solitary reach — apart from Theletos, nearing dissolution in the Father&#39;s sweetness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:1.36rem;opacity:1.00\" title=\"Horos / Stauros — the same power establishing and dividing\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.96rem;opacity:1.00\" title=\"the enthymesis — the intention excluded with its passion; later called Achamoth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.93rem;opacity:1.00\" title=\"the amorphous-birth variant — a second articulation, not silently merged\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter\" aria-label=\"Teaching, thanksgiving, and the common fruit\"><h2>Teaching, thanksgiving, and the common fruit</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.20%;font-size:0.74rem;opacity:1.00\" title=\"the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the Holy Spirit — bringing thanksgiving and rest\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.50%;font-size:0.96rem;opacity:1.00\" title=\"the contributions — each Aeon&#39;s most beautiful, composing one common fruit\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth\" aria-label=\"Achamoth receives form twice\"><h2>Achamoth receives form twice</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.74rem;opacity:1.00\" title=\"Achamoth in darkness and vacuity — formless, like an untimely birth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:0.99rem;opacity:1.00\" title=\"the first formation — according to substance; the odour of immortality left behind\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.50%;font-size:0.96rem;opacity:1.00\" title=\"the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:0.81rem;opacity:1.00\" title=\"the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels&#39; likeness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"Horos stops her crossing back — her cry of Iao\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge\" aria-label=\"A maker who does not know his mother\"><h2>A maker who does not know his mother</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"Achamoth — moving him without making herself known\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:1.17rem;opacity:1.00\" title=\"the Demiurge — ordering the substances, ruling the Hebdomas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:53.50%;font-size:0.81rem;opacity:1.00\" title=\"the seven heavens; Achamoth&#39;s Ogdoad dwelling above him, below the Pleroma\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.80%;font-size:1.20rem;opacity:1.00\" title=\"the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:0.60rem;opacity:1.00\" title=\"the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return\" aria-label=\"Bridal return and what remains outside\"><h2>Bridal return and what remains outside</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.53rem;opacity:1.00\" title=\"the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:1.05rem;opacity:1.00\" title=\"the Demiurge&#39;s reward — the intermediate dwelling; righteous psychic souls resting, not entering\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"fire consuming matter and finally itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.81rem;opacity:1.00\" title=\"the founding comparison — Offered; human-amplified: no: Sophia&#39;s reach, Horos&#39;s limit, the common fruit beside 0/1→4+2\">§</span></div></section></main></body></html>"
+         }
+        ],
+        "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad"
+       },
+       "composition": {
+        "schema": "oi.expression-composition/v1",
+        "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "revision": 1,
+        "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+        "scenes": [
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad",
+          "revision": 1,
+          "title": "The fullness in conjunction",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos",
+          "revision": 1,
+          "title": "Sophia reaches; Horos restores",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter",
+          "revision": 1,
+          "title": "Teaching, thanksgiving, and the common fruit",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth",
+          "revision": 1,
+          "title": "Achamoth receives form twice",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge",
+          "revision": 1,
+          "title": "A maker who does not know his mother",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599"
+          ]
+         },
+         {
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return",
+          "revision": 1,
+          "title": "Bridal return and what remains outside",
+          "entity_refs": [
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602",
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603"
+          ]
+         }
+        ],
+        "entities": {
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578",
+          "revision": 1,
+          "title": "the Ogdoad — the four primary conjunctions",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.31,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.679,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579",
+          "revision": 1,
+          "title": "the Decad and Duodecad — two branches of further generation",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580",
+          "revision": 1,
+          "title": "Sophia — youngest of the Duodecad, joined to Theletos",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.34,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581",
+          "revision": 1,
+          "title": "Nous alone comprehends the Father; the rest long and are restrained",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582",
+          "revision": 1,
+          "title": "Sophia's solitary reach — apart from Theletos, nearing dissolution in the Father's sweetness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.203,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583",
+          "revision": 1,
+          "title": "Horos / Stauros — the same power establishing and dividing",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.23,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.452,
+            "automation": null
+           },
+           "share": {
+            "value": 1.5,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584",
+          "revision": 1,
+          "title": "the enthymesis — the intention excluded with its passion; later called Achamoth",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585",
+          "revision": 1,
+          "title": "the amorphous-birth variant — a second articulation, not silently merged",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.31,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586",
+          "revision": 1,
+          "title": "the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.12,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.2455,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587",
+          "revision": 1,
+          "title": "the Holy Spirit — bringing thanksgiving and rest",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.135,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588",
+          "revision": 1,
+          "title": "the contributions — each Aeon's most beautiful, composing one common fruit",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": 0.25,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589",
+          "revision": 1,
+          "title": "the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.4,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.3,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590",
+          "revision": 1,
+          "title": "Achamoth in darkness and vacuity — formless, like an untimely birth",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.17,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.246,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591",
+          "revision": 1,
+          "title": "the first formation — according to substance; the odour of immortality left behind",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.33,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592",
+          "revision": 1,
+          "title": "the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.15,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.32,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593",
+          "revision": 1,
+          "title": "the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels' likeness",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594",
+          "revision": 1,
+          "title": "Horos stops her crossing back — her cry of Iao",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.42,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595",
+          "revision": 1,
+          "title": "Achamoth — moving him without making herself known",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.26,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.178,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596",
+          "revision": 1,
+          "title": "the Demiurge — ordering the substances, ruling the Hebdomas",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": 0.3,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.39,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597",
+          "revision": 1,
+          "title": "the seven heavens; Achamoth's Ogdoad dwelling above him, below the Pleroma",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0.45,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598",
+          "revision": 1,
+          "title": "the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": -0.5,
+            "automation": null
+           },
+           "y": {
+            "value": -0.38,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.4,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599",
+          "revision": 1,
+          "title": "the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": 0.02,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.16,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600",
+          "revision": 1,
+          "title": "the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.51,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601",
+          "revision": 1,
+          "title": "the Demiurge's reward — the intermediate dwelling; righteous psychic souls resting, not entering",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "O",
+            "automation": null
+           },
+           "x": {
+            "value": 0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.35,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602",
+          "revision": 1,
+          "title": "fire consuming matter and finally itself",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": -0.55,
+            "automation": null
+           },
+           "y": {
+            "value": -0.35,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.24,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         },
+         "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603": {
+          "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603",
+          "revision": 1,
+          "title": "the founding comparison — Offered; human-amplified: no: Sophia's reach, Horos's limit, the common fruit beside 0/1→4+2",
+          "subject": {
+           "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+           "native_owner": "return-of-zero",
+           "presentation_role": "thing",
+           "sources": [
+            {
+             "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+             "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+             "availability": "available"
+            }
+           ]
+          },
+          "parameters": {
+           "glyph": {
+            "value": "§",
+            "automation": null
+           },
+           "x": {
+            "value": 0,
+            "automation": null
+           },
+           "y": {
+            "value": -0.45,
+            "automation": null
+           },
+           "z": {
+            "value": 0,
+            "automation": null
+           },
+           "scale": {
+            "value": 0.27,
+            "automation": null
+           },
+           "share": {
+            "value": 1,
+            "automation": null
+           }
+          }
+         }
+        },
+        "relations": {},
+        "selection": {
+         "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad",
+         "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578"
+        },
+        "provenance": [
+         {
+          "ref": "mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.journey.json",
+          "revision": "track3-2026-09-19",
+          "availability": "available"
+         }
+        ],
+        "representations": []
+       },
+       "title": "Valentinian Sophia, Horos, Achamoth and Soter"
+      },
+      "fallback": {
+       "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+       "text": "Valentinian Sophia, Horos, Achamoth and Soter: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "region_ref": "subjects",
+    "role": "relation",
+    "label": "Bound subjects · 1",
+    "bindings": [
+     {
+      "schema": "oi.presentation-binding/v1",
+      "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-valentinian-sophia-horos-achamoth",
+      "component_ref": "oi.presentation/reference-card/v1",
+      "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+      "portable_renderer": "oi.presentation/reference-card/v1",
+      "props": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+       "text": "thing · return-of-zero",
+       "refs": [
+        "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json"
+       ]
+      },
+      "fallback": {
+       "title": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth"
+      },
+      "provenance": [
+       {
+        "kind": "expression",
+        "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "source_system": "o-i",
+        "revision": "1"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "projection": {
+  "schema": "oi.projection/v1",
+  "projection_ref": "projection:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:expression",
+  "projection_revision": 1,
+  "state": "published",
+  "subject": {
+   "kind": "expression",
+   "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth"
+  },
+  "source": {
+   "system": "o-i",
+   "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+   "revision": "1"
+  },
+  "publisher_participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-valentinian-sophia-horos-achamoth:human-frank-sovereign",
+  "published_at": "2026-09-21T11:09:04.290Z",
+  "audience": {
+   "visibility": "public"
+  },
+  "representation": {
+   "kind": "oi.world-presentation/v1",
+   "payload": {
+    "schema": "oi.world-presentation/v1",
+    "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-valentinian-sophia-horos-achamoth",
+    "world_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+    "revision": 1,
+    "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+    "theme": {
+     "tokens": {}
+    },
+    "regions": [
+     {
+      "region_ref": "lede",
+      "role": "lede",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "lede",
+        "component_ref": "oi.presentation/lede/v1",
+        "subject_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "portable_renderer": "oi.presentation/lede/v1",
+        "props": {
+         "title": "Valentinian Sophia, Horos, Achamoth and Soter"
+        },
+        "fallback": {
+         "title": "Valentinian Sophia, Horos, Achamoth and Soter"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "body",
+      "role": "body",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "expression",
+        "component_ref": "oi.presentation/expression/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "portable_renderer": "oi.presentation/expression/v1",
+        "props": {
+         "expression": {
+          "schema": "oi.expression-presentation/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+          "expression_revision": 1,
+          "live_renderer_ref": "renderer:oi:expression-stage",
+          "live_availability": "available",
+          "subjects": [
+           {
+            "ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+            "revision": "1",
+            "availability": "available",
+            "sources": [
+             {
+              "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+              "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+              "availability": "available"
+             }
+            ]
+           }
+          ],
+          "representations": [
+           {
+            "kind": "html",
+            "representation": {
+             "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:frozen:1",
+             "revision": "1",
+             "availability": "available"
+            },
+            "provenance": [
+             {
+              "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+              "revision": "1",
+              "availability": "available"
+             }
+            ],
+            "media_type": "text/html",
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>Valentinian Sophia, Horos, Achamoth and Soter</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth\" data-expression-revision=\"1\"><h1>Valentinian Sophia, Horos, Achamoth and Soter</h1><p>Frozen reading of expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth at revision 1. The live Expression renders where the renderer is admitted.</p><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad\" aria-label=\"The fullness in conjunction\"><h2>The fullness in conjunction</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:53.10%;font-size:2.04rem;opacity:1.00\" title=\"the Ogdoad — the four primary conjunctions\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:0.96rem;opacity:1.00\" title=\"the Decad and Duodecad — two branches of further generation\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:1.02rem;opacity:1.00\" title=\"Sophia — youngest of the Duodecad, joined to Theletos\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.60rem;opacity:1.00\" title=\"Nous alone comprehends the Father; the rest long and are restrained\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos\" aria-label=\"Sophia reaches; Horos restores\"><h2>Sophia reaches; Horos restores</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.70%;font-size:0.61rem;opacity:1.00\" title=\"Sophia&#39;s solitary reach — apart from Theletos, nearing dissolution in the Father&#39;s sweetness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:52.30%;font-size:1.36rem;opacity:1.00\" title=\"Horos / Stauros — the same power establishing and dividing\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:54.00%;font-size:0.96rem;opacity:1.00\" title=\"the enthymesis — the intention excluded with its passion; later called Achamoth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:54.20%;font-size:0.93rem;opacity:1.00\" title=\"the amorphous-birth variant — a second articulation, not silently merged\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter\" aria-label=\"Teaching, thanksgiving, and the common fruit\"><h2>Teaching, thanksgiving, and the common fruit</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:51.20%;font-size:0.74rem;opacity:1.00\" title=\"the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:50.20%;font-size:0.60rem;opacity:1.00\" title=\"the Holy Spirit — bringing thanksgiving and rest\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:47.50%;font-size:0.96rem;opacity:1.00\" title=\"the contributions — each Aeon&#39;s most beautiful, composing one common fruit\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.00%;font-size:0.90rem;opacity:1.00\" title=\"the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth\" aria-label=\"Achamoth receives form twice\"><h2>Achamoth receives form twice</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.50%;top:51.70%;font-size:0.74rem;opacity:1.00\" title=\"Achamoth in darkness and vacuity — formless, like an untimely birth\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:46.50%;font-size:0.99rem;opacity:1.00\" title=\"the first formation — according to substance; the odour of immortality left behind\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:51.50%;font-size:0.96rem;opacity:1.00\" title=\"the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.00%;top:54.50%;font-size:0.81rem;opacity:1.00\" title=\"the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels&#39; likeness\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:54.20%;font-size:0.81rem;opacity:1.00\" title=\"Horos stops her crossing back — her cry of Iao\">O</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge\" aria-label=\"A maker who does not know his mother\"><h2>A maker who does not know his mother</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:52.60%;font-size:0.60rem;opacity:1.00\" title=\"Achamoth — moving him without making herself known\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:47.00%;font-size:1.17rem;opacity:1.00\" title=\"the Demiurge — ordering the substances, ruling the Hebdomas\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:54.50%;top:53.50%;font-size:0.81rem;opacity:1.00\" title=\"the seven heavens; Achamoth&#39;s Ogdoad dwelling above him, below the Pleroma\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:45.00%;top:53.80%;font-size:1.20rem;opacity:1.00\" title=\"the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:49.80%;font-size:0.60rem;opacity:1.00\" title=\"the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly\">§</span></div></section><section class=\"scene\" data-scene-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return\" aria-label=\"Bridal return and what remains outside\"><h2>Bridal return and what remains outside</h2><div class=\"field\"><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:1.53rem;opacity:1.00\" title=\"the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:55.50%;top:53.50%;font-size:1.05rem;opacity:1.00\" title=\"the Demiurge&#39;s reward — the intermediate dwelling; righteous psychic souls resting, not entering\">O</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:44.50%;top:53.50%;font-size:0.72rem;opacity:1.00\" title=\"fire consuming matter and finally itself\">§</span><span class=\"entity\" data-entity-ref=\"expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603\" data-subject-ref=\"world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth\" data-presentation-role=\"thing\" style=\"left:50.00%;top:54.50%;font-size:0.81rem;opacity:1.00\" title=\"the founding comparison — Offered; human-amplified: no: Sophia&#39;s reach, Horos&#39;s limit, the common fruit beside 0/1→4+2\">§</span></div></section></main></body></html>"
+           }
+          ],
+          "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad"
+         },
+         "composition": {
+          "schema": "oi.expression-composition/v1",
+          "expression_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+          "revision": 1,
+          "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+          "scenes": [
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad",
+            "revision": 1,
+            "title": "The fullness in conjunction",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos",
+            "revision": 1,
+            "title": "Sophia reaches; Horos restores",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter",
+            "revision": 1,
+            "title": "Teaching, thanksgiving, and the common fruit",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth",
+            "revision": 1,
+            "title": "Achamoth receives form twice",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge",
+            "revision": 1,
+            "title": "A maker who does not know his mother",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599"
+            ]
+           },
+           {
+            "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return",
+            "revision": 1,
+            "title": "Bridal return and what remains outside",
+            "entity_refs": [
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602",
+             "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603"
+            ]
+           }
+          ],
+          "entities": {
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578",
+            "revision": 1,
+            "title": "the Ogdoad — the four primary conjunctions",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.31,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.679,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e579",
+            "revision": 1,
+            "title": "the Decad and Duodecad — two branches of further generation",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e580",
+            "revision": 1,
+            "title": "Sophia — youngest of the Duodecad, joined to Theletos",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.34,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e581",
+            "revision": 1,
+            "title": "Nous alone comprehends the Father; the rest long and are restrained",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e582",
+            "revision": 1,
+            "title": "Sophia's solitary reach — apart from Theletos, nearing dissolution in the Father's sweetness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.203,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e583",
+            "revision": 1,
+            "title": "Horos / Stauros — the same power establishing and dividing",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.23,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.452,
+              "automation": null
+             },
+             "share": {
+              "value": 1.5,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e584",
+            "revision": 1,
+            "title": "the enthymesis — the intention excluded with its passion; later called Achamoth",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-1-horos:e585",
+            "revision": 1,
+            "title": "the amorphous-birth variant — a second articulation, not silently merged",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.31,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e586",
+            "revision": 1,
+            "title": "the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.12,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.2455,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e587",
+            "revision": 1,
+            "title": "the Holy Spirit — bringing thanksgiving and rest",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.135,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e588",
+            "revision": 1,
+            "title": "the contributions — each Aeon's most beautiful, composing one common fruit",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": 0.25,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-2-soter:e589",
+            "revision": 1,
+            "title": "the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.4,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.3,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e590",
+            "revision": 1,
+            "title": "Achamoth in darkness and vacuity — formless, like an untimely birth",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.17,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.246,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e591",
+            "revision": 1,
+            "title": "the first formation — according to substance; the odour of immortality left behind",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.33,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e592",
+            "revision": 1,
+            "title": "the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.15,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.32,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e593",
+            "revision": 1,
+            "title": "the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels' likeness",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-3-achamoth:e594",
+            "revision": 1,
+            "title": "Horos stops her crossing back — her cry of Iao",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.42,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e595",
+            "revision": 1,
+            "title": "Achamoth — moving him without making herself known",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.26,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.178,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e596",
+            "revision": 1,
+            "title": "the Demiurge — ordering the substances, ruling the Hebdomas",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": 0.3,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.39,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e597",
+            "revision": 1,
+            "title": "the seven heavens; Achamoth's Ogdoad dwelling above him, below the Pleroma",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0.45,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e598",
+            "revision": 1,
+            "title": "the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": -0.5,
+              "automation": null
+             },
+             "y": {
+              "value": -0.38,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.4,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-4-demiurge:e599",
+            "revision": 1,
+            "title": "the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": 0.02,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.16,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e600",
+            "revision": 1,
+            "title": "the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.51,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e601",
+            "revision": 1,
+            "title": "the Demiurge's reward — the intermediate dwelling; righteous psychic souls resting, not entering",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "O",
+              "automation": null
+             },
+             "x": {
+              "value": 0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.35,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e602",
+            "revision": 1,
+            "title": "fire consuming matter and finally itself",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": -0.55,
+              "automation": null
+             },
+             "y": {
+              "value": -0.35,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.24,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           },
+           "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603": {
+            "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-5-return:e603",
+            "revision": 1,
+            "title": "the founding comparison — Offered; human-amplified: no: Sophia's reach, Horos's limit, the common fruit beside 0/1→4+2",
+            "subject": {
+             "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+             "native_owner": "return-of-zero",
+             "presentation_role": "thing",
+             "sources": [
+              {
+               "ref": "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json",
+               "revision": "66c767c659abb7bd01be96118e3eb28570b6afc9",
+               "availability": "available"
+              }
+             ]
+            },
+            "parameters": {
+             "glyph": {
+              "value": "§",
+              "automation": null
+             },
+             "x": {
+              "value": 0,
+              "automation": null
+             },
+             "y": {
+              "value": -0.45,
+              "automation": null
+             },
+             "z": {
+              "value": 0,
+              "automation": null
+             },
+             "scale": {
+              "value": 0.27,
+              "automation": null
+             },
+             "share": {
+              "value": 1,
+              "automation": null
+             }
+            }
+           }
+          },
+          "relations": {},
+          "selection": {
+           "scene_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad",
+           "entity_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:scene:m-val-0-ogdoad:e578"
+          },
+          "provenance": [
+           {
+            "ref": "mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.journey.json",
+            "revision": "track3-2026-09-19",
+            "availability": "available"
+           }
+          ],
+          "representations": []
+         },
+         "title": "Valentinian Sophia, Horos, Achamoth and Soter"
+        },
+        "fallback": {
+         "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+         "text": "Valentinian Sophia, Horos, Achamoth and Soter: a living Expression at revision 1. Where the live renderer is not admitted, the frozen reading of the same revision renders instead."
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "region_ref": "subjects",
+      "role": "relation",
+      "label": "Bound subjects · 1",
+      "bindings": [
+       {
+        "schema": "oi.presentation-binding/v1",
+        "binding_ref": "subject:world-return-of-zero-wiki-roz-mytheme-valentinian-sophia-horos-achamoth",
+        "component_ref": "oi.presentation/reference-card/v1",
+        "subject_ref": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+        "portable_renderer": "oi.presentation/reference-card/v1",
+        "props": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth",
+         "text": "thing · return-of-zero",
+         "refs": [
+          "production/return-of-zero/bindings/roz-mytheme-valentinian-sophia-horos-achamoth.binding.json"
+         ]
+        },
+        "fallback": {
+         "title": "world:return-of-zero/wiki:roz-mytheme-valentinian-sophia-horos-achamoth"
+        },
+        "provenance": [
+         {
+          "kind": "expression",
+          "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+          "source_system": "o-i",
+          "revision": "1"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "provenance": [
+     {
+      "kind": "expression",
+      "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+      "source_system": "o-i",
+      "revision": "1"
+     }
+    ]
+   }
+  },
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-valentinian-sophia-horos-achamoth:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "entry": {
+  "schema": "oi.explore-entry/v1",
+  "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+  "kind": "expression",
+  "world_ref": "world:return-of-zero",
+  "label": "Valentinian Sophia, Horos, Achamoth and Soter",
+  "summary": "a living Expression · 6 scenes · 26 entities",
+  "revision": "1",
+  "aliases": [
+   "projection:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:expression"
+  ],
+  "provenance": [
+   {
+    "kind": "expression",
+    "ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ],
+  "locators": [
+   {
+    "surface": "web",
+    "locator": "/explore.html?ref=expression%3Areturn-of-zero%3Aroz-mytheme-valentinian-sophia-horos-achamoth"
+   }
+  ],
+  "meta": {
+   "projection_ref": "projection:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth:expression",
+   "standing": "projection",
+   "presentation_ref": "presentation:expression-return-of-zero-roz-mytheme-valentinian-sophia-horos-achamoth",
+   "expression_revision": 1,
+   "live_renderer_ref": "renderer:oi:expression-stage"
+  }
+ },
+ "field": {
+  "schema": "oi.shared-field/v1",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-valentinian-sophia-horos-achamoth",
+  "kind": "explore",
+  "visibility": "public",
+  "title": "Valentinian Sophia, Horos, Achamoth and Soter",
+  "provenance": [
+   {
+    "kind": "human-publication",
+    "ref": "participant:field-return-of-zero-expressions-roz-mytheme-valentinian-sophia-horos-achamoth:human-frank-sovereign",
+    "source_system": "o-i",
+    "revision": "1"
+   }
+  ]
+ },
+ "participant": {
+  "schema": "oi.participant/v1",
+  "participant_ref": "participant:field-return-of-zero-expressions-roz-mytheme-valentinian-sophia-horos-achamoth:human-frank-sovereign",
+  "field_ref": "field:return-of-zero-expressions:roz-mytheme-valentinian-sophia-horos-achamoth",
+  "identity": {
+   "kind": "human",
+   "ref": "human:frank-sovereign"
+  },
+  "presentation": {
+   "world_ref": "world:return-of-zero"
+  },
+  "provenance": {
+   "source_system": "o-i",
+   "source_revision": "1",
+   "source_ref": "expression:return-of-zero:roz-mytheme-valentinian-sophia-horos-achamoth"
+  }
+ },
+ "live": {
+  "renderer_ref": "renderer:oi:expression-stage",
+  "fallback_kinds": [
+   "html"
+  ]
+ },
+ "omissions": {
+  "readings": 0,
+  "actions": 0,
+  "scenes": [],
+  "entities": [],
+  "parameters": [],
+  "representations": [],
+  "sources": {
+   "withheld": [],
+   "protected": [],
+   "unavailable": []
+  },
+  "provenance": []
+ }
+}
