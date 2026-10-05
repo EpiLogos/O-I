@@ -269,6 +269,14 @@ struct MatchSeq<'a> {
     values: &'a [Value],
     index: usize,
 }
+// serde_json's pinned arbitrary_precision Number serializes a one-field
+// struct. Visit that scalar separately; its lexical text is borrowed, never
+// converted to another Value or rounded through a machine float.
+const JSON_NUMBER_TOKEN: &str = "$serde_json::private::Number";
+enum MatchStruct<'a> {
+    Object(MatchMap<'a>),
+    Number { value: &'a Value, matched: bool },
+}
 struct MatchMap<'a> {
     values: &'a serde_json::Map<String, Value>,
     entries: usize,
@@ -320,7 +328,7 @@ impl<'a> serde::Serializer for MatchValue<'a> {
     type SerializeTupleStruct = MatchSeq<'a>;
     type SerializeTupleVariant = MatchSeq<'a>;
     type SerializeMap = MatchMap<'a>;
-    type SerializeStruct = MatchMap<'a>;
+    type SerializeStruct = MatchStruct<'a>;
     type SerializeStructVariant = MatchMap<'a>;
     fn serialize_bool(self, value: bool) -> Result<(), Self::Error> {
         if self.0.as_bool() == Some(value) {
@@ -442,10 +450,17 @@ impl<'a> serde::Serializer for MatchValue<'a> {
     }
     fn serialize_struct(
         self,
-        _name: &'static str,
+        name: &'static str,
         len: usize,
     ) -> Result<Self::SerializeStruct, Self::Error> {
-        self.object(Some(len))
+        if name == JSON_NUMBER_TOKEN {
+            if len != 1 || self.0.as_number().is_none() {
+                return Err(mismatch());
+            }
+            Ok(MatchStruct::Number { value: self.0, matched: false })
+        } else {
+            self.object(Some(len)).map(MatchStruct::Object)
+        }
     }
     fn serialize_struct_variant(
         self,
@@ -489,7 +504,7 @@ impl serde::ser::SerializeMap for MatchMap<'_> {
         if self.pending.is_some() {
             return Err(mismatch());
         }
-        self.pending = Some(key.serialize(MatchKey(self.values))?);
+        self.pending = Some(key.serialize(MatchKey::Object(self.values))?);
         Ok(())
     }
     fn serialize_value<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), Self::Error> {
@@ -531,7 +546,38 @@ macro_rules! match_struct {
 }
 match_struct!(SerializeStruct);
 match_struct!(SerializeStructVariant);
-struct MatchKey<'a>(&'a serde_json::Map<String, Value>);
+impl serde::ser::SerializeStruct for MatchStruct<'_> {
+    type Ok = ();
+    type Error = serde_json::Error;
+    fn serialize_field<T: Serialize + ?Sized>(
+        &mut self,
+        key: &'static str,
+        value: &T,
+    ) -> Result<(), Self::Error> {
+        match self {
+            Self::Object(object) => serde::ser::SerializeStruct::serialize_field(object, key, value),
+            Self::Number { value: raw, matched } => {
+                if *matched || key != JSON_NUMBER_TOKEN {
+                    return Err(mismatch());
+                }
+                value.serialize(MatchKey::Number(raw))?;
+                *matched = true;
+                Ok(())
+            }
+        }
+    }
+    fn end(self) -> Result<(), Self::Error> {
+        match self {
+            Self::Object(object) => serde::ser::SerializeStruct::end(object),
+            Self::Number { matched: true, .. } => Ok(()),
+            Self::Number { .. } => Err(mismatch()),
+        }
+    }
+}
+enum MatchKey<'a> {
+    Object(&'a serde_json::Map<String, Value>),
+    Number(&'a Value),
+}
 macro_rules! refuse_key {
     ($method:ident,$ty:ty) => {
         fn $method(self, _value: $ty) -> Result<Self::Ok, Self::Error> {
@@ -550,9 +596,18 @@ impl<'a> serde::Serializer for MatchKey<'a> {
     type SerializeStruct = serde::ser::Impossible<Self::Ok, Self::Error>;
     type SerializeStructVariant = serde::ser::Impossible<Self::Ok, Self::Error>;
     fn serialize_str(self, value: &str) -> Result<Self::Ok, Self::Error> {
-        self.0.get(value).ok_or_else(mismatch)
+        match self {
+            Self::Object(object) => object.get(value).ok_or_else(mismatch),
+            Self::Number(raw) => raw.as_number()
+                .filter(|number| number.as_str() == value)
+                .map(|_| raw)
+                .ok_or_else(mismatch),
+        }
     }
     fn serialize_char(self, value: char) -> Result<Self::Ok, Self::Error> {
+        if matches!(self, Self::Number(_)) {
+            return Err(mismatch());
+        }
         let mut s = [0u8; 4];
         self.serialize_str(value.encode_utf8(&mut s))
     }
@@ -574,6 +629,9 @@ impl<'a> serde::Serializer for MatchKey<'a> {
         Err(mismatch())
     }
     fn serialize_some<T: Serialize + ?Sized>(self, value: &T) -> Result<Self::Ok, Self::Error> {
+        if matches!(self, Self::Number(_)) {
+            return Err(mismatch());
+        }
         value.serialize(self)
     }
     fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
@@ -588,6 +646,9 @@ impl<'a> serde::Serializer for MatchKey<'a> {
         _index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
+        if matches!(self, Self::Number(_)) {
+            return Err(mismatch());
+        }
         self.serialize_str(variant)
     }
     fn serialize_newtype_struct<T: Serialize + ?Sized>(
@@ -595,6 +656,9 @@ impl<'a> serde::Serializer for MatchKey<'a> {
         _name: &'static str,
         value: &T,
     ) -> Result<Self::Ok, Self::Error> {
+        if matches!(self, Self::Number(_)) {
+            return Err(mismatch());
+        }
         value.serialize(self)
     }
     fn serialize_newtype_variant<T: Serialize + ?Sized>(
@@ -973,4 +1037,77 @@ pub(super) fn preflight_source_outputs_into(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod lossless_number_tests {
+    use super::*;
+    #[test]
+    fn borrowed_numbers_use_actual_arbitrary_precision_serde_without_rounding() {
+        let value: Value = serde_json::from_str(
+            "[18446744073709551616,-9223372036854775809,3.123456789012345678901234567890,1e+300,-0.0]"
+        ).unwrap();
+        let raw = serde_json::to_value(&value).unwrap();
+        assert!(matches_borrowed(&value, &raw));
+        let reparsed: Value = serde_json::from_slice(&serde_json::to_vec(&raw).unwrap()).unwrap();
+        assert!(matches_borrowed(&value, &reparsed));
+        let before = serde_json::to_vec(&raw).unwrap();
+        assert!(matches_borrowed(&value, &raw));
+        assert_eq!(serde_json::to_vec(&raw).unwrap(), before);
+    }
+    #[test]
+    fn borrowed_numbers_reject_kind_digit_and_string_changes() {
+        for (original, wrong) in [
+            ("1.0", "1"),
+            ("-0.0", "0.0"),
+            ("18446744073709551616", "18446744073709551617"),
+            ("3.123456789012345678901234567890", "3.123456789012345678901234567891"),
+            ("1e+300", "1e+299"),
+            ("1.0", "\"1.0\""),
+        ] {
+            let original: Value = serde_json::from_str(original).unwrap();
+            let wrong: Value = serde_json::from_str(wrong).unwrap();
+            assert!(!matches_borrowed(&original, &wrong));
+        }
+    }
+    #[test]
+    fn number_serde_token_cannot_match_an_object_or_supply_missing_number() {
+        let number = serde_json::from_str::<Value>("1.0").unwrap();
+        let object = json!({"$serde_json::private::Number": "1.0"});
+        assert!(object.is_object());
+        assert!(!matches_borrowed(&number, &object));
+        assert!(!matches_borrowed(&object, &number));
+        assert!(matches_borrowed(&object, &object));
+        for wrong in [Value::Null, json!(true), json!([]), json!({})] {
+            assert!(!matches_borrowed(&number, &wrong));
+        }
+    }
+
+    #[test]
+    fn number_token_field_refuses_optional_and_newtype_emitters_like_pinned_serde() {
+        struct OptionalNumber;
+        impl Serialize for OptionalNumber {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let mut state = serializer.serialize_struct(JSON_NUMBER_TOKEN, 1)?;
+                state.serialize_field(JSON_NUMBER_TOKEN, &Some("1.0"))?;
+                state.end()
+            }
+        }
+        #[derive(Serialize)]
+        struct NumberText<'a>(&'a str);
+        struct NewtypeNumber;
+        impl Serialize for NewtypeNumber {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let mut state = serializer.serialize_struct(JSON_NUMBER_TOKEN, 1)?;
+                state.serialize_field(JSON_NUMBER_TOKEN, &NumberText("1.0"))?;
+                state.end()
+            }
+        }
+        let raw = serde_json::from_str::<Value>("1.0").unwrap();
+        assert!(serde_json::to_vec(&OptionalNumber).is_err());
+        assert!(serde_json::to_vec(&NewtypeNumber).is_err());
+        assert!(!matches_borrowed(&OptionalNumber, &raw));
+        assert!(!matches_borrowed(&NewtypeNumber, &raw));
+        assert!(matches_borrowed(&raw, &raw));
+    }
 }

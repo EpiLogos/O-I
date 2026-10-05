@@ -170,6 +170,7 @@ fn actual_continuation_refuses_new_global_parameter_manifestation_without_expand
     let second = format!("{EXPRESSION}:scene:continuation-second");
     let mut presentation = original.scenes[0].presentation.clone().unwrap();
     presentation.scene["id"] = json!(second);
+    presentation.scene["name"] = json!("Second manifestation");
     presentation
         .scene
         .as_object_mut()
