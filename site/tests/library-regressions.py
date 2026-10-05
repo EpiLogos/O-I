@@ -37,7 +37,7 @@ with sync_playwright() as p:
  # The original hero and developed landing retain the real publication routes.
  page.goto(BASE)
  expect(page.locator('.pl')).to_be_visible()
- expect(page.locator('.office-grid .office-tile')).to_have_count(6)
+ expect(page.locator('.facets__grid .facet')).to_have_count(6)
  expect(page.locator('.sn__reading a[href="./essay/"]')).to_be_visible()
  expect(page.locator('.sec__reading a[href="./essay/"]')).to_have_count(1)
  expect(page.locator('a[href^="#/library"]')).to_have_count(0)

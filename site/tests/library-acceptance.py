@@ -40,7 +40,7 @@ with sync_playwright() as p:
     page.on('request',lambda r:mutations.append(r.url) if r.method not in ['GET','HEAD','OPTIONS'] else None)
     def home():
         page.goto(BASE);expect(page.locator('.pl')).to_be_visible()
-        expect(page.locator('.office-grid .office-tile')).to_have_count(6)
+        expect(page.locator('.facets__grid .facet')).to_have_count(6)
         expect(page.locator('.sn__reading a[href="./essay/"]')).to_be_visible()
         expect(page.locator('.sec__reading a[href="./essay/"]')).to_have_count(1)
         page.screenshot(path=str(OUT/'home.png'),full_page=True)
