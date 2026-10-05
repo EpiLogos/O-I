@@ -58,6 +58,7 @@ pub mod expression_performance_codec;
 pub mod expression_performance_delivery;
 pub mod expression_performance_management;
 pub mod expression_performance_reader;
+pub(crate) mod expression_performance_record_codec;
 pub mod expression_performance_recording;
 pub mod expression_performance_reservation;
 pub mod expression_performance_source_asset;

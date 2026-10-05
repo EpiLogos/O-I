@@ -779,6 +779,160 @@ fn full_actual_source_form_fifteen_minute_45k_native_delivery_keeps_original_sou
 ) {
     full_workload(true);
 }
+// These counterproofs run only AFTER the original actual source producer has
+// admitted all 180 editions. No shortened or fabricated recording stands in.
+fn packed_actual_source_record_counterproofs(
+    home: &std::path::Path,
+    act: &oi_cradle_kernel::expression_world::Act,
+    document: &oi_cradle_kernel::expression::Document,
+) {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use oi_cradle_kernel::{
+        expression_act_store::{ActStore, Written},
+        expression_file, expression_performance_act,
+        expression_performance_storage::ActPerformanceCustody,
+    };
+    use std::io::Read;
+    let budget = 64 * 1024 * 1024;
+    let record = expression_performance_act::encode(act).unwrap();
+    assert!(record.len() <= expression_file::FILE_BYTES);
+    let wire: Value = serde_json::from_slice(&record).unwrap();
+    assert_eq!(wire["schema"], "oi.expression-act-storage/v5");
+    assert_eq!(
+        expression_performance_act::decode_bytes(&record, budget).unwrap(),
+        *act
+    );
+    // The private expansion proof does not grant raw public admission.
+    let raw_custody = serde_json::to_value(act.performance_custody.as_ref().unwrap()).unwrap();
+    assert!(serde_json::to_vec(&raw_custody).unwrap().len() > expression_file::FILE_BYTES);
+    assert!(ActPerformanceCustody::read_value(raw_custody).is_err());
+    for (key, changed) in [
+        ("act_ref", json!("act:wrong-source")),
+        ("phase", json!("held")),
+        ("updated_at_unix_ms", json!(act.updated_at_unix_ms + 1)),
+        ("archived", json!(!act.archived)),
+    ] {
+        let mut bad = wire.clone();
+        assert_ne!(bad["act"][key], changed);
+        bad["act"][key] = changed;
+        assert!(
+            expression_performance_act::decode_bytes(&serde_json::to_vec(&bad).unwrap(), budget)
+                .is_err(),
+            "header {key}"
+        );
+    }
+    // Remove exactly one actual default field while retaining EVERY other raw
+    // byte in its original order. Rebind the codec SHA, but retain the original
+    // native Act digest. Canonical typed qualification must refuse omission.
+    let stream = STANDARD
+        .decode(wire["packed"]["payload"].as_str().unwrap())
+        .unwrap();
+    let mut raw = Vec::new();
+    brotli::Decompressor::new(std::io::Cursor::new(stream), 4096)
+        .take(budget as u64 + 1)
+        .read_to_end(&mut raw)
+        .unwrap();
+    assert_eq!(
+        raw.len() as u64,
+        wire["packed"]["expanded_bytes"].as_u64().unwrap()
+    );
+    let original = String::from_utf8(raw).unwrap();
+    let field = format!("\"mode\":{},", serde_json::to_string(&act.mode).unwrap());
+    assert!(original.contains(&field));
+    let omitted = original.replacen(&field, "", 1).into_bytes();
+    assert_eq!(omitted.len() + field.len(), original.len());
+    let mut compressed = Vec::new();
+    brotli::BrotliCompress(
+        &mut std::io::Cursor::new(&omitted),
+        &mut compressed,
+        &brotli::enc::BrotliEncoderParams {
+            quality: 3,
+            lgwin: 22,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let mut bad = wire.clone();
+    bad["packed"]["expanded_bytes"] = json!(omitted.len());
+    bad["packed"]["expanded_sha256"] = json!(format!("sha256:{:x}", Sha256::digest(&omitted)));
+    bad["packed"]["payload"] = json!(STANDARD.encode(compressed));
+    assert!(
+        expression_performance_act::decode_bytes(&serde_json::to_vec(&bad).unwrap(), budget)
+            .is_err(),
+        "omitted actual default"
+    );
+    // Actual complete private file reads reject trailing compressed bytes.
+    let mut bad = wire.clone();
+    let mut tail = STANDARD
+        .decode(bad["packed"]["payload"].as_str().unwrap())
+        .unwrap();
+    tail.push(0);
+    bad["packed"]["payload"] = json!(STANDARD.encode(tail));
+    assert!(
+        expression_performance_act::decode_bytes(&serde_json::to_vec(&bad).unwrap(), budget)
+            .is_err()
+    );
+    let document_bytes = expression_file::encode(document).unwrap();
+    assert_eq!(expression_file::decode(&document_bytes).unwrap(), *document);
+    let mut file: Value = serde_json::from_str(&document_bytes).unwrap();
+    if file["schema"] == "oi.expression-storage/v5" {
+        let raw_bytes = file["packed"]["expanded_bytes"].as_u64().unwrap();
+        assert!(raw_bytes > expression_file::FILE_BYTES as u64);
+        eprintln!(
+            "actual source180 selected file packed raw={raw_bytes} physical={}",
+            document_bytes.len()
+        );
+        let mut tail = STANDARD
+            .decode(file["packed"]["payload"].as_str().unwrap())
+            .unwrap();
+        tail.push(0);
+        file["packed"]["payload"] = json!(STANDARD.encode(tail));
+    } else {
+        // Preserve a lawful original file when its actual complete envelope
+        // fits. Whole-Act size does not determine selected-file size.
+        assert_eq!(file["schema"], "oi.expression-storage/v4");
+        assert!(document_bytes.len() <= expression_file::FILE_BYTES);
+        eprintln!(
+            "actual source180 selected file retains raw v4 physical={}",
+            document_bytes.len()
+        );
+        file["expanded_document_sha256"] =
+            json!(format!("sha256:{:x}", Sha256::digest(b"wrong body")));
+    }
+    assert!(expression_file::decode(&serde_json::to_string(&file).unwrap()).is_err());
+    // A separate controlled store receives the COMPLETE admitted native Act.
+    // Cold admission, CAS and corruption refusal leave the original store exact.
+    let primary = ActStore::at_home(home);
+    let name = format!("{:x}.json", Sha256::digest(act.act_ref.as_bytes()));
+    let primary_file = primary.root().join(&name);
+    let primary_before = std::fs::read(&primary_file).unwrap();
+    let probe_home = home.join("packed-actual-source-counterproof");
+    let probe = ActStore::at_home(&probe_home);
+    assert_eq!(probe.write(act, None).unwrap(), Written::Written);
+    assert_eq!(
+        ActStore::at_home(&probe_home)
+            .read_retained(&act.act_ref)
+            .unwrap()
+            .unwrap(),
+        *act
+    );
+    let probe_file = probe.root().join(name);
+    let saved = std::fs::read(&probe_file).unwrap();
+    assert!(matches!(probe.write(act, Some(act.revision - 1)).unwrap(),
+        Written::Conflict { current: Some(revision) } if revision == act.revision));
+    assert_eq!(std::fs::read(&probe_file).unwrap(), saved);
+    let mut corrupt = wire;
+    corrupt["act"]["archived"] = json!(!act.archived);
+    let corrupt_bytes = serde_json::to_vec(&corrupt).unwrap();
+    std::fs::write(&probe_file, &corrupt_bytes).unwrap();
+    let cold = ActStore::at_home(&probe_home);
+    assert!(cold.read_retained(&act.act_ref).is_err());
+    assert!(cold.write(act, Some(act.revision)).is_err());
+    assert_eq!(std::fs::read(&probe_file).unwrap(), corrupt_bytes);
+    assert_eq!(std::fs::read(&primary_file).unwrap(), primary_before);
+    eprintln!("actual 180-source packed record/file/cold/CAS/header/default/corruption/public-raw-bound counterproofs passed");
+}
+
 fn full_workload(source_required: bool) {
     use oi_cradle_kernel::expression_act_store::{ActStore, Written};
     use oi_cradle_kernel::expression_performance_storage::ActPerformanceCustody;
@@ -1064,6 +1218,9 @@ fn full_workload(source_required: bool) {
         .unwrap()
         .unwrap();
     assert_eq!(act.sequence.len(), 180);
+    if source_required {
+        packed_actual_source_record_counterproofs(&home, &act, &document);
+    }
     let custody = act.performance_custody.as_ref().unwrap();
     assert_eq!(custody.editions().len(), 180);
     assert!(matches!(store.write(&act, Some(act.revision - 1)).unwrap(),

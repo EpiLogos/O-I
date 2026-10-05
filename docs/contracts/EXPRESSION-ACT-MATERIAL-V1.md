@@ -215,6 +215,24 @@ The physical record remains bounded at4MiB. This receiving repair adds explicit
 operational guards:8MiB of fully expanded serialized Act weight (including
 every edition occurrence and metadata), and64MiB across resident Acts. These
 are storage/admission budgets, not new semantic meanings or measured heap RSS.
+For explicitly opted-in `oi.expression-act-material/v2`, indexed immutable
+edition custody counts unique retained native material at the existing64MiB
+live limit rather than expanding every historical occurrence. Public Acts,
+native source and immutable part/edition digests retain their exact bytes.
+When complete private retained storage exceeds raw4MiB, versioned
+`oi.expression-act-storage/v5` packs the entire original Record losslessly.
+Its bounded metadata header must match the fully decoded Act before cold
+admission. Whole `oi.expression-storage/v5` files similarly restore the
+original complete performance file before native Document admission.
+Both physical files remain4MiB; decoded unique storage remains64MiB and
+each selected native Document remains8MiB. Legacy raw and archive callers,
+unversioned4MiB readers, source/privacy/default/hash/CAS guards and public
+serialization do not acquire the private expanded-reader route. No external
+assets, skipped recordings, changed clocks or reduced original workload are
+introduced. Technical acceptance requires the unchanged native full180-edition,
+45,000-application recording/save/reopen/delivery tests; codec/schema checks
+alone do not prove that capacity, speed, receiving or installed encounter.
+
 The native Document remains bounded at8MiB. Borrowed prospective history is
 counted before cloning prior editions; the ordinary native prospective edit
 still constructs its Document before the before-live-edit gate. Startup ranks

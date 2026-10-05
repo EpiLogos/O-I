@@ -505,6 +505,16 @@ impl PerformancePartCatalog {
         if encoded(&value)? > MAX_ENCODED_BYTES {
             return Err("native source catalog encoded budget exceeded before typing".into());
         }
+        Self::read_decoded_value(value)
+    }
+    pub(crate) fn read_packed_value(
+        value: Value,
+        _proof: &crate::expression_performance_record_codec::PackedProof,
+    ) -> Result<Self, String> {
+        crate::expression_act_storage::measure(&value, MAX_LIVE_BYTES)?;
+        Self::read_decoded_value(value)
+    }
+    fn read_decoded_value(value: Value) -> Result<Self, String> {
         let typed = StoredPerformanceParts::deserialize(&value).map_err(|e| e.to_string())?;
         if digest(&serde_json::to_value(&typed).map_err(|e| e.to_string())?)? != digest(&value)? {
             return Err(
@@ -1106,7 +1116,7 @@ impl PerformancePartCatalog {
         self.manifests.iter().any(|m| m.private_context)
     }
     pub fn encoded_bytes(&self) -> Result<usize, String> {
-        encoded(self)
+        crate::expression_performance_record_codec::physical_bytes(self)
     }
     pub fn retained_references(&self, reference: &str) -> Option<usize> {
         self.parts.get(reference).map(Arc::strong_count)

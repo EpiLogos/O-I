@@ -11,11 +11,19 @@ use std::collections::{BTreeMap, BTreeSet};
 pub const STORAGE_SCHEMA: &str = "oi.expression-storage/v2";
 pub const SOURCE_STORAGE_SCHEMA: &str = "oi.expression-storage/v3";
 pub const RECORDING_STORAGE_SCHEMA: &str = "oi.expression-storage/v4";
+pub const PACKED_STORAGE_SCHEMA: &str = "oi.expression-storage/v5";
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PackedDocument {
+    schema: String,
+    packed: crate::expression_performance_record_codec::EncodedRecord,
+}
 pub fn supports_storage(schema: &Value) -> bool {
     [
         STORAGE_SCHEMA,
         SOURCE_STORAGE_SCHEMA,
         RECORDING_STORAGE_SCHEMA,
+        PACKED_STORAGE_SCHEMA,
     ]
     .iter()
     .any(|s| schema == *s)
@@ -222,13 +230,20 @@ pub fn encode_document(document: &Document) -> Result<String, String> {
         expanded_document_sha256: expression_file::digest(&raw),
     })
     .map_err(|e| e.to_string())?;
-    if encoded.len() > expression_file::FILE_BYTES {
-        return Err(
-            "complete native performance file exceeds 4 MiB; use admitted native asset custody"
-                .into(),
-        );
+    if encoded.len() <= expression_file::FILE_BYTES {
+        return Ok(encoded);
     }
-    Ok(encoded)
+    let packed = serde_json::to_string(&PackedDocument {
+        schema: PACKED_STORAGE_SCHEMA.into(),
+        packed: crate::expression_performance_record_codec::EncodedRecord::from_bytes(
+            encoded.as_bytes(),
+        )?,
+    })
+    .map_err(|e| e.to_string())?;
+    if packed.len() > expression_file::FILE_BYTES {
+        return Err("complete packed native performance file exceeds 4 MiB".into());
+    }
+    Ok(packed)
 }
 fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
     if depth > 48 {
@@ -280,9 +295,49 @@ pub(crate) fn decode_document(value: Value) -> Result<Document, String> {
     if weight(&value)? > expression_file::FILE_BYTES {
         return Err("native performance file exceeds 4 MiB".into());
     }
-    let mut stored: StoredDocument<Value> =
-        serde_json::from_value(value).map_err(|e| e.to_string())?;
-    if !supports_storage(&Value::String(stored.schema.clone()))
+    let mut stored: StoredDocument<PerformancePartCatalog> =
+        if value["schema"] == PACKED_STORAGE_SCHEMA {
+            let packed = PackedDocument::deserialize(&value).map_err(|e| e.to_string())?;
+            if serde_json::to_value(&packed).map_err(|e| e.to_string())? != value {
+                return Err("packed native file omitted canonical envelope fields".into());
+            }
+            let (raw, proof) = packed.packed.decode()?;
+            safe_storage(&raw, 0)?;
+            let typed: StoredDocument<StoredPerformanceParts> =
+                serde_json::from_value(raw).map_err(|e| e.to_string())?;
+            proof.canonical(&typed)?;
+            StoredDocument {
+                schema: typed.schema,
+                document: typed.document,
+                images: typed.images,
+                performance_parts: typed
+                    .performance_parts
+                    .into_iter()
+                    .map(PerformancePartCatalog::read)
+                    .collect::<Result<_, _>>()?,
+                expanded_document_sha256: typed.expanded_document_sha256,
+            }
+        } else {
+            let typed: StoredDocument<Value> =
+                serde_json::from_value(value).map_err(|e| e.to_string())?;
+            StoredDocument {
+                schema: typed.schema,
+                document: typed.document,
+                images: typed.images,
+                performance_parts: typed
+                    .performance_parts
+                    .into_iter()
+                    .map(PerformancePartCatalog::read_value)
+                    .collect::<Result<_, _>>()?,
+                expanded_document_sha256: typed.expanded_document_sha256,
+            }
+        };
+    if ![
+        STORAGE_SCHEMA,
+        SOURCE_STORAGE_SCHEMA,
+        RECORDING_STORAGE_SCHEMA,
+    ]
+    .contains(&stored.schema.as_str())
         || !expression_file::digest_ref(&stored.expanded_document_sha256)
         || stored.images.len() > expression_file::MAX_IMAGES
         || stored.performance_parts.len() > 64
@@ -298,11 +353,7 @@ pub(crate) fn decode_document(value: Value) -> Result<Document, String> {
             return Err("corrupt/duplicate native embedded image".into());
         }
     }
-    let catalogs = stored
-        .performance_parts
-        .into_iter()
-        .map(PerformancePartCatalog::read_value)
-        .collect::<Result<Vec<_>, _>>()?;
+    let catalogs = stored.performance_parts;
     if (stored.schema == RECORDING_STORAGE_SCHEMA)
         != catalogs
             .iter()
@@ -938,13 +989,37 @@ impl ActPerformanceCustody {
         }
     }
     pub fn read(stored: StoredActPerformanceCustody) -> Result<Self, String> {
-        Self::read_value(serde_json::to_value(stored).map_err(|e| e.to_string())?)
+        // Typed native snapshots are not raw physical files. Larger snapshots
+        // must first prove their complete private physical representation.
+        let size = weight(&stored)?;
+        if size <= expression_file::FILE_BYTES {
+            return Self::read_value(serde_json::to_value(stored).map_err(|e| e.to_string())?);
+        }
+        let packed =
+            crate::expression_performance_record_codec::EncodedRecord::from_value(&stored)?;
+        let (value, proof) = packed.decode()?;
+        proof.canonical(&stored)?;
+        Self::read_packed_value(value, &proof)
     }
     pub fn read_value(value: Value) -> Result<Self, String> {
         safe_storage(&value, 0)?;
         if weight(&value)? > expression_file::FILE_BYTES {
             return Err("native Act performance custody exceeds physical record budget".into());
         }
+        Self::read_decoded_value(value, None)
+    }
+    pub(crate) fn read_packed_value(
+        value: Value,
+        proof: &crate::expression_performance_record_codec::PackedProof,
+    ) -> Result<Self, String> {
+        safe_storage(&value, 0)?;
+        weight(&value)?;
+        Self::read_decoded_value(value, Some(proof))
+    }
+    fn read_decoded_value(
+        value: Value,
+        proof: Option<&crate::expression_performance_record_codec::PackedProof>,
+    ) -> Result<Self, String> {
         let stored =
             StoredActPerformanceCustody::<Value>::deserialize(&value).map_err(|e| e.to_string())?;
         if serde_json::to_value(&stored).map_err(|e| e.to_string())? != value {
@@ -979,7 +1054,10 @@ impl ActPerformanceCustody {
             .map(|(r, c)| {
                 Ok((
                     r,
-                    std::sync::Arc::new(PerformancePartCatalog::read_value(c)?),
+                    std::sync::Arc::new(match proof {
+                        Some(proof) => PerformancePartCatalog::read_packed_value(c, proof)?,
+                        None => PerformancePartCatalog::read_value(c)?,
+                    }),
                 ))
             })
             .collect::<Result<_, String>>()?;
@@ -995,7 +1073,7 @@ impl ActPerformanceCustody {
         Ok(result)
     }
     pub fn encoded_bytes(&self) -> Result<usize, String> {
-        weight(self)
+        crate::expression_performance_record_codec::physical_bytes(self)
     }
     pub fn requires_private_disclosure(&self) -> bool {
         self.performance_catalogs

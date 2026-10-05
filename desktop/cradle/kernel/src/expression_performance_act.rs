@@ -15,10 +15,12 @@ use std::collections::BTreeSet;
 pub const STORAGE_SCHEMA: &str = "oi.expression-act-storage/v2";
 pub const SOURCE_STORAGE_SCHEMA: &str = "oi.expression-act-storage/v3";
 pub const RECORDING_STORAGE_SCHEMA: &str = "oi.expression-act-storage/v4";
+pub const PACKED_STORAGE_SCHEMA: &str = "oi.expression-act-storage/v5";
 pub fn supports_storage(schema: &Value) -> bool {
     schema == STORAGE_SCHEMA
         || schema == SOURCE_STORAGE_SCHEMA
         || schema == RECORDING_STORAGE_SCHEMA
+        || schema == PACKED_STORAGE_SCHEMA
 }
 fn storage_schema(act: &Act) -> &'static str {
     if act
@@ -202,19 +204,111 @@ struct Record<T> {
     act: T,
     retained_act_sha256: String,
 }
-pub fn encode(act: &Act) -> Result<Vec<u8>, String> {
-    validate(act)?;
-    let bytes = serde_json::to_vec(act).map_err(|e| e.to_string())?;
-    let record = serde_json::to_vec(&Record {
-        schema: storage_schema(act).into(),
-        act,
-        retained_act_sha256: digest(&bytes),
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PackedHeader {
+    act_ref: String,
+    phase: ActPhase,
+    updated_at_unix_ms: u64,
+    archived: bool,
+}
+impl From<&Act> for PackedHeader {
+    fn from(act: &Act) -> Self {
+        Self {
+            act_ref: act.act_ref.clone(),
+            phase: act.phase.clone(),
+            updated_at_unix_ms: act.updated_at_unix_ms,
+            archived: act.archived,
+        }
+    }
+}
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct PackedRecord {
+    schema: String,
+    act: PackedHeader,
+    packed: crate::expression_performance_record_codec::EncodedRecord,
+}
+fn encode_record<T: Serialize>(
+    record: &Record<T>,
+    header: PackedHeader,
+) -> Result<Vec<u8>, String> {
+    expression_act_storage::measure(record, expression_act_storage::LIVE_BYTES)?;
+    let raw = serde_json::to_vec(record).map_err(|e| e.to_string())?;
+    if raw.len() as u64 <= crate::expression_act_store::MAX_RECORD_BYTES {
+        return Ok(raw);
+    }
+    let encoded = serde_json::to_vec(&PackedRecord {
+        schema: PACKED_STORAGE_SCHEMA.into(),
+        act: header,
+        packed: crate::expression_performance_record_codec::EncodedRecord::from_bytes(&raw)?,
     })
     .map_err(|e| e.to_string())?;
-    if record.len() as u64 > crate::expression_act_store::MAX_RECORD_BYTES {
-        return Err("complete indexed native Act record exceeds4MiB".into());
+    if encoded.len() as u64 > crate::expression_act_store::MAX_RECORD_BYTES {
+        return Err("complete packed indexed native Act record exceeds4MiB".into());
     }
-    Ok(record)
+    Ok(encoded)
+}
+pub fn encode(act: &Act) -> Result<Vec<u8>, String> {
+    validate(act)?;
+    let (_, hash) = expression_act_storage::fingerprint(act, expression_act_storage::LIVE_BYTES)?;
+    encode_record(
+        &Record {
+            schema: storage_schema(act).into(),
+            act,
+            retained_act_sha256: hash,
+        },
+        PackedHeader::from(act),
+    )
+}
+fn decode_packed(value: Value, available: usize) -> Result<Act, String> {
+    let packed = PackedRecord::deserialize(&value).map_err(|e| e.to_string())?;
+    if packed.schema != PACKED_STORAGE_SCHEMA
+        || serde_json::to_value(&packed).map_err(|e| e.to_string())? != value
+    {
+        return Err("packed native Act envelope/schema/defaults differ".into());
+    }
+    let (raw, proof) = packed.packed.decode()?;
+    expression_act_storage::safe(&raw, 0)?;
+    let stored: Record<Value> = serde_json::from_value(raw).map_err(|e| e.to_string())?;
+    if ![
+        STORAGE_SCHEMA,
+        SOURCE_STORAGE_SCHEMA,
+        RECORDING_STORAGE_SCHEMA,
+    ]
+    .contains(&stored.schema.as_str())
+    {
+        return Err("packed Act must contain one original complete native Record".into());
+    }
+    let mut native = stored.act;
+    let custody = native
+        .as_object_mut()
+        .ok_or("packed Act object absent")?
+        .remove("performance_custody")
+        .ok_or("packed Act complete custody absent")?;
+    let custody = ActPerformanceCustody::read_packed_value(custody, &proof)?;
+    // Public raw4MiB custody/catalog readers stay unchanged. Only the proven
+    // private complete record reaches the separately bounded internal route.
+    let mut act: Act = serde_json::from_value(native).map_err(|e| e.to_string())?;
+    act.performance_custody = Some(custody);
+    proof.canonical(&Record {
+        schema: stored.schema.clone(),
+        act: &act,
+        retained_act_sha256: stored.retained_act_sha256.clone(),
+    })?;
+    if packed.act != PackedHeader::from(&act)
+        || stored.schema != storage_schema(&act)
+        || !digest_ref(&stored.retained_act_sha256)
+        || expression_act_storage::fingerprint(&act, expression_act_storage::LIVE_BYTES)?.1
+            != stored.retained_act_sha256
+    {
+        return Err("packed native Act complete header/schema/digest differs".into());
+    }
+    if retained_bytes(&act)? > available.min(expression_act_storage::LIVE_BYTES) {
+        return Err("indexed native Act exceeds current live custody budget".into());
+    }
+    validate(&act)?;
+    Ok(act)
 }
 pub fn decode(value: Value, available: usize) -> Result<Act, String> {
     if expression_act_storage::measure(
@@ -223,6 +317,9 @@ pub fn decode(value: Value, available: usize) -> Result<Act, String> {
     )? > crate::expression_act_store::MAX_RECORD_BYTES as usize
     {
         return Err("indexed native Act record exceeds4MiB".into());
+    }
+    if value["schema"] == PACKED_STORAGE_SCHEMA {
+        return decode_packed(value, available);
     }
     let stored = Record::<Act>::deserialize(&value).map_err(|e| e.to_string())?;
     if serde_json::to_value(&stored).map_err(|e| e.to_string())? != value {
@@ -449,8 +546,8 @@ impl Serialize for RetainedAct<'_> {
                 handles: self.handles
             }
         );
-        field!("material_contract", MATERIAL_SCHEMA);
         field!("performance_custody", self.custody);
+        field!("material_contract", MATERIAL_SCHEMA);
         field!("continuations", continuations);
         optional!("return_ref", return_ref);
         optional!("result", result);
@@ -484,7 +581,10 @@ fn materialize(mut view: RetainedAct<'_>, available: usize) -> Result<Act, Strin
             "retained Act exceeds available unique-material live custody before allocation".into(),
         );
     }
-    let conservative = Record {
+    view.updated = updated;
+    let (_, exact_hash) =
+        expression_act_storage::fingerprint(&view, expression_act_storage::LIVE_BYTES)?;
+    let prospective = Record {
         schema: if view.custody.has_native_recordings() {
             RECORDING_STORAGE_SCHEMA
         } else if view.custody.has_native_sources() {
@@ -492,15 +592,25 @@ fn materialize(mut view: RetainedAct<'_>, available: usize) -> Result<Act, Strin
         } else {
             STORAGE_SCHEMA
         }
-        .to_owned(),
+        .into(),
         act: &view,
-        retained_act_sha256: format!("sha256:{}", "0".repeat(64)),
+        retained_act_sha256: exact_hash.clone(),
     };
-    expression_act_storage::measure(
-        &conservative,
-        crate::expression_act_store::MAX_RECORD_BYTES as usize,
+    // Count the exact complete prospective physical representation before
+    // cloning historical metadata. The actual Store repeats its whole check.
+    encode_record(
+        &prospective,
+        PackedHeader {
+            act_ref: view.act.act_ref.clone(),
+            phase: if view.append.is_some() {
+                ActPhase::Running
+            } else {
+                view.act.phase
+            },
+            updated_at_unix_ms: updated,
+            archived: view.act.archived,
+        },
     )?;
-    view.updated = updated;
     // This view contains already-native, privately qualified immutable custody.
     // Materialize only passage metadata; serializing/reimporting the entire
     // custody would discard its private page qualification and re-run every
@@ -587,6 +697,13 @@ fn materialize(mut view: RetainedAct<'_>, available: usize) -> Result<Act, Strin
     let metadata = serde_json::to_vec(&act).map_err(|e| e.to_string())?;
     let mut act: Act = serde_json::from_slice(&metadata).map_err(|e| e.to_string())?;
     act.performance_custody = Some(view.custody.clone());
+    if expression_act_storage::fingerprint(&act, expression_act_storage::LIVE_BYTES)?.1
+        != exact_hash
+    {
+        return Err(
+            "prospective retained Act bytes differ from complete materialized native Act".into(),
+        );
+    }
     validate(&act)?;
     Ok(act)
 }
