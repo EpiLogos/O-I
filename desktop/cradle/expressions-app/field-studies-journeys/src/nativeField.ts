@@ -62,8 +62,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    <div class="ni-row"><label>Damping · decay (s⁻¹) <input type="number" min="0" max="1000000" step="any" data-ni-damping aria-describedby="ni-damping-standing"></label><button type="button" class="secondary" data-ni="set-damping">Apply damping</button></div>
    <p class="control-note" id="ni-damping-standing">Declared material policy. Changes decay from the resident state; it does not strike the voices or turn either clock.</p>
    <div class="ni-row"><button type="button" class="secondary" data-ni="step">Step one tick</button><button type="button" class="secondary" data-ni="strike">Strike voices</button></div>
-   ${seg('cadence',[{value:'hold',label:'Hold'},...CADENCES.map(c=>({value:String(c.ticks_per_second),label:c.label,title:c.source}))],'Tick cadence')}
-   <p class="control-note" data-ni-v="cadence">Cadence held. 1 tick/s follows the M3/M4′ world clock; 12 ticks/s is PPS's user-facing tick.</p>
+   ${seg('cadence',[{value:'hold',label:'Hold'},...CADENCES.map(c=>({value:String(c.ticks_per_second),label:c.label,title:c.source}))],'Requested tick cadence')}
+   <p class="control-note" data-ni-v="cadence">Cadence held. Choose a request rate: 1 tick/s from the M3/M4′ world clock, or 12 ticks/s from PPS. Busy beats are skipped; the achieved rate appears while playing.</p>
   </section>
   <section class="ni-block" aria-label="Change a determinant">
    <h4>Change a determinant</h4>
@@ -201,8 +201,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    const c=instrument.cadence;
    press('cadence',c.playing?String(c.rate):'hold');
    setText('cadence',c.playing
-    ?`Playing ${c.rate} tick${c.rate===1?'':'s'}/s (${c.source}). Achieved ${c.achieved_ticks_per_second.toFixed(2)}/s · ${c.applied} applied · ${c.skipped} skipped while the owner was busy${c.suspended?` · ${c.suspended} suspended while held`:''}.`
-    :c.rate?`Cadence held${c.stopped&&c.stopped!=='held'?` (${c.stopped})`:''}. Last run: ${c.applied} ticks applied, ${c.skipped} skipped.`:'Cadence held. 1 tick/s follows the M3/M4′ world clock; 12 ticks/s is PPS\'s user-facing tick.');
+    ?`Requesting ${c.rate} tick${c.rate===1?'':'s'}/s (${c.source}). Achieved ${c.achieved_ticks_per_second.toFixed(2)}/s · ${c.applied} applied · ${c.skipped} skipped while the owner was busy${c.suspended?` · ${c.suspended} suspended while held`:''}.`
+    :c.rate?`Cadence held${c.stopped&&c.stopped!=='held'?` (${c.stopped})`:''}. Last run: ${c.applied} ticks applied, ${c.skipped} skipped.`:'Cadence held. Choose a request rate: 1 tick/s from the M3/M4′ world clock, or 12 ticks/s from PPS. Busy beats are skipped; the achieved rate appears while playing.');
    const refusal=query('[data-ni-v="refusal"]');refusal.hidden=!instrument.refusal;
    if(instrument.refusal)setText('refusal',`Refused (${instrument.refusal.operation}): ${instrument.refusal.reason}`);
    effects(reading.causal_trace,instrument.acting);

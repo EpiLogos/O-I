@@ -1148,10 +1148,15 @@ fn shared_candidates(
     value: &Value,
     path: &str,
     counts: &mut BTreeMap<String, usize>,
+    fingerprints: &mut BTreeMap<usize, (usize, String)>,
+    fingerprint_limit: usize,
 ) -> Result<(), String> {
     if shared_path(path) && (value.is_object() || value.is_array()) {
         let (bytes, reference) = shared_fingerprint(value)?;
         if bytes >= MIN_SHARED_BYTES {
+            if fingerprints.len() < fingerprint_limit {
+                fingerprints.insert(value as *const Value as usize, (bytes, reference.clone()));
+            }
             if !counts.contains_key(&reference) && counts.len() >= MAX_SHARED_PARTS {
                 return Err("Recovery shared candidate count exceeds its bound".into());
             }
@@ -1161,12 +1166,24 @@ fn shared_candidates(
     match value {
         Value::Object(values) => {
             for (k, v) in values {
-                shared_candidates(v, &child_path(path, k), counts)?;
+                shared_candidates(
+                    v,
+                    &child_path(path, k),
+                    counts,
+                    fingerprints,
+                    fingerprint_limit,
+                )?;
             }
         }
         Value::Array(values) => {
             for (i, v) in values.iter().enumerate() {
-                shared_candidates(v, &child_path(path, &i.to_string()), counts)?;
+                shared_candidates(
+                    v,
+                    &child_path(path, &i.to_string()),
+                    counts,
+                    fingerprints,
+                    fingerprint_limit,
+                )?;
             }
         }
         _ => {}
@@ -1179,9 +1196,13 @@ fn shared_intern(
     counts: &BTreeMap<String, usize>,
     parts: &mut BTreeMap<String, Value>,
     used: &mut BTreeMap<String, usize>,
+    fingerprints: &mut BTreeMap<usize, (usize, String)>,
 ) -> Result<(), String> {
     if shared_path(path) && (value.is_object() || value.is_array()) {
-        let (bytes, reference) = shared_fingerprint(value)?;
+        let (bytes, reference) = match fingerprints.remove(&(value as *const Value as usize)) {
+            Some(fingerprint) => fingerprint,
+            None => shared_fingerprint(value)?,
+        };
         if bytes >= MIN_SHARED_BYTES && counts.get(&reference).is_some_and(|n| *n > 1) {
             if let Some(previous) = parts.get(&reference) {
                 if previous != value {
@@ -1199,12 +1220,19 @@ fn shared_intern(
     match value {
         Value::Object(values) => {
             for (k, v) in values {
-                shared_intern(v, &child_path(path, k), counts, parts, used)?;
+                shared_intern(v, &child_path(path, k), counts, parts, used, fingerprints)?;
             }
         }
         Value::Array(values) => {
             for (i, v) in values.iter_mut().enumerate() {
-                shared_intern(v, &child_path(path, &i.to_string()), counts, parts, used)?;
+                shared_intern(
+                    v,
+                    &child_path(path, &i.to_string()),
+                    counts,
+                    parts,
+                    used,
+                    fingerprints,
+                )?;
             }
         }
         _ => {}
@@ -1335,7 +1363,7 @@ fn qualify_shared(stored: &SharedRecord, images: &BTreeMap<String, String>) -> R
         {
             return Err("Recovery shared literal digest differs".into());
         }
-        let size = (serialized_size(&part.value)? as i128)
+        let size = (literal_bytes as i128)
             .checked_add(crate::expression_file::expansion_delta(
                 &part.value,
                 None,
@@ -1412,14 +1440,34 @@ fn shared_expand(value: &mut Value, parts: &BTreeMap<String, Value>) {
         _ => {}
     }
 }
-fn encode_shared_record(mut stored: StoredRecord) -> Result<Option<Vec<u8>>, String> {
+fn encode_shared_record(stored: StoredRecord) -> Result<Option<Vec<u8>>, String> {
+    encode_shared_record_with_fingerprint_limit(stored, MAX_SHARED_PARTS)
+}
+fn encode_shared_record_with_fingerprint_limit(
+    mut stored: StoredRecord,
+    fingerprint_limit: usize,
+) -> Result<Option<Vec<u8>>, String> {
     if stored.record.kind != Kind::Checkpoint {
         return Ok(None);
     }
     no_shared_refs(&stored.record.value)?;
     let mut candidates = BTreeMap::new();
+    // Operation-local memo of already-qualified complete literal bytes. The
+    // owned tree stays in place between these two traversals. Intern examines
+    // an ancestor before changing descendants and returns after replacing it;
+    // it never inserts/removes array or object members, so unvisited nodes keep
+    // both their addresses and bytes. New markers are never traversed. Addresses
+    // are identity keys only, never dereferenced; no memo survives this encode.
+    // Bound retained entries; a miss uses the same complete fingerprint oracle.
+    let mut fingerprints = BTreeMap::new();
     let candidates_phase = diagnostic_phase("encode_shared_candidates");
-    shared_candidates(&stored.record.value, "", &mut candidates)?;
+    shared_candidates(
+        &stored.record.value,
+        "",
+        &mut candidates,
+        &mut fingerprints,
+        fingerprint_limit.min(MAX_SHARED_PARTS),
+    )?;
     drop(candidates_phase);
     let mut parts = BTreeMap::new();
     let mut used = BTreeMap::new();
@@ -1430,6 +1478,7 @@ fn encode_shared_record(mut stored: StoredRecord) -> Result<Option<Vec<u8>>, Str
         &candidates,
         &mut parts,
         &mut used,
+        &mut fingerprints,
     )?;
     drop(intern_phase);
     let singletons_phase = diagnostic_phase("encode_shared_singletons");
@@ -3955,6 +4004,57 @@ mod shared_fingerprint_buffer_tests {
         let bytes = serde_json::to_vec(value).unwrap();
         let expected = format!("sha256:{:x}", Sha256::digest(&bytes));
         assert_eq!(shared_fingerprint(value).unwrap(), (bytes.len(), expected));
+    }
+
+    #[test]
+    fn actual_native_material_memo_and_bounded_fallback_match_uncached_storage_bytes() {
+        let fixture = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            crate::expression_file::digest(fixture.as_bytes()),
+            "sha256:630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let document = crate::expression_file::decode(fixture).unwrap();
+        let body = serde_json::to_value(document).unwrap();
+        // Genuine complete native material appears in distinct allowed bases;
+        // this tests lossless private encoding, not whole-world UX acceptance.
+        let mut value = json!({"view":{"document":body,"journey":{"material":body}},
+            "pending":{"request":{"material":body},"submitted":{"journey":{"material":body}}}});
+        for occasion in [0, 1] {
+            value["view"]["journey"]["occasion"] = json!(occasion);
+            let make = || StoredRecord {
+                schema: STORAGE_SCHEMA.into(),
+                record: Record {
+                    schema: SCHEMA.into(),
+                    scope: Scope::Expressions,
+                    kind: Kind::Checkpoint,
+                    id: "actual-native-memo-oracle".into(),
+                    revision: 1,
+                    value: value.clone(),
+                },
+                images: Vec::new(),
+                expanded_value_sha256: crate::expression_file::digest(
+                    &serde_json::to_vec(&value).unwrap(),
+                ),
+            };
+            let uncached = encode_shared_record_with_fingerprint_limit(make(), 0)
+                .unwrap()
+                .unwrap();
+            for limit in [1, MAX_SHARED_PARTS] {
+                let encoded = encode_shared_record_with_fingerprint_limit(make(), limit)
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(
+                    encoded, uncached,
+                    "Memo cap/misses must preserve the entire encoded byte stream"
+                );
+                let reopened =
+                    decode_shared_record(serde_json::from_slice(&encoded).unwrap(), true).unwrap();
+                assert_eq!(
+                    reopened.value, value,
+                    "Fresh decode must recover every native body and changed occasion"
+                );
+            }
+        }
     }
 
     #[test]
