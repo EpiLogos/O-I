@@ -1,3 +1,4 @@
+import {authoredSourceKey,authoredCandidatePool,entitySourceCoordinate,linkSourceCoordinate,effectiveLayerSourceCoordinate,type AuthoredSourceCoordinate} from './authoredSourceCoordinates';
 import {ConnectionRuntime} from "../../../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs";
 /**
  * @license
@@ -42,7 +43,8 @@ import {
 } from './fieldModel';
 import { SpatialChakraNode, type GlyphVolumeConfig } from './types';
 import { resolveEntityPose, type EvaluatedEntityPose } from './entityPose';
-import { drawVolumeZ, mulberry32, hashString, buildDepthFieldsFromMask, cellVolumeShape, DEFAULT_GLYPH_VOLUME } from './glyphVolume';
+import {writeAuthoredCandidates,snapshotAuthoredMaterial,type AuthoredMaterialRange,type AuthoredMaterialSnapshot} from './authoredMaterialSampling';
+import { hashString, buildDepthFieldsFromMask, cellVolumeShape, DEFAULT_GLYPH_VOLUME } from './glyphVolume';
 
 /** World px per canvas px at entity.scale = 1 (a glyph fills ≈ 400 px) */
 const BASE_SCALE = 0.56;
@@ -89,6 +91,8 @@ export class EntityRuntime {
   public readonly connections = new ConnectionRuntime();
   private sampler: GlyphSampler;
   public bakeGeneration = 0;
+  private allocationGeneration = 0;
+  private materialRanges = new Map<string,{a:AuthoredMaterialRange[];b:AuthoredMaterialRange[];generation:number}>();
   private currentPlane: Composition['plane'] = 'vertical';
   private texW = 0;
   private texH = 0;
@@ -146,6 +150,8 @@ export class EntityRuntime {
   // ------------------------------------------------------------------ allocation
   public allocate(particleCount: number, texW: number, texH: number) {
     this.disposeTextures();
+    this.allocationGeneration++;
+    this.materialRanges.clear();
     this.texW = texW;
     this.texH = texH;
     this.particleCount = particleCount;
@@ -186,6 +192,7 @@ export class EntityRuntime {
     this.disposeTextures();
     this.clearCandidateCache();
     this.geometryProjection=null;
+    this.materialRanges.clear();
   }
 
   private clearCandidateCache() {
@@ -221,6 +228,15 @@ export class EntityRuntime {
 
   public getPartitions(): Partition[] {
     return this.partitions;
+  }
+
+  /** A requested point-in-time copy of actual authored sampler targets. */
+  public readAuthoredMaterialSnapshot(entityId:string):AuthoredMaterialSnapshot {
+    const p=this.partitions.find(row=>row.entityId===entityId),ranges=this.materialRanges.get(entityId);
+    if(!p||!ranges||!this.bakeSig.has(entityId)||!this.textureA||!this.textureB)throw Error('The selected actual material bake is unavailable.');
+    return snapshotAuthoredMaterial({entity_view_id:entityId,allocation_generation:this.allocationGeneration,bake_generation:ranges.generation,
+      layout_signature:this.layoutSig,sampling_signature:this.baseSig,plane:this.currentPlane,volume:this.volume,
+      start:p.start,end:p.end,target_a:this.dataA.subarray(p.start*4,p.end*4),target_b:this.dataB.subarray(p.start*4,p.end*4),ranges_a:ranges.a,ranges_b:ranges.b});
   }
 
   /** Base bake context (style/font/plane). Changing it invalidates every partition. */
@@ -266,8 +282,9 @@ export class EntityRuntime {
   }
 
   /** Image / ASCII sources: override a formation's shape with an explicit candidate pool. */
-  public setCustomCandidates(entityId: string, candidates: Candidate[] | null, linkId?:string) {
-    const key=linkId?entityId+':'+linkId:entityId;
+  public setCustomCandidates(entityId: string, candidates: Candidate[] | null, linkId?:string, coordinate?:AuthoredSourceCoordinate) {
+    const key=coordinate?authoredSourceKey(coordinate):linkId?entityId+':'+linkId:entityId;
+    if(coordinate&&coordinate.entity_ref!==entityId)throw new Error('Candidate pool has a foreign Entity coordinate');
     if (candidates) this.customCandidates.set(key, candidates);
     else this.customCandidates.delete(key);
     this.bakeSig.delete(entityId);
@@ -350,6 +367,7 @@ export class EntityRuntime {
     if (sig === this.layoutSig) return false;
     this.layoutSig = sig;
     this.bakeSig.clear();
+    this.materialRanges.clear();
     // particles outside every partition (none normally) are parked at the origin
     return true;
   }
@@ -365,45 +383,7 @@ export class EntityRuntime {
     channel: 0 | 2,
     depthOffset: number = 0
   ) {
-    const n = cands.length;
-    if(!n){target.fill(0,start*4,end*4);for(let i=start;i<end;i++){this.noiseData[i*4+channel]=0;this.noiseData[i*4+channel+1]=0;}return;}
-    // Depth is drawn per particle from the cell's own body thickness, so a single
-    // pool spans the whole solid instead of one sheet per raster cell. The stream
-    // is seeded per bake, so a re-bake reproduces the same body rather than
-    // re-rolling it into visible flicker.
-    const volume = this.volume;
-    const volumeOn = volume.enabled && volume.depth > 0;
-    const rand = volumeOn ? mulberry32((start + 1) * 2654435761 + (channel + 1) * 40503 + n) : null;
-    const jitter=mulberry32((start+1)*40503+(channel+1)*2654435761+n);
-    for (let i = start; i < end; i++) {
-      // The raster pool is scanline ordered. A prefix would crop low-share
-      // allocations to the top of a glyph. A low-discrepancy stride covers the
-      // complete local shape for every allocation size without changing IDs.
-      const c = cands[Math.floor(((i-start)*0.6180339887498949 % 1)*n)];
-      const jx = (jitter() - 0.5) * jitterPx;
-      const jy = (jitter() - 0.5) * jitterPx;
-      this.noiseData[i*4+channel]=jx;this.noiseData[i*4+channel+1]=jy;
-      const lx = c.x * scale;
-      const ly = c.y * scale;
-      let lz = (c.z ?? 0) * scale;
-      if (volumeOn && rand && c.hz !== undefined) {
-        lz = drawVolumeZ(Math.max(0, c.hz) * scale, c.cw ?? 0, volume, rand).z;
-      }
-      // Layer depth (lamination) offsets the extrusion axis after the body law,
-      // so a laminated layer carries both its own thickness and its band.
-      lz += depthOffset;
-      const o = i * 4;
-      if (plane === 'horizontal') {
-        target[o] = lx;
-        target[o + 1] = lz;
-        target[o + 2] = -ly;
-      } else {
-        target[o] = lx;
-        target[o + 1] = ly;
-        target[o + 2] = lz;
-      }
-      target[o + 3] = c.density;
-    }
+    writeAuthoredCandidates(target,this.noiseData,start,end,cands,scale,plane,jitterPx,channel,depthOffset,this.volume);
   }
 
   /** Stage-box normalization shared by every pool path: glyph-law pools are
@@ -423,17 +403,18 @@ export class EntityRuntime {
 
   /** A link's candidate pool: per-link custom source, the entity-wide override on link 0, else the shape. */
   private linkCandidates(e: Entity, link: SequenceLink, linkIndex: number, custom: Candidate[] | undefined, fontFamily?: string, fontWeight?: string | number): Candidate[] {
-    return this.customCandidates.get(e.id+':'+link.id)
+    return authoredCandidatePool(this.customCandidates,e,linkSourceCoordinate(e,link))
       ?? (custom && linkIndex === 0 ? custom : this.candidatesFor(link.shape, fontFamily, fontWeight));
   }
 
   /** A layer's candidate pool: its loaded image/ASCII source, else its shape. */
-  private layerCandidates(e: Entity, layer: EntityLayer, custom: Candidate[] | undefined, fontFamily?: string, fontWeight?: string | number): Candidate[] {
-    return this.customCandidates.get(e.id+':'+layer.id)
+  private layerCandidates(e: Entity, layer: EntityLayer, link:SequenceLink, custom: Candidate[] | undefined, fontFamily?: string, fontWeight?: string | number): Candidate[] {
+    return authoredCandidatePool(this.customCandidates,e,effectiveLayerSourceCoordinate(e,link,layer))
       ?? this.candidatesFor(layer.shape, fontFamily, fontWeight);
   }
 
   private bakePartition(p: Partition, e: Entity, linkIndex: number, nextIndex: number, plane: Composition['plane'], fontFamily?: string, fontWeight?: string | number) {
+    const ranges:{a:AuthoredMaterialRange[];b:AuthoredMaterialRange[]}={a:[],b:[]};
     const geometry=this.geometryProjection?.entityId===e.id?this.geometryProjection:null;
     if(geometry){
       this.bakeGeneration++;
@@ -441,6 +422,8 @@ export class EntityRuntime {
       // Preserve the owner's angles and aspect; never stretch the local
       // geometry to its own bounding box. Outer authored transforms still apply.
       for(const channel of [0,2] as const)this.writeCandidates(channel===0?this.dataA:this.dataB,p.start,p.end,geometry.candidates,scale,plane,0,channel);
+      for(const lane of [ranges.a,ranges.b])lane.push({start:p.start,end:p.end,link_ref:e.id+':geometry',layer_ref:null,parent_ref:null,shape:e.shape,source:null,layer_z:0,layer_scale:1,sampling_layer_scale:1,sampling_scale:scale,geometry_projection:geometry.key});
+      this.materialRanges.set(e.id,{...ranges,generation:this.bakeGeneration});
       if(this.noiseTexture)this.noiseTexture.needsUpdate=true;
       if(this.textureA)this.textureA.needsUpdate=true;
       if(this.textureB)this.textureB.needsUpdate=true;
@@ -448,7 +431,7 @@ export class EntityRuntime {
       return;
     }
     const links = effectiveLinks(e);
-    const custom = this.customCandidates.get(e.id);
+    const custom = authoredCandidatePool(this.customCandidates,e,entitySourceCoordinate(e.id));
     const slot = this.collisionTexture ? this.collisionSlot(e.id) : -1;
     for (const [index, channel] of [[linkIndex, 0], [nextIndex, 2]] as const) {
       const link = links[index];
@@ -463,21 +446,24 @@ export class EntityRuntime {
         const per = Math.floor((p.end-p.start)/layers.length);
         const reach = Math.max(...layers.map(l=>Math.abs(l.z)),0);
         layers.forEach((layer,k)=>{
-          const pool = this.presetPool(body,this.layerCandidates(e,layer,custom,fontFamily,fontWeight),this.customCandidates.has(e.id+':'+layer.id)).map(c=>{
+          const pool = this.presetPool(body,this.layerCandidates(e,layer,link,custom,fontFamily,fontWeight),authoredCandidatePool(this.customCandidates,e,effectiveLayerSourceCoordinate(e,link,layer))!==undefined).map(c=>{
             const ls=Math.max(.001,layer.scale??1);
             return {...c,x:c.x*ls,y:c.y*ls,...(c.hz===undefined?{}:{hz:c.hz*ls})};
           });
           const start=p.start+k*per,end=k===layers.length-1?p.end:start+per;
           this.writeCandidates(target,start,end,pool,scale,plane,2,channel,layer.z);
+          (channel===0?ranges.a:ranges.b).push({start,end,link_ref:link.id,layer_ref:layer.id,source_coordinate:effectiveLayerSourceCoordinate(e,link,layer),parent_ref:effectiveLayerSourceCoordinate(e,link,layer).parent_ref,shape:layer.shape,source:layer.source??null,layer_z:layer.z,layer_scale:layer.scale??1,sampling_layer_scale:Math.max(.001,layer.scale??1),sampling_scale:scale,geometry_projection:null});
           union.push(...pool.map(c=>({...c,hz:Math.max(c.hz??0,reach)})));
         });
       } else {
-        union=this.presetPool(body,this.linkCandidates(e,link,index,custom,fontFamily,fontWeight),this.customCandidates.has(e.id+':'+link.id)||!!(custom&&index===0));
+        union=this.presetPool(body,this.linkCandidates(e,link,index,custom,fontFamily,fontWeight),authoredCandidatePool(this.customCandidates,e,linkSourceCoordinate(e,link))!==undefined||!!(custom&&index===0));
         this.writeCandidates(target,p.start,p.end,union,scale,plane,2,channel);
+        (channel===0?ranges.a:ranges.b).push({start:p.start,end:p.end,link_ref:link.id,layer_ref:null,source_coordinate:linkSourceCoordinate(e,link),parent_ref:null,shape:link.shape,source:link.source??(index===0?e.authoringSource:undefined)??null,layer_z:0,layer_scale:1,sampling_layer_scale:1,sampling_scale:scale,geometry_projection:null});
       }
       this.bakeGeneration++;
       if(slot>=0)writeSdfTile(this.collisionData,slot,channel===0?0:1,buildSdfTile(union,scale));
     }
+    this.materialRanges.set(e.id,{...ranges,generation:this.bakeGeneration});
     if(this.noiseTexture)this.noiseTexture.needsUpdate=true;
     if(this.textureA)this.textureA.needsUpdate=true;
     if(this.textureB)this.textureB.needsUpdate=true;
@@ -527,10 +513,10 @@ export class EntityRuntime {
       const links = effectiveLinks(e);
       const linkSig=(link:SequenceLink,index:number)=>{
         const layers=link.layers??e.layers;
-        const shape=layers?.length?layers.map(l=>`${l.id}:${l.z}:${l.scale??1}:${this.shapeSignature(l.shape)}:${this.customCandidates.get(e.id+':'+l.id)?.length??0}`).join(','):this.shapeSignature(link.shape);
-        return `${layers?.length?'layers':link.id}:${shape}:${link.state?.extent?.normalized??e.extent?.normalized??!!e.extent}:${layers?.length?'':(this.customCandidates.get(e.id+':'+link.id)?.length??0)+':'+customSource(index)}`;
+        const shape=layers?.length?layers.map(l=>`${authoredSourceKey(effectiveLayerSourceCoordinate(e,link,l))}:${l.z}:${l.scale??1}:${this.shapeSignature(l.shape)}:${authoredCandidatePool(this.customCandidates,e,effectiveLayerSourceCoordinate(e,link,l))?.length??0}`).join(','):this.shapeSignature(link.shape);
+        return `${layers?.length?'layers':link.id}:${shape}:${link.state?.extent?.normalized??e.extent?.normalized??!!e.extent}:${layers?.length?'':(authoredCandidatePool(this.customCandidates,e,linkSourceCoordinate(e,link))?.length??0)+':'+customSource(index)}`;
       };
-      const customSource=(index:number)=>index===0?this.customCandidates.get(e.id)?.length??0:0;
+      const customSource=(index:number)=>index===0?authoredCandidatePool(this.customCandidates,e,entitySourceCoordinate(e.id))?.length??0:0;
       const sig=linkSig(links[state.linkIndex],state.linkIndex)+'>'+linkSig(links[state.nextIndex],state.nextIndex);
       const prevStep = this.lastStep.get(e.id);
       if (this.bakeSig.get(e.id) !== sig) {

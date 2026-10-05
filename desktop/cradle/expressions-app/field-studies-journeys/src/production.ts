@@ -2,7 +2,8 @@ import {ExpressionConnectionLayer,type ConnectionBinding} from '../../../../../p
 import {withRetainedField} from "../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs";
 import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel';
 import {TransportState} from '../../src/engine/transportState';
-import {stateSource} from './sourceState';
+import {authoredSourceRequests,sourceCoordinateFromKey} from './authoredSourceRequests';
+import {authoredSourceKey} from '../../src/engine/authoredSourceCoordinates';
 import {PointCloudField} from '../../src/engine/PointCloudField';
 import type {PointCloudConfig} from '../../src/engine/types';
 import {CymaticResonator} from '../../src/engine/cymaticResonator';
@@ -239,18 +240,15 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   // Layers are the object's spatial composition: their sources always load,
   // regardless of any transport state — a laminated body exists whether or not
   // its sequence plays.
-  const requests=scene.entities.filter(e=>e.kind==='formation').flatMap(e=>[
-   ...Array.from(new Map([...(e.layers??[]),...(e.sequence.enabled||e.sequence.manual?e.sequence.steps.flatMap(k=>k.layers??[]):[])].map(l=>[l.id,l])).values()).flatMap(l=>l.source?[{entityId:e.id,linkId:l.id,source:l.source}]:[]),
-   ...(e.sequence.enabled||e.sequence.manual?e.sequence.steps.flatMap((k,i)=>{const source=stateSource(e,i);return source?[{entityId:e.id,linkId:k.id,source}]:[]}):e.source?[{entityId:e.id,linkId:e.id+'_base',source:e.source}]:[]),
-  ]);
-  const ids=new Set(requests.map(r=>JSON.stringify([r.entityId,r.linkId])));
-  for(const key of this.sources.keys())if(!ids.has(key)){const [entityId,linkId]=JSON.parse(key);this.engine?.clearCustomSource(entityId,linkId);this.sources.delete(key);delete this.sourceStatus[key];}
-  for(const {entityId,linkId,source} of requests){const key=JSON.stringify([entityId,linkId]),signature=JSON.stringify(source);if(this.sources.get(key)===signature)continue;this.sources.set(key,signature);this.engine?.clearCustomSource(entityId,linkId);delete this.sourceStatus[key];
-   if(source.kind==='ascii'){const analysis=this.engine?.loadAsciiArt(source.ascii.text,source.ascii,entityId,linkId);this.sourceStatus[key]=analysis?summarizeAnalysis(analysis,'ascii'):'ASCII source active';continue;}
+  const requests=authoredSourceRequests(scene);
+  const ids=new Set(requests.map(r=>authoredSourceKey(r.coordinate)));
+  for(const key of this.sources.keys())if(!ids.has(key)){const coordinate=sourceCoordinateFromKey(key);this.engine?.clearCustomSource(coordinate.entity_ref,coordinate.component==='entity'?undefined:coordinate.constituent_ref,coordinate);this.sources.delete(key);delete this.sourceStatus[key];}
+  for(const {entityId,linkId,source,coordinate} of requests){const key=authoredSourceKey(coordinate),signature=JSON.stringify(source);if(this.sources.get(key)===signature)continue;this.sources.set(key,signature);this.engine?.clearCustomSource(entityId,linkId,coordinate);delete this.sourceStatus[key];
+   if(source.kind==='ascii'){const analysis=this.engine?.loadAsciiArt(source.ascii.text,source.ascii,entityId,linkId,coordinate);this.sourceStatus[key]=analysis?summarizeAnalysis(analysis,'ascii'):'ASCII source active';continue;}
    const options=source.image,url=options.dataUrl??'';
    if(!/^data:image\/(png|jpeg|webp);base64,/i.test(url)){this.sourceStatus[key]='Image source needs an embedded PNG, JPEG or WebP.';continue;}
    const image=new Image();this.sourceStatus[key]='Decoding image…';
-   image.onload=()=>{if(this.sources.get(key)!==signature||!this.engine)return;if(image.naturalWidth*image.naturalHeight>16777216){this.sourceStatus[key]='Image exceeds the 16 megapixel source limit.';this.dirty=true;return;}const analysis=this.engine.loadCustomImage(image,options,entityId,linkId);this.sourceStatus[key]=analysis?summarizeAnalysis(analysis,'image'):'Image source active';this.dirty=true;};
+   image.onload=()=>{if(this.sources.get(key)!==signature||!this.engine)return;if(image.naturalWidth*image.naturalHeight>16777216){this.sourceStatus[key]='Image exceeds the 16 megapixel source limit.';this.dirty=true;return;}const analysis=this.engine.loadCustomImage(image,options,entityId,linkId,coordinate);this.sourceStatus[key]=analysis?summarizeAnalysis(analysis,'image'):'Image source active';this.dirty=true;};
    image.onerror=()=>{if(this.sources.get(key)===signature){this.sourceStatus[key]='The embedded image could not be decoded.';this.dirty=true;}};image.src=url;
   }
  }

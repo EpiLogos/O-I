@@ -1,3 +1,4 @@
+import {authoredSourceKey,resolveAuthoredSourceCoordinate,validateAuthoredSourceCoordinate,type AuthoredSourceCoordinate} from './authoredSourceCoordinates';
 import type {ConnectionBinding} from "../../../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs";
 import {TransportState,validateTransport} from './transportState';
 /**
@@ -63,6 +64,7 @@ interface CustomSourceRecord {
   kind: 'image' | 'ascii';
   entityId: string;
   linkId?: string;
+  coordinate:AuthoredSourceCoordinate;
   /** The decoded element (image) or the raw text (ASCII) the pool was sampled from. */
   input: CanvasImageSource | ImageData | string;
   options: Record<string, unknown>;
@@ -1230,14 +1232,15 @@ export class PointCloudField {
   }
 
   /** Keyed exactly like the runtime's custom candidate pools. */
-  private static sourceKey(entityId: string, linkId?: string): string {
-    return linkId ? `${entityId}:${linkId}` : entityId;
+  private static sourceKey(entityId: string, linkId?: string, coordinate?:AuthoredSourceCoordinate): string {
+    if(coordinate){if(coordinate.entity_ref!==entityId)throw new Error('Source cache coordinate has a foreign Entity');return authoredSourceKey(coordinate);}
+    throw new Error('Source cache requires an actual resolved authored coordinate');
   }
 
   private customSourceInputs = new Map<string, CustomSourceRecord>();
 
   private retainCustomSource(record: CustomSourceRecord) {
-    this.customSourceInputs.set(PointCloudField.sourceKey(record.entityId, record.linkId), record);
+    this.customSourceInputs.set(PointCloudField.sourceKey(record.entityId, record.linkId,record.coordinate), record);
   }
 
   /**
@@ -1250,40 +1253,46 @@ export class PointCloudField {
     for (const record of [...this.customSourceInputs.values()]) {
       if (record.kind === 'image') {
         if (typeof record.input === 'string') continue;
-        this.loadCustomImage(record.input, record.options, record.entityId, record.linkId);
+        this.loadCustomImage(record.input, record.options, record.entityId, record.linkId,record.coordinate);
       } else {
         if (typeof record.input !== 'string') continue;
-        this.loadAsciiArt(record.input, record.options, record.entityId, record.linkId);
+        this.loadAsciiArt(record.input, record.options, record.entityId, record.linkId,record.coordinate);
       }
     }
   }
 
-  public loadCustomImage(img: CanvasImageSource | ImageData, options: { mode?: 'luminance' | 'edgeSobel' | 'silhouette'; threshold?: number; invert?: boolean; scale?: number } = {}, entityId?: string, linkId?:string): SourceAnalysis | null {
+  public loadCustomImage(img: CanvasImageSource | ImageData, options: { mode?: 'luminance' | 'edgeSobel' | 'silhouette'; threshold?: number; invert?: boolean; scale?: number } = {}, entityId?: string, linkId?:string, coordinate?:AuthoredSourceCoordinate): SourceAnalysis | null {
     const target = entityId ? this.formations().find(e=>e.id===entityId) : this.formations()[0];
     if (!target) return null;
+    const resolved=resolveAuthoredSourceCoordinate(target,linkId,coordinate);
     const { candidates, analysis } = this.glyphSampler.rasterizeCustomImage(img, options);
     if (entityId) this.sourceAnalyses.set(entityId, analysis);
-    this.entities.setCustomCandidates(target.id, candidates,linkId);
-    this.retainCustomSource({ kind: 'image', entityId: target.id, linkId, input: img, options });
+    this.entities.setCustomCandidates(target.id, candidates,linkId,resolved);
+    this.retainCustomSource({ kind: 'image', entityId: target.id, linkId, coordinate:resolved, input: img, options });
     return analysis;
   }
 
-  public loadAsciiArt(asciiText: string, options: { fontFamily?: string; fontSize?: number; invert?: boolean } = {}, entityId?: string, linkId?:string): SourceAnalysis | null {
+  public loadAsciiArt(asciiText: string, options: { fontFamily?: string; fontSize?: number; invert?: boolean } = {}, entityId?: string, linkId?:string, coordinate?:AuthoredSourceCoordinate): SourceAnalysis | null {
     const target = entityId ? this.formations().find(e=>e.id===entityId) : this.formations()[0];
     if (!target) return null;
+    const resolved=resolveAuthoredSourceCoordinate(target,linkId,coordinate);
     const { candidates, analysis } = this.glyphSampler.rasterizeAscii(asciiText, options);
     if (entityId) this.sourceAnalyses.set(entityId, analysis);
-    this.entities.setCustomCandidates(target.id, candidates,linkId);
-    this.retainCustomSource({ kind: 'ascii', entityId: target.id, linkId, input: asciiText, options });
+    this.entities.setCustomCandidates(target.id, candidates,linkId,resolved);
+    this.retainCustomSource({ kind: 'ascii', entityId: target.id, linkId, coordinate:resolved, input: asciiText, options });
     return analysis;
   }
 
-  public clearCustomSource(entityId?: string,linkId?:string) {
+  public clearCustomSource(entityId?: string,linkId?:string,coordinate?:AuthoredSourceCoordinate) {
     const id = entityId ?? this.formations()[0]?.id;
     if (id) {
+      const target=this.formations().find(e=>e.id===id);
+      const resolved=coordinate?validateAuthoredSourceCoordinate(coordinate):target?resolveAuthoredSourceCoordinate(target,linkId):undefined;
+      if(resolved&&(resolved.entity_ref!==id||linkId!==undefined&&resolved.constituent_ref!==linkId))throw new Error('Source removal has a foreign coordinate');
+      if(!resolved)return;
       this.sourceAnalyses.delete(id);
-      this.customSourceInputs.delete(PointCloudField.sourceKey(id, linkId));
-      this.entities.setCustomCandidates(id, null,linkId);
+      this.customSourceInputs.delete(PointCloudField.sourceKey(id, linkId,resolved));
+      this.entities.setCustomCandidates(id, null,linkId,resolved);
     }
   }
 

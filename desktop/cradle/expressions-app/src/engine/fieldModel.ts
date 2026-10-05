@@ -1,3 +1,4 @@
+import type {AuthoredSourceCoordinate} from './authoredSourceCoordinates';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -60,6 +61,7 @@ export interface Shape {
 }
 
 export interface SequenceLink {
+  sourceCoordinate?:AuthoredSourceCoordinate;
   /** State-local body. Empty overrides inherited entity layers with this link's shape/source. */
   layers?: EntityLayer[];
   source?:Entity['authoringSource'];
@@ -169,6 +171,7 @@ export interface Entity {
  * it (size, rotation, tint, forces, placement) through the ordinary uniforms.
  */
 export interface EntityLayer {
+  sourceCoordinate?:AuthoredSourceCoordinate;
   source?: Entity['authoringSource'];
   id: string;
   z: number;              // depth band centre, world px, relative to the entity
@@ -321,7 +324,7 @@ const hash01 = (n: number) => {
 };
 
 export function effectiveLinks(e: Entity): SequenceLink[] {
-  return e.sequence.links.length > 0 ? e.sequence.links : [{ id: e.id + '_base', shape: e.shape }];
+  return e.sequence.links.length > 0 ? e.sequence.links : [{ id: e.id + '_base', shape: e.shape, sourceCoordinate:{entity_ref:e.id,component:'entity',constituent_ref:e.id,parent_ref:null} }];
 }
 
 /** Map a monotonic step counter to a link index under the sequence order rule. */

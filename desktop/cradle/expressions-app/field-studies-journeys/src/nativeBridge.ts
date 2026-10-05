@@ -1,3 +1,4 @@
+import {entitySourceCoordinate,sequenceSourceCoordinate,layerSourceCoordinate} from '../../src/engine/authoredSourceCoordinates';
 import type {KernelConversion} from './kernelDocumentBridge';
 import {projectNativeEntityControls} from './proceduralNativeControlProjection';
 import {applyBlueprintAnchors} from './blueprintGeometry.js';
@@ -39,7 +40,7 @@ function shapeOf(e:Pick<Entity,'shape'|'text'|'yantraId'|'templateFrequency'|'te
  return {kind:'primitive',primitive:e.shape};
 }
 /** Layers are the object's spatial composition. Their depth rides the same unit law as every position: studio z (stage units) ⇄ native z (world px), like link z. */
-const toNativeLayers=(ls:Entity['layers']):NativeEntity['layers']|undefined=>ls?.length?ls.map(l=>({id:l.id,z:clamp(l.z,-100,100)*WORLD_SCALE,scale:l.scale,source:l.source?clone(l.source):undefined,shape:{kind:'glyph' as const,text:l.text.trim()||'O'}})):undefined;
+const toNativeLayers=(ls:Entity['layers'],entityId:string,parentRef:string|null):NativeEntity['layers']|undefined=>ls?.length?ls.map(l=>({id:l.id,sourceCoordinate:layerSourceCoordinate(entityId,l.id,parentRef),z:clamp(l.z,-100,100)*WORLD_SCALE,scale:l.scale,source:l.source?clone(l.source):undefined,shape:{kind:'glyph' as const,text:l.text.trim()||'O'}})):undefined;
 const fromNativeLayers=(ls:NativeEntity['layers']):Entity['layers']|undefined=>ls?.length?ls.map(l=>({id:l.id,z:clamp(l.z,-100*WORLD_SCALE,100*WORLD_SCALE)/WORLD_SCALE,scale:l.scale,source:l.source?clone(l.source):undefined,text:l.shape.text??'O'})):undefined;
 export function toNativeEntity(e:Entity,semanticAuthority=false):NativeEntity{
  const original=e.native;
@@ -50,11 +51,11 @@ export function toNativeEntity(e:Entity,semanticAuthority=false):NativeEntity{
  return {...original,id:e.id,name:e.name,kind:e.kind,enabled:e.enabled!==false,x:e.position.x*WORLD_SCALE,y:e.position.y*WORLD_SCALE,z:e.position.z*WORLD_SCALE,
   scale:e.scale??1,extent:{width:e.size.x*WORLD_SCALE,height:e.size.y*WORLD_SCALE,rotation:e.rotation*Math.PI/180,normalized:original?original.extent?.normalized??!!original.extent:true},
   share:e.kind==='pin'?0:e.share,shape:shapeOf(e,original?.shape),
-  layers:e.kind==='pin'?undefined:toNativeLayers(e.layers),
+  layers:e.kind==='pin'?undefined:toNativeLayers(e.layers,e.id,null),
   sequence:{...sequence,hold,transition,advance:e.sequence.enabled?(e.sequence.clock==='morph'?'morphCycle':'time'):'off',
-   links:e.kind==='pin'?[]:e.sequence.enabled||e.sequence.manual?e.sequence.steps.map(k=>({...k.native,id:k.id,name:k.name,layers:k.layers===undefined?undefined:toNativeLayers(k.layers)??[],source:k.source?clone(k.source):undefined,state:k.objectState?{scale:k.objectState.scale??1,extent:{width:k.objectState.size.x*WORLD_SCALE,height:k.objectState.size.y*WORLD_SCALE,rotation:k.objectState.rotation*Math.PI/180,normalized:k.objectState.normalized??true},tint:k.objectState.tint,tintWeight:k.objectState.tintWeight,forces:{mode:k.objectState.force.kind,strength:k.objectState.force.strength,radius:k.objectState.force.radius*WORLD_SCALE,spin:k.objectState.force.spin}}:undefined,shape:shapeOf(k,k.native?.shape),
+   links:e.kind==='pin'?[]:e.sequence.enabled||e.sequence.manual?e.sequence.steps.map(k=>({...k.native,id:k.id,sourceCoordinate:sequenceSourceCoordinate(e.id,k.id),name:k.name,layers:k.layers===undefined?undefined:toNativeLayers(k.layers,e.id,k.id)??[],source:k.source?clone(k.source):undefined,state:k.objectState?{scale:k.objectState.scale??1,extent:{width:k.objectState.size.x*WORLD_SCALE,height:k.objectState.size.y*WORLD_SCALE,rotation:k.objectState.rotation*Math.PI/180,normalized:k.objectState.normalized??true},tint:k.objectState.tint,tintWeight:k.objectState.tintWeight,forces:{mode:k.objectState.force.kind,strength:k.objectState.force.strength,radius:k.objectState.force.radius*WORLD_SCALE,spin:k.objectState.force.spin}}:undefined,shape:shapeOf(k,k.native?.shape),
     hold:k.holdOverride?k.hold:e.sequence.hold===undefined&&k.hold!==hold?k.hold:undefined,transition:k.transitionOverride?k.transition:e.sequence.transition===undefined&&k.transition!==transition?k.transition:undefined,
-    x:k.position?k.position.x*WORLD_SCALE:undefined,y:k.position?k.position.y*WORLD_SCALE:undefined,z:k.position?k.position.z*WORLD_SCALE:undefined})):[{id:e.id+'_base',source:e.source?clone(e.source):undefined,layers:toNativeLayers(e.layers),shape:shapeOf(e,original?.shape)}]},
+    x:k.position?k.position.x*WORLD_SCALE:undefined,y:k.position?k.position.y*WORLD_SCALE:undefined,z:k.position?k.position.z*WORLD_SCALE:undefined})):[{id:e.id+'_base',sourceCoordinate:entitySourceCoordinate(e.id),source:e.source?clone(e.source):undefined,layers:toNativeLayers(e.layers,e.id,null),shape:shapeOf(e,original?.shape)}]},
   forces:{...DEFAULT_FORCES,...original?.forces,mode:e.force.kind,strength:e.force.strength,radius:e.force.radius*WORLD_SCALE,spin:e.force.spin},
   authoringSource:e.sequence.enabled||e.sequence.manual?(stateSource(e,0)?clone(stateSource(e,0)):undefined):e.source?clone(e.source):undefined,
   tint:e.tint,tintWeight:e.tintWeight,stationIndex:semanticAuthority?original?.stationIndex:e.station??original?.stationIndex,
@@ -115,14 +116,27 @@ function projectNativeConfig(s:Scene):PointCloudConfig{
  }).filter((l):l is NativeLane=>!!l);
  return cfg;
 }
+/** Lossless native data may predate the authored coordinate annotation. Add only
+ * exact projected identity metadata; every original material/numeric/clock field stays. */
+function withAuthoredSourceCoordinates(config:PointCloudConfig,projected:PointCloudConfig):PointCloudConfig {
+ const expected=new Map(projected.entities?.map(e=>[e.id,e]));
+ return {...config,entities:config.entities?.map(e=>{
+  const authored=expected.get(e.id);if(!authored)return e;
+  const layers=(actual:NativeEntity['layers'],reading:NativeEntity['layers'])=>actual?.map(l=>{const matched=reading?.find(r=>r.id===l.id);return matched?.sourceCoordinate?{...l,sourceCoordinate:matched.sourceCoordinate}:l;});
+  return {...e,layers:layers(e.layers,authored.layers),sequence:{...e.sequence,links:e.sequence.links.map(link=>{
+   const matched=authored.sequence.links.find(k=>k.id===link.id);if(!matched)return link;
+   return {...link,sourceCoordinate:matched.sourceCoordinate,layers:layers(link.layers,matched.layers)};
+  })}};
+ })};
+}
 /** Lossless native documents: display defaults do not rewrite unedited native data. */
 export function toNativeConfig(s:Scene,correspondence?:KernelConversion):PointCloudConfig {
  const projected=projectNativeConfig(s);
- if(!s.native)return projectNativeEntityControls(s,applyBlueprintAnchors(s,projected),correspondence);
+ if(!s.native)return withAuthoredSourceCoordinates(projectNativeEntityControls(s,applyBlueprintAnchors(s,projected),correspondence),projected);
  // Earlier Expressions files have an original config but no projection baseline.
  // Recover that baseline without mutating the document or erasing authored edits.
  const baseline=s.native.projection??nativeSnapshotToJourney({schemaVersion:CONFIG_SCHEMA_VERSION,config:s.native.config}).scenes[0].native!.projection!;
- return projectNativeEntityControls(s,applyBlueprintAnchors(s,applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig),correspondence);
+ return withAuthoredSourceCoordinates(projectNativeEntityControls(s,applyBlueprintAnchors(s,applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig),correspondence),projected);
 }
 const shellShape=(s:NativeShape):Shape=>s.kind==='glyph'?'text':s.kind==='primitive'?s.primitive??'disc':s.kind;
 export function fromNativeEntity(e:NativeEntity):Entity{

@@ -190,6 +190,22 @@ return class RetainedProductionAdapter extends ProductionAdapter {
             authored_target_b: targetB.image.data.slice(),
           });
         },
+        /** Authored sample rest/layer basis, not a native FIELD/body admission. */
+        readAuthoredMaterialSnapshot(entityId) {
+          if (adapter.retained !== state || adapter.contextLost || state.recoveryRequired) throw new Error("Retained material inspection is unavailable during field recovery.");
+          const topology = this.readPartitionSnapshot();
+          const original = adapter.engine?.entities?.readAuthoredMaterialSnapshot(entityId);
+          const selected = topology.partitions.filter(row => row.entity_ref === entityId);
+          if (!original || original.schema !== "oi.authored-material-snapshot/v1" || original.standing !== "authored_material_basis_only" || selected.length !== 1 ||
+              original.entity_view_id !== entityId || original.start !== selected[0].start || original.end !== selected[0].end) throw new Error("The actual sampler does not match the selected retained partition.");
+          for (const [samples, all] of [[original.target_a, topology.authored_target_a], [original.target_b, topology.authored_target_b]]) {
+            if (!(samples instanceof Float32Array) || samples.length !== (original.end - original.start) * 4) throw new Error("The actual sampler allocation is incomplete.");
+            const bytes = new Uint8Array(samples.buffer, samples.byteOffset, samples.byteLength);
+            const expected = new Uint8Array(all.buffer, all.byteOffset + original.start * 16, samples.byteLength);
+            if (!bytes.every((value, index) => value === expected[index])) throw new Error("The authored material changed during retained inspection.");
+          }
+          return Object.freeze({ ...original, partition_signature: topology.partition_signature, scene_signature: topology.scene_signature });
+        },
         setTargetTextures(targetA, targetB, centre) {
           if (adapter.retained !== state || adapter.contextLost || state.recoveryRequired) throw new Error("Retained target write is unavailable during field recovery.");
           state.external = true;
