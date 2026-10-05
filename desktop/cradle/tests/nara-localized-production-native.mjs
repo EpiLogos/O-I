@@ -84,7 +84,7 @@ assert.equal((await native({operation:'open',source_ref:bindings[0].source_ref})
 }catch(error){await closeControlledExpression(moduleServer,bridge,ownedRef,output,'Preserved failed native modal setup');await moduleServer.close();throw error;}
 
 await writeFile(join(output,'native-exchanges.json'),JSON.stringify(exchanges,null,2));
-const files=['expressions-app/field-studies-journeys/src/naraFormField.ts','expressions-app/src/engine/formationGeometryProjection.ts','expressions-app/src/engine/entityRuntime.ts','expressions-app/field-studies-journeys/src/naraEvidenceField.ts','expressions-app/field-studies-journeys/src/native-field/entitySound.ts','expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts','expressions-app/src/engine/naraEvidenceProjection.ts','expressions-app/field-studies-journeys/src/production.ts','expressions-app/src/engine/PointCloudField.ts','expressions-app/src/engine/GPGPUSimulator.ts','expressions-app/src/engine/LocalizedResonanceBank.ts','expressions-app/src/engine/shaders/simulationShaders.ts'];
+const files=['expressions-app/field-studies-journeys/src/naraFormField.ts','expressions-app/src/engine/formationGeometryProjection.ts','expressions-app/src/engine/entityRuntime.ts','expressions-app/field-studies-journeys/src/naraEvidenceField.ts','expressions-app/field-studies-journeys/src/native-field/entitySound.ts','expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts','expressions-app/src/engine/naraEvidenceProjection.ts','expressions-app/field-studies-journeys/src/production.ts','expressions-app/src/engine/localizedResonanceProjection.ts','expressions-app/src/engine/PointCloudField.ts','expressions-app/src/engine/GPGPUSimulator.ts','expressions-app/src/engine/LocalizedResonanceBank.ts','expressions-app/src/engine/shaders/simulationShaders.ts'];
 const sources=Object.fromEntries(await Promise.all(files.map(async p=>[p,createHash('sha256').update(await readFile(p)).digest('hex')])));
 const code=`
 import {kernelDocumentToJourney} from './expressions-app/field-studies-journeys/src/kernelDocumentBridge';
@@ -135,7 +135,20 @@ window.measure=async({document,identities,currents,later,forms,activityCurrents}
   const positionDifference=diff(a.result.positions,b.result.positions),velocityDifference=diff(a.result.velocities,b.result.velocities);
   check(positionDifference>1e-5&&velocityDifference>1e-5,'Identity difference must pass through ProductionAdapter and PointCloudField to real GPU state');
   check(diff(a.result.positions,disconnected.result.positions)>1e-5,'Removing actual frame consumer must remove the identity effect');
-  check(a.result.localizedResonance.length===7&&b.result.localizedResonance.length===7,'All seven independent source-qualified drivers must reach the production engine');
+  for(const [run,identity] of [[a,identities[0]],[b,identities[1]]]){
+   const contributions=identity.reading.natal_composition.planetary_contributions,qualified=contributions.filter(row=>row.receiving_centre_ordinal!=null);
+   check(contributions.length===10&&qualified.length===9,'All ten owner contributions with only Uranus unallocated');
+   check(contributions.find(row=>row.body==='Uranus')?.receiving_centre_ordinal==null,'Uranus remains unallocated');
+   check(run.result.localizedResonance.length===qualified.length,'Every qualified native frequency reaches the production engine');
+   check(new Set(run.result.localizedResonance.map(row=>row.driverRef)).size===qualified.length,'Each native frequency retains an independent driver identity');
+   check(new Set(run.result.localizedResonance.map(row=>row.entityId)).size===7,'Nine independent drivers share the seven native centre targets');
+   const denominator=contributions.reduce((sum,row)=>sum+row.weighted_contribution,0);
+   for(const row of qualified){
+    const ref=JSON.stringify([identity.source.source_ref,row.native_planet_id]),driver=run.result.localizedResonance.find(value=>value.driverRef===ref);
+    check(driver?.frequencyHz===row.native_cousto_frequency_hz,'Driver retains the exact owner frequency');
+    check(Math.abs(driver.params.driveStrength-(native.cymatics.driveStrength??1)*row.weighted_contribution/denominator)<1e-10,'Driver retains weighted contribution over the all-ten denominator');
+   }
+  }
   check(a.result.localizedResonance.every(row=>row.re.some(value=>Math.abs(value)>0)), 'Every admitted driver must develop actual resident modes');
   check(a.result.localizedResonance.every((row,i,rows)=>i===0||diff(row.re,rows[0].re)>1e-8),'Local modes must be independently determined, not copied from one state');
   check(disconnected.result.localizedResonance.length===0,'Disconnect must release every private resident mode');
@@ -163,7 +176,7 @@ window.measure=async({document,identities,currents,later,forms,activityCurrents}
   for(const partition of partitions.filter(p=>p.entityId!==selectedEntity))check(diff(hingeA.positions.slice(partition.start*4,partition.end*4),hingeB.positions.slice(partition.start*4,partition.end*4))===0,'Other formation targets must remain unchanged');
   check(JSON.stringify(document)===original&&JSON.stringify(scene)===material,'Private presentation must preserve native document and retained material');
   check(gl.getError()===gl.NO_ERROR,'The real graphics context must report no error');
-  return {checks:23,activityPositionDifference,activityVelocityDifference,hingePositionDifference,gpu,positionDifference,velocityDifference,skyPositionDifference,skyVelocityDifference,localModes:a.result.localizedResonance,particleCount:a.result.particleCount,images:{a:a.image,b:b.image,changedSky:changedSky.image,disconnected:disconnected.image},medium:native.medium};
+  return {checks:29,activityPositionDifference,activityVelocityDifference,hingePositionDifference,gpu,positionDifference,velocityDifference,skyPositionDifference,skyVelocityDifference,localModes:a.result.localizedResonance,particleCount:a.result.particleCount,images:{a:a.image,b:b.image,changedSky:changedSky.image,disconnected:disconnected.image},medium:native.medium};
  }finally{engine.dispose();canvas.remove();}
 };
 const documentGlobal=window.document;

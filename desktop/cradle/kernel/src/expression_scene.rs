@@ -40,9 +40,10 @@ pub fn data(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Scene presentation nesting budget exceeded".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => return Err("Scene presentation number must be finite".into()),
         Value::Object(values) => {
             for (key, value) in values {
-                if ["__proto__", "constructor", "prototype"].contains(&key.as_str()) {
+                if ["__proto__", "constructor", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str()) {
                     return Err("Unsafe Scene presentation key".into());
                 }
                 if key == "dataUrl" {
@@ -117,6 +118,7 @@ pub fn validate(
         "propertyTracks",
         "pointerScope",
         "research",
+        "epiWorld",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
         return Err("Unsupported authoring Scene field; original input was not rewritten".into());
@@ -188,6 +190,45 @@ pub fn validate(
     for layer in presentation.scene["text"].as_array().unwrap() {
         role_slot(layer)?;
     }
+    if let Some(world) = material.get("epiWorld") {
+        // A retained native reading, never a replacement for the Scene or its
+        // reset material. Exact source authority is re-read on reception.
+        object(world, "Epi world reading")?;
+        if world["schema"] != "oi.epi-world-material/v1"
+            || world["world"]["schema"] != "oi.epi-portable-world/v1"
+            || world["world"]["instance_ref"] != document.expression_ref
+            || world["world"]["subject_ref"] != world["person_ref"]
+            || world["world"]["event_ref"] != world["world"]["snapshot_ref"]
+            || world["receiving"]["personal"]["canonical_locus"] != "ql:m-coordinate:bimba:M4.4.4.4"
+        {
+            return Err("Retained Epi world has a different native instance, person, occasion or personal locus".into());
+        }
+        validate_epi_portable_basis(world, document)?;
+        if let Some(policy) = world.get("current_material_policy") {
+            let policy = object(policy, "Retained Epi material policy")?;
+            if policy.len() != 3 || policy.keys().any(|key| !["schema", "material", "standing"].contains(&key.as_str()))
+                || policy["schema"] != "oi.epi-current-material-policy/v1"
+                || policy["standing"] != "declared-material-policy: no source table fixes presentation scale, damping, strike amplitude or output gain (QL-MEF #135)"
+            {
+                return Err("Retained Epi material policy lost its exact declared standing".into());
+            }
+            crate::native_expression::validate_scene_material(&policy["material"])?;
+        }
+        let locus = world["receiving"]["personal"]["locus_entity_ref"]
+            .as_str()
+            .ok_or("Retained Epi world has no personal locus occurrence")?;
+        if document
+            .entities
+            .get(locus)
+            .and_then(|e| e.subject.as_ref())
+            .map(|s| s.subject_ref.as_str())
+            != Some("ql:m-coordinate:bimba:M4.4.4.4")
+        {
+            return Err(
+                "Retained Epi world personal occurrence belongs to a different branch".into(),
+            );
+        }
+    }
     if let Some(research) = material.get("research") {
         validate_research(research, &identities)?;
     }
@@ -209,6 +250,118 @@ pub fn validate(
             &saved_scene,
             document,
         )?;
+    }
+    Ok(())
+}
+
+/// The retained carrier is explicitly different from a raw QL constructor
+/// result. Only the two compiled buffers are omitted; their qualification and
+/// the original source owners survive, and reception recompiles them natively.
+fn validate_epi_portable_basis(world: &Value, document: &Document) -> Result<(), String> {
+    let retained = &world["world"];
+    let receiving = &world["receiving"];
+    let source = &world["native_source"];
+    if receiving["expression_ref"] != document.expression_ref
+        || receiving["personal"]["instance_ref"] != document.expression_ref
+        || receiving["subject_ref"] != world["person_ref"]
+        || receiving["personal"]["person"]["ref"] != world["person_ref"]
+        || receiving["event_ref"] != retained["event_ref"]
+        || receiving["snapshot_ref"] != retained["snapshot_ref"]
+        || retained["sky"]["schema"] != "ql.sky-snapshot/v1"
+        || retained["sky"]["snapshot_ref"] != retained["snapshot_ref"]
+        || source["sky"] != retained["sky"]
+        || !retained["basis"].is_object()
+        || retained["basis"] != retained["binding"]["native_basis"]
+        || retained["event"] != retained["basis"]["input"]
+    {
+        return Err(
+            "Retained Epi portable basis lost its exact native person, instance, sky or event"
+                .into(),
+        );
+    }
+    let digest = |value: &Value| {
+        value.as_str().is_some_and(|s| {
+            s.len() == 64
+                && s.bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        })
+    };
+    let owners = retained["native_owner_sources"]
+        .as_array()
+        .ok_or("Retained Epi portable basis requires original native owner-role readings")?;
+    let source_owners = world["source_basis"]["native_owner_sources"]
+        .as_array()
+        .ok_or("Retained Epi portable basis lost its material source-owner readings")?;
+    let mut roles = BTreeSet::new();
+    for owner in owners {
+        let expected_source = match owner["role"].as_str() {
+            Some("constructor") => "crates/ql-mef/src/scene.rs",
+            Some("coupled") => "crates/ql-mef/src/continuous/coupled.rs",
+            Some("field") => "crates/ql-mef/src/continuous/scene_field.rs",
+            _ => return Err("Retained Epi portable basis has an unknown native owner role".into()),
+        };
+        let revision = owner["reading"]["revision"].as_str().unwrap_or("");
+        if !roles.insert(owner["role"].as_str().unwrap())
+            || owner["reading"]["ref"] != expected_source
+            || owner["reading"]["availability"] != "available"
+            || !source_owners.contains(&owner["reading"])
+            || !revision
+                .strip_prefix("sha256:")
+                .is_some_and(|s| digest(&Value::String(s.into())))
+        {
+            return Err(
+                "Retained Epi portable basis lost an exact original native owner source".into(),
+            );
+        }
+    }
+    if owners.len() != 3 || source_owners.len() != 3 {
+        return Err(
+            "Retained Epi portable basis requires all three original native owner roles".into(),
+        );
+    }
+    let reading = &source["world_ref"];
+    if source["schema"] != "oi.native-expression-composed-source/v1"
+        || source.get("world").is_some()
+        || reading["ref"] != format!("ql:scene-world:{}", document.expression_ref)
+        || reading["availability"] != "available"
+        || !digest(&reading["revision"])
+        || reading["revision"] != source["request_sha256"]
+        || !digest(&source["ql_executable_sha256"])
+    {
+        return Err(
+            "Retained Epi portable basis lost its exact native construction source receipt".into(),
+        );
+    }
+    let runtime = &world["runtime_buffers"];
+    if runtime["schema"] != "oi.epi-native-runtime-buffers/v1"
+        || runtime["policy"] != "native-owner-recompose"
+        || runtime["reading"] != *reading
+        || retained["binding"]["presentation"].get("slots_a").is_some()
+        || retained["binding"]["presentation"].get("slots_b").is_some()
+    {
+        return Err("Retained Epi portable basis requires native buffer recomposition from its exact reading".into());
+    }
+    let buffers = runtime["buffers"]
+        .as_array()
+        .ok_or("Retained Epi portable basis requires both native buffer qualifications")?;
+    let mut keys = BTreeSet::new();
+    for buffer in buffers {
+        let key = buffer["key"].as_str().unwrap_or("");
+        if !matches!(key, "slots_a" | "slots_b")
+            || !keys.insert(key)
+            || !buffer["values"].as_u64().is_some_and(|n| n > 0)
+            || !digest(&buffer["json_sha256"])
+        {
+            return Err(
+                "Retained Epi portable basis has a missing or damaged native buffer qualification"
+                    .into(),
+            );
+        }
+    }
+    if buffers.len() != 2 {
+        return Err(
+            "Retained Epi portable basis requires both native buffer qualifications".into(),
+        );
     }
     Ok(())
 }

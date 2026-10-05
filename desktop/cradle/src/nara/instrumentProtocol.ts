@@ -41,9 +41,17 @@ export interface InstrumentVoiceResult {
   audio?: {audio_base64: string; content_type: string; [key: string]: unknown};
   answer?: {text: string; answer_block_ids: number[]}; closed?: boolean;
 }
+export interface NativeExpressionAnswerReceipt {
+ schema:'oi.nara-expression-answer-receipt/v1';answer_ref:string;act_ref:string;expression_ref:string;
+ previous_revision:number;revision:number;scene_refs:string[];body_sha256:string;already:boolean;
+ state:'saved'|'native-kept-file-unconfirmed';file:{location:import('../kernel/location').CentralLocation;revision:string};error?:string;
+}
 export interface InstrumentReturnState {
   schema: 'oi.nara-instrument-return/v1'; review_ref: string;
   answer?: {text: string; question: string; block_ids: number[]; original_basis: Record<string, unknown>};
+  expression?:NativeExpressionAnswerReceipt;
+  expressions?:import('./nativeKeptAnswer').KeptAnswer[];
+  kept?:import('./nativeKeptAnswer').KeptAnswerReading;
   flows?: {ref: string; name: string}[];
   day?: {source_ref: string; document_id: string; revision: string; civil_date: string; fields: {id: string; label?: string}[]} | null;
   unavailable?: {flows?: string; day?: string};
@@ -53,6 +61,7 @@ export interface InstrumentReturnState {
 }
 export type NaraInstrumentRequest =
   | {operation: 'coordinate'; request: import('./coordinateExpression').CoordinateRequest}
+  | {operation: 'source'; coordinate_ref:string; inventory?:{offset:number;limit:number}}
   | {operation: 'identity'; request: NaraIdentityRequest}
   | {operation: 'select_identity'; source: IdentitySource; input_revision: string}
   | {operation: 'release_identity'}
@@ -62,8 +71,8 @@ export type NaraInstrumentRequest =
   | {operation: 'epii_accept'; basis: InstrumentBasis; role: 'epii'; answer_block_id: number; focus_ref: string}
   | {operation:'act_inspect';basis:InstrumentBasis;role:'nara';answer_block_id:number}
   | {operation:'act_status';basis:InstrumentBasis;role:'nara'}
-  | {operation:'current_pin';basis:InstrumentBasis;role:'nara';sky_request:import('./identity/types').SkyRequest}
-  | {operation:'current_read';basis:InstrumentBasis;role:'nara'}
+  | ({operation:'current_pin';basis:InstrumentBasis;role:'nara'} & import('./identity/types').NativePersonalSkySource)
+  | {operation:'current_read'|'current_restore';basis:InstrumentBasis;role:'nara'}
   | {operation:'readiness';basis:InstrumentBasis;role:'nara'}
   | {operation:'m3';basis:InstrumentBasis;role:'nara';request:import('./nativeM3').M3Gesture}
   | {operation:'act_focus';basis:InstrumentBasis;role:'nara';answer_block_id:number;target_ref:string}
@@ -72,6 +81,9 @@ export type NaraInstrumentRequest =
   | {operation: 'return_inspect'; basis: InstrumentBasis; role: DialogueRole; answer_block_id: number}
   | {operation: 'return_flow_read'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; flow_ref: string}
   | {operation: 'return_flow'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; flow_ref: string; expected_revision: string}
+  | {operation:'return_expression';basis:InstrumentBasis;role:DialogueRole;review_ref:string}
+  | {operation:'return_expression_list';basis:InstrumentBasis;role:DialogueRole}
+  | {operation:'return_expression_read';basis:InstrumentBasis;role:DialogueRole;answer_ref:string}
   | {operation: 'return_day'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; field_id: string}
   | {operation: 'voice'; basis: InstrumentBasis; role: 'nara'; request: InstrumentVoiceRequest};
 
@@ -89,4 +101,5 @@ export interface InstrumentInterruptionResult {
   cancellation_requested: boolean;
   voice_closed: boolean;
 }
-export type NaraInstrumentReply = import('./nativeM3').NativeM3Reading | import('./runtimeReadiness').RuntimeReadiness | import('./nativeCurrent').NativeCurrentReading | import('./nativeExpressiveAct').NativeActStatus | import('./nativeExpressiveAct').NativeActReview | import('./nativeExpressiveAct').NativeActEffect | import('./epiiTypes').NativeEpiiResult | import('./coordinateExpression').CoordinateExpressionResult | NaraIdentityResult | NaraInstrumentState | InstrumentReturnState | InstrumentVoiceResult | InstrumentInterruptionResult;
+export type NaraSourceReading = {schema:'ql.bimba-coordinate-content/v1'|'ql.bimba-inventory/v1';source_revision:string;registry_revision:string;[key:string]:unknown};
+export type NaraInstrumentReply = NaraSourceReading | import('./nativeM3').NativeM3Reading | import('./runtimeReadiness').RuntimeReadiness | import('./nativeCurrent').NativeCurrentReading | import('./nativeExpressiveAct').NativeActStatus | import('./nativeExpressiveAct').NativeActReview | import('./nativeExpressiveAct').NativeActEffect | import('./epiiTypes').NativeEpiiResult | import('./coordinateExpression').CoordinateExpressionResult | NaraIdentityResult | NaraInstrumentState | InstrumentReturnState | InstrumentVoiceResult | InstrumentInterruptionResult;

@@ -16,18 +16,67 @@ function textLayout(t, w, h) {
   const mobile = w < 761;
   const width = Math.min(t.width, w * (mobile ? 0.65 : w < 1051 ? 0.32 : 0.45));
   const size = mobile ? Math.min(36, t.size) : w < 1051 ? Math.min(38, t.size) : t.size;
-  return { x: t.x * w, y: t.y * h, width, size, kicker: mobile ? 7 : 8, kickerGap: mobile ? 18 : 25, titleGap: mobile ? 18 : 26, body: mobile ? 10 : 11 };
+  return { x: t.x * w, y: t.y * h, width, size, kicker: mobile ? 7 : 8, kickerGap: mobile ? 18 : 25, titleGap: mobile ? 18 : 26, body: typeof t.bodySize === "number" && Number.isFinite(t.bodySize) && t.bodySize >= 8 && t.bodySize <= 72 ? t.bodySize : mobile ? 10 : 11 };
+}
+function captureTextLayers(s) {
+  const pattern = /^(nara-answer-[a-f0-9]{64}):(primary|source)$/;
+  if (!s.text.some((t) => pattern.test(t.role ?? ""))) return s.text;
+  const first = s.text[0], match = first && pattern.exec(first.role ?? "");
+  if (!match || s.text.length > 16 || new Set(s.text.map((t) => t.id)).size !== s.text.length || s.text.some((t) => !t.visible || t.bodySize !== 18 || typeof t.body !== "string" || t.body.length > 5e3 || pattern.exec(t.role ?? "")?.[1] !== match[1]))
+    throw Error("The complete native answer capture cohort is unavailable.");
+  let primary = "", source = "", sourceStarted = false;
+  for (const t of s.text) {
+    const kind = pattern.exec(t.role)[2];
+    if (kind === "source") {
+      sourceStarted = true;
+      source += t.body;
+    } else {
+      if (sourceStarted) throw Error("The native answer capture order changed.");
+      primary += t.body;
+    }
+  }
+  const body = primary + (primary && source ? "\n\nSource Inspect \xB7 original native answer\n" : "") + source;
+  return [{ ...first, body }];
 }
 function wrap(ctx, value, width) {
-  const lines = [];
+  if (!Number.isFinite(width) || width <= 0) throw Error("The capture reading column has no finite positive width.");
+  const Segmenter = Intl.Segmenter;
+  if (!Segmenter) throw Error("Complete-grapheme capture wrapping is unavailable in this browser.");
+  const segmenter = new Segmenter(void 0, { granularity: "grapheme" }), lines = [];
+  const fits = (text) => {
+    const measured = ctx.measureText(text).width;
+    if (!Number.isFinite(measured)) throw Error("Capture text measurement is unavailable.");
+    return measured <= width;
+  };
   for (const para of value.split("\n")) {
+    const tokens = [];
+    for (const { segment } of segmenter.segment(para)) {
+      const space = /^\s/u.test(segment), last = tokens[tokens.length - 1];
+      if (last && last.space === space) last.text += segment;
+      else tokens.push({ text: segment, space });
+    }
     let line = "";
-    for (const word of para.split(" ")) {
-      const test = line ? line + " " + word : word;
-      if (line && ctx.measureText(test).width > width) {
+    for (const token of tokens) {
+      if (fits(line + token.text)) {
+        line += token.text;
+        continue;
+      }
+      if (line && !token.space) {
         lines.push(line);
-        line = word;
-      } else line = test;
+        line = "";
+      }
+      if (fits(line + token.text)) {
+        line += token.text;
+        continue;
+      }
+      for (const { segment } of segmenter.segment(token.text)) {
+        if (!fits(segment)) throw Error("A complete text grapheme exceeds the capture reading column. Widen it to retain the full text.");
+        if (line && !fits(line + segment)) {
+          lines.push(line);
+          line = "";
+        }
+        line += segment;
+      }
     }
     lines.push(line);
   }
@@ -35,7 +84,7 @@ function wrap(ctx, value, width) {
 }
 function paintText(ctx, s, w, h) {
   const col = s.field.palette[0];
-  for (const t of s.text) {
+  for (const t of captureTextLayers(s)) {
     if (!t.visible) continue;
     const l = textLayout(t, w, h);
     let y = l.y;
@@ -44,13 +93,15 @@ function paintText(ctx, s, w, h) {
     ctx.fillStyle = col;
     ctx.textBaseline = "top";
     ctx.textAlign = align;
-    ctx.globalAlpha = 0.65;
-    ctx.font = `${l.kicker}px Arial`;
-    if (align === "left") {
-      ctx.fillRect(l.x, y + 5, 18, 1);
-      ctx.fillText(t.kicker, anchor + 27, y);
-    } else ctx.fillText(t.kicker, anchor, y);
-    y += l.kicker * 1.5 + l.kickerGap;
+    if (t.kicker) {
+      ctx.globalAlpha = 0.65;
+      ctx.font = `${l.kicker}px Arial`;
+      if (align === "left") {
+        ctx.fillRect(l.x, y + 5, 18, 1);
+        ctx.fillText(t.kicker, anchor + 27, y);
+      } else ctx.fillText(t.kicker, anchor, y);
+      y += l.kicker * 1.5 + l.kickerGap;
+    }
     ctx.globalAlpha = 1;
     ctx.font = `${l.size}px Georgia`;
     if ("letterSpacing" in ctx) ctx.letterSpacing = `${-l.size * 0.054}px`;
@@ -67,9 +118,10 @@ function paintText(ctx, s, w, h) {
     }
     y += l.titleGap;
     if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+    const bodyWidth = typeof t.bodySize === "number" && Number.isFinite(t.bodySize) && t.bodySize >= 8 && t.bodySize <= 72 ? l.width : Math.min(l.width, 230);
     ctx.font = `${l.body}px Arial`;
     ctx.globalAlpha = 0.65;
-    for (const line of wrap(ctx, t.body, Math.min(l.width, 230))) {
+    for (const line of wrap(ctx, t.body, bodyWidth)) {
       ctx.fillText(line, anchor, y);
       y += l.body * 1.85;
     }
@@ -225,6 +277,7 @@ class LiveRecorder {
 }
 export {
   LiveRecorder,
+  captureTextLayers,
   createOutput,
   defaultCapture,
   download,
@@ -233,5 +286,6 @@ export {
   paintText,
   png,
   slug,
-  textLayout
+  textLayout,
+  wrap
 };

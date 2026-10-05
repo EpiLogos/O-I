@@ -16,7 +16,7 @@ mod app_assets;
 mod walk_diagnostics;
 use std::sync::Mutex;
 
-use oi_cradle_kernel::events::{KernelEventReceipt, KERNEL_EVENT_TOPIC};
+use oi_cradle_kernel::events::KERNEL_EVENT_TOPIC;
 use oi_cradle_kernel::{Kernel, KernelOp, KernelOpOutcome};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
@@ -27,15 +27,36 @@ struct NativeOwnerServer {
     _server: Mutex<oi_cradle_kernel::expression_transport::Server>,
 }
 
+/// A bounded wake-up hint. Exact event payloads are pulled through native
+/// generation-qualified replay, rather than copied into every webview IPC.
+#[derive(Clone, serde::Serialize)]
+pub(crate) struct KernelEventInvalidation {
+    schema: &'static str,
+    seq: u64,
+}
+
+pub(crate) fn kernel_event_hint(receipt: &oi_cradle_kernel::events::KernelEventReceipt) -> KernelEventInvalidation {
+    kernel_event_hint_sequence(receipt.seq)
+}
+
+fn kernel_event_hint_sequence(seq: u64) -> KernelEventInvalidation {
+    KernelEventInvalidation { schema: "oi.kernel-event-invalidation/v1", seq }
+}
+
 /// The one typed operation seam: apply a `KernelOp` and return its
-/// outcome; every receipt the operation produced is forwarded on the
-/// kernel event topic (one event per state change, exactly as the kernel
-/// recorded it).
+/// outcome; bounded replay retains receipts or declares a gap for owner
+/// rereading, and a bounded hint wakes the generation-qualified page reader.
+fn parse_kernel_op(op_json: &str) -> Result<KernelOp, String> {
+    oi_cradle_kernel::expression_file::read_native_json(op_json.as_bytes())
+        .map_err(|error| format!("unreadable op: {error}"))
+}
+
 #[tauri::command]
-async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
+async fn kernel_op(app: AppHandle, op_json: String) -> Result<KernelOpOutcome, String> {
     // Native owner reads may scan a large World. Keep them off the UI thread;
     // the kernel mutex still serialises mutations and event order.
     tauri::async_runtime::spawn_blocking(move || {
+        let op = parse_kernel_op(&op_json)?;
         if let KernelOp::ExpressionRecovery { request } = op {
             return oi_cradle_kernel::expression_recovery::execute(request);
         }
@@ -47,7 +68,7 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         if let Some(prepared) = epii {
             let completed = prepared.execute()?;
             let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(receipt)); }
             return Ok(outcome);
         }
         let voice = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_voice(&op)?;
@@ -55,7 +76,7 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         if let Some(prepared) = act {
             let completed = prepared.execute()?;
             let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(receipt)); }
             return Ok(outcome);
         }
         let presence=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_presence(&op)?;
@@ -121,7 +142,7 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } = &receipt.envelope.event {
                 apply_native_appearance(&app, &theme.appearance);
             }
-            let _ = app.emit(KERNEL_EVENT_TOPIC, &receipt);
+            let _ = app.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(&receipt));
         }
         Ok(outcome)
     }).await.map_err(|e| e.to_string())?
@@ -139,7 +160,7 @@ async fn decision_episode_authorise(app: AppHandle, window: tauri::WebviewWindow
             .buttons(MessageDialogButtons::OkCancelCustom("Allow this episode".into(), "Cancel".into())).blocking_show();
         if !approved {return Err("Decision episode was not authorised".into());}
         let outcome=host.0.lock().map_err(|_| "kernel lock unavailable")?.authorise_decision(&preflight_ref)?;
-        for receipt in &outcome.receipts {let _=app.emit(KERNEL_EVENT_TOPIC,receipt);}
+        for receipt in &outcome.receipts {let _=app.emit(KERNEL_EVENT_TOPIC,kernel_event_hint(receipt));}
         Ok(outcome)
     }).await.map_err(|error|error.to_string())?
 }
@@ -148,14 +169,14 @@ async fn decision_episode_authorise(app: AppHandle, window: tauri::WebviewWindow
 /// command the renderer bootstraps from and re-syncs through; the topic
 /// event is the push that says "look again".
 #[tauri::command]
-async fn kernel_event_log(app: AppHandle, since_seq: u64) -> Result<Vec<KernelEventReceipt>, String> {
+async fn kernel_event_log(app: AppHandle, generation: Option<String>, cursor: u64, limit: usize) -> Result<oi_cradle_kernel::events::KernelEventReplay, String> {
     // An owner read can hold this mutex for seconds. Waiting on the main
     // thread freezes WebKit and native window interaction, even though
     // kernel_op itself correctly runs on the blocking pool.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
         let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
-        Ok(kernel.event_log().since(since_seq.max(1)).to_vec())
+        Ok(kernel.event_log().replay(generation.as_deref(), cursor, limit))
     }).await.map_err(|error| error.to_string())?
 }
 
@@ -225,7 +246,12 @@ fn main() {
                         )?;
                         if let Some(receipts) = value["outcome"]["receipts"].as_array() {
                             for receipt in receipts {
-                                let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt);
+                                // The native owner already recorded this exact receipt.
+                                // Push only its bounded invalidation hint; replay owns
+                                // payload delivery and explicit oversized gaps.
+                                let seq = receipt["seq"].as_u64()
+                                    .ok_or("Native owner receipt has no qualified sequence")?;
+                                let _ = handle.emit(KERNEL_EVENT_TOPIC, kernel_event_hint_sequence(seq));
                             }
                         }
                         Ok(value)
@@ -250,7 +276,7 @@ fn main() {
                         oi_cradle_kernel::expression_transport::Request::World(request) => KernelOp::ExpressionWorld { request },
                     };
                     let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.apply(op)?;
-                    for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt); }
+                    for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(receipt)); }
                     serde_json::to_value(outcome).map_err(|e| e.to_string())
                 }) {
                     Ok(server) => { app.manage(Mutex::new(server)); eprintln!("Expression application: {}", path.display()); }
@@ -273,4 +299,49 @@ fn main() {
         .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,working_surface_lease::working_surface_takeover,working_surface_lease::working_surface_client_poll,working_surface_lease::working_surface_client_input,working_surface_lease::working_surface_client_resize,working_surface_lease::working_surface_release,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, decision_episode_authorise, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_redock_surface, windows::window_focus_subject, windows::window_focus_main])
         .run(context)
         .expect("error while running the cradle");
+}
+
+#[cfg(test)]
+mod event_hint_tests {
+    use super::kernel_event_hint;
+    use oi_cradle_kernel::events::{KernelEvent, KernelEventLog};
+
+    #[test]
+    fn kernel_event_invalidation_bounds_actual_oversized_native_receipt() {
+        let mut log = KernelEventLog::new();
+        let receipt = log.record(KernelEvent::SurfaceChanged {
+            surface_id: "native-topic-size".to_owned(),
+            surface_ref: None,
+            summary: "large actual native payload".repeat(16384),
+        });
+        assert!(serde_json::to_vec(&receipt).unwrap().len() > 256 * 1024);
+        let hint = serde_json::to_value(kernel_event_hint(&receipt)).unwrap();
+        assert_eq!(hint, serde_json::json!({
+            "schema": "oi.kernel-event-invalidation/v1", "seq": 1
+        }));
+        assert!(serde_json::to_vec(&hint).unwrap().len() < 128);
+        // Native replay preserves the truth of a missed oversized event.
+        let page = log.replay(None, 1, 128);
+        assert!(page.resync_required);
+        assert!(page.receipts.is_empty());
+        assert_eq!(page.next_seq, receipt.seq + 1);
+    }
+}
+
+
+#[cfg(test)]
+mod native_op_carrier_tests {
+    use super::parse_kernel_op;
+    #[test]
+    fn original_json_string_reaches_actual_command_parser_without_private_map_coercion() {
+        for value in ["1e400", r#"{"$serde_json::private::Number":"10"}"#, r#"{"$serde_json::private::RawValue":"10"}"#] {
+            let raw = format!(r#"{{"op":"expression","request":{{"operation":"edit","expression_ref":"expression:carrier","expected_revision":1,"actor":"human:controlled","changes":[{{"change":"parameter_set","entity_ref":"expression:carrier:entity:one","parameter":"x","value":{value}}}]}}}}"#);
+            let invoke = serde_json::to_vec(&serde_json::json!({"opJson":raw})).unwrap();
+            let envelope: serde_json::Value = serde_json::from_slice(&invoke).unwrap();
+            assert_eq!(envelope["opJson"].as_str(), Some(raw.as_str()));
+            assert!(parse_kernel_op(envelope["opJson"].as_str().unwrap()).is_err());
+        }
+        assert!(parse_kernel_op(r#"{"op":"expression","request":{"operation":"list"}}"#).is_ok());
+        assert!(parse_kernel_op(r#"{"op":"expression","\u006fp":"expression","request":{"operation":"list"}}"#).is_err());
+    }
 }

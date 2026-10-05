@@ -24,6 +24,8 @@
 use crate::focus::{FocusRefError, GlobalFocus};
 use crate::refs::SemanticRef;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
+use std::sync::atomic::Ordering;
 
 /// Schema of the event envelope the desktop host forwards to the renderer.
 pub const KERNEL_EVENT_SCHEMA: &str = "oi.kernel-event/v1";
@@ -38,6 +40,51 @@ pub const KERNEL_EVENT_VERSION: u32 = 1;
 /// kernel truth is pulled through the read models — events only trigger the
 /// re-render.
 pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
+pub const KERNEL_EVENT_REPLAY_SCHEMA: &str = "oi.kernel-event-replay/v1";
+pub const DEFAULT_EVENT_REPLAY_COUNT: usize = 1024;
+pub const DEFAULT_EVENT_REPLAY_BYTES: usize = 4 * 1024 * 1024;
+pub const MAX_EVENT_REPLAY_RECEIPT_BYTES: usize = 256 * 1024;
+pub const MAX_EVENT_REPLAY_PAGE_COUNT: usize = 128;
+pub const MAX_EVENT_REPLAY_PAGE_BYTES: usize = 512 * 1024;
+const EVENT_REPLAY_PAGE_METADATA_RESERVE_BYTES: usize = 512;
+static EVENT_LOG_FALLBACK_GENERATION: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+struct ByteCounter(usize);
+
+impl std::io::Write for ByteCounter {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0 = self.0.saturating_add(bytes.len());
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn serialized_len<T: Serialize>(value: &T) -> Result<usize, serde_json::Error> {
+    let mut counter = ByteCounter(0);
+    serde_json::to_writer(&mut counter, value)?;
+    Ok(counter.0)
+}
+
+fn new_event_log_generation() -> String {
+    let mut random = [0u8; 16];
+    if getrandom::fill(&mut random).is_ok() {
+        return random.iter().map(|byte| format!("{byte:02x}")).collect();
+    }
+
+    // Entropy may be unavailable in constrained hosts. Preserve distinct log
+    // generations within this process and make a process restart unlikely to
+    // reuse one, without disclosing a source, owner, or session identifier.
+    let instance = EVENT_LOG_FALLBACK_GENERATION.fetch_add(1, Ordering::Relaxed);
+    let time = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    format!("fallback-{}-{time}-{instance}", std::process::id())
+}
 
 /// One typed kernel event (02 §5), for a state change U0.4's kernel
 /// actually produces. Each variant names the exact refs that changed; the
@@ -453,8 +500,8 @@ impl From<FocusRefError> for String {
 // ---------------------------------------------------------------------------
 
 /// One event as observed on the seam: a monotonic sequence number beside
-/// the envelope. `seq` starts at 1, never repeats, and never gaps — the
-/// order the kernel changed state is the order the log carries.
+/// the envelope. `seq` starts at 1 and never repeats, even when retention
+/// evicts a receipt or an oversized live receipt cannot be retained.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct KernelEventReceipt {
     pub seq: u64,
@@ -462,37 +509,157 @@ pub struct KernelEventReceipt {
     pub envelope: KernelEventEnvelope,
 }
 
-/// The ordered kernel event log. Every kernel state change is recorded
-/// exactly once; `record` is the single assignment point for `seq`, so no
-/// emission path can duplicate or reorder.
-#[derive(Clone, Debug, Default)]
+/// Bounded replay result. A resync response carries no receipts: the consumer
+/// must rebuild its presentation input from stable read models.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct KernelEventReplay {
+    pub schema: String,
+    pub generation: String,
+    pub oldest_seq: Option<u64>,
+    pub latest_seq: u64,
+    pub next_seq: u64,
+    pub resync_required: bool,
+    pub has_more: bool,
+    pub receipts: Vec<KernelEventReceipt>,
+}
+
+/// The ordered kernel event log. Sequence assignment is independent of
+/// retention; this log describes only ephemeral kernel disclosure history.
+#[derive(Clone, Debug)]
 pub struct KernelEventLog {
-    entries: Vec<KernelEventReceipt>,
+    generation: String,
+    entries: VecDeque<(KernelEventReceipt, usize)>,
+    retained_bytes: usize,
+    next_seq: u64,
+    latest_gap_seq: Option<u64>,
+    max_count: usize,
+    max_bytes: usize,
 }
 
 impl KernelEventLog {
     pub fn new() -> Self {
-        Self::default()
+        Self::with_limits(DEFAULT_EVENT_REPLAY_COUNT, DEFAULT_EVENT_REPLAY_BYTES)
+    }
+
+    fn with_limits(max_count: usize, max_bytes: usize) -> Self {
+        Self {
+            generation: new_event_log_generation(),
+            entries: VecDeque::new(),
+            retained_bytes: 0,
+            next_seq: 1,
+            latest_gap_seq: None,
+            max_count,
+            max_bytes,
+        }
     }
 
     /// Record one state change, assigning the next seq. Returns the receipt
     /// the operation hands back and the host forwards on the topic.
     pub fn record(&mut self, event: KernelEvent) -> KernelEventReceipt {
-        let seq = self.entries.len() as u64 + 1;
+        let seq = self.next_seq;
+        self.next_seq = self.next_seq.saturating_add(1);
         let receipt = KernelEventReceipt {
             seq,
             envelope: KernelEventEnvelope::new(event),
         };
-        self.entries.push(receipt.clone());
+        let size = serialized_len(&receipt).unwrap_or(usize::MAX);
+        if size > MAX_EVENT_REPLAY_RECEIPT_BYTES || size > self.max_bytes || self.max_count == 0 {
+            self.latest_gap_seq = Some(seq);
+            return receipt;
+        }
+        while self.entries.len() >= self.max_count
+            || self.retained_bytes.saturating_add(size) > self.max_bytes
+        {
+            if let Some((_, removed_size)) = self.entries.pop_front() {
+                self.retained_bytes = self.retained_bytes.saturating_sub(removed_size);
+            } else {
+                break;
+            }
+        }
+        self.retained_bytes += size;
+        self.entries.push_back((receipt.clone(), size));
         receipt
     }
 
     /// All receipts at or after `since_seq` (a cursor the renderer holds).
-    pub fn since(&self, since_seq: u64) -> &[KernelEventReceipt] {
-        let start = self
-            .entries
-            .partition_point(|entry| entry.seq < since_seq.max(1));
-        &self.entries[start..]
+    pub fn since(&self, since_seq: u64) -> Vec<KernelEventReceipt> {
+        // Kept only for in-process legacy readers. New replay consumers must
+        // use `replay`, which reports gaps and generation changes explicitly.
+        self.entries
+            .iter()
+            .filter(|(entry, _)| entry.seq >= since_seq.max(1))
+            .map(|(entry, _)| entry.clone())
+            .collect()
+    }
+
+    pub fn replay(
+        &self,
+        generation: Option<&str>,
+        cursor: u64,
+        requested_limit: usize,
+    ) -> KernelEventReplay {
+        let oldest_seq = self.entries.front().map(|(entry, _)| entry.seq);
+        let latest_seq = self.next_seq.saturating_sub(1);
+        let invalid_cursor = cursor == 0 || cursor > self.next_seq;
+        let unqualified_continuation = generation.is_none() && cursor > 1;
+        let cursor = cursor.max(1);
+        let wrong_generation = generation.is_some_and(|value| value != self.generation);
+        let expired = oldest_seq.is_some_and(|oldest| cursor < oldest);
+        let crossed_gap = self.latest_gap_seq.is_some_and(|gap| cursor <= gap);
+        let mut resync_required = invalid_cursor
+            || unqualified_continuation
+            || wrong_generation
+            || expired
+            || crossed_gap;
+        let count_limit = requested_limit.clamp(1, MAX_EVENT_REPLAY_PAGE_COUNT);
+        let mut receipts = Vec::new();
+        let mut page_bytes = 0usize;
+        let mut next_seq = cursor;
+        if !resync_required {
+            for (receipt, size) in self
+                .entries
+                .iter()
+                .filter(|(receipt, _)| receipt.seq >= cursor)
+            {
+                if receipts.len() >= count_limit
+                    || page_bytes
+                        .saturating_add(*size)
+                        .saturating_add(EVENT_REPLAY_PAGE_METADATA_RESERVE_BYTES)
+                        > MAX_EVENT_REPLAY_PAGE_BYTES
+                {
+                    break;
+                }
+                // A missing sequence inside the page is a discontinuity.
+                if receipt.seq != next_seq {
+                    resync_required = true;
+                    receipts.clear();
+                    next_seq = cursor;
+                    break;
+                }
+                page_bytes += *size;
+                receipts.push(receipt.clone());
+                next_seq = receipt.seq.saturating_add(1);
+            }
+        }
+        if resync_required {
+            receipts.clear();
+            next_seq = latest_seq.saturating_add(1);
+        }
+        let has_more = !resync_required
+            && self
+                .entries
+                .iter()
+                .any(|(receipt, _)| receipt.seq == next_seq);
+        KernelEventReplay {
+            schema: KERNEL_EVENT_REPLAY_SCHEMA.to_owned(),
+            generation: self.generation.clone(),
+            oldest_seq,
+            latest_seq,
+            next_seq,
+            resync_required,
+            has_more,
+            receipts,
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -503,13 +670,19 @@ impl KernelEventLog {
         self.entries.is_empty()
     }
 
-    /// The log's ordering law, checkable by tests and walks: seqs are
-    /// strictly monotonic from 1 with no gaps.
+    /// Retained receipts stay strictly monotonic, though eviction and
+    /// oversized events may leave gaps in the retained sequence.
     pub fn seq_is_ordered(&self) -> bool {
         self.entries
             .iter()
-            .enumerate()
-            .all(|(index, entry)| entry.seq == index as u64 + 1)
+            .zip(self.entries.iter().skip(1))
+            .all(|((left, _), (right, _))| left.seq < right.seq)
+    }
+}
+
+impl Default for KernelEventLog {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -688,5 +861,172 @@ mod tests {
         assert_eq!(log.since(4).len(), 2);
         assert_eq!(log.since(6).len(), 0);
         assert!(log.seq_is_ordered());
+    }
+
+    #[test]
+    fn old_unbounded_vec_regression_is_bounded_by_count_and_sequences_keep_advancing() {
+        // The former Vec retained every receipt. This deliberately records
+        // beyond the configured count and verifies that replay exposes the
+        // loss instead of pretending the history is complete.
+        let mut log = KernelEventLog::with_limits(2, DEFAULT_EVENT_REPLAY_BYTES);
+        let first = log.record(focus_changed());
+        log.record(focus_changed());
+        let third = log.record(focus_changed());
+        assert_eq!((first.seq, third.seq), (1, 3));
+        assert_eq!(log.len(), 2);
+        let replay = log.replay(Some(&log.generation), 1, 128);
+        assert!(replay.resync_required);
+        assert!(replay.receipts.is_empty());
+        assert_eq!(replay.oldest_seq, Some(2));
+        let continued = log.record(focus_changed());
+        assert_eq!(continued.seq, 4);
+        assert!(log.seq_is_ordered());
+    }
+
+    #[test]
+    fn byte_eviction_removes_oldest_receipts_without_resetting_sequence() {
+        let sample = KernelEventReceipt {
+            seq: 1,
+            envelope: KernelEventEnvelope::new(focus_changed()),
+        };
+        let receipt_bytes = serde_json::to_vec(&sample).unwrap().len();
+        let mut log = KernelEventLog::with_limits(10, receipt_bytes * 2);
+        for _ in 0..3 {
+            log.record(focus_changed());
+        }
+        assert_eq!(log.len(), 2);
+        assert!(log.retained_bytes <= receipt_bytes * 2);
+        let replay = log.replay(Some(&log.generation), 1, 128);
+        assert!(replay.resync_required);
+        assert_eq!(replay.oldest_seq, Some(2));
+        assert_eq!(log.record(focus_changed()).seq, 4);
+    }
+
+    #[test]
+    fn non_allocating_serialized_length_matches_a_bounded_encoded_sample() {
+        let receipt = KernelEventReceipt {
+            seq: 7,
+            envelope: KernelEventEnvelope::new(focus_changed()),
+        };
+        let encoded = serde_json::to_vec(&receipt).unwrap();
+        assert!(encoded.len() < 4096);
+        assert_eq!(serialized_len(&receipt).unwrap(), encoded.len());
+    }
+
+    #[test]
+    fn current_generation_bootstraps_an_empty_log_without_resync() {
+        let log = KernelEventLog::new();
+        let replay = log.replay(Some(&log.generation), 1, 128);
+        assert_eq!(replay.schema, KERNEL_EVENT_REPLAY_SCHEMA);
+        assert!(!replay.resync_required);
+        assert!(!replay.has_more);
+        assert_eq!(replay.oldest_seq, None);
+        assert_eq!(replay.latest_seq, 0);
+        assert_eq!(replay.next_seq, 1);
+        assert!(replay.receipts.is_empty());
+    }
+
+    #[test]
+    fn wrong_generation_and_expired_cursor_require_resync_without_receipts() {
+        let mut log = KernelEventLog::with_limits(2, DEFAULT_EVENT_REPLAY_BYTES);
+        for _ in 0..3 {
+            log.record(focus_changed());
+        }
+        let wrong_generation = log.replay(Some("another-kernel"), 2, 128);
+        assert!(wrong_generation.resync_required);
+        assert!(wrong_generation.receipts.is_empty());
+        assert_eq!(wrong_generation.next_seq, 4);
+
+        let expired = log.replay(Some(&log.generation), 1, 128);
+        assert!(expired.resync_required);
+        assert!(expired.receipts.is_empty());
+        assert_eq!(expired.next_seq, 4);
+    }
+
+    #[test]
+    fn future_zero_and_generationless_continuations_require_current_read_models() {
+        let mut log = KernelEventLog::new();
+        log.record(focus_changed());
+        for (generation, cursor) in [
+            (Some(log.generation.as_str()), 0),
+            (Some(log.generation.as_str()), 3),
+            (Some(log.generation.as_str()), u64::MAX),
+            (None, 2),
+        ] {
+            let replay = log.replay(generation, cursor, 128);
+            assert!(replay.resync_required);
+            assert!(replay.receipts.is_empty());
+            assert_eq!(replay.next_seq, 2);
+        }
+        let bootstrap = log.replay(None, 1, 128);
+        assert!(!bootstrap.resync_required);
+        assert_eq!(bootstrap.receipts.len(), 1);
+        let caught_up = log.replay(Some(&log.generation), 2, 128);
+        assert!(!caught_up.resync_required);
+        assert!(caught_up.receipts.is_empty());
+    }
+
+    #[test]
+    fn oversized_live_receipt_is_returned_but_never_retained_and_marks_a_gap() {
+        let mut log = KernelEventLog::new();
+        let live = log.record(KernelEvent::WorldChanged {
+            summary: "x".repeat(MAX_EVENT_REPLAY_RECEIPT_BYTES + 1),
+        });
+        assert_eq!(live.seq, 1);
+        assert_eq!(log.len(), 0);
+        let replay = log.replay(Some(&log.generation), 1, 128);
+        assert!(replay.resync_required);
+        assert!(replay.receipts.is_empty());
+        assert_eq!(replay.latest_seq, 1);
+        assert_eq!(replay.next_seq, 2);
+    }
+
+    #[test]
+    fn replay_pages_obey_count_and_encoded_byte_limits() {
+        let mut log = KernelEventLog::new();
+        for _ in 0..140 {
+            log.record(focus_changed());
+        }
+        let count_page = log.replay(Some(&log.generation), 1, usize::MAX);
+        assert_eq!(count_page.receipts.len(), MAX_EVENT_REPLAY_PAGE_COUNT);
+        assert_eq!(count_page.next_seq, 129);
+        assert!(count_page.has_more);
+
+        let mut byte_log = KernelEventLog::new();
+        for _ in 0..32 {
+            byte_log.record(KernelEvent::WorldChanged {
+                summary: "x".repeat(24 * 1024),
+            });
+        }
+        let byte_page = byte_log.replay(Some(&byte_log.generation), 1, 128);
+        let encoded_size = byte_page
+            .receipts
+            .iter()
+            .map(|receipt| serde_json::to_vec(receipt).unwrap().len())
+            .sum::<usize>();
+        assert!(byte_page.receipts.len() < 32);
+        assert!(encoded_size <= MAX_EVENT_REPLAY_PAGE_BYTES);
+        assert!(serde_json::to_vec(&byte_page).unwrap().len() <= MAX_EVENT_REPLAY_PAGE_BYTES);
+        assert_eq!(
+            byte_page.next_seq,
+            byte_page.receipts.last().unwrap().seq + 1
+        );
+    }
+
+    #[test]
+    fn replay_page_continues_only_when_a_contiguous_retained_receipt_follows() {
+        let mut log = KernelEventLog::new();
+        for _ in 0..3 {
+            log.record(focus_changed());
+        }
+        let first = log.replay(Some(&log.generation), 1, 2);
+        assert_eq!(first.receipts.len(), 2);
+        assert_eq!(first.next_seq, 3);
+        assert!(first.has_more);
+
+        let last = log.replay(Some(&first.generation), first.next_seq, 2);
+        assert_eq!(last.receipts.len(), 1);
+        assert_eq!(last.next_seq, 4);
+        assert!(!last.has_more);
     }
 }

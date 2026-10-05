@@ -4,7 +4,8 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
-import {NativeWorking,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
+import {sameSceneData} from './sceneCorrespondence.js';
+import {NativeWorking,nativeOwnerSnapshot,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
 import {readWorkingCheckpoint,readWorkingDraft,writeWorkingCheckpoint,writeDraft} from './recovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
@@ -15,6 +16,7 @@ import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 import {refreshStep,hasLocalEdits,performedByLiveAct,retainedDraftId} from './nativeFollow.js';
 import {worldAvailable,worldRequest} from './worldChannel.js';
+export type NativeFileOpenBasis=Pick<NativeFile,'location'|'revision'|'expression_ref'>;
 
 /** The exact native work a summon carries to the cradle's verso account —
  * refs only, the pointer to the Expression / Scene / entity-or-relation
@@ -51,7 +53,7 @@ export interface NativeStatus {
  text:string;failed:boolean;busy:boolean;
  identity:{ref:string;title:string;revision:number}|null;
  pending:string|null;retryOpen:boolean;
- file:{path:string;revision:string|number}|null;
+ file:{path:string;revision:string|number;document_revision?:number}|null;
  page:{page:number;count:number;shown:number;total:number;hidden:number}|null;
 }
 /** Capture the visible draft and navigation generation before any owner read.
@@ -68,15 +70,17 @@ export function captureNativeAdoption(host:Pick<NativeWorkspaceHost,'snapshot'|'
  * open captured concurrently (e.g. a click landing mid-boot) must not be
  * refused by boot's own bookkeeping — an untouched boot canvas is not
  * authored work (see `awaitingNativeBoot`/`shouldRetainDraft` in app.ts).
- * Exported standalone so this sequencing is covered by a plain unit test. */
-export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
- const first=!state.booted;state.booted=true;return !first;
+ * The explicit initialising argument distinguishes boot from a first ordinary
+ * switch when boot was already superseded. The absent argument retains the
+ * first-call classifier used by existing standalone source checks. */
+export function isGenuineWorkspaceSwitch(state:{booted:boolean},initialising?:boolean):boolean{
+ const first=!state.booted;state.booted=true;return initialising===undefined?!first:!initialising;
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const scope=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
   checkpoint:(id,value)=>writeWorkingCheckpoint(id,value,scope),mint:()=>`expression:authored-${crypto.randomUUID()}`});
- let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
+ let busy=false,notice='',lastFailure=false,restoreGeneration=0,intentGeneration=0;const bootState={booted:false};
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
  const status=(text:string)=>{notice=text;update();};
@@ -87,14 +91,14 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   host.status?.({text:notice,failed:lastFailure,busy,
    identity:doc?{ref:doc.expression_ref,title:doc.title,revision:doc.revision}:null,
    pending:state?.pending?.kind??null,retryOpen:!!opens?.reference,
-   file:state?.file?{path:state.file.location.path,revision:state.file.revision}:null,
+   file:state?.file?{path:state.file.location.path,revision:state.file.revision,document_revision:state.file.document_revision}:null,
    page:binding?{page:binding.page,count:binding.page_count,shown:binding.occurrences.length,total:binding.member_refs.length,hidden:binding.hidden_refs.length}:null});
  };
- const run=async(task:()=>Promise<void>):Promise<boolean>=>{
+ const run=async(task:()=>Promise<void>,reportCurrent:()=>boolean=()=>true):Promise<boolean>=>{
   if(busy)return false;busy=true;
   let releaseOwner!:()=>void;ownerIdle=new Promise<void>(resolve=>{releaseOwner=resolve;});
   lastFailure=false;update();status('Reading or saving through the native owner…');
-  try{await task();return true;}catch(error){lastFailure=true;status(error instanceof Error?error.message:String(error));host.toast(notice,7000);return false;}
+  try{await task();return true;}catch(error){if(reportCurrent()){lastFailure=true;status(error instanceof Error?error.message:String(error));host.toast(notice,7000);}return false;}
   finally{busy=false;releaseOwner();update();selections.resume();}
  };
  const mutate=async(task:()=>Promise<void>):Promise<boolean>=>{
@@ -151,11 +155,27 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   catch{return false;}
  };
  const localEdits=(view:KernelConversion)=>hasLocalEdits(loadedVersion,host.version(),prepareCompositionEdit(view,host.snapshot().journey).changes.length);
+ const inspectReference=async(reference:string)=>nativeOwnerSnapshot(await nativeExpressionRequest({operation:'inspect',expression_ref:reference}),reference);
  const followOpen=async(reference:string)=>{
   if(!reference.startsWith('expression:'))throw new Error('Choose a native Expression reference');
-  const generation=++followGeneration;opens.cancel();
-  const raw=await readKernelExpression(reference) as KernelExpressionDocument;
-  if(generation!==followGeneration)return;
+  const captured=captureNativeAdoption(host,()=>restoreGeneration),generation=++followGeneration;opens.cancel();
+  const current=()=>generation===followGeneration&&captured();
+  const listed=await listKernelExpressions();requireAdoption(current);
+  // A fresh process has no in-memory graph. Reopen the exact acknowledged
+  // checkpoint through the owner before following it; retain its local draft
+  // and attached native file, rather than deriving an unrelated browser view.
+  if(!listed.some(row=>row.expression_ref===reference)){
+   const recovered=await readWorkingDraft(reference,scope);requireAdoption(current);
+   if(recovered?.record.view){
+    const performing=await actPerforms(reference);requireAdoption(current);
+    if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));requireAdoption(current);
+    const view=await work.reopenCheckpoint(recovered.record,recovered.journey,current);requireAdoption(current);
+    readThrough=performing?reference:null;restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,!!readThrough);
+    status(`Reopened ${view.document.title} through its native owner. Its Scene, selection, attached file and separate unsaved draft were retained.`);update();return;
+   }
+  }
+  const native=await inspectReference(reference),raw=native.document;
+  requireAdoption(current);
   // Nothing is discarded: the showing draft, and any unsaved checkpoint of
   // this same Expression, stay in recovery under their own identities.
   if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));
@@ -168,8 +188,15 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // in `adopt`. Awaiting between them left the frame reporting (and saving
   // against) the new Expression while it still showed the previous document.
   const performing=await actPerforms(reference);
-  if(generation!==followGeneration)return;
-  const view=await work.adopt(raw,undefined,()=>generation===followGeneration);
+  requireAdoption(current);
+  // Re-admit an exact clean checkpoint through the owner. Rewriting the same
+  // complete basis delays opening and needlessly replaces its authored ID.
+  const retained=recovered?.record;
+  const exactClean=!!retained?.view&&!retained.pending
+   &&sameSceneData(retained.view.document,raw)&&sameSceneData(retained.file??null,native.file??null)
+   &&prepareCompositionEdit(retained.view,recovered!.journey).changes.length===0;
+  const view=exactClean?await work.reopenCheckpoint(retained,recovered!.journey,current):await work.adopt(raw,native.file,current);
+  requireAdoption(current);
   readThrough=performing?reference:null;
   restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,!!readThrough);
   status(`${readThrough?'Following':'Opened'} ${raw.title} at revision ${raw.revision}.${readThrough?' An act is performing it: this view reads through and never commits into it.':''}`);update();
@@ -190,7 +217,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    restoreGeneration++;selections.cancel();host.load(view);update();
    status('Working composition recovered through its native owner. Unsaved edits and interrupted operations were retained.');return;
   }
-  await adopt(await readKernelExpression(reference) as KernelExpressionDocument,current);
+  const native=await inspectReference(reference);await adopt(native.document,current,native.file);
  };
  const opens=new NativeOpenIntent({
   idle:async()=>{while(busy)await ownerIdle;},
@@ -199,12 +226,13 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  });
  const requestOpen=(reference:string)=>{
   if(!reference.startsWith('expression:')){status('Choose a native Expression reference');return Promise.resolve(false);}
+  intentGeneration++; // Explicit opening wins over boot before any owner reply.
   return opens.submit(reference,captureNativeAdoption(host,()=>restoreGeneration));
  };
- const loadFile=async(path:string)=>{
-  const current=captureNativeAdoption(host,()=>restoreGeneration),result=await nativeFileRequest({operation:'open',path}) as {document:KernelExpressionDocument;file:NativeFile};
+ const loadFile=async(path:string,observed?:NativeFileOpenBasis)=>{
+  const current=captureNativeAdoption(host,()=>restoreGeneration),result=await nativeFileRequest({operation:'open',path,...(observed?{observed:clone(observed)}:{})}) as {document:KernelExpressionDocument;file:NativeFile};
   if(!result?.document||!result.file)throw new Error('The native file was not returned');
-  await adopt(result.document,current,{location:result.file.location,revision:result.file.revision,expression_ref:result.document.expression_ref});
+  await adopt(result.document,current,{location:result.file.location,revision:result.file.revision,expression_ref:result.document.expression_ref,document_revision:result.document.revision});
  };
  const changePage=async(delta:number)=>{
   let record=work.state;const snapshot=host.snapshot();
@@ -266,15 +294,30 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   }
   status(result);
  });
+ const beginSwitch=()=>{
+  intentGeneration++;opens.cancel();restoreGeneration++;selections.cancel();
+  return {generation:restoreGeneration,intent:intentGeneration};
+ };
  return {
+  /** Invalidate old work synchronously, before installing a chosen draft. */
+  beginSwitch,
   /** Retry the last native open that failed (e.g. a revision conflict). */
-  retryOpen:()=>opens.retry(),
+  retryOpen:()=>{intentGeneration++;return opens.retry();},
   /** Inspect and settle an interrupted native operation. */
   resolvePending,
   /** Re-perform an interrupted file save with its retained identity. */
   retryFile:()=>guarded(async()=>{const file=await work.retryFile();status(`Verified the retained file save: ${file.location.path}.`);}),
   /** Page the loaded members of a Scene larger than the render budget. */
   page:(delta:number)=>guarded(()=>changePage(delta)),
+  /** Read and qualify a complete unchanged saved basis without rewriting it. */
+  confirmSaved:async():Promise<NativeFile|undefined>=>{
+   const snapshot=clone(host.snapshot()),captured=captureNativeAdoption(host,()=>restoreGeneration);
+   const current=()=>captured()&&host.snapshot().sceneId===snapshot.sceneId&&host.snapshot().entityId===snapshot.entityId;
+   let file:NativeFile|undefined;
+   const succeeded=await mutate(async()=>{file=await work.confirmSaved(snapshot,current);});
+   if(!succeeded)throw Error(notice||'The existing saved file was not qualified');
+   return file;
+  },
   /** Write the working composition to a Central file and read it back. */
   saveFile:(folder:string,name:string)=>{const snapshot=clone(host.snapshot()),version=host.version();return guarded(async()=>{
    await retainSubmitted(snapshot);
@@ -284,7 +327,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},
-  openFile:(path:string)=>run(()=>loadFile(path)),
+  openFile:(path:string,observed?:NativeFileOpenBasis)=>{intentGeneration++;return run(()=>loadFile(path,observed));},
+  intentGeneration:()=>intentGeneration,
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */
   advance:async():Promise<boolean>=>{
@@ -302,17 +346,37 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    if(!nativeRef)return Promise.resolve('invalidated' as const);
    return selections.submit({generation:restoreGeneration,nativeRef,sceneId,entityId,bindingRef});
   },
-  async changed(journey:Journey){
-   if(isGenuineWorkspaceSwitch(bootState)){opens.cancel();restoreGeneration++;selections.cancel();}
-   const generation=restoreGeneration;work.detach();host.correspondence({},null);
-   try{const record=await readWorkingCheckpoint(journey.id,scope);if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
-   catch(error){if(generation===restoreGeneration){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
+  async changed(journey:Journey,bootCurrent?:()=>boolean,switchBasis?:{generation:number;intent:number}):Promise<number|undefined>{
+   const switching=isGenuineWorkspaceSwitch(bootState,!!bootCurrent);
+   if(!switching&&(bootCurrent?.()!==true||intentGeneration!==0||busy||work.state?.view||opens.reference))return;
+   if(switching){const basis=switchBasis??beginSwitch();if(basis.generation!==restoreGeneration||basis.intent!==intentGeneration)return;}
+   const generation=restoreGeneration,intent=intentGeneration,captured=captureNativeAdoption(host,()=>restoreGeneration),current=()=>captured()&&intentGeneration===intent&&(!bootCurrent||bootCurrent());
+   if(!current())return;work.detach();host.correspondence({},null);
+   try{
+    const record=await readWorkingCheckpoint(journey.id,scope) as import('./nativeWorking.js').NativeWorkingRecord|undefined;
+    if(!current())return;
+    if(record?.view){
+     while(busy)await ownerIdle;if(!current())return;
+     const reopened=await run(async()=>{
+      const view=await work.reopenCheckpoint(record,journey,current);requireAdoption(current);
+      restoreGeneration++;selections.cancel();host.load(view,true);markLoaded();readThrough=null;
+      status('Reopened the acknowledged native world; local edits and interrupted operations were retained.');update();
+     },current);
+     if(!reopened)return;
+    }else{if(record)work.restore(record,journey);update();}
+    return host.version();
+   }
+   catch(error){if(generation===restoreGeneration&&current()){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
-  inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
+  inspect(){const state=work.inspect();return {native_ref:state.native_ref,revision:state.revision,file:state.file,pending:state.pending,notice,failed:lastFailure,busy,notes:state.notes,bindings:state.bindings};},
+  idle:async()=>{while(busy)await ownerIdle;},
   /** `changes` may be computed from the flushed native view (after the
    * working draft commits) — e.g. a reuse block naming committed refs. */
-  edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]))=>{
+  edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]),mayAdopt?:()=>boolean)=>{
    if(Array.isArray(input)&&!input.length)return;
+   // A queued focus may report its own successful result when mutate releases
+   // the owner. Keep this edit's recipient refusal independently of that notice.
+   let adoptionRefusal:Error|undefined;
    const succeeded=await mutate(async()=>{
     let current=work.state?.view;
     if(!current)throw new Error('Open a native Expression before editing its connections.');
@@ -320,12 +384,17 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     current=await flushDraft(current);
     const changes=typeof input==='function'?input(current):input;
     if(!changes.length)return;
+    if(mayAdopt&&!mayAdopt()){adoptionRefusal=new Error('The selected recipient changed before the native edit was sent. No edit was committed.');throw adoptionRefusal;}
     const view=await work.editConnections(changes);
+    // A commit and local adoption are different operations. Preserve the real
+    // native successor even when scene/selection/private intent changed while
+    // its genuine ACK was in flight; never load it over that changed recipient.
     if(host.version()!==version)throw new Error('The edit was saved natively; newer local edits remain in your working draft.');
+    if(mayAdopt&&!mayAdopt()){adoptionRefusal=new Error('The edit was saved natively; a changed selected recipient remains in your working draft. Inspect the saved native successor before adopting it.');throw adoptionRefusal;}
     restoreGeneration++;selections.cancel();
     host.load(view,true);update();
    });
-   if(!succeeded)throw new Error(notice||'The native edit was not acknowledged.');
+   if(!succeeded)throw adoptionRefusal??new Error(notice||'The native edit was not acknowledged.');
   },
   duplicateOccurrence:async(sceneId:string,entityId:string):Promise<void>=>{
    const succeeded=await mutate(async()=>{
@@ -355,7 +424,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    });
    if(!succeeded)throw new Error(notice||'The native source insertion was not acknowledged.');
   },
-  nativeView:()=>work.state?.view,
+  nativeView:()=>work.acknowledgedView,
   blueprint:async(intent:BlueprintIntent):Promise<void>=>{
    const captured=clone(intent);
    const succeeded=await mutate(async()=>{
@@ -370,14 +439,32 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    if(!succeeded)throw Error(notice||'The native blueprint was not acknowledged');
   },
   /** Stand on a kernel Expression (host open-expression, boot deep link). */
-  follow:async(reference:string):Promise<boolean>=>{while(busy)await ownerIdle;return run(()=>followOpen(reference));},
+  follow:async(reference:string):Promise<boolean>=>{intentGeneration++;while(busy)await ownerIdle;return run(()=>followOpen(reference));},
   /** Re-read a followed Expression. Clean: adopt the kernel's newer revision
    * (never commits). Edited: keep the edits unsaved and disclose the newer
    * revision. Not open: follow it. */
+  /** Receive only an acknowledged same-file answer revision; never open a
+   * foreign document or discard a pending local draft. Keep view position. */
+  receiveKeptAnswer:async(receipt:import('../../../src/nara/instrumentProtocol').NativeExpressionAnswerReceipt):Promise<boolean>=>{
+   if(receipt.schema!=='oi.nara-expression-answer-receipt/v1'||receipt.state!=='saved')throw Error('The native answer is kept but its same-file save is unconfirmed. Reconcile its existing native file before reading.');
+   while(busy)await ownerIdle;
+   const before=work.acknowledgedView;
+   if(!before||before.document.expression_ref!==receipt.expression_ref||before.document.revision!==receipt.previous_revision
+     ||localEdits(before)||work.state?.pending)throw Error('The saved answer was kept natively; resolve this retained local draft before receiving its revision.');
+   const version=host.version(),intent=intentGeneration,generation=followGeneration;
+   return run(async()=>{
+    const current=()=>host.version()===version&&intentGeneration===intent&&followGeneration===generation&&work.acknowledgedView===before;
+    const native=await inspectReference(receipt.expression_ref);if(!current())throw Error('The current view changed; the saved answer remains in its native file.');
+    if(native.document.revision!==receipt.revision||!native.file||native.file.revision!==receipt.file.revision
+      ||JSON.stringify(native.file.location)!==JSON.stringify(receipt.file.location))throw Error('The native answer receipt does not match this exact saved file and revision.');
+    const view=await work.adopt(native.document,native.file,current);if(host.version()!==version||intentGeneration!==intent||followGeneration!==generation)throw Error('The view changed while receiving the saved native answer.');
+    restoreGeneration++;selections.cancel();host.load(view,true);markLoaded();host.followed?.(receipt.expression_ref,readThrough===receipt.expression_ref);update();
+   });
+  },
   refreshReference:async(reference:string):Promise<boolean>=>{while(busy)await ownerIdle;return run(async()=>{
    const current=work.state?.view;
    if(!current||current.document.expression_ref!==reference){await followOpen(reference);return;}
-   const raw=await readKernelExpression(reference) as KernelExpressionDocument;
+   const native=await inspectReference(reference),raw=native.document;
    const step=refreshStep({openRef:current.document.expression_ref,reference,localRevision:current.document.revision,kernelRevision:raw.revision,edited:localEdits(current),pending:!!work.state?.pending});
    if(step.kind==='current')return;
    if(step.kind==='follow'){await followOpen(reference);return;}
@@ -387,7 +474,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     host.toast(notice,7000);return;
    }
    const generation=++followGeneration;
-   const view=await work.adopt(raw,work.state?.file,()=>generation===followGeneration);
+   const view=await work.adopt(raw,native.file??work.state?.file,()=>generation===followGeneration);
    restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,readThrough===reference);update();
   });},
   nativeSubject,

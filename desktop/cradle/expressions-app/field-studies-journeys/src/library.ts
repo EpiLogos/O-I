@@ -18,13 +18,15 @@
 import {compositionCover,featuredExpressions,startingPoints,libraryHTML} from './expressions.js';
 import {readLibraryDetailed,removeFromLibrary} from './store.js';
 import {installNativeLibraryInteractions} from './libraryScopes.js';
+import {installKernelExpressions,nativeFileRequest,readKernelExpression} from './kernelExpressions.js';
+import type {NativeLibraryFileBasis} from './nativeLibrary.js';
 
 type StartingPoint = ReturnType<typeof startingPoints>[number];
 
 const page=():HTMLElement=>document.getElementById('library-page')!;
-const hostRequest=(payload:{request:string;mode?:string})=>{
-  if(window.parent===window)return;
-  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
+const hostRequest=(payload:{request:string;mode?:string;expressionRef?:string}):boolean=>{
+  if(window.parent===window)return false;
+  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');return true;}catch{return false;}
 };
 
 function hasLegacyLibrary():boolean{try{return !!localStorage.getItem('typographic_pointcloud_saved_states');}catch{return false;}}
@@ -63,11 +65,23 @@ window.addEventListener('message',ev=>{
 });
 try{applyAppearance(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch{}
 
+installKernelExpressions();
 installNativeLibraryInteractions();
 (window as unknown as {__FIELD_STUDIES__:unknown}).__FIELD_STUDIES__={
   /** The standalone page cannot open a composition into a field it does
-   * not host: opening hands to the instrument through the host. */
-  openNative:()=>hostRequest({request:'workspace-mode',mode:'expressions'}),
+   * not host: the native owner acknowledges the exact basis, then its ref
+   * travels through the host's existing Expression selection route. */
+  openNative:async(ref:string)=>{
+    const document=await readKernelExpression(ref) as {expression_ref?:string};
+    if(!ref.startsWith('expression:')||document.expression_ref!==ref)throw Error('The native owner did not return the selected Expression');
+    return hostRequest({request:'open-expression',expressionRef:ref});
+  },
+  openNativeFile:async(path:string,observed?:NativeLibraryFileBasis)=>{
+    const opened=await nativeFileRequest({operation:'open',path,...(observed?{observed}:{})}) as {document?:{expression_ref?:string}};
+    const ref=opened.document?.expression_ref;
+    if(!ref?.startsWith('expression:')||(observed&&ref!==observed.expression_ref))throw Error('The native file owner did not return the selected Expression');
+    return hostRequest({request:'open-expression',expressionRef:ref});
+  },
 };
 
 document.addEventListener('click',event=>{

@@ -62,14 +62,14 @@ native menu."
     }
     #[cfg(unix)]
     if let ["expression", request] = values.as_slice() {
-        let request: oi_cradle_kernel::expression_transport::Request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
+        let request: oi_cradle_kernel::expression_transport::Request = oi_cradle_kernel::expression_file::read_native_json(request.as_bytes()).map_err(|e| format!("invalid Expression request: {e}"))?;
         let response = oi_cradle_kernel::expression_transport::call(&oi_cradle_kernel::expression_transport::default_socket_path()?, &request)?;
         println!("{response}");
         return Ok(if response["ok"] == true { 0 } else { 1 });
     }
     #[cfg(unix)]
     if let ["expression", socket, request] = values.as_slice() {
-        let request: oi_cradle_kernel::expression_transport::Request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
+        let request: oi_cradle_kernel::expression_transport::Request = oi_cradle_kernel::expression_file::read_native_json(request.as_bytes()).map_err(|e| format!("invalid Expression request: {e}"))?;
         let response = oi_cradle_kernel::expression_transport::call(Path::new(socket), &request)?;
         println!("{response}");
         return Ok(if response["ok"] == true { 0 } else { 1 });
@@ -93,7 +93,7 @@ native menu."
             .map_err(|e| e.to_string())?
         }
         ["knowledge", cwd, request] => {
-            let request = serde_json::from_str(request)
+            let request = oi_cradle_kernel::expression_file::read_native_json(request.as_bytes())
                 .map_err(|e| format!("invalid Knowledge Request: {e}"))?;
             oi_cradle_kernel::knowledge::call(Path::new(cwd), &request)?
         }
@@ -501,4 +501,18 @@ fn print_remove_plan(plan: &oi_cli::desktop_install::RemovePlan) {
         println!("  {:<8} {:<18} {}", change.action, change.kind, change.path);
     }
     println!("Only these receipt-owned resources are removed; Central ground, Agents and Projects are never owned and stay untouched.");
+}
+
+
+#[cfg(all(test, unix))]
+mod native_desktop_json_tests {
+    use super::*;
+    #[test]
+    fn actual_cli_expression_refuses_raw_private_maps_before_socket_discovery() {
+        for value in ["1e400", r#"{"$serde_json::private::Number":"10"}"#, r#"{"$serde_json::private::RawValue":"10"}"#] {
+            let raw = format!(r#"{{"operation":"edit","expression_ref":"expression:cli-number","expected_revision":1,"actor":"human:controlled","changes":[{{"change":"parameter_set","entity_ref":"expression:cli-number:entity:one","parameter":"x","value":{value}}}]}}"#);
+            let error = command_desktop(&["expression".into(), raw.into()]).unwrap_err();
+            assert!(error.starts_with("invalid Expression request:"), "{error}");
+        }
+    }
 }

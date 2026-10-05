@@ -66,6 +66,10 @@ export function mapSceneOccurrences(
  */
 export function mergeScenePage(whole: Scene, edited: Scene, loaded: ReadonlySet<string>): Scene {
   const result = clone(edited);
+  // Authored reset material shapes the scene; the acknowledged native world
+  // and its continuation stay attached to this same containing Expression.
+  // Their replacement goes through the world owner, not a material-page edit.
+  if (Object.hasOwn(whole, 'epiWorld')) (result as unknown as RecordValue).epiWorld = clone((whole as unknown as RecordValue).epiWorld);
   const hidden = whole.entities.filter(entity => !loaded.has(entity.id));
   // Removing an optional whole-level carrier while only one page is loaded
   // must not discard the unseen occurrences' controls or native parameters.

@@ -130,6 +130,54 @@ def verify_joined_receipt(path, files):
             'standing': 'child behavioural result verified; not independent or installed acceptance'}
 
 
+def emit_failure_diagnostic(report, input_path):
+    """Disclose only an already-failed result; logging cannot change its outcome."""
+    try:
+        if report.get('status') != 'failed':
+            return
+        private_input = str(input_path)
+
+        def bounded(value, limit):
+            if not isinstance(value, str):
+                return None
+            # OSError may quote/escape the filename. Neither spelling belongs
+            # in the public diagnostic; the private receipt keeps the original.
+            for spelling in (private_input, repr(private_input)[1:-1]):
+                if spelling:
+                    value = value.replace(spelling, '[private input]')
+            return value[:limit]
+
+        checks = report.get('checks', {})
+        if not isinstance(checks, dict):
+            checks = {}
+        diagnostic = {
+            'schema': 'oi.native-expression-local-failure/v1',
+            'status': 'failed',
+            'error': bounded(report.get('error'), 1024),
+            'error_truncated': isinstance(report.get('error'), str) and len(report['error']) > 1024,
+        }
+        for name, limit in (('head', 128), ('working_copy', 1024)):
+            record = checks.get(name)
+            if isinstance(record, dict):
+                code = record.get('code')
+                stdout = record.get('stdout')
+                diagnostic[name] = {
+                    'code': code if type(code) is int else None,
+                    'stdout': bounded(stdout, limit),
+                    'stdout_truncated': isinstance(stdout, str) and len(stdout) > limit,
+                }
+        # ASCII JSON makes surrogate/non-UTF8 filenames harmless to the sink.
+        # Even worst-case astral escaping fits this single inclusive byte bound.
+        raw = (json.dumps(diagnostic, ensure_ascii=True, separators=(',', ':')) + '\n').encode('ascii')
+        if len(raw) <= 32768:
+            sys.stderr.write(raw.decode('ascii'))
+            sys.stderr.flush()
+    except Exception:
+        # Closed/broken stderr or hostile metadata cannot mask the original
+        # failure, receipt, owned cleanup or return code.
+        pass
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--expected-head', required=True)
@@ -202,6 +250,7 @@ def main():
         report['status'] = 'failed'
         report['error'] = str(error)
         code = 1
+        emit_failure_diagnostic(report, args.input)
     finally:
         (args.output / 'local-receipt.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps({'status': report['status'], 'receipt': str(args.output / 'local-receipt.json'), 'exit': code}))

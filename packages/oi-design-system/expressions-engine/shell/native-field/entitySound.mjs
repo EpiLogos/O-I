@@ -56,6 +56,7 @@ function entitySoundVoices(scene, active) {
     const follow = sound.followCymatic ?? sound.frequencyHz === void 0;
     const hz = follow ? entity.templateFrequency ?? fieldHz ?? sound.frequencyHz ?? d.frequencyHz : sound.frequencyHz ?? d.frequencyHz;
     voices.push({
+      voiceRef: JSON.stringify(["authored", entity.id]),
       entityId: entity.id,
       frequencyHz: Math.min(2e4, Math.max(1, hz)),
       gain: sound.gain ?? d.gain,
@@ -67,6 +68,21 @@ function entitySoundVoices(scene, active) {
   }
   return voices;
 }
+function presentEntitySoundVoices(plan, scene, active) {
+  validateVoicePlan(plan);
+  const present = new Set(scene.entities.filter((entity) => entity.enabled !== false).map((entity) => entity.id));
+  return plan.filter((voice) => present.has(voice.entityId) && (!active || active.has(voice.entityId))).map((voice) => ({ ...voice }));
+}
+function validateVoicePlan(plan) {
+  const refs = /* @__PURE__ */ new Set();
+  for (const voice of plan) {
+    if (!voice || typeof voice.voiceRef !== "string" || !voice.voiceRef || refs.has(voice.voiceRef) || typeof voice.entityId !== "string" || !voice.entityId) throw new Error("Invalid sound voice: a unique voiceRef and target entityId are required");
+    refs.add(voice.voiceRef);
+    for (const [key, low, high] of [["frequencyHz", 1, 2e4], ["gain", 0, 1], ["attack", 0, 10], ["release", 0, 30], ["pan", -1, 1]])
+      if (!finite(voice[key], low, high)) throw new Error(`Invalid sound voice: ${key} must sit inside [${low}, ${high}]`);
+    if (!SOUND_WAVEFORMS.includes(voice.waveform)) throw new Error("Invalid sound voice: unsupported waveform");
+  }
+}
 class EntitySoundBank {
   constructor(createContext = () => typeof AudioContext === "function" ? new AudioContext() : null) {
     this.createContext = createContext;
@@ -74,34 +90,44 @@ class EntitySoundBank {
   }
   context = null;
   voices = /* @__PURE__ */ new Map();
+  retiring = /* @__PURE__ */ new Set();
   muted = objectSoundIsMuted();
   signature = "";
   gestureArmed = false;
+  disarmGesture = () => {
+  };
   release;
   /** Follow the current Scene (and optional active set). Cheap when unchanged. */
   sync(scene, active) {
-    const plan = entitySoundVoices(scene, active);
-    const signature = JSON.stringify(plan);
-    if (signature === this.signature) return plan;
-    if (!plan.length && !this.voices.size) {
+    return this.syncVoices(entitySoundVoices(scene, active));
+  }
+  /** Receive an already-qualified private plan without changing the Scene. */
+  syncVoices(plan) {
+    validateVoicePlan(plan);
+    const received = plan.map((voice) => ({ ...voice }));
+    const signature = JSON.stringify(received);
+    if (signature === this.signature) return received;
+    if (!received.length && !this.voices.size) {
       this.signature = signature;
-      return plan;
+      return received;
     }
     const context = this.ensureContext();
-    if (!context) return plan;
+    if (!context) return received;
     this.signature = signature;
     const now = context.currentTime;
-    const wanted = new Map(plan.map((voice) => [voice.entityId, voice]));
+    const wanted = new Map(received.map((voice) => [voice.voiceRef, voice]));
     for (const [id, held] of this.voices) if (!wanted.has(id)) {
       held.amp.gain.cancelScheduledValues(now);
       held.amp.gain.setValueAtTime(held.amp.gain.value, now);
       held.amp.gain.linearRampToValueAtTime(0, now + held.voice.release);
       held.oscillator.stop(now + held.voice.release + 0.05);
+      this.retiring.add(held);
       this.voices.delete(id);
     }
-    for (const voice of plan) {
-      let held = this.voices.get(voice.entityId);
+    for (const voice of received) {
+      let held = this.voices.get(voice.voiceRef);
       if (!held) {
+        for (const previous of this.retiring) if (previous.voice.voiceRef === voice.voiceRef) this.stopImmediately(previous);
         const oscillator = context.createOscillator(), amp = context.createGain();
         const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
         amp.gain.setValueAtTime(0, now);
@@ -112,7 +138,14 @@ class EntitySoundBank {
         } else amp.connect(context.destination);
         oscillator.start(now);
         held = { voice, oscillator, amp, panner };
-        this.voices.set(voice.entityId, held);
+        const resident = held;
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          amp.disconnect();
+          panner?.disconnect();
+          this.retiring.delete(resident);
+        };
+        this.voices.set(voice.voiceRef, held);
       }
       held.oscillator.type = voice.waveform;
       held.oscillator.frequency.setTargetAtTime(voice.frequencyHz, now, 0.02);
@@ -122,7 +155,7 @@ class EntitySoundBank {
       held.amp.gain.linearRampToValueAtTime(this.muted ? 0 : voice.gain, now + Math.max(5e-3, voice.attack));
       held.voice = voice;
     }
-    return plan;
+    return received;
   }
   setMuted(muted) {
     this.muted = muted;
@@ -134,34 +167,57 @@ class EntitySoundBank {
       held.amp.gain.setValueAtTime(held.amp.gain.value, now);
       held.amp.gain.linearRampToValueAtTime(muted ? 0 : held.voice.gain, now + (muted ? held.voice.release : held.voice.attack) + 5e-3);
     }
+    if (muted) for (const held of this.retiring) {
+      this.stopImmediately(held);
+    }
   }
   inspect() {
-    return { muted: this.muted, state: this.context?.state ?? "unopened", voices: [...this.voices.values()].map((held) => ({ ...held.voice })) };
+    return { muted: this.muted, state: this.context?.state ?? "unopened", retiringVoiceCount: this.retiring.size, voices: [...this.voices.values()].map((held) => ({ ...held.voice })) };
+  }
+  /** Custody release clears active and retiring nodes immediately. It keeps
+   * the reusable context/mute subscription; focus departure still uses sync's
+   * authored release curve. No old personal basis overlaps a new admission. */
+  clear() {
+    this.disarmGesture();
+    for (const held of [...this.voices.values(), ...this.retiring]) this.stopImmediately(held);
+    this.retiring.clear();
+    this.voices.clear();
+    this.signature = "";
   }
   dispose() {
     this.release();
-    for (const held of this.voices.values()) {
-      try {
-        held.oscillator.stop();
-      } catch {
-      }
-    }
-    this.voices.clear();
-    this.signature = "";
+    this.clear();
     const context = this.context;
     this.context = null;
     if (context && context.state !== "closed") void context.close().catch(() => {
     });
+  }
+  stopImmediately(held) {
+    const now = this.context?.currentTime ?? 0;
+    held.amp.gain.cancelScheduledValues(now);
+    held.amp.gain.setValueAtTime(0, now);
+    held.oscillator.onended = null;
+    try {
+      held.oscillator.stop(now);
+    } catch {
+    }
+    held.oscillator.disconnect();
+    held.amp.disconnect();
+    held.panner?.disconnect();
+    this.retiring.delete(held);
   }
   ensureContext() {
     if (!this.context) this.context = this.createContext();
     const context = this.context;
     if (context && context.state === "suspended" && !this.gestureArmed && typeof window !== "undefined") {
       this.gestureArmed = true;
-      const resume = () => {
+      this.disarmGesture = () => {
         window.removeEventListener("pointerdown", resume, true);
         window.removeEventListener("keydown", resume, true);
         this.gestureArmed = false;
+      };
+      const resume = () => {
+        this.disarmGesture();
         void context.resume().catch(() => {
         });
       };
@@ -180,6 +236,7 @@ export {
   entitySoundVoices,
   objectSoundIsMuted,
   onObjectSoundMuted,
+  presentEntitySoundVoices,
   setObjectSoundMuted,
   validateEntitySound
 };

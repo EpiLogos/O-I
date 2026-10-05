@@ -1,3 +1,5 @@
+// Controlled transport protocol tests. Native file decoding/storage is proved
+// by its actual owner gates; these fixtures cannot establish native acceptance.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {performArtifactSave, inspectArtifactSave, restorePendingArtifactDocument} from '../src/knowledge/artifactRecovery.ts';
@@ -19,6 +21,9 @@ function fixture(initial,live=document){
    outcome={result:'expression',data:{state:'saved',persisted:true,readback_verified:true,file:{location,revision:'file-r1'},expression_revision:4}};
   } else if(op.op==='expression'&&op.request.operation==='open'){
    outcome={result:'expression',data:live&&JSON.stringify(live)!==JSON.stringify(op.request.document)?{state:'revision_conflict'}:{state:'opened',document:op.request.document}};
+  }else if(op.op==='expression'&&op.request.operation==='inspect_file'){
+   assert.deepEqual(op.request.location,file.location);assert.equal(op.request.expected_file_revision,file.revision);
+   outcome={result:'expression',data:{state:'ready',document:JSON.parse(file.content),file:{location:file.location,revision:file.revision}}};
   }else if(op.op==='files_list')outcome={result:'directory_read',directory:{location:parent,entries:file?[{name:'work.expression.json',kind:'file',location}]:[]}};
   else if(op.op==='file_read')outcome={result:'file_read',reading:file};
   else throw new Error(`Unexpected operation ${JSON.stringify(op)}`);

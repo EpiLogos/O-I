@@ -82,7 +82,7 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
   useEffect(() => themes.subscribe(setPresentation), [themes]);
   useEffect(() => {void themes.read();}, [themes, kernel.apply]);
   const themeReceipt = [...kernel.receipts].reverse().find(receipt => receipt.event === "presentation_changed")?.seq;
-  useEffect(() => {if (themeReceipt !== undefined) void themes.read(false);}, [themes, themeReceipt]);
+  useEffect(() => {if (themeReceipt !== undefined || kernel.readModelEpoch > 0) void themes.read(false);}, [themes, themeReceipt, kernel.readModelEpoch]);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let last = "";

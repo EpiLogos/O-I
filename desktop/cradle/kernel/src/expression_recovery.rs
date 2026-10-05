@@ -5,13 +5,65 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeSet, path::PathBuf};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::PathBuf,
+};
 
 pub const MAX_RECORD_BYTES: usize = 8 * 1024 * 1024;
 const MAX_SCOPE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_RECORDS: usize = 256;
 const MAX_REVISION: u64 = crate::expression::MAX_REVISION;
+// Opt-in hosted-proof timings only. The bridge supplies a diagnostic ID;
+// no request field, owner result, admission law or default execution changes.
+thread_local! {
+    static DIAGNOSTIC_TRACE: std::cell::Cell<Option<u64>> = const { std::cell::Cell::new(None) };
+}
+pub fn with_diagnostic_trace<T>(id: u64, run: impl FnOnce() -> T) -> T {
+    struct Restore(Option<u64>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            DIAGNOSTIC_TRACE.with(|trace| trace.set(self.0));
+        }
+    }
+    let _restore = Restore(DIAGNOSTIC_TRACE.with(|trace| trace.replace(Some(id))));
+    run()
+}
+struct DiagnosticPhase {
+    id: Option<u64>,
+    name: &'static str,
+    started: Option<std::time::Instant>,
+}
+fn diagnostic_phase(name: &'static str) -> DiagnosticPhase {
+    let id = DIAGNOSTIC_TRACE.with(std::cell::Cell::get);
+    DiagnosticPhase {
+        id,
+        name,
+        started: id.map(|_| std::time::Instant::now()),
+    }
+}
+impl Drop for DiagnosticPhase {
+    fn drop(&mut self) {
+        if let (Some(id), Some(started)) = (self.id, self.started) {
+            let at = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|v| v.as_micros())
+                .unwrap_or(0);
+            eprintln!(
+                "[recovery-phase] {}",
+                json!({
+                    "schema":"oi.hosted-recovery-phase/v1", "trace_id":id,
+                    "phase":self.name, "elapsed_us":started.elapsed().as_micros(),
+                    "ended_at_unix_us":at,
+                    "standing":"duration_only_not_acknowledgement"
+                })
+            );
+        }
+    }
+}
+
 const SCHEMA: &str = "oi.expression-recovery/v1";
+const STORAGE_SCHEMA: &str = "oi.expression-recovery-storage/v1";
 
 /// Recovery has its own filesystem lock and compare-and-set revisions. It
 /// does not access Kernel memory or emit semantic events, so hosts execute
@@ -83,6 +135,16 @@ struct Record {
     revision: u64,
     value: Value,
 }
+/// Private storage only. Public recovery values remain the complete ordinary
+/// checkpoint, including its independent acknowledged, local and pending bases.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StoredRecord {
+    schema: String,
+    record: Record,
+    images: Vec<crate::expression_file::StoredImage>,
+    expanded_value_sha256: String,
+}
 impl Record {
     fn public(&self) -> Value {
         json!({"id":self.id,"scope":self.scope,"kind":self.kind,"revision":self.revision,"value":self.value})
@@ -137,9 +199,20 @@ fn data(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Recovery data nesting exceeds its bound".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => {
+            return Err("Recovery data number must be finite".into())
+        }
         Value::Object(values) => {
             for (key, value) in values {
-                if ["__proto__", "constructor", "prototype"].contains(&key.as_str()) {
+                if [
+                    "__proto__",
+                    "constructor",
+                    "prototype",
+                    "$serde_json::private::Number",
+                    "$serde_json::private::RawValue",
+                ]
+                .contains(&key.as_str())
+                {
                     return Err("Unsafe recovery property".into());
                 }
                 data(value, depth + 1)?;
@@ -185,10 +258,10 @@ fn journey(value: &Value, id: &str) -> Result<(), String> {
 }
 fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
     safe_id(id)?;
-    if serde_json::to_vec(value).map_err(|e| e.to_string())?.len() > MAX_RECORD_BYTES {
-        return Err("Recovery record exceeds 8 MiB".into());
-    }
     data(value, 0)?;
+    // Refuse an oversized public component before typed Document/request
+    // conversion can clone its material, not only before storage interning.
+    preflight_components(kind, value)?;
     if kind == Kind::Draft {
         return journey(value, id);
     }
@@ -371,6 +444,1310 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Measure serialized UTF8 through a borrowed writer. This allocates neither
+/// a serialized payload nor a cloned Value/image String.
+fn serialized_size<T: Serialize + ?Sized>(value: &T) -> Result<usize, String> {
+    #[derive(Default)]
+    struct Counter(usize);
+    impl std::io::Write for Counter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .ok_or_else(|| std::io::Error::other("Recovery size overflow"))?;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut counter = Counter::default();
+    serde_json::to_writer(&mut counter, value).map_err(|e| e.to_string())?;
+    Ok(counter.0)
+}
+
+fn component_budgets(
+    kind: Kind,
+    value: &Value,
+    size: impl Fn(&Value) -> Result<usize, String>,
+) -> Result<(), String> {
+    let mut removed = 0i128;
+    if kind == Kind::Checkpoint {
+        for path in [
+            "/view/document",
+            "/view/journey",
+            "/pending/request",
+            "/pending/submitted/journey",
+        ] {
+            if let Some(component) = value.pointer(path) {
+                let bytes = size(component)?;
+                if bytes > MAX_RECORD_BYTES {
+                    return Err(
+                        "Expanded recovery component exceeds 8 MiB before material cloning".into(),
+                    );
+                }
+                // Account for a null placeholder without constructing a
+                // remainder copy. The four component roots never overlap.
+                removed = removed
+                    .checked_add(bytes as i128 - 4)
+                    .ok_or("Recovery size overflow")?;
+            }
+        }
+    }
+    let remainder = (size(value)? as i128)
+        .checked_sub(removed)
+        .ok_or("Recovery size overflow")?;
+    if remainder < 0 || remainder > MAX_RECORD_BYTES as i128 {
+        return Err("Expanded recovery component exceeds 8 MiB before material cloning".into());
+    }
+    Ok(())
+}
+
+fn preflight_components(kind: Kind, value: &Value) -> Result<(), String> {
+    if kind != Kind::Checkpoint {
+        return component_budgets(kind, value, serialized_size);
+    }
+    for path in COMPONENT_ROOTS {
+        if let Some(component) = value.pointer(path) {
+            if serialized_size(component)? > MAX_RECORD_BYTES {
+                return Err(COMPONENT_SIZE_MESSAGE.into());
+            }
+        }
+    }
+    // The existing borrowed serializer replaces precisely these four roots
+    // with null. Measure the actual remainder without walking each complete
+    // component a second time inside the whole public value.
+    let remainder = serialized_size(&RecoveryRemainder { value, location: 0 })?;
+    if remainder > MAX_RECORD_BYTES {
+        return Err(COMPONENT_SIZE_MESSAGE.into());
+    }
+    Ok(())
+}
+
+fn expanded_size(value: &Value, images: &BTreeMap<String, String>) -> Result<usize, String> {
+    let encoded = serialized_size(value)?;
+    let delta = crate::expression_file::expansion_delta(value, None, images, &mut BTreeSet::new())?;
+    usize::try_from(
+        (encoded as i128)
+            .checked_add(delta)
+            .ok_or("Expanded recovery size overflow")?,
+    )
+    .map_err(|_| "Expanded recovery size overflow".into())
+}
+
+/// A checkpoint carries several different snapshots, not one larger native
+/// Document. Qualify each existing component budget before cloning any PNG:
+/// acknowledged Document, authoring Journey, pending request/submitted Journey,
+/// and the remaining recovery metadata. None may use storage compression to
+/// exceed its ordinary 8 MiB bound.
+fn qualify_expansion(
+    kind: Kind,
+    value: &Value,
+    images: &BTreeMap<String, String>,
+) -> Result<(), String> {
+    data(value, 0)?;
+    let mut used = BTreeSet::new();
+    crate::expression_file::expansion_delta(value, None, images, &mut used)?;
+    if used.len() != images.len() {
+        return Err("Unused embedded recovery image reference".into());
+    }
+    component_budgets(kind, value, |component| expanded_size(component, images))
+}
+
+/// Private values never enter this receipt. The original refusal stays the
+/// first line; its bounded metadata travels through the existing native String
+/// error channel to the hosted frame and NativeWorking's retained notice.
+const SIZE_DIAGNOSTIC_SCHEMA: &str = "oi.recovery-size-diagnostic/v1";
+const SIZE_DIAGNOSTIC_MARKER: &str = "\n[oi.recovery-size-diagnostic/v1] ";
+const MAX_SIZE_DIAGNOSTIC_BYTES: usize = 16 * 1024;
+const COMPONENT_SIZE_MESSAGE: &str =
+    "Expanded recovery component exceeds 8 MiB before material cloning";
+
+// This is a diagnostic-work ceiling, not an admission budget change. A
+// checkpoint has at most four existing 8 MiB bases plus an 8 MiB remainder.
+const MAX_DIAGNOSTIC_PUBLIC_BYTES: usize = 5 * MAX_RECORD_BYTES;
+const MAX_DIAGNOSTIC_RAW_BYTES: usize = MAX_DIAGNOSTIC_PUBLIC_BYTES + 2048;
+#[derive(Serialize)]
+struct SerializedMeasurement {
+    status: &'static str,
+    serialized_utf8_bytes: Option<usize>,
+    serialized_utf8_bytes_at_least: Option<usize>,
+    measurement_limit_bytes: usize,
+    sha256: Option<String>,
+}
+fn measured_bytes(bytes: &[u8], limit: usize) -> SerializedMeasurement {
+    let complete = bytes.len() <= limit;
+    SerializedMeasurement {
+        status: if complete {
+            "complete"
+        } else {
+            "exact_size_over_bound_hash_not_measured"
+        },
+        serialized_utf8_bytes: Some(bytes.len()),
+        serialized_utf8_bytes_at_least: None,
+        measurement_limit_bytes: limit,
+        sha256: complete.then(|| format!("{:x}", Sha256::digest(bytes))),
+    }
+}
+/// A borrowed bounded serializer/hash sink: no payload Vec, Value or image
+/// clone. A refused write is not hashed, and a prefix is never a full digest.
+fn measure_serialized<T: Serialize + ?Sized>(value: &T, limit: usize) -> SerializedMeasurement {
+    struct Sink {
+        bytes: usize,
+        limit: usize,
+        over_bound: bool,
+        hash: Sha256,
+    }
+    impl std::io::Write for Sink {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            let next = self.bytes.checked_add(bytes.len());
+            if next.is_none_or(|next| next > self.limit) {
+                self.over_bound = true;
+                return Err(std::io::Error::other(
+                    "Recovery diagnostic measurement bound",
+                ));
+            }
+            self.bytes = next.expect("bounded measurement count");
+            self.hash.update(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut sink = Sink {
+        bytes: 0,
+        limit,
+        over_bound: false,
+        hash: Sha256::new(),
+    };
+    let result = serde_json::to_writer(&mut sink, value);
+    let complete = result.is_ok();
+    SerializedMeasurement {
+        status: if complete {
+            "complete"
+        } else if sink.over_bound {
+            "over_bound_partial_not_fully_measured"
+        } else {
+            "serialization_refused_not_fully_measured"
+        },
+        serialized_utf8_bytes: complete.then_some(sink.bytes),
+        serialized_utf8_bytes_at_least: sink.over_bound.then(|| limit.saturating_add(1)),
+        measurement_limit_bytes: limit,
+        sha256: complete.then(|| format!("{:x}", sink.hash.finalize())),
+    }
+}
+#[derive(Serialize)]
+struct SizeRequestContext {
+    operation: &'static str,
+    scope: Scope,
+    kind: Option<Kind>,
+    requested_address_sha256: Option<String>,
+    cas_applicable: bool,
+    expected_revision: Option<u64>,
+}
+fn draft_address_sha256(scope: Scope, kind: Kind, id: &str) -> Option<String> {
+    #[derive(Serialize)]
+    struct Address<'a> {
+        scope: Scope,
+        kind: Kind,
+        id: &'a str,
+    }
+    (id.len() <= 160)
+        .then(|| measure_serialized(&Address { scope, kind, id }, 32 * 1024))
+        .and_then(|m| m.sha256)
+}
+fn size_request_context(request: &Request) -> SizeRequestContext {
+    // These tiny borrowed address objects are hashed, never disclosed. Invalid
+    // unbounded addresses retain their ordinary validation error unchanged.
+    #[derive(Serialize)]
+    struct ExpressionAddress<'a> {
+        scope: Scope,
+        expression_ref: &'a str,
+    }
+    let (operation, scope, kind, address, cas_applicable, expected_revision) = match request {
+        Request::Read { scope, kind, id } => (
+            "read",
+            *scope,
+            Some(*kind),
+            draft_address_sha256(*scope, *kind, id),
+            false,
+            None,
+        ),
+        Request::List { scope, kind } => (
+            "list",
+            *scope,
+            Some(*kind),
+            measure_serialized(&(*scope, *kind), 32 * 1024).sha256,
+            false,
+            None,
+        ),
+        Request::FindCheckpoint {
+            scope,
+            expression_ref,
+        } => (
+            "find_checkpoint",
+            *scope,
+            None,
+            (expression_ref.len() <= 4096)
+                .then(|| {
+                    measure_serialized(
+                        &ExpressionAddress {
+                            scope: *scope,
+                            expression_ref,
+                        },
+                        32 * 1024,
+                    )
+                })
+                .and_then(|m| m.sha256),
+            false,
+            None,
+        ),
+        Request::Write {
+            scope,
+            kind,
+            id,
+            expected_revision,
+            ..
+        } => (
+            "write",
+            *scope,
+            Some(*kind),
+            draft_address_sha256(*scope, *kind, id),
+            true,
+            *expected_revision,
+        ),
+        Request::Remove {
+            scope,
+            kind,
+            id,
+            expected_revision,
+        } => (
+            "remove",
+            *scope,
+            Some(*kind),
+            draft_address_sha256(*scope, *kind, id),
+            true,
+            Some(*expected_revision),
+        ),
+    };
+    SizeRequestContext {
+        operation,
+        scope,
+        kind,
+        requested_address_sha256: address,
+        cas_applicable,
+        expected_revision,
+    }
+}
+/// Serialize the exact existing remainder with component roots replaced by
+/// null. The numeric locations refer to real object keys, never a concatenated
+/// pointer string; a literal key containing '/' cannot masquerade as a root.
+struct RecoveryRemainder<'a> {
+    value: &'a Value,
+    location: u8,
+}
+impl Serialize for RecoveryRemainder<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let Some(object) = self.value.as_object() else {
+            return self.value.serialize(serializer);
+        };
+        let mut map = serializer.serialize_map(Some(object.len()))?;
+        for (key, value) in object {
+            match (self.location, key.as_str()) {
+                (1, "document" | "journey") | (2, "request") | (3, "journey") => {
+                    map.serialize_entry(key, &())?
+                }
+                (0, "view") => {
+                    map.serialize_entry(key, &RecoveryRemainder { value, location: 1 })?
+                }
+                (0, "pending") => {
+                    map.serialize_entry(key, &RecoveryRemainder { value, location: 2 })?
+                }
+                (2, "submitted") => {
+                    map.serialize_entry(key, &RecoveryRemainder { value, location: 3 })?
+                }
+                _ => map.serialize_entry(key, value)?,
+            }
+        }
+        map.end()
+    }
+}
+fn bounded_image_metrics(value: &Value, dictionary_entries: Option<usize>) -> Value {
+    struct Counts<'a> {
+        unique: BTreeMap<&'a str, bool>,
+        unique_overflow: bool,
+        occurrences: Option<usize>,
+        occurrence_bytes: Option<usize>,
+    }
+    fn visit<'a>(value: &'a Value, counts: &mut Counts<'a>) {
+        match value {
+            Value::Object(object) => {
+                for (key, value) in object {
+                    if key == "dataUrl" {
+                        if let Some(url) = value
+                            .as_str()
+                            .filter(|url| crate::expression_file::png(url))
+                        {
+                            counts.occurrences = counts.occurrences.and_then(|n| n.checked_add(1));
+                            counts.occurrence_bytes = counts
+                                .occurrence_bytes
+                                .and_then(|n| n.checked_add(url.len()));
+                            if let Some(repeated) = counts.unique.get_mut(url) {
+                                *repeated = true;
+                            } else if counts.unique.len() < crate::expression_file::MAX_IMAGES {
+                                counts.unique.insert(url, false);
+                            } else {
+                                counts.unique_overflow = true;
+                            }
+                        }
+                    }
+                    visit(value, counts);
+                }
+            }
+            Value::Array(array) => {
+                for value in array {
+                    visit(value, counts);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut counts = Counts {
+        unique: BTreeMap::new(),
+        unique_overflow: false,
+        occurrences: Some(0),
+        occurrence_bytes: Some(0),
+    };
+    visit(value, &mut counts);
+    let exact = !counts.unique_overflow;
+    let unique_bytes = exact
+        .then(|| {
+            counts
+                .unique
+                .keys()
+                .try_fold(0usize, |n, url| n.checked_add(url.len()))
+        })
+        .flatten();
+    json!({
+        "eligible_occurrences": counts.occurrences,
+        "eligible_data_url_utf8_bytes_with_repetition": counts.occurrence_bytes,
+        "eligible_unique": exact.then_some(counts.unique.len()),
+        "eligible_unique_data_url_utf8_bytes": unique_bytes,
+        "repeated_unique": exact.then(|| counts.unique.values().filter(|repeated| **repeated).count()),
+        "unique_metrics_status": if exact { "complete" } else { "more_than_4096_unique_images_not_retained_in_diagnostic" },
+        "actual_candidate_dictionary_entries": dictionary_entries,
+        "diagnostic_unique_tracking_limit": crate::expression_file::MAX_IMAGES
+    })
+}
+struct SizeEvidence<'a> {
+    public: Option<&'a [u8]>,
+    raw_record: Option<&'a [u8]>,
+    stored_candidate: Option<&'a [u8]>,
+    dictionary_entries: Option<usize>,
+}
+fn format_size_refusal(message: &str, diagnostic: &Value) -> String {
+    match serde_json::to_string(diagnostic) {
+        Ok(body) if body.len() <= MAX_SIZE_DIAGNOSTIC_BYTES =>
+            format!("{message}{SIZE_DIAGNOSTIC_MARKER}{body}"),
+        // A metadata-format failure must never turn a refusal into success,
+        // reveal a value, or lose its original human-facing message.
+        _ => format!("{message}{SIZE_DIAGNOSTIC_MARKER}{{\"schema\":\"{SIZE_DIAGNOSTIC_SCHEMA}\",\"diagnostic_status\":\"metadata_format_refused\"}}"),
+    }
+}
+struct SizeRecordBasis<'a> {
+    scope: Scope,
+    kind: Kind,
+    id: &'a str,
+    revision: Option<u64>,
+    value: &'a Value,
+}
+fn size_refusal(
+    record: &Record,
+    message: &str,
+    branch: &'static str,
+    evidence: SizeEvidence<'_>,
+) -> String {
+    size_refusal_basis(
+        SizeRecordBasis {
+            scope: record.scope,
+            kind: record.kind,
+            id: &record.id,
+            revision: Some(record.revision),
+            value: &record.value,
+        },
+        message,
+        branch,
+        evidence,
+    )
+}
+fn size_refusal_basis(
+    record: SizeRecordBasis<'_>,
+    message: &str,
+    branch: &'static str,
+    evidence: SizeEvidence<'_>,
+) -> String {
+    let components: Vec<_> = if record.kind == Kind::Checkpoint {
+        ["/view/document", "/view/journey", "/pending/request", "/pending/submitted/journey"]
+            .into_iter().map(|path| json!({
+                "path": path,
+                "present": record.value.pointer(path).is_some(),
+                "measurement": record.value.pointer(path).map(|value| measure_serialized(value, MAX_RECORD_BYTES))
+            })).collect()
+    } else {
+        Vec::new()
+    };
+    let remainder = if record.kind == Kind::Checkpoint {
+        measure_serialized(
+            &RecoveryRemainder {
+                value: record.value,
+                location: 0,
+            },
+            MAX_RECORD_BYTES,
+        )
+    } else {
+        measure_serialized(&record.value, MAX_RECORD_BYTES)
+    };
+    let public_limit = if record.kind == Kind::Checkpoint {
+        MAX_DIAGNOSTIC_PUBLIC_BYTES
+    } else {
+        MAX_RECORD_BYTES
+    };
+    let public = evidence
+        .public
+        .map(|bytes| measured_bytes(bytes, public_limit))
+        .unwrap_or_else(|| measure_serialized(&record.value, public_limit));
+    let complete = public.status == "complete"
+        && remainder.status == "complete"
+        && components
+            .iter()
+            .all(|row| row["present"] == false || row["measurement"]["status"] == "complete");
+    let removed = components.iter().try_fold(0i128, |total, row| {
+        if row["present"] == false {
+            return Some(total);
+        }
+        total.checked_add(row["measurement"]["serialized_utf8_bytes"].as_u64()? as i128 - 4)
+    });
+    let remainder_formula_bytes = public
+        .serialized_utf8_bytes
+        .and_then(|full| usize::try_from((full as i128).checked_sub(removed?)?).ok());
+    let remainder_matches_formula = remainder
+        .serialized_utf8_bytes
+        .and_then(|measured| remainder_formula_bytes.map(|formula| formula == measured));
+    // An over-bound refused public Value must not cause another full image walk.
+    let images = if public.status == "complete" {
+        bounded_image_metrics(record.value, evidence.dictionary_entries)
+    } else {
+        json!({
+            "eligible_occurrences": null,
+            "eligible_data_url_utf8_bytes_with_repetition": null,
+            "eligible_unique": null,
+            "eligible_unique_data_url_utf8_bytes": null,
+            "repeated_unique": null,
+            "unique_metrics_status": "not_walked_public_measurement_incomplete_or_over_bound",
+            "actual_candidate_dictionary_entries": evidence.dictionary_entries,
+            "diagnostic_unique_tracking_limit": crate::expression_file::MAX_IMAGES
+        })
+    };
+    let diagnostic = json!({
+        "schema": SIZE_DIAGNOSTIC_SCHEMA,
+        "diagnostic_status": if complete { "measured_at_native_size_refusal" } else { "partial_measurement_at_native_size_refusal" },
+        "failure_branch": branch,
+        "operation_context": null,
+        "record_address_sha256": draft_address_sha256(record.scope, record.kind, record.id),
+        "record_scope": record.scope, "record_kind": record.kind,
+        "record_revision": record.revision,
+        "record_revision_role": if branch == "legacy_raw_value_decode" { "stored" } else if branch == "inbound_component_preflight" { "unallocated_inbound" } else { "proposed_not_acknowledged" },
+        "cas_guard": "not_qualified_until_store_request_context",
+        "public_value": public,
+        "components": components, "remainder_with_null_component_roots": remainder,
+        "remainder_formula_bytes": remainder_formula_bytes,
+        "remainder_measurement_matches_formula": remainder_matches_formula,
+        "raw_record": evidence.raw_record.map(|bytes| measured_bytes(bytes, MAX_DIAGNOSTIC_RAW_BYTES)),
+        "stored_candidate": evidence.stored_candidate.map(|bytes| measured_bytes(bytes, MAX_RECORD_BYTES + 2048)),
+        "stored_candidate_admitted_current_operation": false,
+        "stored_candidate_status": if branch == "legacy_raw_value_decode" { "existing_raw_bytes_refused" } else if evidence.stored_candidate.is_some() { "candidate_not_written" } else { "not_materialised" },
+        "images": images,
+        "limits": {"component_and_remainder_bytes": MAX_RECORD_BYTES, "stored_record_bytes": MAX_RECORD_BYTES + 2048, "scope_bytes": MAX_SCOPE_BYTES, "scope_records": MAX_RECORDS,
+            "diagnostic_public_measurement_bytes": public_limit, "diagnostic_raw_measurement_bytes": MAX_DIAGNOSTIC_RAW_BYTES, "diagnostic_metadata_utf8_bytes": MAX_SIZE_DIAGNOSTIC_BYTES},
+        "private_values_disclosed": false
+    });
+    format_size_refusal(message, &diagnostic)
+}
+fn attach_size_request_context(error: String, context: &SizeRequestContext) -> String {
+    let Some((message, body)) = error.split_once(SIZE_DIAGNOSTIC_MARKER) else {
+        return error;
+    };
+    if !matches!(
+        message,
+        "Recovery record exceeds 8 MiB" | COMPONENT_SIZE_MESSAGE
+    ) || body.len() > MAX_SIZE_DIAGNOSTIC_BYTES
+    {
+        return error;
+    }
+    let Ok(mut diagnostic) = serde_json::from_str::<Value>(body) else {
+        return error;
+    };
+    if diagnostic["schema"] != SIZE_DIAGNOSTIC_SCHEMA || !diagnostic.is_object() {
+        return error;
+    }
+    diagnostic["operation_context"] = match serde_json::to_value(context) {
+        Ok(value) => value,
+        Err(_) => return error,
+    };
+    diagnostic["cas_guard"] = json!(
+        match (context.operation, diagnostic["failure_branch"].as_str()) {
+            ("write", Some("inbound_component_preflight")) =>
+                "not_reached_inbound_validation_refused",
+            ("write", Some("legacy_raw_value_decode"))
+            | ("remove", Some("legacy_raw_value_decode")) =>
+                "not_reached_existing_record_decode_refused",
+            (
+                "write",
+                Some(
+                    "component_preflight"
+                    | "write_without_image_dictionary"
+                    | "write_image_dictionary_storage",
+                ),
+            ) => "passed_before_size_refusal",
+            _ => "not_applicable",
+        }
+    );
+    format_size_refusal(message, &diagnostic)
+}
+
+// Private record-local sharing. Full public Recovery values and their four
+// independent native/authoring/intent bases are unchanged. Only try this
+// envelope after the existing PNG-only encoding exceeds the stored limit.
+const SHARED_STORAGE_SCHEMA: &str = "oi.expression-recovery-storage/v2";
+const SHARED_REF_SCHEMA: &str = "oi.expression-recovery-value-ref/v1";
+const MAX_SHARED_PARTS: usize = 4096;
+const MIN_SHARED_BYTES: usize = 16 * 1024;
+const COMPONENT_ROOTS: [&str; 4] = [
+    "/view/document",
+    "/view/journey",
+    "/pending/request",
+    "/pending/submitted/journey",
+];
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SharedPart {
+    r#ref: String,
+    value: Value,
+}
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SharedRecord {
+    schema: String,
+    record: Record,
+    images: Vec<crate::expression_file::StoredImage>,
+    parts: Vec<SharedPart>,
+    expanded_value_sha256: String,
+}
+fn shared_path(path: &str) -> bool {
+    // Keep the complete Document header directly addressable for metadata-only
+    // List/FindCheckpoint. Every shared slot belongs to a bounded basis.
+    path != "/view/document"
+        && !path.starts_with("/view/document/expression_ref")
+        && COMPONENT_ROOTS.iter().any(|root| {
+            path == *root
+                || path
+                    .strip_prefix(root)
+                    .is_some_and(|tail| tail.starts_with('/'))
+        })
+}
+// Only the four fixed basis prefixes and the direct Document ref matter to
+// storage-slot authority. Below them retain depth, not arbitrary/private keys;
+// this prevents a long public key from multiplying path-buffer allocations.
+fn child_path(path: &str, key: &str) -> String {
+    let fixed = match path {
+        "" => matches!(key, "view" | "pending"),
+        "/view" => matches!(key, "document" | "journey"),
+        "/pending" => matches!(key, "request" | "submitted"),
+        "/pending/submitted" => key == "journey",
+        "/view/document" => key == "expression_ref",
+        _ => false,
+    };
+    format!("{path}/{}", if fixed { key } else { "*" })
+}
+fn no_shared_refs(value: &Value) -> Result<(), String> {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        return Err("Recovery shared reference outside its private value slot".into());
+    }
+    match value {
+        Value::Object(values) => {
+            for v in values.values() {
+                no_shared_refs(v)?;
+            }
+        }
+        Value::Array(values) => {
+            for v in values {
+                no_shared_refs(v)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+/// Borrowed, byte-bounded canonical serialization; no payload Vec or Value
+/// clone. Part fingerprints qualify precisely the stored (PNG-compacted)
+/// literal, and the whole-record digest qualifies the expanded public value.
+fn shared_fingerprint(value: &Value) -> Result<(usize, String), String> {
+    const HASH_BUFFER_BYTES: usize = 8192;
+    struct Counter {
+        size: usize,
+        hash: Sha256,
+        hash_buffer: Vec<u8>,
+    }
+    impl std::io::Write for Counter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            let next = self
+                .size
+                .checked_add(bytes.len())
+                .filter(|n| *n <= MAX_RECORD_BYTES + 2048)
+                .ok_or_else(|| {
+                    std::io::Error::other("Recovery literal exceeds stored byte bound")
+                })?;
+            // Qualify the same complete byte count before accepting any hash
+            // bytes. Batching changes only SHA call granularity, not the stream.
+            let mut remaining = bytes;
+            while !remaining.is_empty() {
+                if self.hash_buffer.is_empty() && remaining.len() >= HASH_BUFFER_BYTES {
+                    self.hash.update(remaining);
+                    break;
+                }
+                let take = remaining
+                    .len()
+                    .min(HASH_BUFFER_BYTES - self.hash_buffer.len());
+                self.hash_buffer.extend_from_slice(&remaining[..take]);
+                remaining = &remaining[take..];
+                if self.hash_buffer.len() == HASH_BUFFER_BYTES {
+                    self.hash.update(&self.hash_buffer);
+                    self.hash_buffer.clear();
+                }
+            }
+            self.size = next;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut out = Counter {
+        size: 0,
+        hash: Sha256::new(),
+        hash_buffer: Vec::with_capacity(HASH_BUFFER_BYTES),
+    };
+    serde_json::to_writer(&mut out, value).map_err(|e| e.to_string())?;
+    out.hash.update(&out.hash_buffer);
+    Ok((out.size, format!("sha256:{:x}", out.hash.finalize())))
+}
+fn shared_candidates(
+    value: &Value,
+    path: &str,
+    counts: &mut BTreeMap<String, usize>,
+    fingerprints: &mut BTreeMap<usize, (usize, String)>,
+    fingerprint_limit: usize,
+) -> Result<(), String> {
+    if shared_path(path) && (value.is_object() || value.is_array()) {
+        let (bytes, reference) = shared_fingerprint(value)?;
+        if bytes >= MIN_SHARED_BYTES {
+            if fingerprints.len() < fingerprint_limit {
+                fingerprints.insert(value as *const Value as usize, (bytes, reference.clone()));
+            }
+            if !counts.contains_key(&reference) && counts.len() >= MAX_SHARED_PARTS {
+                return Err("Recovery shared candidate count exceeds its bound".into());
+            }
+            *counts.entry(reference).or_default() += 1;
+        }
+    }
+    match value {
+        Value::Object(values) => {
+            for (k, v) in values {
+                shared_candidates(
+                    v,
+                    &child_path(path, k),
+                    counts,
+                    fingerprints,
+                    fingerprint_limit,
+                )?;
+            }
+        }
+        Value::Array(values) => {
+            for (i, v) in values.iter().enumerate() {
+                shared_candidates(
+                    v,
+                    &child_path(path, &i.to_string()),
+                    counts,
+                    fingerprints,
+                    fingerprint_limit,
+                )?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+fn shared_intern(
+    value: &mut Value,
+    path: &str,
+    counts: &BTreeMap<String, usize>,
+    parts: &mut BTreeMap<String, Value>,
+    used: &mut BTreeMap<String, usize>,
+    fingerprints: &mut BTreeMap<usize, (usize, String)>,
+) -> Result<(), String> {
+    if shared_path(path) && (value.is_object() || value.is_array()) {
+        let (bytes, reference) = match fingerprints.remove(&(value as *const Value as usize)) {
+            Some(fingerprint) => fingerprint,
+            None => shared_fingerprint(value)?,
+        };
+        if bytes >= MIN_SHARED_BYTES && counts.get(&reference).is_some_and(|n| *n > 1) {
+            if let Some(previous) = parts.get(&reference) {
+                if previous != value {
+                    return Err("Recovery literal digest collision".into());
+                }
+                *value = Value::Null; // drop this duplicate before adding its small marker
+            } else {
+                parts.insert(reference.clone(), std::mem::take(value));
+            }
+            *used.entry(reference.clone()).or_default() += 1;
+            *value = json!({"schema": SHARED_REF_SCHEMA, "ref": reference});
+            return Ok(()); // flat parts never contain other shared references
+        }
+    }
+    match value {
+        Value::Object(values) => {
+            for (k, v) in values {
+                shared_intern(v, &child_path(path, k), counts, parts, used, fingerprints)?;
+            }
+        }
+        Value::Array(values) => {
+            for (i, v) in values.iter_mut().enumerate() {
+                shared_intern(
+                    v,
+                    &child_path(path, &i.to_string()),
+                    counts,
+                    parts,
+                    used,
+                    fingerprints,
+                )?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+// An ancestor may consume one counted occurrence of a smaller candidate.
+// Return singleton literals to their sole slot, by move, before encoding.
+fn shared_singletons(
+    value: &mut Value,
+    used: &BTreeMap<String, usize>,
+    parts: &mut BTreeMap<String, Value>,
+) -> Result<(), String> {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        let reference = value["ref"]
+            .as_str()
+            .ok_or("Invalid recovery shared reference")?;
+        if used.get(reference) == Some(&1) {
+            *value = parts
+                .remove(reference)
+                .ok_or("Missing recovery singleton literal")?;
+        }
+        return Ok(());
+    }
+    match value {
+        Value::Object(values) => {
+            for v in values.values_mut() {
+                shared_singletons(v, used, parts)?;
+            }
+        }
+        Value::Array(values) => {
+            for v in values {
+                shared_singletons(v, used, parts)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+fn shared_depth(value: &Value) -> usize {
+    match value {
+        Value::Object(values) => values.values().map(shared_depth).max().map_or(0, |n| n + 1),
+        Value::Array(values) => values.iter().map(shared_depth).max().map_or(0, |n| n + 1),
+        _ => 0,
+    }
+}
+fn shared_delta(
+    value: &Value,
+    path: &str,
+    weights: &BTreeMap<String, (usize, usize)>,
+    used: &mut BTreeMap<String, usize>,
+) -> Result<i128, String> {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        if !shared_path(path) {
+            return Err("Recovery shared reference outside bounded component".into());
+        }
+        let fields = value.as_object().unwrap();
+        let reference = value["ref"]
+            .as_str()
+            .ok_or("Invalid recovery shared reference")?;
+        if fields.len() != 2
+            || !fields.contains_key("schema")
+            || !fields.contains_key("ref")
+            || !crate::expression_file::digest_ref(reference)
+        {
+            return Err("Invalid recovery shared reference fields/digest".into());
+        }
+        let (size, depth) = *weights
+            .get(reference)
+            .ok_or("Missing recovery shared literal")?;
+        if path
+            .bytes()
+            .filter(|c| *c == b'/')
+            .count()
+            .checked_add(depth)
+            .is_none_or(|n| n > 64)
+        {
+            return Err("Recovery shared literal expands beyond nesting bound".into());
+        }
+        *used.entry(reference.to_owned()).or_default() += 1;
+        return Ok(size as i128 - serialized_size(value)? as i128);
+    }
+    let mut delta = 0i128;
+    match value {
+        Value::Object(values) => {
+            for (k, v) in values {
+                delta = delta
+                    .checked_add(shared_delta(v, &child_path(path, k), weights, used)?)
+                    .ok_or("Recovery shared expansion overflow")?;
+            }
+        }
+        Value::Array(values) => {
+            for (i, v) in values.iter().enumerate() {
+                delta = delta
+                    .checked_add(shared_delta(
+                        v,
+                        &child_path(path, &i.to_string()),
+                        weights,
+                        used,
+                    )?)
+                    .ok_or("Recovery shared expansion overflow")?;
+            }
+        }
+        _ => {}
+    }
+    Ok(delta)
+}
+fn qualify_shared(stored: &SharedRecord, images: &BTreeMap<String, String>) -> Result<(), String> {
+    if stored.schema != SHARED_STORAGE_SCHEMA
+        || stored.record.kind != Kind::Checkpoint
+        || !crate::expression_file::digest_ref(&stored.expanded_value_sha256)
+        || stored.parts.is_empty()
+        || stored.parts.len() > MAX_SHARED_PARTS
+    {
+        return Err("Invalid recovery shared schema/dictionary budget".into());
+    }
+    data(&stored.record.value, 0)?;
+    let mut weights = BTreeMap::new();
+    let mut used_images = BTreeSet::new();
+    for part in &stored.parts {
+        data(&part.value, 0)?;
+        no_shared_refs(&part.value)?;
+        let (literal_bytes, digest) = shared_fingerprint(&part.value)?;
+        if !(part.value.is_object() || part.value.is_array())
+            || literal_bytes < MIN_SHARED_BYTES
+            || !crate::expression_file::digest_ref(&part.r#ref)
+            || digest != part.r#ref
+        {
+            return Err("Recovery shared literal digest differs".into());
+        }
+        let size = (literal_bytes as i128)
+            .checked_add(crate::expression_file::expansion_delta(
+                &part.value,
+                None,
+                images,
+                &mut used_images,
+            )?)
+            .ok_or("Recovery shared expansion overflow")?;
+        if !(0..=MAX_RECORD_BYTES as i128).contains(&size) {
+            return Err(COMPONENT_SIZE_MESSAGE.into());
+        }
+        if weights
+            .insert(
+                part.r#ref.clone(),
+                (size as usize, shared_depth(&part.value)),
+            )
+            .is_some()
+        {
+            return Err("Duplicate recovery shared literal".into());
+        }
+    }
+    let mut uses = BTreeMap::new();
+    let image_delta = crate::expression_file::expansion_delta(
+        &stored.record.value,
+        None,
+        images,
+        &mut used_images,
+    )?;
+    let delta = shared_delta(&stored.record.value, "", &weights, &mut uses)?;
+    if used_images.len() != images.len()
+        || uses.len() != weights.len()
+        || uses.values().any(|n| *n < 2)
+    {
+        return Err("Unused or singleton recovery shared literal/image".into());
+    }
+    let total = (serialized_size(&stored.record.value)? as i128)
+        .checked_add(image_delta)
+        .and_then(|n| n.checked_add(delta))
+        .ok_or("Recovery shared expansion overflow")?;
+    let mut removed = 0i128;
+    for path in COMPONENT_ROOTS {
+        if let Some(value) = stored.record.value.pointer(path) {
+            let size = (expanded_size(value, images)? as i128)
+                .checked_add(shared_delta(value, path, &weights, &mut BTreeMap::new())?)
+                .ok_or("Recovery shared expansion overflow")?;
+            if !(0..=MAX_RECORD_BYTES as i128).contains(&size) {
+                return Err(COMPONENT_SIZE_MESSAGE.into());
+            }
+            removed = removed
+                .checked_add(size - 4)
+                .ok_or("Recovery shared expansion overflow")?;
+        }
+    }
+    if !(0..=MAX_RECORD_BYTES as i128).contains(&(total - removed)) {
+        return Err(COMPONENT_SIZE_MESSAGE.into());
+    }
+    Ok(())
+}
+fn shared_expand(value: &mut Value, parts: &BTreeMap<String, Value>) {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        *value = parts[value["ref"].as_str().unwrap()].clone();
+        return;
+    }
+    match value {
+        Value::Object(values) => {
+            for v in values.values_mut() {
+                shared_expand(v, parts);
+            }
+        }
+        Value::Array(values) => {
+            for v in values {
+                shared_expand(v, parts);
+            }
+        }
+        _ => {}
+    }
+}
+fn encode_shared_record(stored: StoredRecord) -> Result<Option<Vec<u8>>, String> {
+    encode_shared_record_with_fingerprint_limit(stored, MAX_SHARED_PARTS)
+}
+fn encode_shared_record_with_fingerprint_limit(
+    mut stored: StoredRecord,
+    fingerprint_limit: usize,
+) -> Result<Option<Vec<u8>>, String> {
+    if stored.record.kind != Kind::Checkpoint {
+        return Ok(None);
+    }
+    no_shared_refs(&stored.record.value)?;
+    let mut candidates = BTreeMap::new();
+    // Operation-local memo of already-qualified complete literal bytes. The
+    // owned tree stays in place between these two traversals. Intern examines
+    // an ancestor before changing descendants and returns after replacing it;
+    // it never inserts/removes array or object members, so unvisited nodes keep
+    // both their addresses and bytes. New markers are never traversed. Addresses
+    // are identity keys only, never dereferenced; no memo survives this encode.
+    // Bound retained entries; a miss uses the same complete fingerprint oracle.
+    let mut fingerprints = BTreeMap::new();
+    let candidates_phase = diagnostic_phase("encode_shared_candidates");
+    shared_candidates(
+        &stored.record.value,
+        "",
+        &mut candidates,
+        &mut fingerprints,
+        fingerprint_limit.min(MAX_SHARED_PARTS),
+    )?;
+    drop(candidates_phase);
+    let mut parts = BTreeMap::new();
+    let mut used = BTreeMap::new();
+    let intern_phase = diagnostic_phase("encode_shared_intern");
+    shared_intern(
+        &mut stored.record.value,
+        "",
+        &candidates,
+        &mut parts,
+        &mut used,
+        &mut fingerprints,
+    )?;
+    drop(intern_phase);
+    let singletons_phase = diagnostic_phase("encode_shared_singletons");
+    shared_singletons(&mut stored.record.value, &used, &mut parts)?;
+    drop(singletons_phase);
+    if parts.is_empty() {
+        return Ok(None);
+    }
+    let next = SharedRecord {
+        schema: SHARED_STORAGE_SCHEMA.into(),
+        record: stored.record,
+        images: stored.images,
+        parts: parts
+            .into_iter()
+            .map(|(reference, value)| SharedPart {
+                r#ref: reference,
+                value,
+            })
+            .collect(),
+        expanded_value_sha256: stored.expanded_value_sha256,
+    };
+    let images = next
+        .images
+        .iter()
+        .map(|i| (i.r#ref.clone(), i.data_url.clone()))
+        .collect();
+    let qualify_phase = diagnostic_phase("encode_shared_qualification");
+    qualify_shared(&next, &images)?;
+    drop(qualify_phase);
+    // Do not materialize an over-bound serialized rescue candidate.
+    let _serialize_phase = diagnostic_phase("encode_shared_serialization");
+    let mut counter = SizeCounter::default();
+    serde_json::to_writer(&mut counter, &next).map_err(|e| e.to_string())?;
+    if counter.0 > MAX_RECORD_BYTES + 2048 {
+        return Ok(None);
+    }
+    serde_json::to_vec(&next)
+        .map(Some)
+        .map_err(|e| e.to_string())
+}
+#[derive(Default)]
+struct SizeCounter(usize);
+impl std::io::Write for SizeCounter {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0 = self
+            .0
+            .checked_add(bytes.len())
+            .ok_or_else(|| std::io::Error::other("Recovery shared size overflow"))?;
+        Ok(bytes.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+fn decode_shared_record(value: Value, validate_body: bool) -> Result<Record, String> {
+    let mut stored: SharedRecord = serde_json::from_value(value)
+        .map_err(|e| format!("Invalid shared recovery envelope: {e}"))?;
+    if stored.images.len() > crate::expression_file::MAX_IMAGES {
+        return Err("Recovery image dictionary budget exceeded".into());
+    }
+    let mut images = BTreeMap::new();
+    for image in &stored.images {
+        if !crate::expression_file::digest_ref(&image.r#ref)
+            || !crate::expression_file::png(&image.data_url)
+            || crate::expression_file::digest(image.data_url.as_bytes()) != image.r#ref
+            || images
+                .insert(image.r#ref.clone(), image.data_url.clone())
+                .is_some()
+        {
+            return Err("Invalid or duplicate shared recovery image".into());
+        }
+    }
+    qualify_shared(&stored, &images)?;
+    if validate_body {
+        let parts = stored
+            .parts
+            .into_iter()
+            .map(|part| (part.r#ref, part.value))
+            .collect();
+        shared_expand(&mut stored.record.value, &parts);
+        crate::expression_file::expand(&mut stored.record.value, &images);
+        if crate::expression_file::digest(
+            &serde_json::to_vec(&stored.record.value).map_err(|e| e.to_string())?,
+        ) != stored.expanded_value_sha256
+        {
+            return Err("Expanded recovery value digest differs".into());
+        }
+    }
+    Ok(stored.record)
+}
+
+fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
+    preflight_components(record.kind, &record.value).map_err(|error| {
+        if error == COMPONENT_SIZE_MESSAGE {
+            size_refusal(
+                record,
+                &error,
+                "component_preflight",
+                SizeEvidence {
+                    public: None,
+                    raw_record: None,
+                    stored_candidate: None,
+                    dictionary_entries: None,
+                },
+            )
+        } else {
+            error
+        }
+    })?;
+    let full = serde_json::to_vec(&record.value).map_err(|e| e.to_string())?;
+    let mut counts = BTreeMap::new();
+    crate::expression_file::count_images(&record.value, &mut counts);
+    let refs: BTreeMap<String, String> = counts
+        .into_iter()
+        .filter(|(_, count)| *count > 1)
+        .take(crate::expression_file::MAX_IMAGES)
+        .map(|(url, _)| {
+            (
+                url.to_owned(),
+                crate::expression_file::digest(url.as_bytes()),
+            )
+        })
+        .collect();
+    let raw = serde_json::to_vec(record).map_err(|e| e.to_string())?;
+    if refs.is_empty() {
+        if full.len() > MAX_RECORD_BYTES {
+            let shared = StoredRecord {
+                schema: STORAGE_SCHEMA.into(),
+                record: Record {
+                    schema: record.schema.clone(),
+                    scope: record.scope,
+                    kind: record.kind,
+                    id: record.id.clone(),
+                    revision: record.revision,
+                    value: record.value.clone(),
+                },
+                images: Vec::new(),
+                expanded_value_sha256: crate::expression_file::digest(&full),
+            };
+            if let Some(encoded) = encode_shared_record(shared)? {
+                return Ok(encoded);
+            }
+            return Err(size_refusal(
+                record,
+                "Recovery record exceeds 8 MiB",
+                "write_without_image_dictionary",
+                SizeEvidence {
+                    public: Some(&full),
+                    raw_record: Some(&raw),
+                    stored_candidate: Some(&raw),
+                    dictionary_entries: Some(0),
+                },
+            ));
+        }
+        return Ok(raw);
+    }
+    let mut compact = Record {
+        schema: record.schema.clone(),
+        scope: record.scope,
+        kind: record.kind,
+        id: record.id.clone(),
+        revision: record.revision,
+        value: record.value.clone(),
+    };
+    crate::expression_file::intern(&mut compact.value, &refs);
+    let mut images: Vec<_> = refs
+        .iter()
+        .map(|(url, reference)| crate::expression_file::StoredImage {
+            r#ref: reference.clone(),
+            data_url: url.clone(),
+        })
+        .collect();
+    images.sort_by(|a, b| a.r#ref.cmp(&b.r#ref));
+    qualify_expansion(
+        record.kind,
+        &compact.value,
+        &refs
+            .iter()
+            .map(|(url, reference)| (reference.clone(), url.clone()))
+            .collect(),
+    )?;
+    let stored = StoredRecord {
+        schema: STORAGE_SCHEMA.into(),
+        record: compact,
+        images,
+        expanded_value_sha256: crate::expression_file::digest(&full),
+    };
+    let encoded = serde_json::to_vec(&stored).map_err(|e| e.to_string())?;
+    if encoded.len() >= raw.len() && full.len() <= MAX_RECORD_BYTES {
+        return Ok(raw);
+    }
+    if encoded.len() > MAX_RECORD_BYTES + 2048 {
+        let dictionary_entries = stored.images.len();
+        if let Some(shared) = encode_shared_record(stored)? {
+            return Ok(shared);
+        }
+        return Err(size_refusal(
+            record,
+            "Recovery record exceeds 8 MiB",
+            "write_image_dictionary_storage",
+            SizeEvidence {
+                public: Some(&full),
+                raw_record: Some(&raw),
+                stored_candidate: Some(&encoded),
+                dictionary_entries: Some(dictionary_entries),
+            },
+        ));
+    }
+    Ok(encoded)
+}
+
+fn decode_record(bytes: &[u8], validate_body: bool) -> Result<Record, String> {
+    let crate::expression_file::UniqueValue(value) =
+        serde_json::from_slice(bytes).map_err(|e| format!("Invalid native recovery entry: {e}"))?;
+    if value["schema"] == SCHEMA {
+        let record: Record = serde_json::from_value(value).map_err(|e| e.to_string())?;
+        let full = serde_json::to_vec(&record.value).map_err(|e| e.to_string())?;
+        if full.len() > MAX_RECORD_BYTES {
+            return Err(size_refusal(
+                &record,
+                "Recovery record exceeds 8 MiB",
+                "legacy_raw_value_decode",
+                SizeEvidence {
+                    public: Some(&full),
+                    raw_record: Some(bytes),
+                    stored_candidate: Some(bytes),
+                    dictionary_entries: Some(0),
+                },
+            ));
+        }
+        return Ok(record);
+    }
+    if value["schema"] == SHARED_STORAGE_SCHEMA {
+        return decode_shared_record(value, validate_body);
+    }
+    if value["schema"] != STORAGE_SCHEMA {
+        return Err("Unsupported native recovery storage schema".into());
+    }
+    let mut stored: StoredRecord = serde_json::from_value(value)
+        .map_err(|e| format!("Invalid native recovery envelope: {e}"))?;
+    if !crate::expression_file::digest_ref(&stored.expanded_value_sha256)
+        || stored.images.len() > crate::expression_file::MAX_IMAGES
+    {
+        return Err("Invalid recovery digest or image dictionary budget".into());
+    }
+    let mut images = BTreeMap::new();
+    for image in stored.images {
+        if !crate::expression_file::digest_ref(&image.r#ref)
+            || !crate::expression_file::png(&image.data_url)
+            || crate::expression_file::digest(image.data_url.as_bytes()) != image.r#ref
+        {
+            return Err("Invalid embedded recovery image schema or digest".into());
+        }
+        if images.insert(image.r#ref, image.data_url).is_some() {
+            return Err("Duplicate embedded recovery image reference".into());
+        }
+    }
+    qualify_expansion(stored.record.kind, &stored.record.value, &images)?;
+    if validate_body {
+        crate::expression_file::expand(&mut stored.record.value, &images);
+        if crate::expression_file::digest(
+            &serde_json::to_vec(&stored.record.value).map_err(|e| e.to_string())?,
+        ) != stored.expanded_value_sha256
+        {
+            return Err("Expanded recovery value digest differs".into());
+        }
+    }
+    Ok(stored.record)
+}
 fn filename(kind: Kind, id: &str) -> String {
     format!(
         "{:x}.json",
@@ -386,18 +1763,19 @@ fn conflict(current: Option<u64>) -> Value {
 
 impl Store {
     pub fn apply(&self, request: Request) -> Result<Value, String> {
+        let context = size_request_context(&request);
         #[cfg(unix)]
-        {
-            self.apply_unix(request)
-        }
+        let result = self.apply_unix(request);
         #[cfg(not(unix))]
-        {
+        let result = {
             let _ = request;
             Err("Native recovery is unavailable on this platform".into())
-        }
+        };
+        result.map_err(|error| attach_size_request_context(error, &context))
     }
     #[cfg(unix)]
     fn apply_unix(&self, request: Request) -> Result<Value, String> {
+        let _owner_phase = diagnostic_phase("store_total");
         use std::{
             fs,
             io::Read,
@@ -422,6 +1800,7 @@ impl Store {
         let lock = root
             .file(".lock", true, true)?
             .ok_or("Cannot open native recovery lock")?;
+        let lock_phase = diagnostic_phase("store_lock_wait");
         let started = Instant::now();
         loop {
             match lock.try_lock() {
@@ -434,6 +1813,8 @@ impl Store {
                 Err(error) => return Err(format!("Native recovery lock is unavailable: {error}")),
             }
         }
+        drop(lock_phase);
+        let setup_phase = diagnostic_phase("store_cleanup_sequence");
         root.cleanup_pending(128)?;
         let scope = match &request {
             Request::Read { scope, .. }
@@ -462,6 +1843,7 @@ impl Store {
         if sequence > MAX_REVISION {
             return Err("Native recovery revision exceeds the exact JSON integer bound".into());
         }
+        drop(setup_phase);
         match request {
             Request::Read { kind, id, .. } => {
                 safe_id(&id)?;
@@ -476,7 +1858,9 @@ impl Store {
             }
             Request::FindCheckpoint { expression_ref, .. } => {
                 reference(&expression_ref)?;
-                let records = read_records(&dir, scope, sequence, true)?;
+                // Inspect metadata without expanding every unrelated private
+                // body. Only the exact addressed checkpoint returns content.
+                let records = read_records(&dir, scope, sequence, false)?;
                 let matching = records
                     .iter()
                     .filter(|r| {
@@ -490,7 +1874,20 @@ impl Store {
                 if matching.len() > 1 {
                     return Err("Several native working drafts address this Expression; choose a draft explicitly".into());
                 }
-                Ok(ready(matching.first().copied()))
+                let record = matching
+                    .first()
+                    .map(|record| {
+                        read_record(
+                            &dir,
+                            scope,
+                            &filename(record.kind, &record.id),
+                            sequence,
+                            true,
+                        )
+                    })
+                    .transpose()?
+                    .flatten();
+                Ok(ready(record.as_ref()))
             }
             Request::Write {
                 kind,
@@ -499,8 +1896,34 @@ impl Store {
                 value,
                 ..
             } => {
-                validate(kind, &id, &value)?;
+                let validation_phase = diagnostic_phase("store_inbound_validation");
+                validate(kind, &id, &value).map_err(|error| {
+                    if error == COMPONENT_SIZE_MESSAGE {
+                        size_refusal_basis(
+                            SizeRecordBasis {
+                                scope,
+                                kind,
+                                id: &id,
+                                revision: None,
+                                value: &value,
+                            },
+                            &error,
+                            "inbound_component_preflight",
+                            SizeEvidence {
+                                public: None,
+                                raw_record: None,
+                                stored_candidate: None,
+                                dictionary_entries: None,
+                            },
+                        )
+                    } else {
+                        error
+                    }
+                })?;
+                drop(validation_phase);
+                let previous_phase = diagnostic_phase("store_previous_full_read");
                 let previous = read_record(&dir, scope, &filename(kind, &id), sequence, true)?;
+                drop(previous_phase);
                 if previous.as_ref().map(|r| r.revision) != expected_revision {
                     return Ok(conflict(previous.as_ref().map(|r| r.revision)));
                 }
@@ -523,7 +1946,9 @@ impl Store {
                     revision: sequence,
                     value,
                 };
-                let bytes = serde_json::to_vec(&record).map_err(|e| e.to_string())?;
+                let encode_phase = diagnostic_phase("store_encode");
+                let bytes = encode_record(&record)?;
+                drop(encode_phase);
                 let target = filename(kind, &record.id);
                 let total = entries
                     .iter()
@@ -540,11 +1965,14 @@ impl Store {
                 }
                 // Allocate monotonically first. A crash can leave a gap, never reissue a
                 // previously acknowledged revision after remove/recreate.
+                let atomic_phase = diagnostic_phase("store_atomic_write");
                 root.atomic(
                     ".sequence",
                     &serde_json::to_vec(&sequence).map_err(|e| e.to_string())?,
                 )?;
                 dir.atomic(&filename(kind, &record.id), &bytes)?;
+                drop(atomic_phase);
+                let _public_phase = diagnostic_phase("store_public_acknowledgement");
                 Ok(json!({"schema":SCHEMA,"state":"written","record":record.public()}))
             }
             Request::Remove {
@@ -630,8 +2058,7 @@ fn read_record(
     if bytes.len() as u64 != len {
         return Err("Native recovery entry changed while being read".into());
     }
-    let record: Record = serde_json::from_slice(&bytes)
-        .map_err(|e| format!("Invalid native recovery entry: {e}"))?;
+    let record = decode_record(&bytes, validate_body)?;
     if record.schema != SCHEMA
         || record.scope != scope
         || record.revision == 0
@@ -958,6 +2385,283 @@ mod tests {
             .unwrap();
         assert_eq!(reply["state"], "ready");
         json!({"schema":"oi.native-working/v1","draft_id":id,"view":{"document":reply["document"],"journey":draft(id)}})
+    }
+
+    #[test]
+    fn oversized_public_component_refuses_before_image_materialisation() {
+        let home = Home::new();
+        let mut value = draft("oversized-images");
+        let png = format!(
+            "data:image/png;base64,{}",
+            "AAAA".repeat(MAX_RECORD_BYTES / 4)
+        );
+        value["retained"] = json!([
+            {"dataUrl": png}, {"dataUrl": png},
+            {"schema":"oi.expression-image-ref/v1","ref":"invalid-placement"}
+        ]);
+        // If interning or expansion qualification runs before the borrowed
+        // size preflight, the misplaced reference wins with a different error.
+        // The ordinary native write must refuse the size first, without a
+        // record or a persisted sequence, before copying either PNG String.
+        let record = Record {
+            schema: SCHEMA.into(),
+            scope: Scope::Expressions,
+            kind: Kind::Draft,
+            id: "oversized-images".into(),
+            revision: 1,
+            value,
+        };
+        let refused = encode_record(&record).unwrap_err();
+        assert!(
+            refused.contains("8 MiB before material cloning"),
+            "{refused}"
+        );
+        let refused = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Draft,
+                "oversized-images",
+                None,
+                record.value,
+            ))
+            .unwrap_err();
+        assert!(
+            refused.contains("8 MiB before material cloning"),
+            "{refused}"
+        );
+        assert!(!home
+            .path(Scope::Expressions, Kind::Draft, "oversized-images")
+            .exists());
+        assert!(!home.root().join(".sequence").exists());
+    }
+
+    /// The input is the retained failed public operation from the ordinary
+    /// Epi world, not a synthesized checkpoint or an owner-response fixture.
+    #[test]
+    #[ignore = "supply OI_RECOVERY_REAL_FAILURE with the retained ordinary-production refusal"]
+    fn actual_epi_checkpoint_preserves_all_material_and_pending_work_across_recovery() {
+        let path = std::env::var("OI_RECOVERY_REAL_FAILURE").unwrap();
+        let failure: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+        assert_eq!(
+            failure["response"]["error"],
+            "Recovery record exceeds 8 MiB"
+        );
+        let request = &failure["request"]["request"];
+        let original = request["value"].clone();
+        let id = request["id"].as_str().unwrap();
+        assert_eq!(request["kind"], "checkpoint");
+        assert!(serde_json::to_vec(&original).unwrap().len() > MAX_RECORD_BYTES);
+        let document: crate::expression::Document =
+            serde_json::from_value(original["view"]["document"].clone()).unwrap();
+        document.validate().unwrap();
+        let home = Home::new();
+        let written = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                original.clone(),
+            ))
+            .expect("The complete actual checkpoint must fit by lossless native storage encoding");
+        assert_eq!(written["record"]["value"], original);
+        let stored_path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let stored_bytes = fs::read(&stored_path).unwrap();
+        assert!(stored_bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let stored: Value = serde_json::from_slice(&stored_bytes).unwrap();
+        assert_eq!(stored["schema"], "oi.expression-recovery-storage/v1");
+        assert_eq!(stored["images"].as_array().unwrap().len(), 6);
+
+        // A fresh Store has no in-memory state. Every body, source, private
+        // history, working/saved material and interrupted request must return
+        // exactly; recovery itself never executes the pending owner operation.
+        let reopened = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap();
+        assert_eq!(reopened["record"], written["record"]);
+        let found = home
+            .store()
+            .apply(Request::FindCheckpoint {
+                scope: Scope::Expressions,
+                expression_ref: document.expression_ref.clone(),
+            })
+            .unwrap();
+        assert_eq!(found["record"], written["record"]);
+        let listed = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::Checkpoint,
+            })
+            .unwrap();
+        assert_eq!(listed["records"].as_array().unwrap().len(), 1);
+        assert_eq!(listed["records"][0]["id"], id);
+        assert_eq!(
+            listed["records"][0]["expression_ref"],
+            document.expression_ref
+        );
+        assert!(
+            listed["records"][0].get("value").is_none(),
+            "Inventory must not materialize private body data"
+        );
+        let stale = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&written) + 1),
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        assert_eq!(fs::read(&stored_path).unwrap(), stored_bytes);
+
+        let mut missing = stored.clone();
+        missing["images"].as_array_mut().unwrap().pop();
+        let mut modified = stored.clone();
+        modified["images"][0]["data_url"] = json!("data:image/png;base64,AAAA");
+        let mut duplicate = stored.clone();
+        let first = duplicate["images"][0].clone();
+        duplicate["images"].as_array_mut().unwrap().push(first);
+        let mut wrong_digest = stored.clone();
+        wrong_digest["expanded_value_sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+        let mut unused = stored.clone();
+        let url = "data:image/png;base64,AAAA";
+        unused["images"].as_array_mut().unwrap().push(json!({
+            "ref": crate::expression_file::digest(url.as_bytes()), "data_url": url
+        }));
+        let mut wrong_placement = stored.clone();
+        wrong_placement["record"]["value"]["view"]["notes"] =
+            json!([{"schema":"oi.expression-image-ref/v1","ref":stored["images"][0]["ref"]}]);
+        for mutant in [
+            missing,
+            modified,
+            duplicate,
+            wrong_digest,
+            unused,
+            wrong_placement,
+        ] {
+            fs::write(&stored_path, serde_json::to_vec(&mutant).unwrap()).unwrap();
+            assert!(
+                home.store()
+                    .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                    .is_err(),
+                "A corrupted image dictionary or source envelope must refuse"
+            );
+        }
+        let mut future_schema = stored.clone();
+        future_schema["schema"] = json!("oi.expression-recovery-storage/v99");
+        let mut unknown_envelope = stored.clone();
+        unknown_envelope["unexpected"] = json!(true);
+        let mut unknown_record = stored.clone();
+        unknown_record["record"]["unexpected"] = json!(true);
+        let mut unknown_image = stored.clone();
+        unknown_image["images"][0]["unexpected"] = json!(true);
+        let mut unknown_ref = stored.clone();
+        let marker = &mut unknown_ref["record"]["value"]["view"]["journey"]["scenes"][0]
+            ["entities"][16]["source"]["image"]["dataUrl"];
+        assert_eq!(marker["schema"], "oi.expression-image-ref/v1");
+        marker["unexpected"] = json!(true);
+        for (mutant, reason) in [
+            (future_schema, "Unsupported native recovery storage schema"),
+            (unknown_envelope, "unknown field"),
+            (unknown_record, "unknown field"),
+            (unknown_image, "unknown field"),
+            (unknown_ref, "unknown field"),
+        ] {
+            fs::write(&stored_path, serde_json::to_vec(&mutant).unwrap()).unwrap();
+            let refused = home
+                .store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap_err();
+            assert!(refused.contains(reason), "{refused}");
+        }
+        let duplicate_key = format!(
+            "{{\"schema\":\"{}\",{}",
+            STORAGE_SCHEMA,
+            std::str::from_utf8(&stored_bytes)
+                .unwrap()
+                .strip_prefix('{')
+                .unwrap()
+        );
+        fs::write(&stored_path, duplicate_key).unwrap();
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap_err()
+            .contains("Duplicate"));
+
+        // Listing deliberately exposes only metadata. It is not acceptance
+        // of a checkpoint body: finding this exact Expression must verify the
+        // full expanded digest before returning any private material.
+        let mut corrupt_body = stored.clone();
+        corrupt_body["expanded_value_sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+        fs::write(&stored_path, serde_json::to_vec(&corrupt_body).unwrap()).unwrap();
+        let metadata = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::Checkpoint,
+            })
+            .unwrap();
+        assert_eq!(
+            metadata["records"][0]["expression_ref"],
+            document.expression_ref
+        );
+        assert!(metadata["records"][0].get("value").is_none());
+        assert!(home
+            .store()
+            .apply(Request::FindCheckpoint {
+                scope: Scope::Expressions,
+                expression_ref: document.expression_ref.clone(),
+            })
+            .unwrap_err()
+            .contains("Expanded recovery value digest differs"));
+        let mut amplified = stored.clone();
+        let largest = stored["images"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .max_by_key(|row| row["data_url"].as_str().unwrap().len())
+            .unwrap();
+        amplified["record"]["value"]["view"]["journey"]["retained"] = json!(vec![
+            json!({"dataUrl":{"schema":"oi.expression-image-ref/v1","ref":largest["ref"]}});
+            400
+        ]);
+        fs::write(&stored_path, serde_json::to_vec(&amplified).unwrap()).unwrap();
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap_err()
+            .contains("8 MiB before material cloning"));
+        fs::write(&stored_path, &stored_bytes).unwrap();
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            written["record"]
+        );
+
+        // A valid material dictionary cannot bypass any expanded component's
+        // existing byte bound or make recovery evict the accepted checkpoint.
+        let mut oversized = original.clone();
+        oversized["view"]["journey"]["retained"] = json!("x".repeat(MAX_RECORD_BYTES));
+        assert!(home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&written)),
+                oversized
+            ))
+            .unwrap_err()
+            .contains("8 MiB"));
+        assert_eq!(fs::read(&stored_path).unwrap(), stored_bytes);
     }
 
     #[test]
@@ -1467,5 +3171,973 @@ mod tests {
             .unwrap()["record"]
             .is_object());
         assert!(!home.path(Scope::Expressions, Kind::Draft, "extra").exists());
+    }
+    /// Real serde writer qualification, not a native request/installed fixture.
+    #[test]
+    fn refusal_diagnostic_hashes_only_complete_bounded_serialization() {
+        let value = json!({"text":"a\\\"b"});
+        let encoded = serde_json::to_vec(&value).unwrap();
+        let complete = measure_serialized(&value, encoded.len());
+        assert_eq!(complete.status, "complete");
+        assert_eq!(complete.serialized_utf8_bytes, Some(encoded.len()));
+        assert_eq!(
+            complete.sha256,
+            Some(format!("{:x}", Sha256::digest(&encoded)))
+        );
+        let stopped = measure_serialized(&value, encoded.len() - 1);
+        assert_eq!(stopped.status, "over_bound_partial_not_fully_measured");
+        assert_eq!(stopped.serialized_utf8_bytes, None);
+        assert_eq!(stopped.serialized_utf8_bytes_at_least, Some(encoded.len()));
+        assert_eq!(stopped.sha256, None);
+        let known = measured_bytes(&encoded, encoded.len() - 1);
+        assert_eq!(known.status, "exact_size_over_bound_hash_not_measured");
+        assert_eq!(known.serialized_utf8_bytes, Some(encoded.len()));
+        assert_eq!(known.sha256, None);
+    }
+    fn refusal_metadata(error: &str, message: &str) -> Value {
+        let (first, body) = error.split_once(SIZE_DIAGNOSTIC_MARKER).unwrap();
+        assert_eq!(first, message);
+        assert!(body.len() <= MAX_SIZE_DIAGNOSTIC_BYTES);
+        let data: Value = serde_json::from_str(body).unwrap();
+        assert_eq!(data["schema"], SIZE_DIAGNOSTIC_SCHEMA);
+        assert_eq!(data["private_values_disclosed"], false);
+        assert_eq!(data["stored_candidate_admitted_current_operation"], false);
+        data
+    }
+    /// Genuine ordinary owner-created Document plus two explicitly controlled
+    /// local Journey snapshots. This is a budget boundary test, not the absent
+    /// installed533 refusal payload or a source/identity/whole-world fixture.
+    fn two_basis_checkpoint(id: &str, bytes_per_text: usize, repeated_png: bool) -> Value {
+        let mut value = native_checkpoint(id);
+        value["view"]["journey"]["retained_text"] = json!("x".repeat(bytes_per_text));
+        let mut submitted = draft(id);
+        submitted["retained_text"] = json!("y".repeat(bytes_per_text));
+        if repeated_png {
+            value["view"]["journey"]["retained_image"] =
+                json!({"dataUrl":"data:image/png;base64,AAAA"});
+            submitted["retained_image"] = json!({"dataUrl":"data:image/png;base64,AAAA"});
+        }
+        let document = &value["view"]["document"];
+        let pending = json!({"kind":"edit","request":{"operation":"edit","expression_ref":document["expression_ref"],"expected_revision":document["revision"],"actor":"test:recovery","changes":[{"change":"focus","scene_ref":document["scenes"][0]["scene_ref"],"entity_ref":null}]},"submitted":{"journey":submitted}});
+        value["pending"] = pending;
+        value
+    }
+    #[test]
+    fn real_inbound_component_diagnostic_refusal_preserves_last_good_and_unreached_cas() {
+        let home = Home::new();
+        let id = "diagnostic-inbound";
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        let old_revision = revision(&accepted);
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let old_bytes = fs::read(&path).unwrap();
+        let old_sequence = fs::read(home.root().join(".sequence")).unwrap();
+        let mut incoming = native_checkpoint(id);
+        incoming["view"]["journey"]["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES + 1));
+        let refusal = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(old_revision),
+                incoming,
+            ))
+            .unwrap_err();
+        let data = refusal_metadata(&refusal, COMPONENT_SIZE_MESSAGE);
+        assert_eq!(data["failure_branch"], "inbound_component_preflight");
+        assert_eq!(data["record_revision"], Value::Null);
+        assert_eq!(data["record_revision_role"], "unallocated_inbound");
+        assert_eq!(data["cas_guard"], "not_reached_inbound_validation_refused");
+        assert_eq!(data["operation_context"]["operation"], "write");
+        assert_eq!(data["operation_context"]["expected_revision"], old_revision);
+        assert_eq!(
+            data["components"][1]["measurement"]["status"],
+            "over_bound_partial_not_fully_measured"
+        );
+        assert_eq!(data["components"][1]["measurement"]["sha256"], Value::Null);
+        assert!(!refusal.contains(id));
+        assert!(!refusal.contains(&"x".repeat(256)));
+        assert_eq!(fs::read(&path).unwrap(), old_bytes);
+        assert_eq!(
+            fs::read(home.root().join(".sequence")).unwrap(),
+            old_sequence
+        );
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            accepted["record"]
+        );
+        let stale = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        assert_eq!(fs::read(&path).unwrap(), old_bytes);
+        let next = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(old_revision),
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(revision(&next), old_revision + 1);
+    }
+    #[test]
+    fn real_public_and_dictionary_storage_refusals_retain_last_good_bytes_and_cas() {
+        for repeated_png in [false, true] {
+            let home = Home::new();
+            let id = "diagnostic-storage";
+            let accepted = home
+                .store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    None,
+                    native_checkpoint(id),
+                ))
+                .unwrap();
+            let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+            let old_bytes = fs::read(&path).unwrap();
+            let old_sequence = fs::read(home.root().join(".sequence")).unwrap();
+            let incoming = two_basis_checkpoint(id, MAX_RECORD_BYTES / 2 + 4096, repeated_png);
+            validate(Kind::Checkpoint, id, &incoming).unwrap();
+            let public_bytes = serde_json::to_vec(&incoming).unwrap();
+            assert!(public_bytes.len() > MAX_RECORD_BYTES + 2048);
+            let refusal = home
+                .store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    Some(revision(&accepted)),
+                    incoming,
+                ))
+                .unwrap_err();
+            let data = refusal_metadata(&refusal, "Recovery record exceeds 8 MiB");
+            assert_eq!(
+                data["failure_branch"],
+                if repeated_png {
+                    "write_image_dictionary_storage"
+                } else {
+                    "write_without_image_dictionary"
+                }
+            );
+            assert_eq!(data["cas_guard"], "passed_before_size_refusal");
+            assert_eq!(
+                data["public_value"]["serialized_utf8_bytes"],
+                public_bytes.len()
+            );
+            assert_eq!(
+                data["public_value"]["sha256"],
+                format!("{:x}", Sha256::digest(&public_bytes))
+            );
+            assert!(
+                data["stored_candidate"]["serialized_utf8_bytes"]
+                    .as_u64()
+                    .unwrap()
+                    > (MAX_RECORD_BYTES + 2048) as u64
+            );
+            assert_eq!(data["stored_candidate"]["sha256"], Value::Null);
+            assert_eq!(
+                data["images"]["actual_candidate_dictionary_entries"],
+                if repeated_png { 1 } else { 0 }
+            );
+            assert_eq!(fs::read(&path).unwrap(), old_bytes);
+            assert_eq!(
+                fs::read(home.root().join(".sequence")).unwrap(),
+                old_sequence
+            );
+            assert_eq!(
+                home.store()
+                    .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                    .unwrap()["record"],
+                accepted["record"]
+            );
+        }
+    }
+    #[test]
+    fn real_legacy_decode_size_refusal_reports_existing_basis_before_write_cas() {
+        let home = Home::new();
+        let id = "diagnostic-legacy";
+        let accepted = home
+            .store()
+            .apply(write(Scope::Expressions, Kind::Draft, id, None, draft(id)))
+            .unwrap();
+        let mut existing = draft(id);
+        existing["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES));
+        let bytes = serde_json::to_vec(&Record {
+            schema: SCHEMA.into(),
+            scope: Scope::Expressions,
+            kind: Kind::Draft,
+            id: id.into(),
+            revision: revision(&accepted),
+            value: existing,
+        })
+        .unwrap();
+        assert!(bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let path = home.path(Scope::Expressions, Kind::Draft, id);
+        fs::write(&path, &bytes).unwrap();
+        let sequence = fs::read(home.root().join(".sequence")).unwrap();
+        for request in [
+            read(Scope::Expressions, Kind::Draft, id),
+            write(
+                Scope::Expressions,
+                Kind::Draft,
+                id,
+                Some(revision(&accepted)),
+                draft(id),
+            ),
+        ] {
+            let refusal = home.store().apply(request).unwrap_err();
+            let data = refusal_metadata(&refusal, "Recovery record exceeds 8 MiB");
+            assert_eq!(data["failure_branch"], "legacy_raw_value_decode");
+            assert_eq!(data["record_revision_role"], "stored");
+            assert_eq!(data["record_revision"], revision(&accepted));
+            assert_eq!(
+                data["cas_guard"],
+                if data["operation_context"]["operation"] == "write" {
+                    "not_reached_existing_record_decode_refused"
+                } else {
+                    "not_applicable"
+                }
+            );
+            assert_eq!(
+                data["images"]["unique_metrics_status"],
+                "not_walked_public_measurement_incomplete_or_over_bound"
+            );
+            assert_eq!(data["public_value"]["sha256"], Value::Null);
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+        }
+    }
+
+    /// Real native Document + two lawful, full local Journey bases. These are
+    /// controlled authoring data, not claimed Bimba/astronomy/private readings.
+    /// All bytes must survive a fresh Store; no native API is mocked.
+    fn repeated_non_image_checkpoint(id: &str) -> Value {
+        let mut value = two_basis_checkpoint(id, 0, false);
+        let body = json!({"text":"x".repeat(512 * 1024)});
+        value["view"]["journey"]["retained_content"] = json!(vec![body; 12]);
+        value["pending"]["submitted"]["journey"] = value["view"]["journey"].clone();
+        // Distinct complete bases remain distinct. The proposed draft changes
+        // its title and one leaf; only the 23 identical untouched bodies share.
+        value["pending"]["submitted"]["journey"]["name"] = json!("Edited recovery test");
+        value["pending"]["submitted"]["journey"]["retained_content"][11]["edited"] = json!(true);
+        value
+    }
+    #[test]
+    fn repeated_complete_non_image_bases_save_cold_read_find_and_preserve_cas() {
+        let home = Home::new();
+        let id = "shared-complete-bases";
+        let first = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        let original = repeated_non_image_checkpoint(id);
+        validate(Kind::Checkpoint, id, &original).unwrap();
+        assert!(serialized_size(&original).unwrap() > MAX_RECORD_BYTES + 2048);
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&first)),
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(accepted["record"]["value"], original);
+        assert_eq!(revision(&accepted), revision(&first) + 1);
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let bytes = fs::read(&path).unwrap();
+        assert!(bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let stored: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(stored["schema"], SHARED_STORAGE_SCHEMA);
+        assert_eq!(stored["parts"].as_array().unwrap().len(), 1);
+        assert_eq!(stored["images"], json!([]));
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            accepted["record"]
+        );
+        let found = home
+            .store()
+            .apply(Request::FindCheckpoint {
+                scope: Scope::Expressions,
+                expression_ref: "expression:recovery-test".into(),
+            })
+            .unwrap();
+        assert_eq!(found["record"], accepted["record"]);
+        let listed = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::Checkpoint,
+            })
+            .unwrap();
+        assert_eq!(
+            listed["records"][0]["expression_ref"],
+            "expression:recovery-test"
+        );
+        assert!(listed["records"][0].get("value").is_none());
+        let stale = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&first)),
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        let next = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&accepted)),
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(revision(&next), revision(&accepted) + 1);
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            next["record"]
+        );
+    }
+    #[test]
+    fn shared_basis_corruption_and_expansion_refuse_without_replacing_last_good() {
+        let home = Home::new();
+        let id = "shared-corruption";
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                repeated_non_image_checkpoint(id),
+            ))
+            .unwrap();
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let bytes = fs::read(&path).unwrap();
+        let sequence = fs::read(home.root().join(".sequence")).unwrap();
+        let stored: Value = serde_json::from_slice(&bytes).unwrap();
+        let reference = stored["parts"][0]["ref"].clone();
+        let marker = json!({"schema": SHARED_REF_SCHEMA,"ref":reference});
+        let mut missing = stored.clone();
+        missing["parts"] = json!([]);
+        let mut changed = stored.clone();
+        changed["parts"][0]["value"]["retained_text"] = json!("tampered");
+        let mut duplicate = stored.clone();
+        let part = duplicate["parts"][0].clone();
+        duplicate["parts"].as_array_mut().unwrap().push(part);
+        let mut unused = stored.clone();
+        let mut extra = unused["parts"][0]["value"].clone();
+        extra["name"] = json!("unused");
+        unused["parts"].as_array_mut().unwrap().push(json!({"ref":crate::expression_file::digest(&serde_json::to_vec(&extra).unwrap()),"value":extra}));
+        let mut misplaced = stored.clone();
+        misplaced["record"]["value"]["view"]["document"]["expression_ref"] = marker.clone();
+        let mut unknown = stored.clone();
+        unknown["unexpected"] = json!(true);
+        let mut unknown_part = stored.clone();
+        unknown_part["parts"][0]["unexpected"] = json!(true);
+        let mut unknown_ref = stored.clone();
+        unknown_ref["record"]["value"]["view"]["journey"]["retained_content"][0]["unexpected"] =
+            json!(true);
+        let mut future = stored.clone();
+        future["schema"] = json!("oi.expression-recovery-storage/v99");
+        let mut nested = stored.clone();
+        nested["parts"][0]["value"]["nested"] = marker.clone();
+        let mut amplified = stored.clone();
+        amplified["record"]["value"]["view"]["journey"] = json!({"body":vec![marker.clone();17]});
+        let mut whole_digest = stored.clone();
+        whole_digest["expanded_value_sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+        for damaged in [
+            missing,
+            changed,
+            duplicate,
+            unused,
+            misplaced,
+            unknown,
+            unknown_part,
+            unknown_ref,
+            future,
+            nested,
+            amplified,
+            whole_digest,
+        ] {
+            let damaged_bytes = serde_json::to_vec(&damaged).unwrap();
+            assert!(damaged_bytes.len() <= MAX_RECORD_BYTES + 2048);
+            fs::write(&path, &damaged_bytes).unwrap();
+            assert!(home
+                .store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .is_err());
+            assert!(home
+                .store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: "expression:recovery-test".into()
+                })
+                .is_err());
+            assert!(home
+                .store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    Some(revision(&accepted)),
+                    native_checkpoint(id)
+                ))
+                .is_err());
+            assert_eq!(fs::read(&path).unwrap(), damaged_bytes);
+            assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+            fs::write(&path, &bytes).unwrap();
+            assert_eq!(
+                home.store()
+                    .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                    .unwrap()["record"],
+                accepted["record"]
+            );
+        }
+        let text = String::from_utf8(bytes.clone()).unwrap();
+        let duplicate_key = text.replacen("{", "{\"schema\":\"duplicate\",", 1);
+        fs::write(&path, duplicate_key).unwrap();
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .is_err());
+        fs::write(&path, &bytes).unwrap();
+        let mut over_bound = repeated_non_image_checkpoint(id);
+        over_bound["view"]["journey"]["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES + 1));
+        let refusal = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&accepted)),
+                over_bound,
+            ))
+            .unwrap_err();
+        assert_eq!(
+            refusal_metadata(&refusal, COMPONENT_SIZE_MESSAGE)["failure_branch"],
+            "inbound_component_preflight"
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+    }
+    /// Supply the retained ORIGINAL real production Save refusal. Neither the
+    /// input nor its expected complete value is generated by this test. A fresh
+    /// private test home is explicit custody relocation, not the installed home.
+    #[test]
+    #[ignore = "supply OI_RECOVERY_REAL_SAVE_FAILURE with actual full public Save refusal"]
+    fn actual_epi_save_refusal_keeps_full_source_body_and_pending_basis_on_cold_reopen() {
+        let path = std::env::var("OI_RECOVERY_REAL_SAVE_FAILURE").unwrap();
+        let failure: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+        assert!(failure["response"]["error"]
+            .as_str()
+            .unwrap()
+            .starts_with("Recovery record exceeds 8 MiB"));
+        let request = &failure["request"]["request"];
+        assert_eq!(request["operation"], "write");
+        assert_eq!(request["kind"], "checkpoint");
+        let id = request["id"].as_str().unwrap();
+        let original = &request["value"];
+        assert_eq!(original["pending"]["kind"], "edit");
+        for pointer in COMPONENT_ROOTS {
+            assert!(original.pointer(pointer).is_some());
+        }
+        validate(Kind::Checkpoint, id, original).unwrap();
+        let home = Home::new();
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(&accepted["record"]["value"], original);
+        assert!(
+            fs::metadata(home.path(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()
+                .len()
+                <= (MAX_RECORD_BYTES + 2048) as u64
+        );
+        let cold = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap();
+        assert_eq!(cold["record"], accepted["record"]);
+        assert_eq!(
+            home.store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: original["view"]["document"]["expression_ref"]
+                        .as_str()
+                        .unwrap()
+                        .into()
+                })
+                .unwrap()["record"],
+            accepted["record"]
+        );
+        assert_eq!(
+            home.store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    None,
+                    original.clone()
+                ))
+                .unwrap()["state"],
+            "revision_conflict"
+        );
+    }
+    #[test]
+    fn borrowed_checkpoint_preflight_preserves_exact_old_component_boundaries() {
+        // The complete native Document is actually created by its owner.
+        // The following one-variable edits are declared capacity faults,
+        // not admitted numerical/source/world fixtures.
+        let original = two_basis_checkpoint("borrowed-preflight-boundaries", 1024, false);
+        let same_law = |value: &Value| {
+            assert_eq!(
+                preflight_components(Kind::Checkpoint, value),
+                component_budgets(Kind::Checkpoint, value, serialized_size)
+            );
+            let mut copied = value.clone();
+            for path in COMPONENT_ROOTS {
+                if let Some(component) = copied.pointer_mut(path) {
+                    *component = Value::Null;
+                }
+            }
+            assert_eq!(
+                serde_json::to_vec(&RecoveryRemainder { value, location: 0 }).unwrap(),
+                serde_json::to_vec(&copied).unwrap()
+            );
+        };
+        same_law(&original);
+        for path in COMPONENT_ROOTS {
+            for bytes in [MAX_RECORD_BYTES, MAX_RECORD_BYTES + 1] {
+                let mut value = original.clone();
+                *value.pointer_mut(path).unwrap() = json!("x".repeat(bytes - 2));
+                assert_eq!(
+                    serialized_size(value.pointer(path).unwrap()).unwrap(),
+                    bytes
+                );
+                same_law(&value);
+                assert_eq!(
+                    preflight_components(Kind::Checkpoint, &value).is_ok(),
+                    bytes == MAX_RECORD_BYTES
+                );
+            }
+        }
+        for extra in [0, 1] {
+            let mut value = original.clone();
+            // A literal slash key is remainder, never a component pointer.
+            value["view"]["document/journey"] = json!("");
+            let base = serialized_size(&RecoveryRemainder {
+                value: &value,
+                location: 0,
+            })
+            .unwrap();
+            value["view"]["document/journey"] = json!("x".repeat(MAX_RECORD_BYTES - base + extra));
+            same_law(&value);
+            assert_eq!(
+                preflight_components(Kind::Checkpoint, &value).is_ok(),
+                extra == 0
+            );
+        }
+    }
+
+    #[test]
+    fn actual_png_checkpoint_borrowed_preflight_keeps_cold_body_and_last_good_cas() {
+        use base64::Engine as _;
+        let png = format!(
+            "data:image/png;base64,{}",
+            base64::engine::general_purpose::STANDARD
+                .encode(include_bytes!("../../src-tauri/icons/32x32.png"))
+        );
+        let home = Home::new();
+        let id = "borrowed-preflight-png";
+        let mut value = two_basis_checkpoint(id, 64 * 1024, false);
+        for path in ["/view/journey", "/pending/submitted/journey"] {
+            value.pointer_mut(path).unwrap()["retained_image"] = json!({"dataUrl": png});
+        }
+        assert_eq!(
+            preflight_components(Kind::Checkpoint, &value),
+            component_budgets(Kind::Checkpoint, &value, serialized_size)
+        );
+        let written = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                value.clone(),
+            ))
+            .unwrap();
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let bytes = fs::read(&path).unwrap();
+        assert_eq!(
+            serde_json::from_slice::<Value>(&bytes).unwrap()["schema"],
+            STORAGE_SCHEMA
+        );
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            written["record"]
+        );
+        assert_eq!(
+            home.store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: "expression:recovery-test".into()
+                })
+                .unwrap()["record"],
+            written["record"]
+        );
+        let sequence = fs::read(home.root().join(".sequence")).unwrap();
+        assert_eq!(
+            home.store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    None,
+                    value.clone()
+                ))
+                .unwrap()["state"],
+            "revision_conflict"
+        );
+        let mut oversized = value.clone();
+        oversized["view"]["journey"]["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES + 1));
+        let refusal = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&written)),
+                oversized,
+            ))
+            .unwrap_err();
+        let metadata = refusal_metadata(&refusal, COMPONENT_SIZE_MESSAGE);
+        assert_eq!(
+            metadata["cas_guard"],
+            "not_reached_inbound_validation_refused"
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"]["value"],
+            value
+        );
+    }
+
+    #[test]
+    fn complete_shared_bases_and_genuine_png_dictionary_cold_read_and_find() {
+        use base64::Engine as _;
+        // Existing committed real PNG fixture; this is a codec/functionality
+        // check, not a substitute for a source-derived Epi register image.
+        let png_bytes = include_bytes!("../../src-tauri/icons/32x32.png");
+        assert_eq!(&png_bytes[..8], b"\x89PNG\r\n\x1a\n");
+        assert_eq!(
+            &png_bytes[png_bytes.len() - 12..],
+            b"\0\0\0\0IEND\xaeB`\x82"
+        );
+        let png = format!(
+            "data:image/png;base64,{}",
+            base64::engine::general_purpose::STANDARD.encode(png_bytes)
+        );
+        let home = Home::new();
+        let id = "shared-bases-with-genuine-png";
+        let mut original = repeated_non_image_checkpoint(id);
+        for path in [
+            "/view/journey/retained_content",
+            "/pending/submitted/journey/retained_content",
+        ] {
+            for body in original.pointer_mut(path).unwrap().as_array_mut().unwrap() {
+                body["image"] = json!({"dataUrl": png});
+            }
+        }
+        // Exercise an image outside shared literals as well as inside them.
+        original["pending"]["submitted"]["journey"]["standalone_image"] = json!({"dataUrl": png});
+        validate(Kind::Checkpoint, id, &original).unwrap();
+        let written = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(written["record"]["value"], original);
+        let bytes = fs::read(home.path(Scope::Expressions, Kind::Checkpoint, id)).unwrap();
+        assert!(bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let stored: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(stored["schema"], SHARED_STORAGE_SCHEMA);
+        assert_eq!(stored["parts"].as_array().unwrap().len(), 1);
+        assert_eq!(stored["images"].as_array().unwrap().len(), 1);
+        assert_eq!(stored["images"][0]["data_url"], png);
+        assert_eq!(
+            stored["parts"][0]["value"]["image"]["dataUrl"]["schema"],
+            crate::expression_file::IMAGE_REF_SCHEMA
+        );
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            written["record"]
+        );
+        assert_eq!(
+            home.store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: "expression:recovery-test".into()
+                })
+                .unwrap()["record"],
+            written["record"]
+        );
+        assert_eq!(
+            fs::read(home.path(Scope::Expressions, Kind::Checkpoint, id)).unwrap(),
+            bytes
+        );
+    }
+}
+
+#[cfg(test)]
+mod numeric_admission_conservation_tests {
+    use super::*;
+    #[test]
+    fn programmatic_nonfinite_or_reserved_maps_do_not_enter_recovery_custody() {
+        let infinite: Value = serde_json::from_str("1e400").unwrap();
+        assert!(data(&infinite, 0).is_err());
+        for key in [
+            "$serde_json::private::Number",
+            "$serde_json::private::RawValue",
+        ] {
+            let object = Value::Object(
+                [(key.into(), Value::String("3600".into()))]
+                    .into_iter()
+                    .collect(),
+            );
+            assert!(data(&object, 0).is_err());
+        }
+    }
+}
+
+#[cfg(test)]
+mod hosted_diagnostic_scope_tests {
+    use super::*;
+    #[test]
+    fn diagnostic_context_is_nested_thread_local_and_unwind_restored() {
+        assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
+        with_diagnostic_trace(7, || {
+            assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), Some(7));
+            assert_eq!(
+                std::thread::spawn(|| DIAGNOSTIC_TRACE.with(std::cell::Cell::get))
+                    .join()
+                    .unwrap(),
+                None
+            );
+            with_diagnostic_trace(8, || {
+                assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), Some(8))
+            });
+            assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), Some(7));
+        });
+        assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
+        let panicked =
+            std::panic::catch_unwind(|| with_diagnostic_trace(9, || panic!("scope test")));
+        assert!(panicked.is_err());
+        assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
+    }
+}
+
+#[cfg(test)]
+mod shared_fingerprint_buffer_tests {
+    use super::*;
+
+    fn original_complete_byte_oracle(value: &Value) {
+        let bytes = serde_json::to_vec(value).unwrap();
+        let expected = format!("sha256:{:x}", Sha256::digest(&bytes));
+        assert_eq!(shared_fingerprint(value).unwrap(), (bytes.len(), expected));
+    }
+
+    #[test]
+    fn actual_native_material_memo_and_bounded_fallback_match_uncached_storage_bytes() {
+        let fixture = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            crate::expression_file::digest(fixture.as_bytes()),
+            "sha256:630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let document = crate::expression_file::decode(fixture).unwrap();
+        let body = serde_json::to_value(document).unwrap();
+        // Genuine complete native material appears in distinct allowed bases;
+        // this tests lossless private encoding, not whole-world UX acceptance.
+        let mut value = json!({"view":{"document":body,"journey":{"material":body}},
+            "pending":{"request":{"material":body},"submitted":{"journey":{"material":body}}}});
+        for occasion in [0, 1] {
+            value["view"]["journey"]["occasion"] = json!(occasion);
+            let make = || {
+                // Match encode_record's real ordering: shared rescue receives
+                // PNG-compacted material, not an unprepared public checkpoint.
+                let mut counts = BTreeMap::new();
+                crate::expression_file::count_images(&value, &mut counts);
+                let refs: BTreeMap<String, String> = counts
+                    .into_iter()
+                    .filter(|(_, count)| *count > 1)
+                    .take(crate::expression_file::MAX_IMAGES)
+                    .map(|(url, _)| {
+                        (
+                            url.to_owned(),
+                            crate::expression_file::digest(url.as_bytes()),
+                        )
+                    })
+                    .collect();
+                assert_eq!(refs.len(), 6, "Keep every genuine native image");
+                let mut compact = value.clone();
+                crate::expression_file::intern(&mut compact, &refs);
+                qualify_expansion(
+                    Kind::Checkpoint,
+                    &compact,
+                    &refs
+                        .iter()
+                        .map(|(url, reference)| (reference.clone(), url.clone()))
+                        .collect(),
+                )
+                .unwrap();
+                let mut images: Vec<_> = refs
+                    .into_iter()
+                    .map(|(url, reference)| crate::expression_file::StoredImage {
+                        r#ref: reference,
+                        data_url: url,
+                    })
+                    .collect();
+                images.sort_by(|a, b| a.r#ref.cmp(&b.r#ref));
+                StoredRecord {
+                    schema: STORAGE_SCHEMA.into(),
+                    record: Record {
+                        schema: SCHEMA.into(),
+                        scope: Scope::Expressions,
+                        kind: Kind::Checkpoint,
+                        id: "actual-native-memo-oracle".into(),
+                        revision: 1,
+                        value: compact,
+                    },
+                    images,
+                    expanded_value_sha256: crate::expression_file::digest(
+                        &serde_json::to_vec(&value).unwrap(),
+                    ),
+                }
+            };
+            let uncached = encode_shared_record_with_fingerprint_limit(make(), 0)
+                .unwrap()
+                .unwrap();
+            for limit in [1, MAX_SHARED_PARTS] {
+                let encoded = encode_shared_record_with_fingerprint_limit(make(), limit)
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(
+                    encoded, uncached,
+                    "Memo cap/misses must preserve the entire encoded byte stream"
+                );
+                let reopened =
+                    decode_shared_record(serde_json::from_slice(&encoded).unwrap(), true).unwrap();
+                assert_eq!(
+                    reopened.value, value,
+                    "Fresh decode must recover every native body and changed occasion"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn actual_native_document_shared_fingerprint_preserves_complete_bytes() {
+        let fixture = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            crate::expression_file::digest(fixture.as_bytes()),
+            "sha256:630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let document = crate::expression_file::decode(fixture).unwrap();
+        assert_eq!(
+            (
+                document.revision,
+                document.entities.len(),
+                document.relations.len(),
+                document.scenes.len()
+            ),
+            (131, 38, 86, 3)
+        );
+        // The genuine full native body, sources and image data remain intact;
+        // the independent oracle is the original complete Value Serde stream.
+        let value = serde_json::to_value(&document).unwrap();
+        original_complete_byte_oracle(&value);
+        original_complete_byte_oracle(&value["scenes"][0]);
+    }
+
+    #[test]
+    fn shared_fingerprint_keeps_buffer_boundaries_unicode_and_immediate_byte_refusal() {
+        for length in [0, 1, 8190, 8191, 8192, 8193, 8194, 65536] {
+            original_complete_byte_oracle(&Value::String("x".repeat(length)));
+        }
+        original_complete_byte_oracle(&json!({
+            "text":"ॐ · Māyā\n\"\\",
+            "rows":(0..1024).map(|index| json!({"index":index,"value":index as f64 / 7.0})).collect::<Vec<_>>()
+        }));
+        let limit = MAX_RECORD_BYTES + 2048;
+        // JSON quotes contribute two exact bytes. Equality admits, one more
+        // byte refuses before that write can enter either SHA or its buffer.
+        let exact = Value::String("x".repeat(limit - 2));
+        let (bytes, _) = shared_fingerprint(&exact).unwrap();
+        assert_eq!(bytes, limit);
+        original_complete_byte_oracle(&exact);
+        let overflow = Value::String("x".repeat(limit - 1));
+        assert_eq!(
+            shared_fingerprint(&overflow).unwrap_err(),
+            "Recovery literal exceeds stored byte bound"
+        );
     }
 }

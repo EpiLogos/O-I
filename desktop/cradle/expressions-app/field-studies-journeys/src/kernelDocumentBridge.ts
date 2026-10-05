@@ -1,8 +1,8 @@
 import {generatedWikiAppearance, wikiDisplayName} from '../../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs';
 /** Native Expression -> bounded working view of the SAME document.
  *
- * Native identities and the complete document stay above the engine's ten
- * formation/eight pin budget. A page is disclosure, not another Scene or a
+ * Native identities and the complete document stay above the engine's resident
+ * formation/pin budget imported from fieldModel. A page is disclosure, not another Scene or a
  * new Expression. Source bindings, relations, bodies and unsupported fields
  * remain inspectable through `bindings` and `document`; neither is inferred
  * from glyph text or layout. This adapter performs no I/O or publication.

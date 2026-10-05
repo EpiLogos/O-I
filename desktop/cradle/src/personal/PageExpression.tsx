@@ -35,7 +35,7 @@ export function PageExpression({page,fileRevision,pageRef,onHostedState}:{page:P
    if(!live)return;if(reply.error||reply.outcome?.result!=="expression")throw new Error(reply.error??"Expression application unavailable");const doc=reply.outcome.data?.document as ExpressionDocument|undefined;if(!doc)throw new Error("Expression is not open in the native application");
    if(doc.revision!==expression.expression_revision)throw new Error(`Expression revision changed: page has ${expression.expression_revision}, native application has ${doc.revision}`);if(expression.scene_ref&&!doc.scenes.some(scene=>scene.scene_ref===expression.scene_ref))throw new Error("Page Expression scene is unavailable");const projected=expression.scene_ref&&doc.selection.scene_ref!==expression.scene_ref?{...doc,selection:{scene_ref:expression.scene_ref,entity_ref:null}}:doc;verifySubjects(projected,expression.subjects);setLoaded(previous=>previous?.basis===basis&&previous.document.revision===projected.revision?previous:{basis,document:projected});
  }).catch(cause=>{if(live){presentation.current?.release();presentation.current=null;setLoaded(undefined);setStageReady(false);setError(String(cause));}});return()=>{live=false;};
- },[kernel.transport,expression?.expression_ref,expression?.expression_revision,basis,resolved?.state,changedSeq]);
+ },[kernel.transport,expression?.expression_ref,expression?.expression_revision,basis,resolved?.state,changedSeq,kernel.readModelEpoch]);
  useEffect(()=>{
   if(!currentDocument||presentation.current)return;
   let current=true;

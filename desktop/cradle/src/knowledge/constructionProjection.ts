@@ -86,6 +86,18 @@ export function sameComposition(a: unknown, b: unknown): boolean {
 }
 export interface ArtifactReturn {file: NativeFileReading; document: ExpressionDocument; returned?: SavedConstruction}
 
+/** File encoding belongs to the native Expression owner. Re-read the exact
+ * already observed revision without opening or replacing a working draft.
+ * Keep the raw file reading as provenance; rendering consumes this full
+ * validated Document, never its storage envelope or image reference markers. */
+export async function readExpressionFile(transport: KernelTransportStatus, file: NativeFileReading): Promise<ExpressionDocument> {
+  if (!file.revision || file.location.schema !== 'central.path-ref/v1') throw new Error('The Expression file has no exact native reading.');
+  const result = await expressionOperation(transport, {operation: 'inspect_file', location: file.location, expected_file_revision: file.revision});
+  if (result.state !== 'ready' || !result.document || !result.file
+    || result.file.revision !== file.revision || !sameComposition(result.file.location, file.location)) throw new Error('The decoded Expression file differs from its exact native reading. Keep the draft and inspect its source.');
+  return result.document;
+}
+
 /** Save the actual current working composition, not a copied scene or metadata
  * pretending to be an artifact. Attachment remains a separately retryable act. */
 export async function saveCompositionFile(transport: KernelTransportStatus, document: ExpressionDocument, destination: {parent: CentralLocation; name: string; operation_ref: string} | {location: CentralLocation; revision: string}, apply?: ApplyKernel): Promise<ArtifactReturn> {
@@ -97,7 +109,7 @@ export async function saveCompositionFile(transport: KernelTransportStatus, docu
   requireSavedExpression(result);
   const file = await readFile(transport, result.file.location);
   if (file.revision !== result.file.revision) throw new Error('The saved artifact changed before readback. Its save is not replayed automatically.');
-  if (!sameComposition(JSON.parse(file.content), current.document)) throw new Error('The saved file does not match the intended composition. Inspect it before Return.');
+  if (!sameComposition(await readExpressionFile(transport, file), current.document)) throw new Error('The saved file does not match the intended composition. Inspect it before Return.');
   return {file, document: current.document};
 }
 /** Prepare the exact Return separately so the containing surface can retain
@@ -162,9 +174,9 @@ export async function reopenComposition(transport: KernelTransportStatus, item: 
   if (!location || location.schema !== 'central.path-ref/v1' || !location.ref || !location.root || typeof location.path !== 'string') throw new Error('This older Return has no native artifact location. Open its source file to resume the composition.');
   const reading = await readFile(transport, location);
   if (reading.revision !== item.source.source_revision) throw new Error('The returned artifact has changed. Open and review its current source before replacing the recorded composition.');
-  const native = JSON.parse(reading.content) as Partial<ExpressionDocument>;
+  const native = await readExpressionFile(transport, reading);
   if (native.schema !== 'oi.expression/v1' || native.expression_ref !== item.reference || String(native.revision) !== item.revision) throw new Error('The returned file no longer names this exact Expression revision.');
-  const result = await expressionOperation(transport, {operation: 'open_file', location, actor: ACTOR}, apply);
-  if (!result.document || result.document.expression_ref !== item.reference) throw new Error('The Expression owner did not reopen the returned file.');
+  const result = await expressionOperation(transport, {operation: 'open_file', location, expected_file_revision: reading.revision, actor: ACTOR}, apply);
+  if (!result.document || !sameComposition(result.document, native) || !result.file || result.file.revision !== reading.revision || !sameComposition(result.file.location, reading.location)) throw new Error('The Expression owner did not reopen the exact returned file.');
   return result.document;
 }

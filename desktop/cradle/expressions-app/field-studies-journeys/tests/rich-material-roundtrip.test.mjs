@@ -162,9 +162,9 @@ test('the sound bank opens voices with attack and releases departing ones',()=>{
  const log=[];
  const param=name=>({value:0,setValueAtTime:(v,t)=>log.push([name,'set',v,t]),linearRampToValueAtTime:(v,t)=>log.push([name,'ramp',v,t]),setTargetAtTime:(v)=>log.push([name,'target',v]),cancelScheduledValues:()=>{}});
  const context={currentTime:10,state:'running',destination:{},
-  createOscillator:()=>({type:'sine',frequency:param('frequency'),connect(){},start:t=>log.push(['osc','start',t]),stop:t=>log.push(['osc','stop',t])}),
-  createGain:()=>({gain:param('gain'),connect(){}}),
-  createStereoPanner:()=>({pan:param('pan'),connect(){}}),close:async()=>{}};
+  createOscillator:()=>({type:'sine',frequency:param('frequency'),connect(){},disconnect(){},start:t=>log.push(['osc','start',t]),stop:t=>log.push(['osc','stop',t])}),
+  createGain:()=>({gain:param('gain'),connect(){},disconnect(){}}),
+  createStereoPanner:()=>({pan:param('pan'),connect(){},disconnect(){}}),close:async()=>{}};
  const bank=new EntitySoundBank(()=>context);
  bank.sync({entities:[{id:'a',sound:{enabled:true,frequencyHz:300,gain:.4,attack:.5,release:2}}]});
  assert.ok(log.some(e=>e[0]==='gain'&&e[1]==='ramp'&&e[2]===.4&&e[3]===10.5),'attack ramps to gain');
@@ -189,7 +189,7 @@ test('a bank without an audio device keeps the plan pending until one exists',()
  const scene={entities:[{id:'a',sound:{enabled:true,frequencyHz:300}}]};
  bank.sync(scene);assert.equal(bank.inspect().voices.length,0);
  const param=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){},cancelScheduledValues(){}});
- context={currentTime:0,state:'running',destination:{},createOscillator:()=>({type:'sine',frequency:param(),connect(){},start(){},stop(){}}),createGain:()=>({gain:param(),connect(){}}),close:async()=>{}};
+ context={currentTime:0,state:'running',destination:{},createOscillator:()=>({type:'sine',frequency:param(),connect(){},disconnect(){},start(){},stop(){}}),createGain:()=>({gain:param(),connect(){},disconnect(){}}),close:async()=>{}};
  bank.sync(scene);assert.equal(bank.inspect().voices.length,1,'the same plan applies once a device exists');
  // The shared object-sound mute reaches every bank.
  setObjectSoundMuted(true);assert.equal(bank.inspect().muted,true);setObjectSoundMuted(false);assert.equal(bank.inspect().muted,false);

@@ -103,7 +103,19 @@
         "job": "kernel",
         "step": "Test and lint cradle kernel"
       },
-      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets"
+      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --lib --bins --examples --benches"
+    },
+    {
+      "name": "kernel-integration-tests",
+      "tier": "landing",
+      "area": "cli",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "kernel",
+        "step": "Test and lint cradle kernel"
+      },
+      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test '*'"
     },
     {
       "name": "kernel-clippy",
@@ -213,7 +225,7 @@
         "job": "canvas",
         "step": "Production editor selection and send interaction"
       },
-      "command": "node tests/canvas-editor-browser.mjs",
+      "command": "cargo build --manifest-path kernel/Cargo.toml --target-dir \"$PWD/kernel/target\" --locked --bin walk-bridge && OI_KERNEL_BIN=\"$PWD/kernel/target/debug/walk-bridge\" node tests/canvas-editor-browser.mjs",
       "retry": 1
     },
     {

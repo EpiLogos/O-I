@@ -5,7 +5,7 @@ export function connectionPaths(bindings:readonly ConnectionBinding[],poses:read
 export function hitConnection(paths:readonly ConnectionPath[],x:number,y:number,project:(p:{x:number;y:number;z:number})=>{x:number;y:number;visible:boolean},radius?:number):(ConnectionBinding&{kind:'relation';distance:number})|null;
 export class ExpressionConnectionLayer {
  constructor(engine:unknown);
- configure(bindings?:readonly ConnectionBinding[],selected?:readonly string[]):void;
+ configure(bindings?:readonly ConnectionBinding[],selected?:readonly string[],restOpacity?:number):void;
  update():void;
  paths:ConnectionPath[];
  hitTest(x:number,y:number,radius?:number):(ConnectionBinding&{kind:'relation';distance:number})|null;

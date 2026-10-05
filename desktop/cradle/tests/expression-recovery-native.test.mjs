@@ -18,8 +18,8 @@ test('native recovery preserves exact basis and local material across restart, s
   // Transpile the actual production state machine in memory; its .js source
   // imports and parameter properties do not use Node's strip-only TS dialect.
   const {build}=await import('esbuild');
-  const built=await build({stdin:{contents:"export {NativeWorking} from './nativeWorking.ts'; export {validateJourney} from './model.ts';",resolveDir:fileURLToPath(new URL('../expressions-app/field-studies-journeys/src/',import.meta.url)),sourcefile:'native-recovery-test-entry.ts',loader:'ts'},bundle:true,platform:'node',format:'esm',target:'node22',write:false,logLevel:'silent'});
-  const {NativeWorking,validateJourney}=await import('data:text/javascript;base64,'+Buffer.from(built.outputFiles[0].text).toString('base64'));
+  const built=await build({stdin:{contents:"export {NativeWorking} from './nativeWorking.ts'; export {validateJourney} from './model.ts'; export {nativeSceneMaterial} from './kernelDocumentBridge.ts';",resolveDir:fileURLToPath(new URL('../expressions-app/field-studies-journeys/src/',import.meta.url)),sourcefile:'native-recovery-test-entry.ts',loader:'ts'},bundle:true,platform:'node',format:'esm',target:'node22',write:false,logLevel:'silent'});
+  const {NativeWorking,validateJourney,nativeSceneMaterial}=await import('data:text/javascript;base64,'+Buffer.from(built.outputFiles[0].text).toString('base64'));
   // JSON owner operations omit optional undefined properties; compare every
   // serialisable Journey value against that exact wire material.
   const wireJourney=value=>JSON.parse(JSON.stringify(validateJourney(value)));
@@ -154,5 +154,31 @@ test('native recovery preserves exact basis and local material across restart, s
     const removed=await recovery({operation:'remove',scope:'expressions',kind:'draft',id,expected_revision:winner.revision});
     assert.equal(removed.state,'removed');assert.equal((await read('expressions','draft',id)).record,null);
     assert.deepEqual((await read('expressions','checkpoint',id)).record,checkpointRecord,'removing a draft does not remove its independent checkpoint');
+
+    // The ordinary workspace uses this SAME native CAS path for personal
+    // binding and retained form/material changes, not a parallel producer.
+    const receiver=makeWorking(async(draftId,value)=>{
+      const before=await read('expressions','checkpoint',draftId);
+      const ack=await write('expressions','checkpoint',draftId,before.record?.revision??null,value);
+      assert.equal(ack.state,'written');
+    });
+    const receiving=await receiver.adopt(advanced.document);
+    const material=nativeSceneMaterial(receiving.document,receiving.document.scenes[0]);
+    const source={ref:'expression:native-recovery-test',revision:String(advanced.document.revision),availability:'available'};
+    const binding={subject_ref:'oi:native-recovery-test:material',native_owner:'oi',presentation_role:'thing',sources:[source],readings:[source],actions:[]};
+    const applied=await receiver.editConnections([
+      {change:'subject_bind',entity_ref:entityRef,binding},
+      {change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:material,saved:structuredClone(material)}},
+      {change:'parameter_set',entity_ref:entityRef,parameter:'glyph',value:'Actual receiving glyph'},
+    ]);
+    assert.deepEqual(applied.document.entities[entityRef].subject,binding);
+    assert.equal(applied.document.entities[entityRef].parameters.glyph.value,'Actual receiving glyph');
+    assert.equal(applied.document.scenes[0].presentation.scene.entities[0].text,'Actual receiving glyph');
+    assert.equal(applied.document.scenes[0].presentation.saved.entities[0].text,material.entities[0].text,'native scalar edit leaves retained saved material distinct');
+    assert.equal(applied.document.entities[entityRef].revision,applied.document.revision);
+    assert.equal(applied.document.scenes[0].revision,applied.document.revision);
+    assert.deepEqual((await expression({operation:'inspect',expression_ref:reference})).document,applied.document,'actual owner and second native readback match the complete working edit');
+    await assert.rejects(receiver.editConnections([{change:'parameter_set',entity_ref:entityRef,parameter:'unowned_parameter',value:1}]),/admitted native entity parameter/);
+    assert.deepEqual((await expression({operation:'inspect',expression_ref:reference})).document,applied.document,'refused unknown operation leaves actual source/material untouched');
   }finally{await Promise.all([...children].map(target=>stop(target)));await rm(home,{recursive:true,force:true});}
 });

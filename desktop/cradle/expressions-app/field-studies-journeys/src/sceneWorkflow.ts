@@ -1,27 +1,31 @@
 import {clone,uid,Journey,Scene} from './model';
+import {sameSceneData} from './sceneCorrespondence';
+
+/** Saving artistic material never copies the instance's live world receipt. */
+function authoredScene(s:Scene):Scene {const saved=clone(s);delete saved.epiWorld;return saved;}
 
 /** Older documents contain finished scenes, before drafts had a separate status. */
 export function initialiseSceneSaves(j:Journey){
- if(j.savedScenes===undefined)j.savedScenes=Object.fromEntries(j.scenes.map(s=>[s.id,clone(s)]));
+ if(j.savedScenes===undefined)j.savedScenes=Object.fromEntries(j.scenes.map(s=>[s.id,authoredScene(s)]));
  return j;
 }
 export function sceneSaveState(j:Journey,s:Scene):'Draft'|'Saved'|'Edited since save'{
  const saved=j.savedScenes?.[s.id];
- const compare=(scene:Scene)=>{const {toolbelt,pointerScope,...rest}=scene;return rest;};return !saved?'Draft':JSON.stringify(compare(saved))===JSON.stringify(compare(s))?'Saved':'Edited since save';
+ const compare=(scene:Scene)=>{const {toolbelt,pointerScope,epiWorld,...rest}=scene;return rest;};return !saved?'Draft':sameSceneData(compare(saved),compare(s))?'Saved':'Edited since save';
 }
 export function saveScene(j:Journey,s:Scene,name:string){
  const trimmed=name.trim();if(!trimmed||trimmed.length>160)throw new Error('Give this scene a name of 1–160 characters.');
- s.name=trimmed;(j.savedScenes??={})[s.id]=clone(s);
+ s.name=trimmed;(j.savedScenes??={})[s.id]=authoredScene(s);
 }
 export function nextSceneFrom(j:Journey,s:Scene):Scene{
  if(j.scenes.length>=64)throw new Error('An expression can contain up to 64 scenes.');
  const index=j.scenes.findIndex(v=>v.id===s.id);if(index<0)throw new Error('The source scene is no longer in this expression.');
- const next=clone(s);next.id=uid('scene');next.name=(s.name+' / next').slice(0,160);
+ const next=authoredScene(s);next.id=uid('scene');next.name=(s.name+' / next').slice(0,160);
  j.scenes.splice(index+1,0,next);return next;
 }
 export function restoreScene(j:Journey,id:string){
  const saved=j.savedScenes?.[id],i=j.scenes.findIndex(s=>s.id===id);if(!saved||i<0)return false;
- const pointerScope=j.scenes[i].pointerScope;j.scenes[i]=clone(saved);j.scenes[i].pointerScope=pointerScope;return true;
+ const {pointerScope,epiWorld}=j.scenes[i];j.scenes[i]=authoredScene(saved);j.scenes[i].pointerScope=pointerScope;if(epiWorld)j.scenes[i].epiWorld=clone(epiWorld);return true;
 }
 export function savedSceneIndices(j:Journey){return j.scenes.flatMap((s,i)=>j.savedScenes?.[s.id]?[i]:[]);}
 export function sceneParameterChanges(a:Scene,b:Scene):Array<{path:string;from:number;to:number}>{

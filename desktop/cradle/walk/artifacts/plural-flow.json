@@ -1,0 +1,144 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "plural-flow",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-30T12:59:17.574Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "f0546b45b6505faa048ff42678ddf4a49fbd90a2cc24737159a064a5ae11f4c9"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/env-1/o-i",
+      "repository_head": "49435ed122427cd69f5af24dd60df7e5a51a01cc",
+      "tracked_changes": [
+        "desktop/cradle/kernel/src/nara_current.rs",
+        "desktop/cradle/kernel/src/nara_identity.rs",
+        "desktop/cradle/src/expressions/naraChannel.ts",
+        "desktop/cradle/src/flow/FlowSurface.tsx",
+        "desktop/cradle/src/nara/identity/types.ts",
+        "desktop/cradle/src/nara/instrumentProtocol.ts",
+        "desktop/cradle/src/nara/nativeCurrent.ts",
+        "desktop/cradle/walk/scenarios/plural-flow.mjs"
+      ],
+      "dirty_digest": "7f86f5771729503927a3615c36b6020cbe10081ff5ca6429785d45b382dc0021",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/env-1/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 25268,
+  "checks": [
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    },
+    {
+      "ok": true,
+      "label": true
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-30T12:59:17.795Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "plural-flow-plural-flow-participants.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "plural-flow-plural-flow-asked.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-30T12:59:41.884Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "plural-flow-plural-flow-reopened.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "plural-flow-plural-flow-participants.png",
+    "plural-flow-plural-flow-asked.png",
+    "plural-flow-plural-flow-reopened.png"
+  ]
+}

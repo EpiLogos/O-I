@@ -21,7 +21,7 @@ import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {createServer} from 'vite';
+import {createServer, optimizeDeps} from 'vite';
 import react from '@vitejs/plugin-react';
 import {chromium} from 'playwright';
 
@@ -107,7 +107,17 @@ async function openLiveThenSummon() {
 
 try {
   await startBridge();
-  server = await createServer({root, configFile: false, plugins: [react()], resolve: {alias: {three: resolve(root, 'node_modules/three')}}, define: {__CRADLE_WALK__: 'false'}, server: {host: '127.0.0.1', port: 0, fs: {allow: [root, resolve(root, '../../packages/oi-design-system')]}}});
+  server = await createServer({root, configFile: false, plugins: [react()], optimizeDeps: {entries: ['tests/techne-construction-join.html'], include: ['d3-force']}, resolve: {alias: {three: resolve(root, 'node_modules/three')}}, define: {__CRADLE_WALK__: 'false'}, server: {host: '127.0.0.1', port: 0, fs: {allow: [root, resolve(root, '../../packages/oi-design-system')]}}});
+  // Qualify the actual Wiki layout dependency before the original encounter.
+  // A late optimizer reload invalidates the captured native host frame.
+  const optimized = await optimizeDeps(server.config);
+  const forceDependency = optimized.optimized['d3-force'];
+  assert.ok(forceDependency?.src && forceDependency?.file, 'The actual d3-force dependency must finish prebundling before browser navigation');
+  receipt.bootstrap = {owner: 'vite.optimizeDeps', entries: server.config.optimizeDeps.entries,
+    include: server.config.optimizeDeps.include, hash: optimized.hash, browser_hash: optimized.browserHash,
+    dependency: {name: 'd3-force', source: forceDependency.src, optimized_file: forceDependency.file,
+      source_sha256: createHash('sha256').update(readFileSync(forceDependency.src)).digest('hex'),
+      optimized_sha256: createHash('sha256').update(readFileSync(forceDependency.file)).digest('hex')}};
   await server.listen();
   browser = await chromium.launch({headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl']});
   receipt.browser = browser.version();

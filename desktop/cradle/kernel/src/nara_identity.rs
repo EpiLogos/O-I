@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
     io::{Read, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::mpsc,
     time::{Duration, Instant},
@@ -17,6 +17,43 @@ use std::{
 const PREFIX: &str = "Control/self/nara/identities/";
 const MAX_PROFILE: usize = 2 * 1024 * 1024;
 const MAX_OUTPUT: u64 = 16 * 1024 * 1024;
+
+/// An existing immutable occasion is distinct from asking for fresh current sky.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SnapshotPurpose {
+    #[default]
+    Requested,
+    RetainedOccasion,
+}
+
+pub(crate) fn validate_retained_admission(
+    admission: &Value,
+    snapshot: &Value,
+) -> Result<(), String> {
+    if admission["schema"] != "ql.sky-admission/v1"
+        || admission["purpose"] != "retained-occasion"
+        || admission["snapshot_ref"] != snapshot["snapshot_ref"]
+        || admission["original_mode"] != snapshot["request"]["mode"]
+        || admission["epoch_utc"] != snapshot["epoch_utc"]
+        || admission["receipt_utc"] != snapshot["receipt_utc"]
+        || admission["fresh_current_attested"] != false
+        || admission["validation"] != "immutable-snapshot-and-current-native-source"
+        || admission["validator_source"]["source_ref"] != "providers/sky/kerykeion_snapshot.py"
+        || !admission["validator_source"]["revision"]
+            .as_str()
+            .is_some_and(|r| {
+                r.strip_prefix("sha256:")
+                    .is_some_and(|h| h.len() == 64 && h.bytes().all(|c| c.is_ascii_hexdigit()))
+            })
+    {
+        return Err(
+            "QL did not qualify the exact retained occasion separately from fresh current sky"
+                .into(),
+        );
+    }
+    Ok(())
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -33,7 +70,12 @@ pub enum Request {
     PersonalCurrent {
         source_ref: String,
         expected_revision: String,
-        sky_request: Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        sky_request: Option<Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        sky_snapshot: Option<Value>,
+        #[serde(default)]
+        snapshot_purpose: SnapshotPurpose,
     },
     List,
     Open {
@@ -96,17 +138,34 @@ pub(crate) fn run_ql_nara(operation: &str, input: &Value) -> Result<Value, Strin
     run_ql_owner("nara", operation, input)
 }
 
-pub(crate) fn run_ql_m3(input: &Value) -> Result<Value, String> {
-    run_ql_owner("kernel", "m3", input)
-}
-
 fn run_ql_owner(family: &str, operation: &str, input: &Value) -> Result<Value, String> {
-    let bytes = profile_bytes(input)?;
     let executable = std::env::var_os("OI_BIN")
         .map(PathBuf::from)
         .unwrap_or_else(|| "oi".into());
-    let mut child = Command::new(executable)
-        .args(["ql", family, operation, "-", "--json"])
+    let mut command = Command::new(executable);
+    command.args(["ql", family, operation, "-", "--json"]);
+    run_ql_command(command, input)
+}
+
+/// The native current owner captured this absolute executable. No request,
+/// renderer profile or stored material can choose a command. `oi ql` itself
+/// delegates these same arguments without modifying the inherited environment.
+pub(crate) fn run_ql_selected(
+    executable: &Path,
+    family: &str,
+    operation: &str,
+    input: &Value,
+) -> Result<Value, String> {
+    if !executable.is_absolute() {
+        return Err("Selected QL owner path must be absolute".into());
+    }
+    let mut command = Command::new(executable);
+    command.args([family, operation, "-", "--json"]);
+    run_ql_command(command, input)
+}
+fn run_ql_command(mut command: Command, input: &Value) -> Result<Value, String> {
+    let bytes = profile_bytes(input)?;
+    let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -155,7 +214,7 @@ fn run_ql_owner(family: &str, operation: &str, input: &Value) -> Result<Value, S
 /// QL's typed float fields can serialize an entered JSON integer as `0.0`.
 /// Preserve exact values and object shape while accepting that representation
 /// change. Large integers never pass through a lossy floating conversion.
-fn same_input(left: &Value, right: &Value) -> bool {
+pub(crate) fn same_input(left: &Value, right: &Value) -> bool {
     match (left, right) {
         (Value::Object(a), Value::Object(b)) => {
             a.len() == b.len()
@@ -164,6 +223,12 @@ fn same_input(left: &Value, right: &Value) -> bool {
         }
         (Value::Array(a), Value::Array(b)) => {
             a.len() == b.len() && a.iter().zip(b).all(|(a, b)| same_input(a, b))
+        }
+        // This is the existing typed-profile representation comparison, not
+        // receipt/witness/digest equality. Preserve equal finite binary64
+        // profile values across QL's scientific/decimal serialization.
+        (Value::Number(a), Value::Number(b)) if a.is_f64() && b.is_f64() => {
+            a.as_f64().is_some() && a.as_f64() == b.as_f64()
         }
         (Value::Number(a), Value::Number(b)) if a.is_f64() != b.is_f64() => {
             let (integer, float) = if a.is_f64() { (b, a) } else { (a, b) };
@@ -222,7 +287,7 @@ pub(crate) fn read(
     if !source.source.path.starts_with(PREFIX) || source.content.len() > MAX_PROFILE {
         return Err("source is outside the Central identity aperture or exceeds its bound".into());
     }
-    let profile: Value = serde_json::from_str(&source.content).map_err(|e| e.to_string())?;
+    let profile: Value = crate::expression_file::read_native_json(source.content.as_bytes()).map_err(|e| e.to_string())?;
     if profile["schema"] != "ql.nara-identity-profile/v1"
         || source.source.path != profile_path(&profile)?
     {
@@ -234,7 +299,52 @@ fn result(reading: Value, source: Option<&SourceReading>) -> Value {
     json!({"schema":"oi.nara-identity/v1","reading":reading,"source":source.map(|s|json!({"source_ref":s.source.source_ref,"revision":s.revision.revision}))})
 }
 
+/// Select one sky input without interpreting it. QL revalidates snapshot
+/// provenance and reconstructs the personal reading from the saved identity.
+fn personal_sky_input(
+    request: Option<Value>,
+    snapshot: Option<Value>,
+) -> Result<serde_json::Map<String, Value>, String> {
+    let (key, value, schema) = match (request, snapshot) {
+        (Some(value), None) => ("sky_request", value, "ql.sky-request/v1"),
+        (None, Some(value)) => ("sky_snapshot", value, "ql.sky-snapshot/v1"),
+        _ => return Err("Choose exactly one sky request or existing native sky snapshot".into()),
+    };
+    if !value.is_object() || value["schema"] != schema {
+        return Err("The personal sky input is not a supported native sky reading".into());
+    }
+    if key == "sky_snapshot"
+        && value["snapshot_ref"]
+            .as_str()
+            .is_none_or(|reference| reference.trim().is_empty())
+    {
+        return Err("The existing native sky snapshot has no occasion reference".into());
+    }
+    Ok(serde_json::Map::from_iter([(key.to_owned(), value)]))
+}
+
 pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> {
+    apply_inner(client, request, None)
+}
+/// Narrow native current acquisition; ordinary identity operations keep their
+/// existing installed-suite route and cannot receive an executable in JSON.
+pub(crate) fn apply_selected_personal_current(
+    client: &CentralClient,
+    request: Request,
+    owner: &Path,
+) -> Result<Value, String> {
+    if !matches!(&request, Request::PersonalCurrent { .. }) {
+        return Err(
+            "Selected QL custody applies only to native personal current acquisition".into(),
+        );
+    }
+    apply_inner(client, request, Some(owner))
+}
+fn apply_inner(
+    client: &CentralClient,
+    request: Request,
+    owner: Option<&Path>,
+) -> Result<Value, String> {
     match request {
         Request::Inspect { profile } => Ok(result(ql("inspect", &profile)?, None)),
         Request::Calculate { profile } => Ok(result(ql("calculate", &profile)?, None)),
@@ -249,23 +359,54 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
             source_ref,
             expected_revision,
             sky_request,
+            sky_snapshot,
+            snapshot_purpose,
         } => {
+            if snapshot_purpose == SnapshotPurpose::RetainedOccasion && sky_snapshot.is_none() {
+                return Err("A retained occasion requires an existing native sky snapshot".into());
+            }
+            let retained_snapshot = sky_snapshot.clone();
+            let supplied_snapshot_ref = sky_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot["snapshot_ref"].as_str())
+                .map(str::to_owned);
+            let sky = personal_sky_input(sky_request, sky_snapshot)?;
             let (source, profile) = read(client, &source_ref)?;
             if source.revision.revision != expected_revision {
                 return Err("The identity changed; reopen its current revision before reading the present field".into());
             }
-            let current = run_ql_nara(
-                "personal-current",
-                &json!({
-                    "schema":"ql.nara-personal-current-request/v1","profile":profile,"sky_request":sky_request
-                }),
-            )?;
+            let mut input =
+                json!({"schema":"ql.nara-personal-current-request/v1","profile":profile});
+            input.as_object_mut().unwrap().extend(sky);
+            if snapshot_purpose == SnapshotPurpose::RetainedOccasion {
+                input["snapshot_purpose"] = json!(snapshot_purpose);
+            }
+            let current = match owner {
+                Some(executable) => {
+                    run_ql_selected(executable, "nara", "personal-current", &input)?
+                }
+                None => run_ql_nara("personal-current", &input)?,
+            };
             if current["schema"] != "ql.nara-personal-current/v1"
                 || !same_input(&current["identity"]["profile"], &profile)
                 || current["identity"]["person_ref"] != profile["person_ref"]
                 || current["identity"]["nara_ref"] != profile["nara_ref"]
             {
                 return Err("QL returned a different personal current basis".into());
+            }
+            if supplied_snapshot_ref
+                .as_deref()
+                .is_some_and(|reference| current["snapshot_ref"].as_str() != Some(reference))
+            {
+                return Err(
+                    "QL returned a different sky occasion from the supplied cosmic snapshot".into(),
+                );
+            }
+            if snapshot_purpose == SnapshotPurpose::RetainedOccasion {
+                validate_retained_admission(
+                    &current["sky_admission"],
+                    retained_snapshot.as_ref().unwrap(),
+                )?;
             }
             let (confirmed, _) = read(client, &source_ref)?;
             if confirmed.revision.revision != expected_revision {
@@ -357,6 +498,29 @@ mod input_roundtrip_tests {
     use super::*;
 
     #[test]
+    fn personal_sky_route_retains_one_native_input_and_refuses_ambiguous_or_forged_basis() {
+        let request = json!({"schema":"ql.sky-request/v1","epoch":"2026-09-30T12:00:00Z"});
+        let snapshot =
+            json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:existing-occasion"});
+        assert_eq!(
+            personal_sky_input(Some(request.clone()), None).unwrap(),
+            serde_json::Map::from_iter([("sky_request".to_owned(), request.clone())])
+        );
+        assert_eq!(
+            personal_sky_input(None, Some(snapshot.clone())).unwrap(),
+            serde_json::Map::from_iter([("sky_snapshot".to_owned(), snapshot.clone())])
+        );
+        assert!(personal_sky_input(None, None).is_err());
+        assert!(personal_sky_input(Some(request), Some(snapshot)).is_err());
+        assert!(personal_sky_input(
+            None,
+            Some(json!({"schema":"ql.nara-personal-current/v1","snapshot_ref":"forged"}))
+        )
+        .is_err());
+        assert!(personal_sky_input(None, Some(json!({"schema":"ql.sky-snapshot/v1"}))).is_err());
+    }
+
+    #[test]
     fn typed_float_roundtrip_preserves_input_without_relaxing_identity() {
         let entered = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0,"role_weights":[1,0,2]}});
         let returned = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.0,"role_weights":[1.0,0.0,2.0]}});
@@ -375,5 +539,40 @@ mod input_roundtrip_tests {
             &json!(9007199254740992.0)
         ));
         assert!(!same_input(&json!(i64::MAX), &json!(i64::MAX as f64)));
+    }
+}
+
+
+#[cfg(test)]
+mod scientific_profile_input_tests {
+    use super::*;
+    #[test]
+    fn existing_typed_profile_policy_accepts_equal_scientific_values_but_not_changed_basis() {
+        let entered: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.00001,"role_weights":[1,0,2]}}"#).unwrap();
+        let returned: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":1e-05,"role_weights":[1.0,0.0,2.0]}}"#).unwrap();
+        assert_ne!(entered, returned, "full Value/receipt equality retains exact token custody");
+        assert!(same_input(&entered, &returned), "typed profile admission retains its existing finite representation policy");
+        let changed: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":1.000000000000001e-05,"role_weights":[1.0,0.0,2.0]}}"#).unwrap();
+        assert!(!same_input(&entered, &changed));
+        let mut other = returned.clone(); other["person_ref"] = json!("controlled:two");
+        assert!(!same_input(&entered, &other));
+        other = returned; other["encoding_policy"]["new_authority"] = Value::Null;
+        assert!(!same_input(&entered, &other));
+    }
+}
+
+
+#[cfg(test)]
+mod raw_profile_source_admission_tests {
+    use super::*;
+    #[test]
+    fn original_identity_source_json_cannot_impersonate_finite_profile_values() {
+        let raw = r#"{"schema":"ql.nara-identity-profile/v1","person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.00001}}"#;
+        let profile: Value = crate::expression_file::read_native_json(raw.as_bytes()).unwrap();
+        assert_eq!(profile["encoding_policy"]["lens_element_factor"].as_f64(), Some(0.00001));
+        for value in [r#"{"$serde_json::private::Number":"0.00001"}"#, r#"{"$serde_json::private::RawValue":"0.00001"}"#, "1e400"] {
+            let wrong = raw.replace("0.00001", value);
+            assert!(crate::expression_file::read_native_json::<Value>(wrong.as_bytes()).is_err());
+        }
     }
 }

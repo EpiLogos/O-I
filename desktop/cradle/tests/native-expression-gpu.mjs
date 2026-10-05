@@ -28,14 +28,20 @@ window.measure=async(targetX,disconnect)=>{
   engine.resize(640,480,1);engine.render(frame);const initial=engine.inspect(true),topology=engine.retainedTopology();
   const native=controlledFrame();native.targets.forEach(t=>t.position=[targetX,0,0]);
   engine.setNativeDomain(true);const port=engine.retainedTargetPort();
+  const partition=port.readPartitionSnapshot(),authoredFirst=partition.authored_target_a[0];
+  partition.authored_target_a[0]=authoredFirst+999;
+  const reread=port.readPartitionSnapshot();
+  if(reread.authored_target_a[0]!==authoredFirst)throw new Error('partition snapshot leaked mutable authored engine state');
   // The mutation cuts only the producer->GPU operation; all admission and
   // renderer code still runs, so metadata-only implementations fail the test.
   const targetPort=disconnect?{...port,setTargetTextures(){}}:port;
-  const slots=Array.from({length:topology.slot_count},(_,i)=>i%2);
-  projection=new NativeProjection(targetPort,native,{units_per_metre:400,slots_a:slots,slots_b:slots});
+  const target_map={schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:reread.partition_signature,
+   partitions:reread.partitions.map(({entity_ref})=>({entity_ref,target_a:{sample_identities:[0,1]},target_b:{sample_identities:[1,0]}}))};
+  projection=new NativeProjection(targetPort,native,{units_per_metre:400,target_map});
   for(let i=1;i<=24;i++)engine.render({...frame,delta:1/120,simTime:i/120});
   const result=engine.inspect(true);
-  return {initial:initial.positions,positions:result.positions,velocities:result.velocities,seeds:result.seeds,initialSeeds:initial.seeds,steps:result.steps,particles:result.particleCount};
+  return {initial:initial.positions,positions:result.positions,velocities:result.velocities,seeds:result.seeds,initialSeeds:initial.seeds,steps:result.steps,particles:result.particleCount,
+   partition:{schema:reread.schema,signature:reread.partition_signature,entities:reread.partitions.length,connectionStart:reread.connection_start,slotCount:reread.slot_count,isolatedCopy:reread.authored_target_a[0]===authoredFirst}};
  }finally{projection?.dispose();engine.releaseRetainedField();engine.dispose();canvas.remove();Math.random=originalRandom;}
 };`},bundle:true,format:'esm',platform:'browser',nodePaths:[resolve('expressions-app/node_modules')],outfile:join(temp,'test.js')});
 const server=createServer(async(req,res)=>{if(req.url==='/test.js'){res.setHeader('content-type','text/javascript');res.end(await readFile(join(temp,'test.js')));}else{res.setHeader('content-type','text/html');res.end('<!doctype html><script type="module" src="/test.js"></script>');}});
@@ -48,7 +54,9 @@ try{
  const difference=(a,b)=>Math.max(...a.map((v,i)=>Math.abs(v-b[i])));
  assert.deepEqual(left.initial,right.initial,'same seeded resident starting state');
  assert.deepEqual(cutLeft.initial,cutRight.initial,'same disconnected starting state');
- for(const result of [left,right,cutLeft,cutRight]){assert.equal(result.seeds,result.initialSeeds);assert.ok(result.positions.every(Number.isFinite));assert.ok(result.velocities.every(Number.isFinite));}
+ for(const result of [left,right,cutLeft,cutRight]){assert.equal(result.seeds,result.initialSeeds);assert.ok(result.positions.every(Number.isFinite));assert.ok(result.velocities.every(Number.isFinite));
+  assert.equal(result.partition.schema,'oi.retained-partition-snapshot/v1');assert.equal(result.partition.isolatedCopy,true);assert.ok(result.partition.entities>0);
+  assert.ok(result.partition.connectionStart<=result.partition.slotCount);}
  report.position_effect=difference(left.positions,right.positions);report.velocity_effect=difference(left.velocities,right.velocities);
  assert.ok(report.position_effect>1e-4,'producer change must change actual GPU positions');assert.ok(report.velocity_effect>1e-4,'producer change must change actual GPU velocities');
  assert.deepEqual(cutLeft.positions,cutRight.positions,'disconnecting target operation removes position effect');

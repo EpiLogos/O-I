@@ -71,7 +71,8 @@ export function useExpressionApplication(initialExpressionRef?:string):Expressio
  },[request]);
  useEffect(()=>{if(initialExpressionRef)void inspect(initialExpressionRef).catch(e=>setError(String(e)));else void refresh().catch(e=>setError(String(e)));},[refresh,inspect,initialExpressionRef]);
  const seq=kernel.receipts.filter(r=>r.event==="expression_changed").slice(-1)[0]?.seq;
- useEffect(()=>{void refresh().catch(e=>setError(String(e)));},[seq,refresh]);
+ const replayEpoch=useRef(kernel.readModelEpoch);
+ useEffect(()=>{if(replayEpoch.current!==kernel.readModelEpoch){replayEpoch.current=kernel.readModelEpoch;readGeneration.current++;setPending(false);}void refresh().catch(e=>setError(String(e)));},[seq,kernel.readModelEpoch,refresh]);
  const run=async(op:ExpressionRequest)=>{
   const target="expression_ref" in op?op.expression_ref:undefined;
   let generation=readGeneration.current;

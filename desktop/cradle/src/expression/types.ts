@@ -75,7 +75,8 @@ export type ExpressionRequest =
  | {operation:"inspect";expression_ref:string}
  | {operation:"create";expression_ref:string;title:string;actor:string}
  | {operation:"open";document:ExpressionDocument;actor:string}
- | {operation:"open_file";location:CentralLocation;actor:string}
+ | {operation:"open_file";location:CentralLocation;actor:string;expected_file_revision?:string}
+ | {operation:"inspect_file";location:CentralLocation;expected_file_revision:string}
  | {operation:"fork";expression_ref:string;expected_revision:number;new_expression_ref:string;actor:string}
  | {operation:"edit";expression_ref:string;expected_revision:number;actor:string;changes:Change[]}
  | {operation:"propose";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[]}
@@ -86,6 +87,7 @@ export type ExpressionRequest =
  | {operation:"invoke";expression_ref:string;expected_revision:number;entity_ref:string;action_ref:string;input:unknown;project:string|null}
  /* Substrate requests (#352): ES3 profiles/editions/index, ES3A asset index. */
  | {operation:"profile_define";profile:unknown;actor:string}
+ | {operation:"profile_define_many";definitions:{profile:unknown;actor:string}[]}
  | {operation:"profile_inspect";profile_ref:string}
  | {operation:"profile_resolve";native_owner:string;carrier:CarrierKind}
  | {operation:"edition_create";edition:unknown;actor:string}

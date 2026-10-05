@@ -1,3 +1,5 @@
+// Controlled Return/file protocol tests; they are not native decoder/storage
+// acceptance. Keep the independent read's exact native operation/revision.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CONSTRUCTION, ACTOR} from '../src/knowledge/construction.ts';
@@ -49,13 +51,22 @@ test('the saved file and pending Return survive checkpoint restoration with exac
 
 test('recovery reads the exact saved artifact without opening, rewriting or replacing a live composition',async()=>{
  const original=globalThis.fetch;const calls=[];
- globalThis.fetch=async(_url,options)=>{const op=JSON.parse(options.body);calls.push(op);return {json:async()=>({ok:true,outcome:{result:'file_read',reading:artifact.file}})};};
+ globalThis.fetch=async(_url,options)=>{
+  const op=JSON.parse(options.body);calls.push(op);let outcome;
+  if(op.op==='file_read')outcome={result:'file_read',reading:artifact.file};
+  else if(op.op==='expression'&&op.request.operation==='inspect_file'){
+   assert.deepEqual(op.request.location,location);assert.equal(op.request.expected_file_revision,artifact.file.revision);
+   outcome={result:'expression',data:{state:'ready',document,file:{location,revision:artifact.file.revision}}};
+  }else throw Error('Unexpected read-only artifact operation '+JSON.stringify(op));
+  return {json:async()=>({ok:true,outcome})};
+ };
  try{
   const held={location,revision:'file:r4',expression_ref:'expression:one'};
   assert.deepEqual(await readSavedArtifact(transport,held),artifact);
   await assert.rejects(readSavedArtifact(transport,{...held,revision:'file:older'}),/file has changed/);
   await assert.rejects(readSavedArtifact(transport,{...held,expression_ref:'expression:another'}),/recorded Expression/);
-  assert.ok(calls.every(op=>op.op==='file_read'));
+  assert.ok(calls.every(op=>op.op==='file_read'||op.op==='expression'&&op.request.operation==='inspect_file'),'recovery never opens or mutates a live composition');
+  assert.deepEqual(calls[1],{op:'expression',request:{operation:'inspect_file',location,expected_file_revision:artifact.file.revision}});
  }finally{globalThis.fetch=original;}
 });
 
@@ -85,7 +96,15 @@ test('operation inspection requires current attachment and the recorded native a
 
 test('a redirected or malformed saved artifact cannot become a retry basis',async()=>{
  const original=globalThis.fetch;let reading=artifact.file;
- globalThis.fetch=async()=>({json:async()=>({ok:true,outcome:{result:'file_read',reading}})});
+ globalThis.fetch=async(_url,options)=>{
+  const op=JSON.parse(options.body);let outcome;
+  if(op.op==='file_read')outcome={result:'file_read',reading};
+  else if(op.op==='expression'&&op.request.operation==='inspect_file'){
+   assert.deepEqual(op.request.location,reading.location);assert.equal(op.request.expected_file_revision,reading.revision);
+   outcome={result:'expression',data:{state:'ready',document:JSON.parse(reading.content),file:{location:reading.location,revision:reading.revision}}};
+  }else throw Error('Unexpected read-only artifact operation '+JSON.stringify(op));
+  return {json:async()=>({ok:true,outcome})};
+ };
  try{
   const held={location,revision:'file:r4',expression_ref:'expression:one'};
   reading={...artifact.file,location:{...location,root:'/different'}};

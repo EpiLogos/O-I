@@ -24,8 +24,14 @@ export class NativeChannel implements NativePort {
  request(request:unknown):Promise<any>{
   if(this.dead || !this.epoch || !this.available)return Promise.reject(new Error('Native QL host channel unavailable. Ordinary Expressions remains usable.'));
   const req=++this.seq;
+  // Construction may resolve one dated sky (120s), compile the owner world
+  // (120s), resolve its executable (10s) and open the field (20s). A realtime
+  // exchange deadline must not discard that lawful acknowledgement. Unknown
+  // acknowledgements still never trigger an automatic retry.
+  const operation=request&&typeof request==='object'&&'operation' in request?request.operation:null;
+  const timeout=operation==='prepare_world'||operation==='compose'?300000:15000;
   return new Promise((resolve,reject)=>{
-   const timer=window.setTimeout(()=>{this.pending.delete(req);this.onHold?.('native acknowledgement unknown; not retried');reject(new Error('native acknowledgement timed out; not retried'));},15000);
+   const timer=window.setTimeout(()=>{this.pending.delete(req);if(operation!=='observe')this.onHold?.('native acknowledgement unknown; not retried');reject(new Error(operation==='observe'?'native observation timed out; driver unchanged':'native acknowledgement timed out; not retried'));},timeout);
    this.pending.set(req,{resolve,reject,timer});window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,req,kind:'request',request},'*');
   });
  }

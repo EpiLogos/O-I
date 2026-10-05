@@ -85,9 +85,8 @@ impl Loaded {
 pub fn read_file(client: &CentralClient, file_ref: &str) -> Result<Loaded, String> {
     let location = files::resolve(client, file_ref)?;
     let reading = files::read(client, &location)?;
-    let document: Document = serde_json::from_str(&reading.content)
+    let document = crate::expression_file::decode(&reading.content)
         .map_err(|e| format!("Material {file_ref} is not an Expression document: {e}"))?;
-    document.validate()?;
     Ok(Loaded {
         document,
         file_ref: Some(location.ref_id),
@@ -156,10 +155,7 @@ pub fn list(
                     continue;
                 }
             };
-            let document = match serde_json::from_str::<Document>(&reading.content)
-                .map_err(|e| e.to_string())
-                .and_then(|d| d.validate().map(|_| d))
-            {
+            let document = match crate::expression_file::decode(&reading.content) {
                 Ok(document) => document,
                 Err(error) => {
                     unreadable.push(json!({"file_ref": entry.location.ref_id, "error": error}));
@@ -339,6 +335,98 @@ pub fn graft(scene: &mut Value, fills: &BTreeMap<String, RoleFill>) {
             }
         }
     }
+}
+
+/// Authored capacity of one text role. These are material choices, not
+/// renderer defaults. The directive is interpreted only when that role is
+/// filled; an absent directive retains the ordinary single-fill contract.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct TextPassagePolicy {
+    schema: String,
+    capacity_chars: usize,
+    max_newlines: usize,
+    maximum_pages: usize,
+}
+
+/// Prepare lossless pages before any native edit. Scalar values are counted
+/// without slicing UTF-8; CRLF stays together and counts as one newline.
+/// Whitespace is retained on one side of each boundary, never trimmed.
+pub(crate) fn text_passages(
+    scene: &Value,
+    role: &str,
+    field: &str,
+    text: &str,
+) -> Result<Option<Vec<String>>, String> {
+    let layers: Vec<_> = scene["text"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|layer| layer["role"].as_str() == Some(role))
+        .collect();
+    if !layers.iter().any(|layer| layer.get("passage").is_some()) {
+        return Ok(None);
+    }
+    if layers.len() != 1 {
+        return Err("A paged text role must name exactly one text layer".into());
+    }
+    if field != "body" {
+        return Err("A paged text role fills only its body field".into());
+    }
+    let policy: TextPassagePolicy = serde_json::from_value(layers[0]["passage"].clone())
+        .map_err(|error| format!("Invalid text passage directive: {error}"))?;
+    if policy.schema != "oi.expression-text-passages/v1"
+        || !(1..=4096).contains(&policy.capacity_chars)
+        || !(1..=4096).contains(&policy.max_newlines)
+        || !(1..=64).contains(&policy.maximum_pages)
+    {
+        return Err("Text passage directive schema or capacity is outside its bounds".into());
+    }
+    if text.is_empty() {
+        return Ok(Some(vec![String::new()]));
+    }
+    let mut pages = Vec::new();
+    let mut start = 0;
+    while start < text.len() {
+        let mut units = text[start..].char_indices().peekable();
+        let mut end = start;
+        let mut chars = 0;
+        let mut newlines = 0;
+        let mut word_boundary = None;
+        let mut content_seen = false;
+        while let Some((offset, character)) = units.next() {
+            let mut count = 1;
+            let mut unit_end = start + offset + character.len_utf8();
+            let newline = usize::from(matches!(character, '\r' | '\n' | '\u{2028}' | '\u{2029}'));
+            if character == '\r' && units.peek().is_some_and(|(_, next)| *next == '\n') {
+                let (offset, character) = units.next().expect("peeked CRLF");
+                count += 1;
+                unit_end = start + offset + character.len_utf8();
+            }
+            if chars + count > policy.capacity_chars || newlines + newline > policy.max_newlines {
+                break;
+            }
+            chars += count;
+            newlines += newline;
+            end = unit_end;
+            content_seen |= !character.is_whitespace();
+            if character.is_whitespace() && content_seen {
+                word_boundary = Some(end);
+            }
+        }
+        if end == start {
+            return Err("Text passage capacity cannot retain the next complete newline".into());
+        }
+        if end < text.len() {
+            end = word_boundary.unwrap_or(end);
+        }
+        pages.push(text[start..end].to_owned());
+        if pages.len() > policy.maximum_pages {
+            return Err("Text passage maximum_pages budget exceeded".into());
+        }
+        start = end;
+    }
+    Ok(Some(pages))
 }
 
 /// Fill one text role in place; returns whether a layer carried the role.

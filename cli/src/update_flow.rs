@@ -645,10 +645,13 @@ fn build_plan(
             _ => None,
         };
         let discovered = {
-            let resolved = resolve_executable(&target.exe);
-            let inside = resolved.as_ref().is_some_and(|path| path.starts_with(data_root));
-            let receipted = entry.is_some();
-            if inside || receipted { None } else { resolved }
+            let resolved = resolve_executable(&target.exe).and_then(|path| fs::canonicalize(path).ok());
+            let managed_root = fs::canonicalize(data_root).unwrap_or_else(|_| data_root.to_path_buf());
+            let inside = resolved.as_ref().is_some_and(|path| path.starts_with(&managed_root));
+            // An existing receipt describes the active generation. A newer
+            // outside-root candidate still needs exact-cut qualification;
+            // plan_product preserves healthy-current and forced-build rules.
+            if inside { None } else { resolved }
         };
         if let Some(path) = &discovered {
             drift.push(format!(

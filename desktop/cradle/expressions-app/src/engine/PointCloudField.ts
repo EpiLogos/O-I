@@ -142,6 +142,9 @@ export class PointCloudField {
   private particleGeometry!: THREE.BufferGeometry;
   private particleMaterial!: THREE.ShaderMaterial;
   private particlePoints!: THREE.Points;
+  /** Project draw membership of the native node pool. The independently
+   * admitted connection tail, resident medium and clock remain intact. */
+  public setNodePoolVisibility(visible: boolean) { this.particleMaterial.uniforms.uNodePoolVisible.value = visible ? 1 : 0; }
 
   // Animation & Clock (the ONE clock: simTime)
   private clock: THREE.Clock;
@@ -149,6 +152,8 @@ export class PointCloudField {
   private isDestroyed: boolean = false;
   private simTime: number = 0;
   private seedGeneration = 0;
+  private stationaryAdmissionRevision = 0;
+  private lastStationaryAdmission = '';
 
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
   private morphProgress: number = 0.0;
@@ -182,8 +187,8 @@ export class PointCloudField {
     if(value){
       const q=value.orientation,norm=Math.hypot(q.w,q.x,q.y,q.z);
       if(!value.scope||!Number.isFinite(norm)||Math.abs(norm-1)>1e-6||value.drivers.length>MAX_FORMATIONS
-        ||new Set(value.drivers.map(d=>d.entityId)).size!==value.drivers.length
-        ||value.drivers.some(d=>!d.entityId||!Number.isFinite(d.frequencyHz)||d.frequencyHz<=0||!Number.isFinite(d.driveShare)||d.driveShare<0))
+        ||new Set(value.drivers.map(d=>d.driverRef??d.entityId)).size!==value.drivers.length
+        ||value.drivers.some(d=>!d.entityId||(d.driverRef!==undefined&&!d.driverRef.trim())||!Number.isFinite(d.frequencyHz)||d.frequencyHz<=0||!Number.isFinite(d.driveShare)||d.driveShare<0))
         throw Error('Invalid localized resonance admission');
     }
     if(value?.scope!==this.localizedProjection?.scope)this.localizedBank.configure([]);
@@ -203,7 +208,7 @@ export class PointCloudField {
     const drivers=projection.drivers.filter(d=>d.driveShare>0).map(driver=>{
       const pose=this.lastPoses.find(p=>p.entityId===driver.entityId);
       if(!pose)throw Error('A localized resonance driver has no current evaluated entity');
-      return {entityId:driver.entityId,frequencyHz:driver.frequencyHz,
+      return {...(driver.driverRef===undefined?{}:{driverRef:driver.driverRef}),entityId:driver.entityId,frequencyHz:driver.frequencyHz,
         position:[pose.x,pose.y,pose.z] as const,params:{...params,driveStrength:params.driveStrength*driver.driveShare}};
     });
     // A user's explicit dimension edit changes the modal basis. Release that
@@ -443,6 +448,9 @@ export class PointCloudField {
    * count, then re-bakes and reseeds. Camera, grid, pins and config all persist.
    */
   private rebuildParticleSystem() {
+    // A count automation may rebuild after the host projects this frame.
+    // Carry the existing draw projection across the actual material rebuild.
+    const nodePoolVisible = this.particleMaterial?.uniforms.uNodePoolVisible.value ?? 1;
     const hostSize = this.hosted ? this.renderer.getSize(new THREE.Vector2()) : null;
     const width = hostSize?.x ?? (this.canvas.clientWidth || window.innerWidth);
     const height = hostSize?.y ?? (this.canvas.clientHeight || window.innerHeight);
@@ -456,6 +464,7 @@ export class PointCloudField {
     this.simulator = new GPGPUSimulator(this.renderer, this.config.particleCount);
     this.initEntities(true);
     this.initParticlePipeline(width, height, dpr);
+    this.particleMaterial.uniforms.uNodePoolVisible.value = nodePoolVisible;
     this.resonatorActive = false;
     this.updateConfig({});
   }
@@ -563,7 +572,9 @@ export class PointCloudField {
         uEditSelected: {value:new Float32Array(MAX_FORMATIONS)},
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
+        uNodePoolVisible: { value: 1 },
         uConnectionMetadata: { value: this.entities.noiseTexture },
+        uConnectionRestOpacity: { value: 1 },
         uEntityBounds: { value: new Float32Array(MAX_FORMATIONS) },
         uEntityTint: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Color('#ffffff')) },
         uEntityTintWeight: { value: new Float32Array(MAX_FORMATIONS) },
@@ -1410,8 +1421,8 @@ export class PointCloudField {
       partitions:this.entities.getPartitions().map(partition=>({...partition})),
       connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:MAX_FORMATIONS},
       drive: this.lastDrive, composition: this.getCompositionTelemetry(),
-      localizedResonance:this.localizedFrames.map(f=>({entityId:f.entityId,frequencyHz:f.frequencyHz,position:f.position,params:f.params,re:Array.from(f.re),im:Array.from(f.im)})),
-      positions: [] as number[], velocities: [] as number[] };
+      localizedResonance:this.localizedFrames.map(f=>({...(f.driverRef===undefined?{}:{driverRef:f.driverRef}),entityId:f.entityId,frequencyHz:f.frequencyHz,position:f.position,params:f.params,re:Array.from(f.re),im:Array.from(f.im)})),
+      positions: [] as number[], velocities: [] as number[], targets: [] as number[] };
     if (readParticles) {
       const n = this.simulator.texWidth * this.simulator.texHeight * 4;
       const p = new Float32Array(n), v = new Float32Array(n);
@@ -1419,6 +1430,9 @@ export class PointCloudField {
       this.renderer.readRenderTargetPixels(this.simulator.currentVelTarget, 0, 0, this.simulator.texWidth, this.simulator.texHeight, v);
       result.positions = Array.from(p.subarray(0, this.simulator.particleCount * 4));
       result.velocities = Array.from(v.subarray(0, this.simulator.particleCount * 4));
+      // Read the actual blended, transformed targets beside resident GPU state.
+      // This does not seed, step, rebake, retune or alter the current field.
+      result.targets = Array.from(this.entities.buildSeed().subarray(0, this.simulator.particleCount * 4));
     }
     return result;
   }
@@ -1435,7 +1449,9 @@ export class PointCloudField {
   }
 
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
-  public setNativeConnections(bindings: readonly ConnectionBinding[], selected: readonly string[] = []) {
+  public setNativeConnections(bindings: readonly ConnectionBinding[], selected: readonly string[] = [], restOpacity = 1) {
+    if (!Number.isFinite(restOpacity) || restOpacity < 0.01 || restOpacity > 1) throw new Error('Connection presentation opacity must be within 0.01–1.');
+    this.particleMaterial.uniforms.uConnectionRestOpacity.value = restOpacity;
     this.entities.connections.configure(bindings, selected, this.simulator.particleCount);
     this.entities.layout(this.config.entities || []);
   }
@@ -1621,6 +1637,36 @@ export class PointCloudField {
   /** Zero the running toroidal / poloidal phases (restart the morph cycle). */
   /** Reconstruct source targets after startup decoding; preserve recovered driver clocks. */
   seedCurrentTargets(){this.seedGeneration++;this.simulator.seedInitialState(this.entities.buildSeed());}
+  /** A renderer-local CAS fence; the caller owns semantic/source qualification. */
+  public stationaryFormationAdmissionState() {
+    return {revision:this.stationaryAdmissionRevision,partition_signature:JSON.stringify({
+      particleCount:this.simulator.particleCount,texWidth:this.simulator.texWidth,texHeight:this.simulator.texHeight,
+      partitions:this.entities.getPartitions(),bakes:this.entities.bakeGeneration,
+      formations:this.formations(),simTime:this.simTime,
+    })};
+  }
+  public admitStationaryFormations(request:{entity_ids:readonly string[];expected_revision:number;partition_signature:string;source_revision:string}) {
+    const actual = this.stationaryFormationAdmissionState();
+    if (!request || request.expected_revision !== actual.revision || request.partition_signature !== actual.partition_signature ||
+        typeof request.source_revision !== 'string' || !request.source_revision.trim() || request.source_revision.length > 1024 ||
+        !Array.isArray(request.entity_ids) || !request.entity_ids.length || request.entity_ids.length > MAX_FORMATIONS ||
+        new Set(request.entity_ids).size !== request.entity_ids.length) throw Error('Stale or invalid stationary formation admission.');
+    const enabled = new Set(this.formations().map(entity=>entity.id)), partitions = this.entities.getPartitions();
+    const ranges = request.entity_ids.map(id=>{
+      const partition = partitions.find(value=>value.entityId===id);
+      if (typeof id !== 'string' || !enabled.has(id) || !partition || partition.end <= partition.start) {
+        throw Error('The stationary receiving body is missing, disabled or empty.');
+      }
+      return {start:partition.start,end:partition.end};
+    }).sort((a,b)=>a.start-b.start);
+    const key = JSON.stringify([request.source_revision,request.partition_signature,[...request.entity_ids].sort()]);
+    if (key === this.lastStationaryAdmission) throw Error('This stationary source revision is already received.');
+    this.simulator.admitStationaryPositions(this.entities.buildSeed(),ranges);
+    this.stationaryAdmissionRevision++;
+    this.lastStationaryAdmission = key;
+    this.particleMaterial.uniforms.uPositionTexture.value = this.simulator.currentPosTarget.texture;
+    this.renderer.render(this.scene,this.camera);
+  }
   getTransportState():TransportState{return {version:1,simTime:this.simTime,theta:this.torPhaseAcc,phi:this.polPhaseAcc,lanes:[...this.automationRt.lanes].map(([id,v])=>[id,{...v}])};}
   restoreTransportState(value:unknown){const s=validateTransport(value);this.simTime=s.simTime;this.torPhaseAcc=s.theta;this.polPhaseAcc=s.phi;this.breathPhaseAcc=s.phi;this.automationRt={lanes:new Map(s.lanes)};}
   public resetMorphPhases() {

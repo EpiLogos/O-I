@@ -227,3 +227,41 @@ fn saved_scene_is_independent_of_working_draft_through_native_reopen_and_fork() 
     assert!(edit(&mut app, 3, json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":wrong}])).is_err());
     assert_eq!(inspect(&mut app), original);
 }
+
+
+#[test]
+fn actual_scene_edit_and_cold_file_refuse_raw_transport_impersonation_atomically() {
+    use oi_cradle_kernel::expression_file::{decode, encode, read_native_json};
+    let mut app = setup();
+    let mut body = material();
+    body["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    body["scene"]["view"]["extra"] = read_native_json::<Value>(b"2.0937213582368774e-05").unwrap();
+    let raw = serde_json::to_string(&json!({"operation":"edit","expression_ref":"expression:craft","expected_revision":2,"actor":"human:craft","changes":[{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]})).unwrap();
+    let request: Request = read_native_json(raw.as_bytes()).unwrap();
+    app.apply(&CentralClient::discover(), request).unwrap();
+    let original = inspect(&mut app);
+    assert_eq!(serde_json::to_string(&original["scenes"][0]["presentation"]["scene"]["view"]["extra"]).unwrap(), "2.0937213582368774e-05");
+    let document = read_native_json::<oi_cradle_kernel::expression::Document>(&serde_json::to_vec(&original).unwrap()).unwrap();
+    let file = encode(&document).unwrap();
+    assert_eq!(serde_json::to_value(decode(&file).unwrap()).unwrap(), original);
+    let edit_raw = raw.replace("\"expected_revision\":2", "\"expected_revision\":3");
+    for refused in [
+        edit_raw.replace("\"duration\":42", "\"duration\":{\"$serde_json::private::Number\":\"42\"}"),
+        edit_raw.replace("\"duration\":42", "\"duration\":{\"$serde_json::private::RawValue\":\"42\"}"),
+        edit_raw.replace("\"duration\":42", "\"duration\":{\"\\u0024serde_json::private::Number\":\"42\"}"),
+        edit_raw.replace("\"extra\":2.0937213582368774e-05", "\"extra\":1e400"),
+        edit_raw.replace("\"duration\":42", "\"duration\":42,\"duration\":43"),
+    ] {
+        assert_ne!(refused, edit_raw, "counterproof must alter the genuine request");
+        assert!(read_native_json::<Request>(refused.as_bytes()).is_err());
+        assert_eq!(inspect(&mut app), original);
+    }
+    let mut infinite = body.clone();
+    infinite["scene"]["view"]["extra"] = serde_json::from_str("1e400").unwrap();
+    assert!(edit(&mut app, 3, json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":infinite}])).is_err());
+    assert_eq!(inspect(&mut app), original);
+    let refused_file = file.replace("2.0937213582368774e-05", "1e400");
+    assert_ne!(refused_file, file);
+    assert!(decode(&refused_file).is_err());
+    assert_eq!(inspect(&mut app), original);
+}
