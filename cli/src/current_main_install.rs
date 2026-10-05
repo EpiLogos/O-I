@@ -1,3 +1,10 @@
+fn current_main_source_install(
+    id: &str,
+) -> Result<oi_cli::product_command::SourceInstallDescriptor, String> {
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    current_main_source_install_from_catalogue(&catalogue, id)
+}
+
 /// The extraction law over one explicit catalogue: the current-main install
 /// path publishes exactly the descriptor the catalogue carries — it never
 /// overrides an owner's build or entry. Split from the runtime entry above so

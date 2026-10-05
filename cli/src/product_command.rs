@@ -219,7 +219,8 @@ pub fn product_command_catalogue_from_json(
                 ));
             }
             if !companion.executable_path.starts_with("target/")
-                || std::path::Path::new(&companion.executable_path).components()
+                || std::path::Path::new(&companion.executable_path)
+                    .components()
                     .any(|part| !matches!(part, std::path::Component::Normal(_)))
             {
                 return Err(format!(
@@ -416,7 +417,10 @@ mod tests {
         assert!(catalogue
             .products
             .iter()
-            .filter(|product| !matches!(product.id.as_str(), "quaternal-logic" | "workcell" | "ai-kit"))
+            .filter(|product| !matches!(
+                product.id.as_str(),
+                "quaternal-logic" | "workcell" | "ai-kit"
+            ))
             .all(|product| product.source_install.companions.is_empty()));
     }
 
@@ -549,7 +553,8 @@ mod tests {
         ] {
             let error = with_ql_companions(serde_json::json!([{
                 "executable": name, "executable_path": path
-            }])).unwrap_err();
+            }]))
+            .unwrap_err();
             assert!(!error.is_empty(), "{name}: {path}");
         }
     }

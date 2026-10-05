@@ -80,6 +80,32 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('scripts/verify-development-field-s0.py', runs)
         self.assertIn('cargo test', runs)
         self.assertNotIn('repository:', runs)
-        for job in data['jobs'].values():
+        # O:I's installer tests need real executable input from its native
+        # Workcell owner. This single checkout prepares input; it does not run
+        # the sibling programme carried by the scheduled cross-product lane.
+        owner_inputs = []
+        for job_name, job in data['jobs'].items():
             for step in job['steps']:
-                self.assertNotIn('repository', step.get('with', {}), 'the per-push gate never checks out a sibling repository')
+                checkout = step.get('with', {})
+                if checkout.get('repository') == 'EpiLogos/Workcell':
+                    self.assertEqual('rust', job_name)
+                    self.assertEqual('actions/checkout@v4', step.get('uses'))
+                    self.assertEqual('main', checkout.get('ref'))
+                    self.assertEqual('.native-owner/Workcell-current-main', checkout.get('path'))
+                    self.assertEqual('false', checkout.get('persist-credentials'))
+                    owner_inputs.append(step)
+                else:
+                    self.assertNotIn('repository', checkout, 'unrelated sibling checkouts belong to the scheduled cross-product lane')
+        self.assertEqual(1, len(owner_inputs), 'installer prerequisites must have one native owner checkout')
+        rust = data['jobs']['rust']
+        self.assertEqual('30', rust['timeout-minutes'])
+        rust_steps = {step.get('name'): step for step in rust['steps']}
+        prerequisite = rust_steps['Prepare genuine native roles and an owned test directory']
+        self.assertIn('python3 gates/prepare-native-workcell-current-main-material.py', prerequisite['run'])
+        self.assertIn('--workcell-source "$GITHUB_WORKSPACE/.native-owner/Workcell-current-main"', prerequisite['run'])
+        self.assertIn('--output-base "$RUNNER_TEMP"', prerequisite['run'])
+        self.assertEqual('${{ github.workspace }}/cli/target', prerequisite['env']['CARGO_TARGET_DIR'])
+        self.assertEqual('cargo fmt --manifest-path cli/Cargo.toml -- --check', rust_steps['Format']['run'])
+        self.assertEqual('cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings', rust_steps['Clippy']['run'])
+        self.assertEqual('cargo test --manifest-path cli/Cargo.toml --all-targets --locked', rust_steps['Test']['run'])
+        self.assertTrue(all(step.get('continue-on-error', 'false') == 'false' for step in rust['steps']))
