@@ -1095,9 +1095,11 @@ fn no_shared_refs(value: &Value) -> Result<(), String> {
 /// clone. Part fingerprints qualify precisely the stored (PNG-compacted)
 /// literal, and the whole-record digest qualifies the expanded public value.
 fn shared_fingerprint(value: &Value) -> Result<(usize, String), String> {
+    const HASH_BUFFER_BYTES: usize = 8192;
     struct Counter {
         size: usize,
         hash: Sha256,
+        hash_buffer: Vec<u8>,
     }
     impl std::io::Write for Counter {
         fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
@@ -1108,7 +1110,24 @@ fn shared_fingerprint(value: &Value) -> Result<(usize, String), String> {
                 .ok_or_else(|| {
                     std::io::Error::other("Recovery literal exceeds stored byte bound")
                 })?;
-            self.hash.update(bytes);
+            // Qualify the same complete byte count before accepting any hash
+            // bytes. Batching changes only SHA call granularity, not the stream.
+            let mut remaining = bytes;
+            while !remaining.is_empty() {
+                if self.hash_buffer.is_empty() && remaining.len() >= HASH_BUFFER_BYTES {
+                    self.hash.update(remaining);
+                    break;
+                }
+                let take = remaining
+                    .len()
+                    .min(HASH_BUFFER_BYTES - self.hash_buffer.len());
+                self.hash_buffer.extend_from_slice(&remaining[..take]);
+                remaining = &remaining[take..];
+                if self.hash_buffer.len() == HASH_BUFFER_BYTES {
+                    self.hash.update(&self.hash_buffer);
+                    self.hash_buffer.clear();
+                }
+            }
             self.size = next;
             Ok(bytes.len())
         }
@@ -1119,8 +1138,10 @@ fn shared_fingerprint(value: &Value) -> Result<(usize, String), String> {
     let mut out = Counter {
         size: 0,
         hash: Sha256::new(),
+        hash_buffer: Vec::with_capacity(HASH_BUFFER_BYTES),
     };
     serde_json::to_writer(&mut out, value).map_err(|e| e.to_string())?;
+    out.hash.update(&out.hash_buffer);
     Ok((out.size, format!("sha256:{:x}", out.hash.finalize())))
 }
 fn shared_candidates(
@@ -3923,5 +3944,63 @@ mod hosted_diagnostic_scope_tests {
             std::panic::catch_unwind(|| with_diagnostic_trace(9, || panic!("scope test")));
         assert!(panicked.is_err());
         assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
+    }
+}
+
+#[cfg(test)]
+mod shared_fingerprint_buffer_tests {
+    use super::*;
+
+    fn original_complete_byte_oracle(value: &Value) {
+        let bytes = serde_json::to_vec(value).unwrap();
+        let expected = format!("sha256:{:x}", Sha256::digest(&bytes));
+        assert_eq!(shared_fingerprint(value).unwrap(), (bytes.len(), expected));
+    }
+
+    #[test]
+    fn actual_native_document_shared_fingerprint_preserves_complete_bytes() {
+        let fixture = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            crate::expression_file::digest(fixture.as_bytes()),
+            "sha256:630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let document = crate::expression_file::decode(fixture).unwrap();
+        assert_eq!(
+            (
+                document.revision,
+                document.entities.len(),
+                document.relations.len(),
+                document.scenes.len()
+            ),
+            (131, 38, 86, 3)
+        );
+        // The genuine full native body, sources and image data remain intact;
+        // the independent oracle is the original complete Value Serde stream.
+        let value = serde_json::to_value(&document).unwrap();
+        original_complete_byte_oracle(&value);
+        original_complete_byte_oracle(&value["scenes"][0]);
+    }
+
+    #[test]
+    fn shared_fingerprint_keeps_buffer_boundaries_unicode_and_immediate_byte_refusal() {
+        for length in [0, 1, 8190, 8191, 8192, 8193, 8194, 65536] {
+            original_complete_byte_oracle(&Value::String("x".repeat(length)));
+        }
+        original_complete_byte_oracle(&json!({
+            "text":"ॐ · Māyā\n\"\\",
+            "rows":(0..1024).map(|index| json!({"index":index,"value":index as f64 / 7.0})).collect::<Vec<_>>()
+        }));
+        let limit = MAX_RECORD_BYTES + 2048;
+        // JSON quotes contribute two exact bytes. Equality admits, one more
+        // byte refuses before that write can enter either SHA or its buffer.
+        let exact = Value::String("x".repeat(limit - 2));
+        let (bytes, _) = shared_fingerprint(&exact).unwrap();
+        assert_eq!(bytes, limit);
+        original_complete_byte_oracle(&exact);
+        let overflow = Value::String("x".repeat(limit - 1));
+        assert_eq!(
+            shared_fingerprint(&overflow).unwrap_err(),
+            "Recovery literal exceeds stored byte bound"
+        );
     }
 }
