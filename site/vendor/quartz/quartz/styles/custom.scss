@@ -1,7 +1,7 @@
 @use "./base.scss";
 
-// O:I night-paper skin — the essay reads as the same publication as the
-// Plate A entrance and the Plate B shell. Palette lives in quartz.config.ts;
+// O:I night-paper skin — the essay belongs to the restored O:I publication.
+// Palette lives in quartz.config.ts;
 // this file carries the type and surface details those tokens imply.
 
 :root {
@@ -65,57 +65,178 @@ article {
 }
 .article-title { margin-bottom: 1.4rem; line-height: 1.3; }
 .breadcrumbs { margin-bottom: 0.6rem; }
-.center, article { padding-inline: clamp(1.2rem, 4vw, 3rem); }
-
-// Fade toggles — tiny ghost chevrons at the viewport edges; clicking one
-// collapses its column and lets the reading column breathe wider.
-.fade-toggle {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 20;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: 1px solid var(--lightgray);
-  background: var(--light);
-  color: var(--gray);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  opacity: 0.35;
-  transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-
-  &:hover { opacity: 1; color: var(--tertiary); border-color: var(--tertiary); }
-  &[aria-pressed="true"] { opacity: 0.7; }
+// The native body is the grid. The previous fade rules targeted .page,
+// leaving the tablet graph after the entire article and double-padding the prose.
+.page { max-width: 1700px; }
+.page > #quartz-body {
+  --essay-left-width: 16rem;
+  --essay-right-width: 16rem;
+  grid-template-columns: var(--essay-left-width) minmax(0, 1fr) var(--essay-right-width);
+  grid-template-rows: auto auto;
+  grid-template-areas: "grid-sidebar-left grid-center grid-sidebar-right" "grid-sidebar-left grid-footer grid-sidebar-right";
+  padding: 0;
+  gap: 0;
+  .center {
+    grid-area: grid-center;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 54rem;
+    padding: 5rem clamp(1.25rem, 2.5vw, 2.5rem) 1rem;
+    margin: 0 auto;
+  }
+  .page-header { margin-top: 0; }
+  .page-header > header:has(> .essay-reader-toolbar) { margin: 0; }
+  footer { min-width: 0; box-sizing: border-box; padding: 1rem 2rem; }
+  dialog.sidebar:is(.left, .right) {
+    color: var(--darkgray);
+    background: var(--light);
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    max-height: none;
+    height: calc(100dvh - 3.5rem);
+    top: 3.5rem;
+    padding: 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
+    position: sticky;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    gap: 1.25rem;
+    &[open] { display: flex; }
+    &:not([open]) { display: none; }
+    &.left { border-right: 1px solid var(--lightgray); }
+    &.right { border-left: 1px solid var(--lightgray); }
+    & > * { flex: 0 0 auto; max-height: none; }
+    & > .toc { display: block; }
+    .spacer { display: none; }
+  }
+  dialog.sidebar.left:has(.explorer) { padding: 1.25rem; position: sticky; margin: 0; }
 }
-.fade-left { left: 6px; }
-.fade-right { right: 6px; }
+body.oi-explorer-hidden .page > #quartz-body { --essay-left-width: 0rem; }
+body.oi-rail-hidden .page > #quartz-body { --essay-right-width: 0rem; }
 
-@media all and (min-width: 800px) {
-  .page { transition: grid-template-columns 300ms ease; }
-
-  body.oi-explorer-hidden .page { grid-template-columns: 0px minmax(0, 1fr) 320px; }
-  body.oi-explorer-hidden .sidebar.left {
-    visibility: hidden;
-    overflow: hidden;
-  }
-
-  body.oi-rail-hidden .page { grid-template-columns: 320px minmax(0, 1fr) 0px; }
-  body.oi-rail-hidden .sidebar.right {
-    visibility: hidden;
-    overflow: hidden;
-  }
-
-  // The fullscreen graph escapes its faded rail.
-  body.oi-rail-hidden .sidebar.right .global-graph-outer.active {
+.essay-reader-toolbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 25;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 3.5rem;
+  padding: 0 .75rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--lightgray);
+  background: var(--light);
+  font-family: var(--codeFont);
+  font-size: .75rem;
+  .essay-site-home { font-weight: 500; padding: .75rem; }
+}
+.fade-toggle, .essay-panel-heading button, .global-graph-close {
+  min-height: 44px;
+  border: 1px solid var(--lightgray);
+  border-radius: 3px;
+  background: var(--light);
+  color: var(--darkgray);
+  font: inherit;
+  padding: .5rem .75rem;
+  cursor: pointer;
+  &:hover, &[aria-expanded="true"] { color: var(--secondary); border-color: var(--secondary); }
+  &:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 3px; }
+}
+.essay-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--lightgray);
+  padding-bottom: .75rem;
+  font-family: var(--codeFont);
+  font-size: .75rem;
+}
+.page > #quartz-body .sidebar .page-title { font-size: 1.2rem; text-transform: none; letter-spacing: 0; line-height: 1.3; }
+.page > #quartz-body .sidebar .graph-container { height: 248px; }
+.page > #quartz-body .sidebar .explorer {
+  order: 0;
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+  flex: 0 0 auto;
+  align-self: stretch;
+  margin: 0;
+  button.mobile-explorer, button.desktop-explorer { display: none; }
+  .explorer-content {
+    display: block;
+    position: static;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    transform: none;
     visibility: visible;
   }
-
-  body.oi-explorer-hidden.oi-rail-hidden .page { grid-template-columns: 0px minmax(0, 1fr) 0px; }
 }
-@media all and (max-width: 799px) {
-  .fade-toggle { display: none; }
+.explorer-content a.active { color: var(--tertiary); opacity: 1; }
+.explorer-content .folder-container { padding-block: .35rem; }
+.explorer-content li > a { display: block; padding-block: .3rem; overflow-wrap: anywhere; }
+article { padding-inline: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
+article > :first-child { margin-top: .75rem; }
+.page article > h1, .article-title { font-size: clamp(1.85rem, 2.8vw, 2.55rem); line-height: 1.18; }
+article table { display: block; max-width: 100%; overflow-x: auto; }
+article pre { max-width: 100%; overflow-x: auto; }
+article img, article svg { max-width: 100%; height: auto; }
+.essay-anchor { padding-block: .7rem; border-bottom: 1px solid var(--lightgray); }
+body[data-slug="index"] article > h1 { margin: .8rem 0 1.5rem; }
+body[data-slug="index"] article > p:first-of-type { font-size: 1.22rem; line-height: 1.65; }
+body[data-slug="index"] article > ul:first-of-type {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 2rem;
+  border-top: 1px solid var(--lightgray);
+  > li { padding: 1rem 0; border-bottom: 1px solid var(--lightgray); }
+  > li > p { margin: 0; }
+}
+.global-graph-close { position: fixed; z-index: 2; top: .5rem; right: .75rem; font-family: var(--codeFont); font-size: .75rem; }
+.graph > .global-graph-outer { background: color-mix(in srgb, var(--light) 94%, transparent); }
+.graph > .global-graph-outer > .global-graph-container { top: 58%; height: 72dvh; }
+.graph > .global-graph-outer .tag-filter { position: relative; z-index: 1; padding-right: 8rem; max-height: 18dvh; overflow: auto; }
+
+@media (max-width: 1279px) {
+  .page > #quartz-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "grid-center" "grid-footer";
+    .center { padding-top: 4.5rem; }
+    dialog.sidebar:is(.left, .right), dialog.sidebar.left:has(.explorer) {
+      position: fixed;
+      inset: 0 auto 0 0;
+      margin: 0;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: min(25rem, calc(100vw - 2.5rem));
+      max-width: none;
+      padding: 1rem 1.25rem 2rem;
+      z-index: 30;
+      box-sizing: border-box;
+      &.right { inset: 0 0 0 auto; }
+      &[open]:not(:modal) { display: none; }
+      &::backdrop { background: rgb(0 0 0 / .55); }
+    }
+  }
+  body.essay-drawer-open { overflow: hidden; }
+}
+@media (max-width: 600px) {
+  .page > #quartz-body .center { padding-inline: 1.15rem; }
+  article { font-size: 1.05rem; }
+  body[data-slug="index"] article > p:first-of-type { font-size: 1.13rem; }
+  .breadcrumbs { flex-wrap: wrap; }
+  .essay-reader-toolbar { font-size: .7rem; }
 }
 
 // Explorer hierarchy — folders read as containers, files as leaves, the

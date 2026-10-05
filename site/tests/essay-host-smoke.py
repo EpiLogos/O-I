@@ -7,7 +7,7 @@ legacy vault aliases enter the essay, and a missing essay path falls back to
 the reading root (200) — an existing page always wins. Pages mode (prefix
 /O-I) serves a missing path as essay/404.html with status 404. The essay
 must paint the Quartz night reading surface with graph and explorer present;
-/ stays on Plate A.
+/ retains the original O:I hero and developed home.
 """
 import json, os, sys
 import threading
@@ -42,6 +42,9 @@ def dist_guards():
     index = (DIST / 'essay' / 'index.html').read_text()
     assert '<title>' in index, 'essay/index.html has no title'
     assert 'graph-container' in index, 'essay/index.html missing the Quartz graph'
+    manuscript = (DIST / 'essay' / 'THE-RETURN-OF-ZERO.html').read_text()
+    assert 'class="article-title"' in manuscript, 'a vault alias overwrote the manuscript reading address'
+    assert 'http-equiv="refresh"' not in manuscript, 'manuscript address became an alias redirect'
     stamp = json.loads((DIST / 'essay' / 'quartz-source.json').read_text())
     assert stamp.get('vault_commit'), 'quartz-source.json missing vault commit'
     assert not (DIST / 'essay.html').exists(), 'the stood-down shell stub must not ship'
@@ -147,18 +150,22 @@ def main():
         vercel = f'http://127.0.0.1:{vercel_port}'
         from playwright.sync_api import sync_playwright, expect
         with sync_playwright() as p:
-            browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None)
+            browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None,
+                                        args=['--enable-unsafe-swiftshader', '--use-gl=angle', '--use-angle=swiftshader'])
             ctx = browser.new_context(viewport={'width': 1280, 'height': 800})
             cases = [
-                (f'{vercel}/essay', 200, 'The Return of Zero — Reading Root'),
+                (f'{vercel}/essay', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{vercel}/essay/symbolon/matheme/README', 200, None),
-                (f'{vercel}/essay/THE-RETURN-OF-ZERO', 200, 'The Return of Zero'),
+                (f'{vercel}/essay/section-rooms/00-integral-threshold/ROOM-00-integral-threshold', 200, None),
+                (f'{vercel}/essay/section-rooms/arguments/A01-Subject-God-and-Faithful-Definition', 200, None),
+                (f'{vercel}/essay/symbolon/matheme/diagrams/torus-square-quotient-and-winding', 200, None),
+                (f'{vercel}/essay/THE-RETURN-OF-ZERO', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{vercel}/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism', 200, None),
                 (f'{vercel}/essay/section-rooms', 200, None),
-                (f'{vercel}/essay/not-a-real-page', 200, 'The Return of Zero — Reading Root'),
+                (f'{vercel}/essay/not-a-real-page', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{vercel}/symbolon/matheme/README', 200, None),
-                (f'{vercel}/manuscript', 200, 'The Return of Zero'),
-                (f'{pages}/O-I/essay', 200, 'The Return of Zero — Reading Root'),
+                (f'{vercel}/manuscript', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
+                (f'{pages}/O-I/essay', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{pages}/O-I/essay/not-a-real-page', 404, None),
             ]
             for url, status, heading in cases:
@@ -170,7 +177,13 @@ def main():
                     assert response is not None and response.status == status, f'status {None if response is None else response.status}'
                     if status == 200:
                         expect(page.locator('.graph-container').first).to_be_attached(timeout=20000)
+                        expect(page.locator('.graph-container canvas').first).to_be_visible(timeout=20000)
                         expect(page.locator('.explorer').first).to_be_visible(timeout=20000)
+                        expect(page.locator('nav[aria-label="Essay reading routes"]')).to_be_visible(timeout=20000)
+                        if '/ROOM-00-integral-threshold' not in page.url:
+                            foundation = page.locator('.essay-anchor a').filter(has_text='§0/1')
+                            expect(foundation).to_have_count(1)
+                            assert 'ROOM-00-integral-threshold' in foundation.get_attribute('href')
                         assert page.locator('.tags').count() == 0, 'tag dump still on the page'
                         assert page.locator('.content-meta').count() == 0, 'content meta still on the page'
                         has_body = page.locator('article .body p').count() > 0
@@ -212,13 +225,15 @@ def main():
                 response = page.goto(f'{vercel}/', wait_until='load')
                 assert response is not None and response.status == 200
                 expect(page.locator('.graph-container')).to_have_count(0)
+                expect(page.locator('.pl')).to_be_visible()
+                expect(page.get_by_role('heading', name='A world to act within. A way to understand it.', exact=True)).to_have_count(1)
                 expect(page.locator('nav[aria-label="Primary"]')).to_be_visible()
                 Path('evidence/library').mkdir(parents=True, exist_ok=True)
-                page.screenshot(path='evidence/library/essay-vercel-plate-a.png')
-                print('PASS vercel / stays on Plate A', flush=True)
+                page.screenshot(path='evidence/library/essay-vercel-restored-home.png')
+                print('PASS vercel / retains the original hero and developed home', flush=True)
             except Exception as exc:
-                failures.append(f'plate-a: {exc}')
-                print('FAIL plate-a', exc, flush=True)
+                failures.append(f'restored-home: {exc}')
+                print('FAIL restored-home', exc, flush=True)
             browser.close()
     finally:
         stop(pages_server)

@@ -1,10 +1,18 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
 
+// Recovered from the saved September reader follow-on: display names only.
+const readingExplorer = () => Component.Explorer({
+  mapFn: (node) => {
+    if (node.isFolder) node.displayName = node.displayName.replace(/^\d{2}-/, "").replace(/-/g, " ")
+    else node.displayName = node.displayName.replace(/^§[^ ]+ · /, "")
+  },
+})
+
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
-  header: [],
+  header: [Component.FadeToggles()],
   afterBody: [],
   footer: Component.Footer({
     links: {
@@ -17,10 +25,14 @@ export const sharedPageComponents: SharedLayout = {
 export const defaultContentPageLayout: PageLayout = {
   beforeBody: [
     Component.ConditionalRender({
-      component: Component.Breadcrumbs(),
+      component: Component.Breadcrumbs({ rootName: "Essay", showCurrentPage: false }),
       condition: (page) => page.fileData.slug !== "index",
     }),
-    Component.ArticleTitle(),
+    Component.EssayAnchor(),
+    Component.ConditionalRender({
+      component: Component.ArticleTitle(),
+      condition: (page) => page.fileData.slug !== "index",
+    }),
   ],
   left: [
     Component.PageTitle(),
@@ -33,18 +45,18 @@ export const defaultContentPageLayout: PageLayout = {
         },
       ],
     }),
-    Component.Explorer(),
+    readingExplorer(),
   ],
   right: [
     Component.Graph(),
-    Component.DesktopOnly(Component.TableOfContents()),
+    Component.TableOfContents(),
     Component.Backlinks(),
   ],
 }
 
 // components for pages that display lists of pages  (e.g. tags or folders)
 export const defaultListPageLayout: PageLayout = {
-  beforeBody: [Component.Breadcrumbs(), Component.ArticleTitle()],
+  beforeBody: [Component.Breadcrumbs({ rootName: "Essay", showCurrentPage: false }), Component.EssayAnchor(), Component.ArticleTitle()],
   left: [
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
@@ -56,7 +68,7 @@ export const defaultListPageLayout: PageLayout = {
         },
       ],
     }),
-    Component.Explorer(),
+    readingExplorer(),
   ],
   right: [Component.Graph()],
 }
