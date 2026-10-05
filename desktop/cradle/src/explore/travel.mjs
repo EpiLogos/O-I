@@ -18,6 +18,23 @@ export function freshExploreTravel() {
   return { schema: EXPLORE_TRAVEL_SCHEMA, visits: [{ query: '' }], index: 0 };
 }
 
+/** Disposable graph view on one actual owner World/locus. Decoding never
+ * admits a subject: the current owner reading requalifies every ref. */
+export function decodeKnowledgeEncounterView(raw) {
+  const ref = (value) => typeof value === 'string' && value.length > 0 && value.length <= 1024;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)
+    || raw.schema !== 'oi.cradle.knowledge-encounter-view/v1'
+    || !ref(raw.world) || !ref(raw.focus) || !ref(raw.locus)
+    || !['graph', 'tree', 'list', 'page'].includes(raw.mode)
+    || !raw.camera || ![raw.camera.x, raw.camera.y, raw.camera.zoom].every(Number.isFinite)
+    || Math.abs(raw.camera.x) > 1000000 || Math.abs(raw.camera.y) > 1000000
+    || raw.camera.zoom < .4 || raw.camera.zoom > 3
+    || (raw.picked !== undefined && !ref(raw.picked))) return undefined;
+  return { schema: raw.schema, world: raw.world, focus: raw.focus, locus: raw.locus,
+    mode: raw.mode, camera: { x: raw.camera.x, y: raw.camera.y, zoom: raw.camera.zoom },
+    ...(raw.picked !== undefined ? { picked: raw.picked } : {}) };
+}
+
 function validVisit(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   if (typeof raw.query !== 'string' || raw.query.length > 512) return null;
@@ -35,6 +52,8 @@ function validVisit(raw) {
     }
     visit.depth = depth;
   }
+  const knowledge = decodeKnowledgeEncounterView(raw.knowledge);
+  if (knowledge && knowledge.focus === visit.selected) visit.knowledge = knowledge;
   return visit;
 }
 
