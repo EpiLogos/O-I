@@ -14,6 +14,8 @@ import type {EncounterProvisioning} from "../encounter/client";
 export interface ConversationSendRequest {
   request_ref:string;
   flow_location:{schema:string;ref:string;root:string;path:string};
+  /** Exact UUID from the actual observed Flow; optional for legacy callers. */
+  expected_document_id?:string|null;
   sender:string;actor:string;actor_kind?:"human"|"agent";author_session?:string;
   entry:{author_key:string;html:string;at:string;relations?:unknown[];addressees?:string[];audience?:unknown;basis_revision?:number};
   recipients:{participant_key:string;agent_session:string}[];
@@ -34,7 +36,7 @@ export interface ConversationRecipient {
 }
 export interface ConversationReading {
   schema:"aikit.conversation-request/v1";request_ref:string;
-  flow:{location:{ref:string}};
+  flow:{location:{ref:string};document_id?:string};
   entry?:{entry_id?:string;revision?:string;document_revision?:number}|null;
   author_key:string;recipients:ConversationRecipient[];task_completion:"not-inferred";
 }

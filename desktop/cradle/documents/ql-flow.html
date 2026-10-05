@@ -286,6 +286,7 @@ var QlPlural = (() => {
     entryIdForOperation: () => entryIdForOperation,
     formatVersionOf: () => formatVersionOf,
     isCurrentFormat: () => isCurrentFormat,
+    isFlowDocumentUuid: () => isFlowDocumentUuid,
     leaveParticipant: () => leaveParticipant,
     legacyParticipantKey: () => legacyParticipantKey,
     portableCopy: () => portableCopy,
@@ -597,7 +598,17 @@ var QlPlural = (() => {
     if (claimed === "verified") throw new Refusal("attribution-overclaim", "a system caller cannot verify an author");
     return { basis: "declared" };
   }
+  function isFlowDocumentUuid(value) {
+    if (typeof value !== "string") return false;
+    const hyphenated = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+    return new RegExp(`^(?:[0-9a-f]{32}|${hyphenated}|\\{${hyphenated}\\}|urn:uuid:${hyphenated})$`, "i").test(value) && (!value.toLowerCase().startsWith("urn:") || value.startsWith("urn:uuid:"));
+  }
   function appendContribution(doc, request, caller) {
+    const expectedDocumentId = request.expectedDocumentId ?? void 0;
+    if (expectedDocumentId !== void 0) {
+      if (!isFlowDocumentUuid(expectedDocumentId)) throw new Refusal("invalid-expected-document-id", "expected_document_id must be an exact UUID string");
+      if (doc.meta.documentId !== expectedDocumentId) throw new Refusal("document-mismatch", "the Flow document at this location differs from the pinned document");
+    }
     if (!request.operationRef) throw new Refusal("empty-operation", "a native operation reference is required");
     if (formatVersionOf(doc) > FORMAT_VERSION) throw new Refusal("unsupported-format", `flow format v${formatVersionOf(doc)} needs a newer writer`);
     if (!isCurrentFormat(doc)) throw new Refusal("legacy-format", "this document is a legacy form; upgrade it explicitly before contributing");
@@ -618,11 +629,12 @@ var QlPlural = (() => {
       intent: request.intent,
       relations,
       basisRevision: request.basisRevision,
-      request: { ref: request.operationRef, digest: "" }
+      request: { ref: request.operationRef, digest: "", ...expectedDocumentId === void 0 ? {} : { documentId: expectedDocumentId } }
     };
     const digest = requestDigest(probe);
     const existing = doc.entries.find((e) => e.request?.ref === request.operationRef);
     if (existing) {
+      if ((existing.request.documentId ?? void 0) !== expectedDocumentId) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different document basis`);
       if (existing.request.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
       return { doc, entry: existing, outcome: "recovered" };
     }
@@ -655,7 +667,7 @@ var QlPlural = (() => {
     });
     if (relations.filter((r) => r.type === "reply").length > 1) throw new Refusal("reply-multiple", "an entry replies to one entry; use converge to relate several");
     if (relations.filter((r) => r.type === "converge").length === 1) throw new Refusal("converge-needs-two", "a convergence relates at least two entries");
-    const entry = { ...probe, attribution: { ...attribution, ...behalf ? { onBehalfOf: behalf } : {} }, request: { ref: request.operationRef, digest } };
+    const entry = { ...probe, attribution: { ...attribution, ...behalf ? { onBehalfOf: behalf } : {} }, request: { ref: request.operationRef, digest, ...expectedDocumentId === void 0 ? {} : { documentId: expectedDocumentId } } };
     const reply = relations.find((r) => r.type === "reply");
     entry.replyTo = reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null;
     for (const key of ["addressees", "audience", "intent", "basisRevision"]) if (entry[key] === void 0) delete entry[key];

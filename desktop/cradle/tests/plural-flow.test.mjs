@@ -1,9 +1,10 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
+import {runInNewContext} from "node:vm";
 import {
   appendContribution, upgradeDocument, validateDocument, readableEntries, buildThreads, relationsOf, portableCopy,
-  canonicalJson, sha256, Refusal, FORMAT_VERSION,
+  canonicalJson, sha256, Refusal, FORMAT_VERSION, requestDigest, isFlowDocumentUuid,
 } from "../src/flow/plural.ts";
 
 const fixtures = JSON.parse(await readFile(new URL("../documents/fixtures/plural-flow-cases.json", import.meta.url), "utf8"));
@@ -131,4 +132,66 @@ test("reading a document with an audience this form does not know never throws a
   assert.deepEqual(readableEntries(doc, "b").map(e => e.id), []);
   assert.deepEqual(readableEntries(doc, "a").map(e => e.id), ["e1"]);
   assert.deepEqual(validateDocument(doc).map(i => i.code).filter(c => c === "invalid-audience"), ["invalid-audience"]);
+});
+
+
+// Real pure authoring implementation and native-shared contract inputs; these
+// are not native owner/model/renderer execution receipts.
+const uuidA = "5c347cc8-4926-42cf-919c-1e892681c6a8";
+const uuidB = "b3243d85-2e4b-43fa-9a23-69ad507d3487";
+function pinnedAppendInput() {
+  const testCase = fixtures.cases.find(row => row.op === "append" && row.expect.outcome === "appended" && !row.mutate);
+  assert.ok(testCase, "a real shared successful append contract case is required");
+  const doc = prepared(testCase); doc.meta.documentId = uuidA;
+  return {doc, request: {...clone(testCase.request), operationRef: "op-document-basis-contract"}, caller: testCase.caller};
+}
+test("a pinned append and exact retry retain their document UUID without changing the legacy payload digest", () => {
+  const {doc, request, caller} = pinnedAppendInput();
+  const legacy = appendContribution(clone(doc), request, caller);
+  const pinned = appendContribution(clone(doc), {...request, expectedDocumentId: uuidA}, caller);
+  assert.equal(pinned.entry.request.documentId, uuidA);
+  assert.equal(pinned.entry.request.digest, legacy.entry.request.digest);
+  assert.equal(requestDigest(pinned.entry), requestDigest(legacy.entry));
+  const before = canonicalJson(pinned.doc);
+  const replay = appendContribution(pinned.doc, {...request, at: "2030-01-01T00:00:00Z", expectedDocumentId: uuidA}, caller);
+  assert.equal(replay.outcome, "recovered"); assert.equal(canonicalJson(replay.doc), before);
+  for (const expectedDocumentId of [undefined, null]) assert.equal(refusal(() => appendContribution(clone(pinned.doc), {...request, expectedDocumentId}, caller)), "request-conflict");
+  assert.equal(refusal(() => appendContribution(clone(legacy.doc), {...request, expectedDocumentId: uuidA}, caller)), "request-conflict");
+});
+test("document UUID mismatch is checked before recovery even when B carries A's operation record", () => {
+  const {doc, request, caller} = pinnedAppendInput();
+  const first = appendContribution(doc, {...request, expectedDocumentId: uuidA}, caller);
+  const replacement = clone(first.doc); replacement.meta.documentId = uuidB;
+  const before = canonicalJson(replacement);
+  assert.equal(refusal(() => appendContribution(replacement, {...request, expectedDocumentId: uuidA}, caller)), "document-mismatch");
+  assert.equal(refusal(() => appendContribution(replacement, {...request, expectedDocumentId: uuidB}, caller)), "request-conflict");
+  assert.equal(canonicalJson(replacement), before);
+});
+test("malformed UUID pins refuse without mutation; absent and null retain legacy replay", () => {
+  const {doc, request, caller} = pinnedAppendInput(); const before = canonicalJson(doc);
+  for (const expectedDocumentId of ["", 7, "not-a-uuid", ` ${uuidA}`, `${uuidA} `]) {
+    assert.equal(refusal(() => appendContribution(doc, {...request, expectedDocumentId}, caller)), "invalid-expected-document-id");
+    assert.equal(canonicalJson(doc), before);
+  }
+  const first = appendContribution(doc, request, caller);
+  assert.equal(appendContribution(first.doc, {...request, expectedDocumentId: null}, caller).outcome, "recovered");
+  assert.equal(first.entry.request.documentId, undefined);
+  for (const spelling of [uuidA, uuidA.toUpperCase(), uuidA.replaceAll("-", ""), `{${uuidA}}`, `urn:uuid:${uuidA}`]) assert.equal(isFlowDocumentUuid(spelling), true);
+});
+
+test("the actual generated portable form and typed authoring implementation enforce the same UUID pin contract", async () => {
+  const html = await readFile(new URL("../documents/ql-flow.html", import.meta.url), "utf8");
+  const script = html.match(/<script id="ql-plural">([\s\S]*?)<\/script>/);
+  assert.ok(script, "the genuine generated portable module is required");
+  const context = {TextEncoder}; runInNewContext(script[1], context, {timeout: 1000});
+  const portable = context.QlPlural; assert.equal(typeof portable.appendContribution, "function");
+  const {doc, request, caller} = pinnedAppendInput();
+  const typed = appendContribution(clone(doc), {...request, expectedDocumentId: uuidA}, caller);
+  const standalone = portable.appendContribution(clone(doc), {...request, expectedDocumentId: uuidA}, caller);
+  assert.equal(canonicalJson(standalone), canonicalJson(typed));
+  const replacement = clone(typed.doc); replacement.meta.documentId = uuidB;
+  for (const expectedDocumentId of [uuidA, uuidB, null]) {
+    let code; try { portable.appendContribution(clone(replacement), {...request, expectedDocumentId}, caller); } catch (error) { code = error.code; }
+    assert.equal(code, refusal(() => appendContribution(clone(replacement), {...request, expectedDocumentId}, caller)));
+  }
 });

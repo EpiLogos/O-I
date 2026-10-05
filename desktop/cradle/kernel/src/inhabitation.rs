@@ -19,10 +19,9 @@ use crate::material::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::ffi::OsString;
-use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
+use std::process::Command;
+use std::time::Duration;
 
 /// One inhabitation read. `project` is the Central project NAME in scope; the
 /// kernel resolves its canonical ProjectRef and working directory from
@@ -169,9 +168,14 @@ pub fn unwrap_envelope(document: Value, source: &str) -> Result<(Value, Vec<Valu
     }
     if document.get("ok") != Some(&Value::Bool(true)) {
         let stdout = serde_json::to_vec(&document).unwrap_or_default();
+        let message = refusal_words(&stdout, b"");
         return Err(Error {
             kind: "owner-refused-or-failed".into(),
-            message: refusal_words(&stdout, b""),
+            message: if message.is_empty() {
+                format!("{source} returned a native failure without diagnostic words")
+            } else {
+                message
+            },
             operation_may_have_run: false,
         });
     }
@@ -256,23 +260,6 @@ pub fn conversation_reading(data: Value, source: &str) -> Result<Value, Error> {
     Ok(data)
 }
 
-/// Drain a stream keeping at most 8 MiB, so a producer never blocks on a full
-/// pipe and the desktop never accumulates unbounded output.
-fn drain(mut reader: impl Read) -> (Vec<u8>, bool) {
-    let mut kept = Vec::new();
-    let mut chunk = [0u8; 8192];
-    let mut exceeded = false;
-    while let Ok(n) = reader.read(&mut chunk) {
-        if n == 0 {
-            break;
-        }
-        let room = (8 * 1024 * 1024usize).saturating_sub(kept.len());
-        kept.extend_from_slice(&chunk[..n.min(room)]);
-        exceeded |= n > room;
-    }
-    (kept, exceeded)
-}
-
 /// The owner's refusal in its own words: the three-part `{fact, consequence,
 /// action}` refusal (WORLD-INHABITATION-V1, OpenRig's convention) when the
 /// owner wrote one on stdout, else its `error.message`, else stderr.
@@ -303,11 +290,7 @@ fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
         .unwrap_or_default()
         .trim()
         .to_owned();
-    if words.is_empty() {
-        "the owner refused without words".into()
-    } else {
-        words
-    }
+    words
 }
 
 /// Run one read-only owner command with a deadline. Spawn failure and
@@ -362,59 +345,86 @@ pub(crate) fn run_bounded_raw(
         .args(args)
         .envs(environment.iter().cloned())
         .env_remove("OI_POSITION_REF")
-        .env_remove("OI_OCCUPANT_GENERATION")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .env_remove("OI_OCCUPANT_GENERATION");
     if let Some(cwd) = cwd {
         command.current_dir(cwd);
     }
-    let mut child = command.spawn().map_err(|e| {
-        fail(
-            "unavailable",
-            format!("{source} could not start ({}): {e}", executable.display()),
-        )
+    let output = crate::native_process::run(
+        command,
+        None,
+        crate::native_process::Limits {
+            timeout,
+            stdout_bytes: 8 * 1024 * 1024,
+            stderr_bytes: 8 * 1024 * 1024,
+        },
+    )
+    .map_err(|error| {
+        use crate::native_process::FailureKind;
+        let kind = match error.kind {
+            FailureKind::Timeout => "timeout",
+            FailureKind::OutputLimit => "resource-limit",
+            FailureKind::Launch | FailureKind::Unsupported => "unavailable",
+            _ => "process-error",
+        };
+        fail(kind, format!("{source}: {error}"))
     })?;
-    let stdout = child.stdout.take().expect("stdout is piped");
-    let stderr = child.stderr.take().expect("stderr is piped");
-    let out = std::thread::spawn(move || drain(stdout));
-    let err = std::thread::spawn(move || drain(stderr));
-    let deadline = Instant::now() + timeout;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) if Instant::now() >= deadline => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(fail(
-                    "timeout",
-                    format!("{source} did not answer within {} ms", timeout.as_millis()),
-                ));
-            }
-            Ok(None) => std::thread::sleep(Duration::from_millis(10)),
-            Err(e) => return Err(fail("process-error", format!("{source}: {e}"))),
+    if !output.status.success() {
+        let message = refusal_words(&output.stdout, &output.stderr);
+        if message.is_empty() {
+            return Err(fail(
+                "process-error",
+                format!(
+                    "{source} exited with {} without diagnostic words",
+                    output.status
+                ),
+            ));
         }
-    };
-    let (stdout, out_exceeded) = out.join().unwrap_or_default();
-    let (stderr, err_exceeded) = err.join().unwrap_or_default();
-    if out_exceeded || err_exceeded {
-        return Err(fail(
-            "resource-limit",
-            format!("{source} answered more than 8 MiB"),
-        ));
+        return Err(fail("owner-refused-or-failed", message));
     }
-    if !status.success() {
-        return Err(fail(
-            "owner-refused-or-failed",
-            refusal_words(&stdout, &stderr),
-        ));
-    }
-    Ok(stdout)
+    Ok(output.stdout)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Instant;
+
+    #[cfg(unix)]
+    #[test]
+    fn actual_silent_signal_keeps_source_and_real_process_status() {
+        let failure = run_bounded_raw(
+            Path::new("/bin/sh"),
+            &["-c".into(), "kill -TERM $$".into()],
+            None,
+            Duration::from_secs(2),
+            "actual owner signal observation",
+            &[],
+        )
+        .unwrap_err();
+        assert_eq!(failure.kind, "process-error");
+        assert!(failure.message.contains("actual owner signal observation"));
+        assert!(failure.message.contains("signal: 15"));
+        assert!(!failure.operation_may_have_run);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_deadline_includes_pipes_inherited_after_the_leader_exits() {
+        // Actual OS transport mechanics: a descendant holds the pipes after
+        // the leader has returned. This makes no native owner/model claim.
+        let started = Instant::now();
+        let result = run_bounded_raw(
+            Path::new("/bin/sh"),
+            &["-c".into(), "sleep 2 & printf '{}'; exit 0".into()],
+            None,
+            Duration::from_millis(100),
+            "actual inherited pipe characterization",
+            &[],
+        );
+        assert!(started.elapsed() < Duration::from_millis(800));
+        let failure = result.expect_err("incomplete pipes must not certify an owner answer");
+        assert!(!failure.operation_may_have_run, "this call is read-only");
+    }
 
     fn words(args: Vec<OsString>) -> Vec<String> {
         args.into_iter()

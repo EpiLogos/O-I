@@ -57,7 +57,7 @@ export interface PluralEntry extends QlDocEntry {
   relations?: Relation[];
   /** The native operation that produced this entry and the digest of its
    * payload; the document itself is the idempotency record. */
-  request?: {ref: string; digest: string};
+  request?: {ref: string; digest: string; documentId?: string};
   /** Document revision the author composed against. */
   basisRevision?: number;
 }
@@ -77,6 +77,7 @@ export type RefusalCode =
   | "observer-cannot-contribute" | "participant-left" | "unknown-addressee" | "unknown-audience-key"
   | "relation-target-missing" | "relation-revision-ahead" | "relation-shape" | "reply-multiple" | "converge-needs-two"
   | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim" | "authentication-required"
+  | "invalid-expected-document-id" | "document-mismatch"
   | "invalid-relation-type" | "invalid-basis-revision" | "empty-contribution" | "unknown-behalf-of" | "invalid-audience" | "addressee-left";
 export class Refusal extends Error {
   code: RefusalCode;
@@ -298,6 +299,8 @@ export function upgradeDocument(doc: QlDoc, at: string): QlDoc {
 export interface AppendRequest {
   /** The idempotency identity of this native operation. */
   operationRef: string;
+  /** Optional exact UUID of the observed document; excluded from the legacy digest. */
+  expectedDocumentId?: string | null;
   /** The participant the contribution is authored as. */
   authorKey: string;
   html: string;
@@ -380,10 +383,22 @@ function checkCaller(author: PluralParticipant, caller: Caller, request: AppendR
   return {basis: "declared"};
 }
 
+/** UUID spellings accepted by the native append owner, without normalization. */
+export function isFlowDocumentUuid(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const hyphenated = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+  return new RegExp(`^(?:[0-9a-f]{32}|${hyphenated}|\\{${hyphenated}\\}|urn:uuid:${hyphenated})$`, "i").test(value) &&
+    (!value.toLowerCase().startsWith("urn:") || value.startsWith("urn:uuid:"));
+}
 /** Append one distinct contribution. Rereads nothing itself — the caller
  * supplies the current document — but refuses, never mutates on refusal,
  * preserves every other byte of state, and recovers an identical replay. */
 export function appendContribution(doc: QlDoc, request: AppendRequest, caller: Caller): AppendResult {
+  const expectedDocumentId = request.expectedDocumentId ?? undefined;
+  if (expectedDocumentId !== undefined) {
+    if (!isFlowDocumentUuid(expectedDocumentId)) throw new Refusal("invalid-expected-document-id", "expected_document_id must be an exact UUID string");
+    if (doc.meta.documentId !== expectedDocumentId) throw new Refusal("document-mismatch", "the Flow document at this location differs from the pinned document");
+  }
   if (!request.operationRef) throw new Refusal("empty-operation", "a native operation reference is required");
   if (formatVersionOf(doc) > FORMAT_VERSION) throw new Refusal("unsupported-format", `flow format v${formatVersionOf(doc)} needs a newer writer`);
   if (!isCurrentFormat(doc)) throw new Refusal("legacy-format", "this document is a legacy form; upgrade it explicitly before contributing");
@@ -393,11 +408,12 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   const relations = (request.relations ?? []).map(r => ({...r}));
   const probe: PluralEntry = {
     id: request.entryId ?? entryIdForOperation(request.operationRef), author: author.initial, authorKey: author.key, at: request.at, html: request.html, replyTo: null, touched: false,
-    addressees: request.addressees, audience: request.audience, intent: request.intent, relations, basisRevision: request.basisRevision, request: {ref: request.operationRef, digest: ""},
+    addressees: request.addressees, audience: request.audience, intent: request.intent, relations, basisRevision: request.basisRevision, request: {ref: request.operationRef, digest: "", ...(expectedDocumentId === undefined ? {} : {documentId: expectedDocumentId})},
   };
   const digest = requestDigest(probe);
   const existing = (doc.entries as PluralEntry[]).find(e => e.request?.ref === request.operationRef);
   if (existing) {
+    if ((existing.request!.documentId ?? undefined) !== expectedDocumentId) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different document basis`);
     if (existing.request!.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
     return {doc, entry: existing, outcome: "recovered"};
   }
@@ -429,7 +445,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   });
   if (relations.filter(r => r.type === "reply").length > 1) throw new Refusal("reply-multiple", "an entry replies to one entry; use converge to relate several");
   if (relations.filter(r => r.type === "converge").length === 1) throw new Refusal("converge-needs-two", "a convergence relates at least two entries");
-  const entry: PluralEntry = {...probe, attribution: {...attribution, ...(behalf ? {onBehalfOf: behalf} : {})}, request: {ref: request.operationRef, digest}};
+  const entry: PluralEntry = {...probe, attribution: {...attribution, ...(behalf ? {onBehalfOf: behalf} : {})}, request: {ref: request.operationRef, digest, ...(expectedDocumentId === undefined ? {} : {documentId: expectedDocumentId})}};
   const reply = relations.find(r => r.type === "reply");
   entry.replyTo = reply ? {entryId: reply.entryId as string, anchor: reply.anchor ?? null} : null;
   for (const key of ["addressees", "audience", "intent", "basisRevision"] as const) if (entry[key] === undefined) delete entry[key];

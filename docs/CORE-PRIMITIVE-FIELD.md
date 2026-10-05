@@ -373,3 +373,15 @@ neighbouring Wiki / Knowledge / SharedField relations
 ```
 
 without reconstructing the project ontology from scattered documents.
+
+
+### Current implementation navigation (Agent inference, 2 October 2026)
+
+For the commissioned repository harmonisation, follow the existing
+[architecture navigation](architecture/README.md#primitive-implementation-navigation--2-october-2026)
+from these meanings to native operations, state owners, implementation form,
+exact source candidates and remaining verification. This reading consumes
+owner Returns; it changes no ratified row/cell or companion JSON/CSV and creates
+no second primitive registry. Candidate source, operational acceptance and
+human Recognition remain distinct. The six diagrams retain their original
+source cuts rather than presenting unverified repairs as settled architecture.

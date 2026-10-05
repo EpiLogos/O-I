@@ -7,7 +7,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {readFlowInstance,writeFlowInstance,FlowDocumentIdentityError,type FlowInstance} from "./instances";
 import {appendEntry,embedDocument,textToHtml,type QlDoc,type QlDocParticipant} from "./instance";
-import {activeParticipants,isCurrentFormat,withSession,type PluralParticipant,type Relation} from "./plural";
+import {activeParticipants,isCurrentFormat,withSession,isFlowDocumentUuid,type PluralParticipant,type Relation} from "./plural";
 import {conversationReconcile,conversationSend,flowParticipantProvision,mintConversationRef,useFlowConversations} from "./conversation";
 import {FlowConversations} from "./FlowConversations";
 import {FlowThreads} from "./FlowThreads";
@@ -229,6 +229,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    const relations:Relation[]=replyTarget?[{type:relationType,entryId:replyTarget,revision:basis.doc.meta.revision,anchor:null}]:[];
    await conversationSend(kernel.transport,project,{
     request_ref:mintConversationRef(),flow_location:basis.location as never,sender:`human:${writer.key}`,actor:`human:${writer.key}`,
+    ...(isFlowDocumentUuid(basis.doc.meta.documentId)?{expected_document_id:basis.doc.meta.documentId}:{}),
     entry:{author_key:writer.key as string,html:textToHtml(text),at:new Date().toISOString(),relations,addressees,basis_revision:basis.doc.meta.revision},
     recipients:sessions,
    });
