@@ -1303,9 +1303,28 @@ pub struct WorldState {
     /// acts live only in this kernel instance.
     store: Option<crate::expression_act_store::ActStore>,
     store_errors: Vec<String>,
+    /// A retained resident body is not a successful adoption of a newer store
+    /// revision. Inspect retries the native read instead of returning this cache.
+    act_reload_errors: BTreeMap<String, String>,
 }
 
 impl WorldState {
+    /// Shared expanded serialized-weight admission for startup, lazy reading,
+    /// CAS-conflict replacement and live commits. This is not heap RSS.
+    fn available_act_bytes(&self, replacing: &str) -> Result<usize, String> {
+        let mut available = crate::expression_act_storage::LIVE_BYTES;
+        for act in self
+            .acts
+            .values()
+            .filter(|a| !a.archived && a.act_ref != replacing)
+        {
+            available = available
+                .checked_sub(crate::expression_act_store::ActStore::expanded_bytes(act)?)
+                .ok_or("Live Acts exceed their 64 MiB expanded serialized-weight budget")?;
+        }
+        Ok(available)
+    }
+
     pub(crate) fn surface_closed(&mut self, surface_id: &str) {
         self.portals
             .retain(|_, portal| portal.surface_id != surface_id);
@@ -2301,15 +2320,13 @@ impl Kernel {
             let expected = stored.then_some(act.revision);
             if let Written::Conflict { current } = store.check(&act.act_ref, expected)? {
                 // Adopt the stored act so a re-read sees the other writer's work.
-                if let Ok(Some(stored)) = store.read(&act.act_ref) {
-                    if !stored.archived {
-                        self.world.acts.insert(stored.act_ref.clone(), stored);
-                    }
-                }
+                let reload_error = self.act_reload_conflict(&act.act_ref, current);
                 return Ok(Some(json!({
                     "state":"act_revision_conflict","act_ref":act.act_ref,
                     "expected_act_revision":expected,"current_act_revision":current,
-                    "detail":"The stored act moved under this kernel; re-read it with act_inspect",
+                    "resident_revision":self.world.acts.get(&act.act_ref).map(|a|a.revision),
+                    "stored_reload_error":reload_error,
+                    "detail":if reload_error.is_some() {"The stored successor could not be admitted. The retained resident is not current; Inspect retries the bounded native read."} else {"The stored act moved under this kernel; re-read it with act_inspect"},
                 })));
             }
         }
@@ -2360,26 +2377,32 @@ impl Kernel {
         mut act: Act,
         previous: Option<u64>,
     ) -> Result<Result<Act, Value>, String> {
-        act.revision = previous.map_or(1, |r| r + 1);
+        act.revision =
+            previous.map_or(Ok(1), |r| r.checked_add(1).ok_or("Act revision exhausted"))?;
         act.updated_at_unix_ms = unix_ms().max(act.updated_at_unix_ms);
         if act.sequence.len() > MAX_PASSAGES + 1 {
             return Err("Act passage budget exceeded".into());
         }
+        if !act.archived
+            && crate::expression_act_store::ActStore::expanded_bytes(&act)?
+                > self.world.available_act_bytes(&act.act_ref)?
+        {
+            return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget".into());
+        }
         if let Some(store) = &self.world.store {
             use crate::expression_act_store::Written;
             if let Written::Conflict { current } = store.write(&act, previous)? {
-                if let Ok(Some(stored)) = store.read(&act.act_ref) {
-                    if !stored.archived {
-                        self.world.acts.insert(stored.act_ref.clone(), stored);
-                    }
-                }
+                let reload_error = self.act_reload_conflict(&act.act_ref, current);
                 return Ok(Err(json!({
                     "state":"act_revision_conflict","act_ref":act.act_ref,
                     "expected_act_revision":previous,"current_act_revision":current,
-                    "detail":"The stored act moved under this kernel; re-read it with act_inspect",
+                    "resident_revision":self.world.acts.get(&act.act_ref).map(|a|a.revision),
+                    "stored_reload_error":reload_error,
+                    "detail":if reload_error.is_some() {"The stored successor could not be admitted. The retained resident is not current; Inspect retries the bounded native read."} else {"The stored act moved under this kernel; re-read it with act_inspect"},
                 })));
             }
         }
+        self.world.act_reload_errors.remove(&act.act_ref);
         if act.archived {
             self.world.acts.remove(&act.act_ref);
         } else {
@@ -2439,20 +2462,7 @@ impl Kernel {
         if self.world.acts.len() < MAX_ACTS {
             return Ok(());
         }
-        let oldest = self
-            .world
-            .acts
-            .values()
-            .filter(|a| a.phase.ended())
-            .min_by(|a, b| {
-                a.updated_at_unix_ms
-                    .cmp(&b.updated_at_unix_ms)
-                    .then(a.act_ref.cmp(&b.act_ref))
-            })
-            .cloned()
-            .ok_or(format!(
-                "Live act budget exceeded ({MAX_ACTS} running/held acts)"
-            ))?;
+        let oldest = self.act_oldest_ended()?.clone();
         match self.act_archive_one(oldest)? {
             Ok(_) => Ok(()),
             Err(conflict) => Err(format!(
@@ -2463,27 +2473,98 @@ impl Kernel {
 
     /// An act by ref: memory, else lazily from the store (live register or
     /// archive). Archived acts are returned without entering memory.
+    /// An act by ref: memory, else lazily from the store (live register or
+    /// archive). Archived acts are returned without entering memory.
     fn act_lookup(&mut self, act_ref: &str) -> Result<Option<Act>, String> {
-        if let Some(act) = self.world.acts.get(act_ref) {
+        if let Some(act) = self
+            .world
+            .acts
+            .get(act_ref)
+            .filter(|_| !self.world.act_reload_errors.contains_key(act_ref))
+        {
             return Ok(Some(act.clone()));
         }
+        let available = self.world.available_act_bytes(act_ref)?;
         let Some(stored) = self
             .world
             .store
             .as_ref()
-            .map(|s| s.read(act_ref))
+            .map(|s| s.read_with_budget(act_ref, available))
             .transpose()?
             .flatten()
         else {
             return Ok(None);
         };
         if !stored.archived {
-            self.act_make_room()?;
+            if !self.world.acts.contains_key(act_ref) {
+                self.act_make_room()?;
+            }
             self.world
                 .acts
                 .insert(stored.act_ref.clone(), stored.clone());
+        } else {
+            // A successfully read archived successor supersedes a cached live
+            // predecessor too. Clearing the stale marker must not revive it.
+            self.world.acts.remove(act_ref);
         }
+        self.world.act_reload_errors.remove(act_ref);
         Ok(Some(stored))
+    }
+
+    /// The shared source-defined count victim, borrowed before admission.
+    /// Reusing this ordering keeps successful automatic archival unchanged.
+    fn act_oldest_ended(&self) -> Result<&Act, String> {
+        self.world
+            .acts
+            .values()
+            .filter(|a| a.phase.ended())
+            .min_by(|a, b| {
+                a.updated_at_unix_ms
+                    .cmp(&b.updated_at_unix_ms)
+                    .then(a.act_ref.cmp(&b.act_ref))
+            })
+            .ok_or_else(|| format!("Live act budget exceeded ({MAX_ACTS} running/held acts)"))
+    }
+
+    /// Re-read a CAS-conflicted stored act under the live budget. A successful
+    /// read adopts it; a refusal is disclosed and cached as a reload error.
+    fn act_reload_conflict(&mut self, act_ref: &str, current: Option<u64>) -> Option<String> {
+        let result = self
+            .world
+            .available_act_bytes(act_ref)
+            .and_then(|available| {
+                self.world
+                    .store
+                    .as_ref()
+                    .ok_or("No native Act store".to_owned())?
+                    .read_with_budget(act_ref, available)
+            });
+        let error = match result {
+            Ok(Some(act)) => {
+                if act.archived {
+                    self.world.acts.remove(act_ref);
+                } else {
+                    self.world.acts.insert(act_ref.to_owned(), act);
+                }
+                self.world.act_reload_errors.remove(act_ref);
+                return None;
+            }
+            Ok(None) => "The stored Act disappeared; the resident is not current".to_owned(),
+            Err(error) => error.chars().take(4096).collect(),
+        };
+        let detail =
+            format!("Act {act_ref} stored revision {current:?} could not be loaded: {error}");
+        if self.world.act_reload_errors.len() < MAX_ACTS
+            || self.world.act_reload_errors.contains_key(act_ref)
+        {
+            self.world
+                .act_reload_errors
+                .insert(act_ref.to_owned(), detail.clone());
+        }
+        if self.world.store_errors.len() < MAX_ACTS {
+            self.world.store_errors.push(detail.clone());
+        }
+        Some(detail)
     }
 
     fn world_document(&mut self, expression_ref: &str) -> Result<expression::Document, String> {
@@ -4126,7 +4207,14 @@ impl Kernel {
                             .is_none_or(|r| &a.expression_ref == r)
                     })
                     .filter(|a| phase.is_none_or(|p| a.phase == p))
-                    .map(act_summary)
+                    .map(|act| {
+                        let mut row = act_summary(act);
+                        if let Some(error) = self.world.act_reload_errors.get(&act.act_ref) {
+                            row["resident_currentness"] = json!("stored_successor_unloaded");
+                            row["stored_reload_error"] = json!(error);
+                        }
+                        row
+                    })
                     .collect();
                 Ok(
                     json!({"state":"acts","acts":acts,"persistent":self.world.store.is_some(),"store_errors":self.world.store_errors,
