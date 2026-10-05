@@ -439,7 +439,7 @@ fn control_on_main(
             Ok(())
         }
         "context" => {
-            let request: serde_json::Value = serde_json::from_str(address.as_deref().ok_or("Context request is missing")?).map_err(|e|e.to_string())?;
+            let request: serde_json::Value = oi_cradle_kernel::expression_file::read_native_json(address.as_deref().ok_or("Context request is missing")?.as_bytes()).map_err(|e|e.to_string())?;
             let key = serde_json::to_string(request.get("value").unwrap_or(&serde_json::Value::Null)).map_err(|e|e.to_string())?;
             let expression = match request["op"].as_str() {
                 Some("mode") => format!("(() => {{ const api=window.__OI_PAGE_CONTEXT__; if(!api)return false; api.setSignal(()=>{{location.href='oi-context://selection'}}); return api.mode({key}); }})()"),

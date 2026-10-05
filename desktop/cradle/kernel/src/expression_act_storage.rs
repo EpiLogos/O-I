@@ -214,6 +214,7 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Act storage nesting budget exceeded".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => return Err("Act storage number must be finite".into()),
         Value::String(s) if s.contains('\0') => return Err("Act storage contains NUL".into()),
         Value::Array(values) => {
             for v in values {
@@ -223,7 +224,7 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(values) => {
             for (key, v) in values {
                 if key.contains('\0')
-                    || ["__proto__", "prototype"].contains(&key.as_str())
+                    || ["__proto__", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str())
                     || (key == "constructor"
                         && !crate::expression_performance_source_asset::native_constructor_metadata(
                             values,
@@ -732,5 +733,20 @@ mod tests {
         // but their full canonical weight must fit the caller's remaining space.
         assert_eq!(decode(&bytes, EXPANDED_BYTES).unwrap(), actual);
         assert!(decode(&bytes, raw_weight).unwrap_err().contains("budget"));
+    }
+}
+
+
+#[cfg(test)]
+mod numeric_admission_conservation_tests {
+    use super::*;
+    #[test]
+    fn programmatic_nonfinite_or_reserved_maps_do_not_enter_act_custody() {
+        let infinite: Value = serde_json::from_str("1e400").unwrap();
+        assert!(safe(&infinite, 0).is_err());
+        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
+            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+            assert!(safe(&object, 0).is_err());
+        }
     }
 }

@@ -70,8 +70,11 @@ pub struct SubjectBinding {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Automation {
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub min: f64,
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub max: f64,
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub rate_hz: f64,
     pub waveform: Waveform,
 }

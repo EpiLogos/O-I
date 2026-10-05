@@ -514,7 +514,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         if(!ownsPlacement()){detachedRequests.current.delete(key);return false;}
         if(admitted?.result!=="surface_opened")throw Error("The object page has no admitted native subject to detach");
       }
-      await invoke("window_detach",{workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+      await invoke("window_detach",{requestJson:JSON.stringify({workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null})});
       if(ownsPlacement()){
         // Commit the original workspace's actual placement before confirming
         // delivery. Focus may have moved while the native window opened.
@@ -850,7 +850,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       if(placement==="window") {
         try {
           const {invoke}=await import("@tauri-apps/api/core");
-          await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+          await invoke("window_detach",{requestJson:JSON.stringify({workspaceId:workspaceRef.current.current.id,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null})});
           detachedRequests.current.add(`${workspaceRef.current.current.id}:${binding.id}`);
           setState(s=>detachBinding(s,binding.id));
         }catch(error){setWindowError(String(error));throw error;}
@@ -1121,7 +1121,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           await portal.current();
           if(portal.placement==='detached'){
             const {invoke}=await import("@tauri-apps/api/core");
-            await invoke("window_detach",{workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+            await invoke("window_detach",{requestJson:JSON.stringify({workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null})});
             detachedRequests.current.add(`${workspaceId}:${binding.id}`);
             setState(s=>detachBinding(s,binding.id));
           }
@@ -1493,7 +1493,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // exact workspace/surface; a repeated click must never mint a docked tab.
       if(stateRef.current.detached?.some(row=>row.surfaceId===binding.id)){
         const {invoke}=await import("@tauri-apps/api/core");
-        await invoke("window_detach",{workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+        await invoke("window_detach",{requestJson:JSON.stringify({workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null})});
         return true;
       }
       // Reserve BEFORE any placement effect. A second pending request has no
@@ -1851,7 +1851,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const binding=w.layout.surfaces[d.surfaceId];const key=`${w.id}:${d.surfaceId}`;
       if(!binding || !kernel.snapshot.surfaces[binding.id] || detachedRequests.current.has(key)) continue;
       detachedRequests.current.add(key);
-      void import("@tauri-apps/api/core").then(({invoke})=>invoke("window_detach",{workspaceId:w.id,binding,bounds:w.layout.windowBounds?.[binding.id]??null})).catch(error=>{detachedRequests.current.delete(key);setWindowError(String(error));});
+      void import("@tauri-apps/api/core").then(({invoke})=>invoke("window_detach",{requestJson:JSON.stringify({workspaceId:w.id,binding,bounds:w.layout.windowBounds?.[binding.id]??null})})).catch(error=>{detachedRequests.current.delete(key);setWindowError(String(error));});
     }
   },[workspace.workspaces,kernel.snapshot.surfaces,kernel.transport]);
 

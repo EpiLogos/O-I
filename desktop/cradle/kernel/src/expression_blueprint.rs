@@ -12,8 +12,11 @@ pub const SCHEMA: &str = "oi.scene-blueprint/v1";
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Transform {
+    #[serde(deserialize_with = "crate::expression_file::finite_vector")]
     pub translation: [f64; 3],
+    #[serde(deserialize_with = "crate::expression_file::finite_vector")]
     pub rotation: [f64; 3],
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub scale: f64,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]

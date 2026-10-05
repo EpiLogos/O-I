@@ -235,6 +235,7 @@ fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
         return Err("native performance file nesting budget exceeded".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => return Err("native performance file number must be finite".into()),
         Value::String(s) if s.contains('\0') => {
             return Err("native performance file contains NUL".into());
         }
@@ -249,7 +250,7 @@ fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(o) => {
             for (k, v) in o {
                 if k.contains('\0')
-                    || ["__proto__", "prototype"].contains(&k.as_str())
+                    || ["__proto__", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&k.as_str())
                     || (k == "constructor"
                         && !crate::expression_performance_source_asset::native_constructor_metadata(
                             o,
@@ -1085,5 +1086,20 @@ mod borrowed_metadata_tests {
         let scene = serde_json::to_value(SceneMetadata(&created.scenes[0])).unwrap();
         assert_eq!(scene["body"], Value::Null);
         assert_eq!(scene["triggers"], serde_json::json!([]));
+    }
+}
+
+
+#[cfg(test)]
+mod numeric_admission_conservation_tests {
+    use super::*;
+    #[test]
+    fn programmatic_nonfinite_or_reserved_maps_do_not_enter_performance_custody() {
+        let infinite: Value = serde_json::from_str("1e400").unwrap();
+        assert!(safe_storage(&infinite, 0).is_err());
+        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
+            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+            assert!(safe_storage(&object, 0).is_err());
+        }
     }
 }

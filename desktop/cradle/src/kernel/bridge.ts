@@ -87,7 +87,7 @@ export async function kernelOp(
   if (unavailable) return {outcome: null, error: unavailable};
   try {
     if (transport.kind === "tauri") {
-      const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { op });
+      const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { opJson: JSON.stringify(op) });
       return { outcome: outcome ? normaliseOutcome(outcome) : null };
     }
     if (transport.kind === "bridge") {

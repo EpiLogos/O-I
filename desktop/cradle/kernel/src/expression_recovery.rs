@@ -137,9 +137,10 @@ fn data(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Recovery data nesting exceeds its bound".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => return Err("Recovery data number must be finite".into()),
         Value::Object(values) => {
             for (key, value) in values {
-                if ["__proto__", "constructor", "prototype"].contains(&key.as_str()) {
+                if ["__proto__", "constructor", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str()) {
                     return Err("Unsafe recovery property".into());
                 }
                 data(value, depth + 1)?;
@@ -2001,5 +2002,20 @@ mod tests {
             .unwrap()["record"]
             .is_object());
         assert!(!home.path(Scope::Expressions, Kind::Draft, "extra").exists());
+    }
+}
+
+
+#[cfg(test)]
+mod numeric_admission_conservation_tests {
+    use super::*;
+    #[test]
+    fn programmatic_nonfinite_or_reserved_maps_do_not_enter_recovery_custody() {
+        let infinite: Value = serde_json::from_str("1e400").unwrap();
+        assert!(data(&infinite, 0).is_err());
+        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
+            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+            assert!(data(&object, 0).is_err());
+        }
     }
 }

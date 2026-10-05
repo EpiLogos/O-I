@@ -254,9 +254,23 @@ fn coerce_value(kind: ValueKind, raw: &str) -> SurfaceResult<Value> {
             .and_then(serde_json::Number::from_f64)
             .map(Value::Number)
             .ok_or_else(|| invalid(format!("`{raw}` is not a number"))),
-        ValueKind::Table | ValueKind::List => serde_json::from_str(raw)
+        ValueKind::Table | ValueKind::List => oi_cradle_kernel::expression_file::read_native_json(raw.as_bytes())
             .map_err(|error| invalid(format!("expected JSON for this setting: {error}"))),
-        _ => Ok(serde_json::from_str(raw).unwrap_or(Value::String(raw.to_owned()))),
+        _ => match oi_cradle_kernel::expression_file::read_native_json(raw.as_bytes()) {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                // Preserve plain-text/non-JSON settings. A syntactically valid
+                // JSON value refused by native admission must not become text.
+                if let Ok(value) = serde_json::from_str::<Box<serde_json::value::RawValue>>(raw) {
+                    // The old finite parser treated a pure overflowing number
+                    // as text for scalar/text settings. Preserve that String
+                    // fallback; no non-finite Number enters a native Value.
+                    if matches!(value.get().as_bytes().first(), Some(b'-' | b'0'..=b'9')) {
+                        Ok(Value::String(raw.to_owned()))
+                    } else { Err(invalid(format!("unsafe JSON for this setting: {error}"))) }
+                } else { Ok(Value::String(raw.to_owned())) }
+            }
+        },
     }
 }
 
@@ -290,7 +304,7 @@ fn read_request_document(path: &str) -> Result<Value, String> {
     } else {
         fs::read_to_string(path).map_err(|error| format!("cannot read {path}: {error}"))?
     };
-    serde_json::from_str(&raw).map_err(|error| format!("the request document is not JSON: {error}"))
+    oi_cradle_kernel::expression_file::read_native_json(raw.as_bytes()).map_err(|error| format!("the request document is not JSON: {error}"))
 }
 
 fn parse_request_document(document: &Value) -> SurfaceResult<ChangeSet> {
@@ -1201,4 +1215,26 @@ Scopes use the compact form: kind, plus `:ref` for non-singular kinds\n\
 Also: `oi <namespace> config-contribution --json` discloses an owner's\n\
 contribution through the dispatcher, exactly like `system --json`."
     );
+}
+
+
+#[cfg(test)]
+mod native_config_json_tests {
+    use super::*;
+    #[test]
+    fn configuration_json_refusals_do_not_become_literal_text_settings() {
+        for raw in [r#"{"x":1,"\u0078":2}"#, r#"{"$serde_json::private::Number":"3600"}"#, r#"{"nested":1e400}"#] {
+            assert!(coerce_value(ValueKind::Table, raw).is_err());
+            assert!(coerce_value(ValueKind::List, raw).is_err());
+            assert!(coerce_value(ValueKind::Scalar, raw).is_err());
+        }
+        assert_eq!(coerce_value(ValueKind::Scalar, "ordinary text").unwrap(), Value::String("ordinary text".into()));
+        assert_eq!(coerce_value(ValueKind::Number, "0.00001").unwrap().as_f64(), Some(0.00001));
+        for overflow in ["1e400", "-1e400", " 1e400 "] {
+            assert_eq!(coerce_value(ValueKind::Scalar, overflow).unwrap(), Value::String(overflow.into()));
+            assert!(coerce_value(ValueKind::Number, overflow).is_err());
+            assert!(coerce_value(ValueKind::Table, overflow).is_err());
+            assert!(coerce_value(ValueKind::List, overflow).is_err());
+        }
+    }
 }

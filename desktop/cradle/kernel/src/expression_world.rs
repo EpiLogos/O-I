@@ -293,6 +293,7 @@ pub struct Binding {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(deserialize_with = "crate::expression_file::optional_finite_number")]
     pub value: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entity_ref: Option<String>,
@@ -379,6 +380,7 @@ pub struct ActMaterial {
 #[serde(deny_unknown_fields)]
 pub struct Transition {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(deserialize_with = "crate::expression_file::optional_finite_number")]
     pub duration: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub easing: Option<String>,
@@ -471,6 +473,7 @@ pub struct Passage {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(deserialize_with = "crate::expression_file::optional_finite_number")]
     pub value: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field: Option<String>,
@@ -1242,6 +1245,7 @@ pub enum Request {
         #[serde(default)]
         text: Option<String>,
         #[serde(default)]
+        #[serde(deserialize_with = "crate::expression_file::optional_finite_number")]
         value: Option<f64>,
         #[serde(default)]
         field: Option<String>,

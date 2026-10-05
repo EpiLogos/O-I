@@ -31,11 +31,17 @@ struct NativeOwnerServer {
 /// outcome; every receipt the operation produced is forwarded on the
 /// kernel event topic (one event per state change, exactly as the kernel
 /// recorded it).
+fn parse_kernel_op(op_json: &str) -> Result<KernelOp, String> {
+    oi_cradle_kernel::expression_file::read_native_json(op_json.as_bytes())
+        .map_err(|error| format!("unreadable op: {error}"))
+}
+
 #[tauri::command]
-async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
+async fn kernel_op(app: AppHandle, op_json: String) -> Result<KernelOpOutcome, String> {
     // Native owner reads may scan a large World. Keep them off the UI thread;
     // the kernel mutex still serialises mutations and event order.
     tauri::async_runtime::spawn_blocking(move || {
+        let op = parse_kernel_op(&op_json)?;
         if let KernelOp::ExpressionRecovery { request } = op {
             return oi_cradle_kernel::expression_recovery::execute(request);
         }
@@ -753,4 +759,22 @@ fn main() {
         ])
         .run(context)
         .expect("error while running the cradle");
+}
+
+
+#[cfg(test)]
+mod native_op_carrier_tests {
+    use super::parse_kernel_op;
+    #[test]
+    fn original_json_string_reaches_actual_command_parser_without_private_map_coercion() {
+        for value in ["1e400", r#"{"$serde_json::private::Number":"10"}"#, r#"{"$serde_json::private::RawValue":"10"}"#] {
+            let raw = format!(r#"{{"op":"expression","request":{{"operation":"edit","expression_ref":"expression:carrier","expected_revision":1,"actor":"human:controlled","changes":[{{"change":"parameter_set","entity_ref":"expression:carrier:entity:one","parameter":"x","value":{value}}}]}}}}"#);
+            let invoke = serde_json::to_vec(&serde_json::json!({"opJson":raw})).unwrap();
+            let envelope: serde_json::Value = serde_json::from_slice(&invoke).unwrap();
+            assert_eq!(envelope["opJson"].as_str(), Some(raw.as_str()));
+            assert!(parse_kernel_op(envelope["opJson"].as_str().unwrap()).is_err());
+        }
+        assert!(parse_kernel_op(r#"{"op":"expression","request":{"operation":"list"}}"#).is_ok());
+        assert!(parse_kernel_op(r#"{"op":"expression","\u006fp":"expression","request":{"operation":"list"}}"#).is_err());
+    }
 }

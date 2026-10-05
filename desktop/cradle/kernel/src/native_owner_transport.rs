@@ -86,7 +86,7 @@ impl NativeOwner {
                 ));
             }
         }
-        let grants: NativeGrants = serde_json::from_slice(
+        let grants: NativeGrants = crate::expression_file::read_native_json(
             &std::fs::read(&self.grants)
                 .map_err(|_| refusal("Native operation offer is unreadable".into()))?,
         )
@@ -296,7 +296,7 @@ pub fn remote(world_ref: &str, request: &KernelOp) -> Result<KernelOpOutcome, St
         }
     }
     let register: RemoteRoutes =
-        serde_json::from_slice(&std::fs::read(path).map_err(|e| e.to_string())?)
+        crate::expression_file::read_native_json(&std::fs::read(path).map_err(|e| e.to_string())?)
             .map_err(|e| e.to_string())?;
     if register.schema != "oi.hosted-native-routes/v1" || register.routes.len() > 64 {
         return Err("Unsupported native route register".into());
@@ -454,7 +454,7 @@ fn gateway(
             "Native Gateway response exceeded the bound; reconcile effects before replaying".into(),
         );
     }
-    let reply: Value = serde_json::from_slice(&bytes).map_err(|e| {
+    let reply: Value = crate::expression_file::read_native_json(&bytes).map_err(|e| {
         format!("Native Gateway response invalid; reconcile possible effects before replaying: {e}")
     })?;
     if !status.success() || reply["ok"] != true {

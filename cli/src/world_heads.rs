@@ -560,7 +560,7 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     } else {
         input
     };
-    let parsed: serde_json::Value = serde_json::from_str(encoded.trim())
+    let parsed: serde_json::Value = oi_cradle_kernel::expression_file::read_native_json(encoded.trim().as_bytes())
         .map_err(|error| format!("Action input must be one JSON value: {error}"))?;
     let central_holds = read_central_action_field()?
         .iter()
