@@ -465,6 +465,31 @@ class Replay:
         self.env['QL_NARA_UV'] = str(Path(args.uv).resolve(strict=True))
         self.env['PATH'] = str(Path(args.uv).resolve(strict=True).parent) + os.pathsep + self.env.get('PATH', '')
 
+    def failed_child_diagnostic(self, label, base):
+        # The controlled encounter already retains this complete file. Expose
+        # only its bounded observed error tail in the official job log, so an
+        # unavailable artifact transport cannot hide the determining failure.
+        # No environment/argv or successful-command material is printed.
+        if label not in OWNED_PHASES:
+            return
+        try:
+            path = base.with_suffix('.stderr')
+            with path.open('rb') as output:
+                size = output.seek(0, os.SEEK_END)
+                output.seek(max(0, size - 32768))
+                observed = output.read(32768)
+            encoded = observed.decode('utf-8', errors='replace').encode('utf-8')
+            if not encoded.endswith(b'\n'):
+                encoded += b'\n'
+            tail = encoded[-32768:].decode('utf-8', errors='ignore')
+            sys.stderr.write(f'\nObserved failed controlled child {label}: bounded error tail, {len(tail.encode("utf-8"))} emitted bytes; retained stderr={size} bytes\n')
+            sys.stderr.write(tail)
+            sys.stderr.flush()
+        except (OSError, ValueError):
+            # Diagnostic transport must never replace the original failure.
+            # The complete retained file/receipt remains the source of proof.
+            return
+
     def command(self, label, argv, cwd, env=None, timeout=1800):
         self.number += 1
         base = self.commands / f'{self.number:02d}-{label}'
@@ -502,12 +527,15 @@ class Replay:
                         'stderr_ref': file_ref(base.with_suffix('.stderr')),
                         'elapsed_seconds': time.monotonic() - started})
                     save(self.out / 'receipt.json', self.report)
+                    self.failed_child_diagnostic(label, base)
                 raise
         row = {'name': label, 'argv': argv, 'cwd': str(cwd), 'exit': code,
                'stdout_ref': file_ref(base.with_suffix('.stdout')),
                'stderr_ref': file_ref(base.with_suffix('.stderr')), 'elapsed_seconds': time.monotonic() - started}
         self.report['commands'].append(row)
         save(self.out / 'receipt.json', self.report)
+        if code != 0:
+            self.failed_child_diagnostic(label, base)
         require(code == 0, label + ': actual command failed, see retained stdout/stderr')
         return row
 
