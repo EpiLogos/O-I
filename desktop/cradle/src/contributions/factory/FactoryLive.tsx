@@ -179,7 +179,7 @@ export function useFactoryLive(): FactoryLiveReading {
 export interface LiveRunSource {runKey: string; runRef: string; statePath: string; project?: string; goal?: string; worldRef?: string | null; explicitExpression?: string;
   /** The workflow inspection's units (task types, SkillSets, skills for the repertoire). */
   units?: {key?: string; workflowUnitRef?: string; praxisRefs?: string[]; agentRequirements?: {agentSetRefs?: string[]}}[]}
-interface LiveHolder {producer: LiveProducer; holders: number; state: LiveState; unsubscribe: () => void}
+interface LiveHolder {producer: LiveProducer; holders: number; state: LiveState; unsubscribe: () => void; retirement?: Promise<void>}
 const liveHolders = new Map<string, LiveHolder>();
 const liveListeners = new Set<() => void>();
 const emitLive = () => { for (const listener of [...liveListeners]) listener(); };
@@ -234,18 +234,37 @@ export function followRunLive(transport: KernelTransportStatus, source: LiveRunS
     created.unsubscribe = producer.subscribe(state => { created.state = state; emitLive(); });
     liveHolders.set(source.runKey, created);
     holder = created;
-    producer.start();
   }
   holder.holders++;
+  holder.producer.start();
   emitLive();
   let released = false;
   return () => {
     if (released) return;
     released = true;
     const current = liveHolders.get(source.runKey);
-    if (!current) return;
+    if (!current || current !== holder) return;
     current.holders--;
-    if (current.holders <= 0) { current.producer.stop(); current.unsubscribe(); liveHolders.delete(source.runKey); }
+    if (current.holders <= 0) {
+      // The old pass owns its outstanding native receipts until retirement.
+      // Keep this SAME producer in the map: reopening cannot create a second
+      // writer while its earlier read/perform/reconciliation is still pending.
+      const retired = current.producer.stop();
+      // Repeated close/reopen shares one retirement waiter as well as one writer.
+      if (!current.retirement) current.retirement = (async () => {
+        await retired;
+        // A newer pending pass or explicit selection still belongs to this
+        // holder. Follow its actual retirement, never an earlier waiter's flag.
+        while (liveHolders.get(source.runKey) === current && current.holders <= 0 && !current.producer.retired) {
+          await current.producer.stop();
+        }
+        current.retirement = undefined;
+        if (liveHolders.get(source.runKey) !== current || current.holders > 0 || !current.producer.retired) return;
+        current.unsubscribe();
+        liveHolders.delete(source.runKey);
+        emitLive();
+      })();
+    }
     emitLive();
   };
 }

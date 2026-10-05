@@ -76,7 +76,7 @@ export interface LiveConfig {
 
 export interface PerformedPassage {key: string; op: ActOp; material?: ResolvedMaterial; state: "performed" | "refused" | "unresolved" | "skipped"; error?: string; at: number}
 export interface LiveState {
-  status: "idle" | "opening" | "following" | "stopped" | "refused";
+  status: "idle" | "opening" | "following" | "degraded" | "stopped" | "refused";
   cast: LiveCastMember[];
   repertoire?: {basis: Repertoire["basis"]; expression?: {file_ref: string; title: string}};
   /** Every Expression the repertoire could perform (for the Live selector). */
@@ -384,6 +384,8 @@ export class LiveProducer {
   private config: LiveConfig;
   private stopped = false;
   private running?: Promise<void>;
+  /** Existing explicit native material selections share this producer's custody. */
+  private selections = new Set<Promise<void>>();
   private repertoire: Repertoire = {basis: "none", material: []};
   private listeners = new Set<(state: LiveState) => void>();
   private passes = 0;
@@ -548,13 +550,18 @@ export class LiveProducer {
   }
 
   /** Tier 1: an explicitly selected Expression (or Scene) for this Run. */
-  async select(fileRef: string | undefined): Promise<void> {
-    this.config = {...this.config, context: {...this.config.context, explicit: fileRef}};
-    this.resolve(this.repertoire.material);
-    if (this.state.status === "following") {
-      const act = await this.openAct(this.state.cast).catch(() => undefined);
-      if (act) this.set({act});
-    }
+  select(fileRef: string | undefined): Promise<void> {
+    const selected = (async () => {
+      this.config = {...this.config, context: {...this.config.context, explicit: fileRef}};
+      this.resolve(this.repertoire.material);
+      if (this.state.status === "following" || this.state.status === "degraded") {
+        const act = await this.openAct(this.state.cast).catch(() => undefined);
+        if (act) this.set({act});
+      }
+    })();
+    this.selections.add(selected);
+    void selected.then(() => { this.selections.delete(selected); }, () => { this.selections.delete(selected); });
+    return selected;
   }
 
   private async readCharacters(cast: LiveCastMember[], known: LiveCastMember[]) {
@@ -615,7 +622,7 @@ export class LiveProducer {
     this.passes++;
     const previousRevision = this.state.cursor.telemetry?.stateRevision;
     const watch = await this.source("factory-telemetry", () => this.io.watch(this.state.cursor.telemetry));
-    const moved = this.held.attempts === undefined || !watch || watch.cursor.stateRevision !== previousRevision;
+    const moved = this.held.attempts === undefined || this.state.sources["factory-attempt"] === "unavailable" || !watch || watch.cursor.stateRevision !== previousRevision;
     if (moved) {
       this.held.attempts = await this.source("factory-attempt", () => this.io.readAttempts()) ?? this.held.attempts;
       this.held.custody = await this.source("factory-custody", this.io.readCustody?.bind(this.io)) ?? this.held.custody;
@@ -634,7 +641,7 @@ export class LiveProducer {
     if (newcomers.length || newArtifacts.length) {
       await this.source("expression-sync", this.io.syncExpression ? () => this.io.syncExpression!(readings, cast) : undefined);
       for (const ref of newArtifacts) this.held.artifacts.add(ref);
-      if (newcomers.length && this.state.status === "following") {
+      if (newcomers.length && (this.state.status === "following" || this.state.status === "degraded")) {
         const act = await this.openAct(cast).catch(() => undefined);
         if (act) this.set({act});
       }
@@ -824,8 +831,10 @@ export class LiveProducer {
   /** Follow until stopped. The watch paces each pass; a failing pass (or an
    * unreadable watch) backs off exponentially, capped at 15 s. */
   start(): void {
-    if (this.running) return;
+    // Reopening resumes the existing pass and its exact pending request;
+    // it never replaces that writer before its native effects are retired.
     this.stopped = false;
+    if (this.running) return;
     this.running = (async () => {
       let backoff = MIN_PASS_MS;
       try {
@@ -834,9 +843,11 @@ export class LiveProducer {
           const began = Date.now();
           let failed = false;
           try { await this.pass(); } catch (error) { failed = true; this.set({error: error instanceof Error ? error.message : String(error)}); }
-          if (this.state.sources["factory-telemetry"] === "unavailable") failed = true;
+          if (this.state.sources["factory-telemetry"] === "unavailable" || this.state.sources["factory-attempt"] === "unavailable") failed = true;
           backoff = failed ? Math.min(backoff * 2, MAX_BACKOFF_MS) : MIN_PASS_MS;
-          this.set({backoffMs: failed ? backoff : undefined, ...(failed ? {} : {error: undefined})});
+          // This is observed source availability, not a fabricated Agent or
+          // act phase. Retain the last native edition and receipt/cursors.
+          this.set({status: failed ? "degraded" : "following", backoffMs: failed ? backoff : undefined, ...(failed ? {} : {error: undefined})});
           const rest = backoff - (Date.now() - began);
           if (rest > 0 && !this.stopped) await new Promise(resolve => setTimeout(resolve, rest));
         }
@@ -844,8 +855,12 @@ export class LiveProducer {
       finally { this.running = undefined; if (this.stopped) this.set({status: "stopped"}); }
     })();
   }
-  stop(): void { this.stopped = true; }
+  stop(): Promise<void> {
+    this.stopped = true;
+    return Promise.allSettled([...this.selections, ...(this.running ? [this.running] : [])]).then(() => undefined);
+  }
   get following(): boolean { return !!this.running && !this.stopped; }
+  get retired(): boolean { return this.stopped && !this.running && this.selections.size === 0; }
 }
 
 function artifactRefsOf(attempts: unknown): string[] {

@@ -132,7 +132,7 @@ function LiveStrip({entry, live}: {entry: RunEntry; live: ReturnType<typeof useR
   const unavailable = Object.entries(live?.sources ?? {}).filter(([, state]) => state === "unavailable").map(([name]) => name.replace(/^journal:.*$/, "a journal").replace(/^card:.*$/, "an Agent card"));
   const words = live?.repertoire?.basis === "none" ? "no repertoire material is available yet" : live?.repertoire?.expression ? `${live.repertoire.expression.title} (${live.repertoire.basis})` : "reading the repertoire";
   return <p className="flx-strip" data-live-repertoire={live?.repertoire?.basis ?? "reading"}>
-    <span>{live?.status === "following" ? "● following" : live?.status ?? "opening"}</span>
+    <span>{live?.status === "following" ? "● following" : live?.status === "degraded" ? "Live source interrupted · retained reading" : live?.status ?? "opening"}</span>
     <span> · {entry.card.title}</span>
     <span> · {words}</span>
     {live?.error && <span role="alert"> · {live.error}</span>}
