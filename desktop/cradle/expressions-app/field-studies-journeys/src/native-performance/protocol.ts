@@ -1,3 +1,4 @@
+import {readLiveTemporalProgress,type NativeLiveTemporalProgress} from './temporalCapture.js';
 /** Native management projection. These packets are emitted by the retained
  * QL owner, reached through NativeFieldController's serial exchange. Browser
  * state holds copied readings and input lifetimes, never audio time or tuning. */
@@ -20,6 +21,7 @@ export interface NativeParameter {
  scope:'note'|'instrument'|'body'|'context'|'presentation';
  unit:string; minimum:number; maximum:number; baseline:number; effective:number;
  smoothing_samples:Counter; route_ref:string|null;
+ sample_rate?:Counter;
  capabilities:('set'|'undo'|'clear'|'learn')[]; unavailable_reason:string|null;
 }
 export interface NativeDevice {
@@ -31,17 +33,21 @@ export interface NativeDeviceReading {
  backend:string; device_id:number|null; client_rate:number; hardware_rate:number;
  buffer_frames:number; reported_output_latency_ms:number;
  sample_rate_conversion:boolean; error:string|null;
+ start_epoch:Counter; start_callback_baseline:Counter;
  callbacks:Counter; callback_failures:Counter; underruns:Counter|null; overload_notifications:Counter;
  capture_drops:Counter; timestamp_discontinuities:Counter;
  physical_latency_measurement:'unexecuted'|'measured';
 }
 export interface NativePhysicalReading {
- preparation_ref:string; state_ref:string; body_revision:Counter;
+ sample_rate?:number;
+ preparation_ref:string; state_ref:string; body_revision:Counter; eigenbasis_identity?:string;
  samples_elapsed:Counter; source_generation:Counter; node_ids:Counter[];
  positions_metres:[number,number,number][]; pickup_linear:number; energy_joules:number;
 }
 export interface NativePerformanceReading {
  schema:'ql.performance-management/v1'; session_ref:string; scope:PerformanceScope;
+ live_temporal?:NativeLiveTemporalProgress;
+ instrument_parameter_ramps?:NativeInstrumentParameterRamp[];
  transport_epoch:Counter;
  body_source:{kind:'sourceForm'|'referenceMetric';recipe_ref:string|null;validated_m3_generation:Counter|null};
  samples_elapsed:Counter; accepted_sequence:Counter; available:boolean; reason:string|null;
@@ -51,6 +57,9 @@ export interface NativePerformanceReading {
  sustain:boolean; peak_linear:number; rms_linear:number; clipping_samples:Counter;
  excitation:{policy_ref:string;standing:string;audio_octet_hz:number[];nodal_quartet:{position:0|5;face:0|1;m:number;n:number}[]};
 }
+/** Enum order comes from the same Engine's fixed native parameter table. */
+export const nativeInstrumentRampTargets=Object.freeze(['force-newtons','attack-seconds','release-seconds','cutoff-hertz','master-linear','body-linear','monitor-linear'].map(name=>'ql:performance/parameter/'+name));
+export interface NativeInstrumentParameterRamp {start_value:number;target_value:number;start_sample:Counter;duration_samples:Counter;remaining_samples:Counter}
 export interface NativeCurrentOutputCalibration {schema:'ql.native-current-output-calibration-declaration/v1';required:boolean;operation:'calibrate-current'|null;timing:'after-original-recording-birth-before-first-native-input';standing:string}
 export type NativePerformanceCommand =
  | {operation:'calibrate-current'}
@@ -85,7 +94,12 @@ export interface NativePerformanceUpdate {
 /** The existing serial owner supplies this seam. It owns the lease, outer
  * request ID/source CAS and AUHAL timestamp; the client creates none of them. */
 export interface NativeOutputCalibrationState {declaration:NativeCurrentOutputCalibration;stage:'queued'|'applied'|'not-required';admission_sequence:Counter|null;effective_force_newtons:number|null}
+/** Historical acknowledgement of this controller's actual original Start.
+ * This local observer seam is not a native wire command or current-source grant. */
+export interface NativePerformanceTransportObservation {lease:string;request_id:Counter;reading:NativePerformanceReading;transport_transition:NativeTransportAcknowledgement|null}
 export interface NativePerformanceExchange {
+ /** Preserve the exact original transport boundary while currentness is pending. */
+ transportObservation?():NativePerformanceTransportObservation|null;
  /** Actual original native declaration, queue and observed callback application. */
  outputCalibration?():NativeOutputCalibrationState|null;
  readonly current:boolean;
@@ -151,6 +165,39 @@ function list(v:unknown,max:number,label:string):asserts v is unknown[] {
 }
 function boolean(v:unknown,label:string):asserts v is boolean {if(typeof v!=='boolean')throw Error(`Native ${label} is invalid.`);}
 function nullableText(v:unknown,label:string) {if(v!==null)text(v,label);}
+/** Validate copied native state. No browser interpolation, timer or source
+ * parameter is authored here. Full source/effective bit equality is checked
+ * by the native checkpoint owner; descriptor baseline is not its source. */
+function validateInstrumentRamps(v:RecordValue,p:RecordValue):void {
+ if(!Object.hasOwn(v,'instrument_parameter_ramps'))return;
+ const rows=v.instrument_parameter_ramps;list(rows,7,'instrument parameter ramps');
+ if(rows.length!==7)throw Error('The native instrument ramp table must contain all seven enum-ordered rows.');
+ integer(p.sample_rate,1,768000,'native ramp sample rate');
+ const cursor=BigInt(v.samples_elapsed as string),maximum=18446744073709551615n,rate=BigInt(p.sample_rate);
+ const keys=['start_value','target_value','start_sample','duration_samples','remaining_samples'];
+ for(let index=0;index<rows.length;index++){
+  const row=object(rows[index],'instrument ramp');
+  if(Object.keys(row).length!==keys.length||keys.some(key=>!Object.hasOwn(row,key)))throw Error('A native instrument ramp differs from its exact five-field contract.');
+  const parameter=(v.parameters as RecordValue[]).find(value=>value.target_ref===nativeInstrumentRampTargets[index]);
+  if(!parameter||parameter.scope!=='instrument'||parameter.native_owner!=='ql.performance.Engine'||parameter.action_ref!=='ql:native-performance/parameter')throw Error('A native ramp is detached from its actual Engine parameter.');
+  counter(parameter.sample_rate);if(BigInt(parameter.sample_rate)!==rate)throw Error('The native ramp parameter and physical body have different sample rates.');
+  number(row.start_value,-1e15,1e15,'ramp start');number(row.target_value,-1e15,1e15,'ramp target');
+  for(const key of keys.slice(2))counter(row[key]);
+  const start=BigInt(row.start_sample as string),duration=BigInt(row.duration_samples as string),remaining=BigInt(row.remaining_samples as string);
+  if(duration===0n){
+   if(start!==0n||remaining!==0n||!Object.is(row.start_value,0)||!Object.is(row.target_value,0))throw Error('An inactive native ramp contains nonzero or signed-zero state.');
+   continue;
+  }
+  number(row.start_value,parameter.minimum as number,parameter.maximum as number,'active ramp start');number(row.target_value,parameter.minimum as number,parameter.maximum as number,'active ramp target');
+  if(duration>rate*900n||remaining>duration||start>cursor||start>maximum-duration)throw Error('The native ramp duration/date exceeds its actual owner bounds.');
+  if(remaining>0n?start+duration-remaining!==cursor:cursor<start+duration)throw Error('The native ramp remaining count differs from the copied callback cursor.');
+  const effective=parameter.effective as number;
+  if(remaining===0n){if(!Object.is(effective,row.target_value))throw Error('A completed native ramp differs from its actual effective value.');}
+  else if(effective<Math.min(row.start_value as number,row.target_value as number)||effective>Math.max(row.start_value as number,row.target_value as number))throw Error('The native effective value lies outside its active ramp.');
+  // Do not emulate native floating-point interpolation or treat a baseline
+  // policy as current source. Those exact bits remain in native CP custody.
+ }
+}
 export function readTransportAcknowledgement(value:unknown):NativeTransportAcknowledgement|null {
  if(value===null||value===undefined)return null;
  const v=object(value,'transport acknowledgement'),keys=['previous_epoch','epoch','previous_cursor','previous_sequence','target_sample','accepted_sequence','transaction_ref','checkpoint_ref'];
@@ -175,14 +222,16 @@ export function readPerformance(value:unknown,previous?:NativePerformanceReading
  list(v.parameters,128,'parameters');const targets=new Set<unknown>();
  for(const parameter of v.parameters){const p=object(parameter,'parameter');for(const k of ['target_ref','action_ref','native_owner','label','unit'])text(p[k],k);if(targets.has(p.target_ref))throw Error('Native parameter target is duplicated.');targets.add(p.target_ref);if(!['excitation','material','boundary','modulation','receiving','mixer'].includes(String(p.group))||!['note','instrument','body','context','presentation'].includes(String(p.scope)))throw Error('Native parameter scope/group is invalid.');number(p.minimum,-1e15,1e15,'minimum');number(p.maximum,p.minimum,1e15,'maximum');number(p.baseline,p.minimum,p.maximum,'baseline');number(p.effective,p.minimum,p.maximum,'effective');counter(p.smoothing_samples);nullableText(p.route_ref,'route');nullableText(p.unavailable_reason,'parameter refusal');list(p.capabilities,4,'parameter capabilities');for(const c of p.capabilities)if(!['set','undo','clear','learn'].includes(String(c)))throw Error('Native parameter action is unsupported.');}
  list(v.devices,64,'devices');for(const item of v.devices){const d=object(item,'device');integer(d.id,1,4294967295,'device id');text(d.uid,'device uid');text(d.name,'device name');boolean(d.default_output,'default output');boolean(d.alive,'device alive');integer(d.output_channels,0,128,'channels');number(d.nominal_rate,0,768000,'nominal rate');integer(d.buffer_frames,0,65536,'device buffer');}
- const d=object(v.device,'device reading');if(!['closed','prepared','running','recovering','lost','failed'].includes(String(d.state)))throw Error('Native device lifecycle is invalid.');text(d.backend,'backend');if(d.device_id!==null)integer(d.device_id,1,4294967295,'selected device');number(d.client_rate,0,768000,'client rate');number(d.hardware_rate,0,768000,'hardware rate');integer(d.buffer_frames,0,65536,'buffer');number(d.reported_output_latency_ms,0,10000,'reported latency');boolean(d.sample_rate_conversion,'rate conversion');nullableText(d.error,'device error');for(const k of ['callbacks','callback_failures','overload_notifications','capture_drops','timestamp_discontinuities'])counter(d[k]);if(d.underruns!==null)counter(d.underruns);if(!['unexecuted','measured'].includes(String(d.physical_latency_measurement)))throw Error('Native physical latency standing is absent.');
- const p=object(v.physical,'physical snapshot');for(const k of ['preparation_ref','state_ref'])if(p[k]!==s[k])throw Error('Native physical snapshot differs from its performance owner.');for(const k of ['body_revision','source_generation','samples_elapsed'])counter(p[k]);if(bodySource.kind==='sourceForm'&&bodySource.validated_m3_generation!==p.source_generation)throw Error('Source-form validation differs from the actual physical M3 generation.');if(p.body_revision!==s.body_revision||p.samples_elapsed!==v.samples_elapsed)throw Error('Native audio and visible cursors differ.');list(p.node_ids,32,'body node IDs');list(p.positions_metres,32,'visible positions');if(p.node_ids.length!==p.positions_metres.length||new Set(p.node_ids).size!==p.node_ids.length)throw Error('Native physical node correspondence is invalid.');for(const n of p.node_ids)counter(n);for(const xyz of p.positions_metres){list(xyz,3,'position');if(xyz.length!==3)throw Error('Native position is not Vec3.');for(const n of xyz)number(n,-1e9,1e9,'metre position');}number(p.pickup_linear,-1e6,1e6,'pickup');number(p.energy_joules,0,1e15,'energy');
+ const d=object(v.device,'device reading');if(!['closed','prepared','running','recovering','lost','failed'].includes(String(d.state)))throw Error('Native device lifecycle is invalid.');text(d.backend,'backend');if(d.device_id!==null)integer(d.device_id,1,4294967295,'selected device');number(d.client_rate,0,768000,'client rate');number(d.hardware_rate,0,768000,'hardware rate');integer(d.buffer_frames,0,65536,'buffer');number(d.reported_output_latency_ms,0,10000,'reported latency');boolean(d.sample_rate_conversion,'rate conversion');nullableText(d.error,'device error');for(const k of ['start_epoch','start_callback_baseline','callbacks','callback_failures','overload_notifications','capture_drops','timestamp_discontinuities'])counter(d[k]);if(d.underruns!==null)counter(d.underruns);if(!['unexecuted','measured'].includes(String(d.physical_latency_measurement)))throw Error('Native physical latency standing is absent.');
+ const p=object(v.physical,'physical snapshot');if(Object.hasOwn(p,'eigenbasis_identity'))text(p.eigenbasis_identity,'physical eigenbasis');for(const k of ['preparation_ref','state_ref'])if(p[k]!==s[k])throw Error('Native physical snapshot differs from its performance owner.');for(const k of ['body_revision','source_generation','samples_elapsed'])counter(p[k]);if(bodySource.kind==='sourceForm'&&bodySource.validated_m3_generation!==p.source_generation)throw Error('Source-form validation differs from the actual physical M3 generation.');if(p.body_revision!==s.body_revision||p.samples_elapsed!==v.samples_elapsed)throw Error('Native audio and visible cursors differ.');list(p.node_ids,32,'body node IDs');list(p.positions_metres,32,'visible positions');if(p.node_ids.length!==p.positions_metres.length||new Set(p.node_ids).size!==p.node_ids.length)throw Error('Native physical node correspondence is invalid.');for(const n of p.node_ids)counter(n);for(const xyz of p.positions_metres){list(xyz,3,'position');if(xyz.length!==3)throw Error('Native position is not Vec3.');for(const n of xyz)number(n,-1e9,1e9,'metre position');}number(p.pickup_linear,-1e6,1e6,'pickup');number(p.energy_joules,0,1e15,'energy');
+ validateInstrumentRamps(v,p);
  integer(v.active_voices,0,24,'voices');integer(v.active_touches,0,96,'touches');boolean(v.sustain,'sustain');number(v.peak_linear,0,1,'peak');number(v.rms_linear,0,1,'RMS');counter(v.clipping_samples);
  const e=object(v.excitation,'excitation');text(e.policy_ref,'excitation policy');text(e.standing,'excitation standing');list(e.audio_octet_hz,8,'audio octet');list(e.nodal_quartet,4,'nodal quartet');if(e.audio_octet_hz.length!==8||e.nodal_quartet.length!==4)throw Error('Native 8 audio / 4 boundary roles are incomplete.');for(const hz of e.audio_octet_hz)number(hz,0.001,1e9,'octet frequency');for(const boundary of e.nodal_quartet){const b=object(boundary,'boundary');if(b.position!==0&&b.position!==5)throw Error('Native boundary is not at a source pole.');integer(b.face,0,1,'boundary face');integer(b.m,1,12,'boundary m');integer(b.n,1,12,'boundary n');}
  if(v.keys.length){const addresses=new Map<string,{count:number;key:unknown;available:unknown;coordinate:unknown;face:unknown;hertz:unknown;ratio:unknown;degree:unknown;policy:unknown;collection:unknown;receipt:unknown;reason:unknown}>(),rows=new Set<number>();for(const key of v.keys){const k=key as unknown as NativeKey;rows.add(k.row);const id=`${k.key}:${k.register_octave}`,old=addresses.get(id);if(old){if(old.available!==k.available||old.coordinate!==k.coordinate||old.face!==k.face||old.hertz!==k.hertz||JSON.stringify(old.ratio)!==JSON.stringify(k.ratio)||old.degree!==k.source_degree||old.policy!==k.reduction_policy||old.collection!==k.source_collection||old.receipt!==k.source_receipt||old.reason!==k.reason)throw Error('Repeated physical addresses differ in native source availability/tuning.');old.count++;}else addresses.set(id,{count:1,key:k.key,available:k.available,coordinate:k.coordinate,face:k.face,hertz:k.hertz,ratio:k.ratio,degree:k.source_degree,policy:k.reduction_policy,collection:k.source_collection,receipt:k.source_receipt,reason:k.reason});}if(rows.size!==6||[...addresses.values()].some(p=>p.count!==3))throw Error('Native Jankó catalog omits six rows or three touchpoints per address.');}
 
  if(previous){if(s.instance_ref!==previous.scope.instance_ref||s.event_ref!==previous.scope.event_ref||s.subject_ref!==previous.scope.subject_ref)throw Error('Native performance reply belongs to a different retained work.');const ack=transport(transition);if(v.transport_epoch===previous.transport_epoch){if(v.session_ref!==previous.session_ref||ack)throw Error('Native lifetime/transport acknowledgement differs within one epoch.');if(BigInt(v.samples_elapsed)<BigInt(previous.samples_elapsed)||BigInt(v.accepted_sequence)<BigInt(previous.accepted_sequence))throw Error('Native performance acknowledgement regressed.');}else{if(!ack||v.session_ref!==previous.session_ref||BigInt(v.transport_epoch)<=BigInt(previous.transport_epoch)||ack.previous_epoch!==previous.transport_epoch||ack.epoch!==v.transport_epoch||ack.target_sample!==v.samples_elapsed||ack.accepted_sequence!==v.accepted_sequence||BigInt(ack.previous_cursor)<BigInt(previous.samples_elapsed)||BigInt(ack.previous_sequence)<BigInt(previous.accepted_sequence))throw Error('Native transport epoch changed without the exact actual restore acknowledgement.');}}
  const initialAck=transport(transition);if(initialAck&&(initialAck.epoch!==v.transport_epoch||initialAck.target_sample!==v.samples_elapsed||initialAck.accepted_sequence!==v.accepted_sequence))throw Error('Native restored reading differs from its original transport acknowledgement.');
+ if(Object.hasOwn(v,'live_temporal'))readLiveTemporalProgress(v.live_temporal,v.samples_elapsed as string);
  const admitted=freezeJson(candidate) as NativePerformanceReading;admittedReadings.add(admitted);return admitted;
 }
 export function readReply(value:unknown,command:NativePerformanceCommand,previous?:NativePerformanceReading):NativePerformanceReply {

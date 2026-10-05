@@ -14,6 +14,7 @@ export interface NativeSceneRecordingBinding {
  acceptPhysical:(result:unknown,expected:NativeRecordingCas)=>Promise<void>;
  receivingMap:(reading:NativePerformanceReading)=>PhysicalTargetMap;
  basis:number;layer:number;
+ selectAct?:()=>Promise<RetainedPerformanceAct>;
  score:()=>Omit<NativeScoreSnapshot,'stopped'|'playback_current'|'reason'>;
  edit:(operations:NativeScoreOperation[],expected:NativeRecordingCas)=>Promise<void>;
  resolve:()=>Promise<void>;
@@ -23,7 +24,7 @@ export interface NativeSceneRecordingBinding {
  * acknowledged source to the SAME controller. This contains only CAS/authoring
  * intent; full source, original Return, body and pulse remain native-owned. */
 export type NativeSceneInstrumentInput={controller:NativeFieldController;view:()=>KernelConversion|undefined;sceneId:string;current:()=>boolean;
- adopt:(result:unknown,expected:NativeRecordingCas)=>Promise<KernelConversion>;adoptPhysical:(result:unknown,expected:NativeRecordingCas)=>Promise<KernelConversion>;receivingMap:(reading:NativePerformanceReading)=>PhysicalTargetMap;edit:(expected:NativeRecordingCas,operations:NativeScoreOperation[])=>Promise<KernelConversion>;resolve:()=>Promise<KernelConversion>;advanced:(view:KernelConversion)=>void};
+ selectAct?:()=>Promise<RetainedPerformanceAct>;adopt:(result:unknown,expected:NativeRecordingCas)=>Promise<KernelConversion>;adoptPhysical:(result:unknown,expected:NativeRecordingCas)=>Promise<KernelConversion>;receivingMap:(reading:NativePerformanceReading)=>PhysicalTargetMap;edit:(expected:NativeRecordingCas,operations:NativeScoreOperation[])=>Promise<KernelConversion>;resolve:()=>Promise<KernelConversion>;advanced:(view:KernelConversion)=>void};
 function sceneRecordingBinding(input:NativeSceneInstrumentInput):NativeSceneRecordingBinding{
  const {controller,sceneId,current}=input;
  const capture=():NativeRecordingCas=>{
@@ -31,7 +32,7 @@ function sceneRecordingBinding(input:NativeSceneInstrumentInput):NativeSceneReco
   if(!current()||!view||!binding||!scene||!Number.isSafeInteger(scene.revision))throw Error('The actual native Document or selected Scene changed before recording admission.');
   return{expression_ref:view.document.expression_ref,document_revision:view.document.revision,scene_ref:binding.scene_ref,scene_revision:scene.revision as number,actor:'human:expressions-app'};
  };
- const binding:NativeSceneRecordingBinding={capture,receivingMap:input.receivingMap,acceptPhysical:async(result,expected)=>{const view=await input.adoptPhysical(result,expected);input.advanced(view);},document:()=>{capture();return input.view()!.document;},basis:0,layer:0,physicalRest:reading=>{if(!current())throw Error('The current Document changed before its physical rest reading.');return currentNativePhysicalRest(input.view(),sceneId,reading);},score:()=>currentScore(input.view(),sceneId),resolve:async()=>{const view=await input.resolve();input.advanced(view);},edit:async(operations,expected)=>{const view=await input.edit(expected,operations);input.advanced(view);},accept:async(result,expected)=>{const view=await input.adopt(result,expected);input.advanced(view);}};
+ const binding:NativeSceneRecordingBinding={capture,selectAct:input.selectAct,receivingMap:input.receivingMap,acceptPhysical:async(result,expected)=>{const view=await input.adoptPhysical(result,expected);input.advanced(view);},document:()=>{capture();return input.view()!.document;},basis:0,layer:0,physicalRest:reading=>{if(!current())throw Error('The current Document changed before its physical rest reading.');return currentNativePhysicalRest(input.view(),sceneId,reading);},score:()=>currentScore(input.view(),sceneId),resolve:async()=>{const view=await input.resolve();input.advanced(view);},edit:async(operations,expected)=>{const view=await input.edit(expected,operations);input.advanced(view);},accept:async(result,expected)=>{const view=await input.adopt(result,expected);input.advanced(view);}};
  return binding;
 }
 export async function retainPreparedSceneInstrument(input:NativeSceneInstrumentInput){

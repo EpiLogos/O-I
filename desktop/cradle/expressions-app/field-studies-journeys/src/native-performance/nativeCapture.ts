@@ -1,3 +1,4 @@
+import {readTemporalCaptureAudio,readLiveTemporalProgress,readSourceApplication,temporalKeys,type NativeCaptureSourceSpan,type NativeLiveTemporalProgress,type NativeSourceApplication} from './temporalCapture.js';
 import type { NativePerformanceReading } from './protocol.js';
 type JsonObject = Record<string, unknown>;
 export interface CaptureIdentity {
@@ -8,7 +9,7 @@ export interface CaptureIdentity {
     m2_generation: string;
 }
 export interface NativeAudioCapture {
-    schema: 'ql.native-audio-capture/v1';
+    schema: 'ql.native-audio-capture/v1'|'ql.native-audio-capture/v2';
     identity: CaptureIdentity;
     end_identity: CaptureIdentity;
     preparation_ref: string;
@@ -33,6 +34,10 @@ export interface NativeAudioCapture {
     has_receiving: boolean;
     receiving_manifest: unknown;
     route_force_newtons: number[][];
+    live_temporal?:NativeLiveTemporalProgress;
+    source_spans?:NativeCaptureSourceSpan[];
+    source_force_vector_newtons?:[number,number,number][];
+    source_force_absolute_load_newtons?:number[];
 }
 export interface NativeDeviceCapture {
     schema: 'ql.native-device-capture/v1';
@@ -68,6 +73,7 @@ export interface NativeCaptureBatch {
     audio_blocks: NativeAudioCapture[];
     device_blocks: NativeDeviceCapture[];
     counters: NativeCaptureCounters;
+    source_applications?:NativeSourceApplication[];
 }
 export const captureCounterNames = ['dropped_audio_blocks_at_readback', 'dropped_readbacks_at_readback', 'native_queue_overflows_at_readback', 'device_capture_drops', 'device_callback_failures', 'device_timestamp_discontinuities'] as const;
 const fail = (reason: string): never => { throw Error('Original native capture: ' + reason); };
@@ -84,7 +90,7 @@ function identity(value: unknown, reading: NativePerformanceReading) { const v =
 /** Validate a COPY of the original same-pulse observations. Historical M1/M2
  * and body values remain observations; they never authorize a source rebind. */
 export function readNativeCapture(value: unknown, reading: NativePerformanceReading): NativeCaptureBatch {
-    const v = object(value);
+    const v = temporalKeys(value,['schema','session_ref','transport_epoch','sample_rate','capture_enabled','audio_blocks','device_blocks','counters',...(Object.hasOwn(object(value),'source_applications')?['source_applications']:[])]);
     need(v.schema === 'ql.native-performance-capture-batch/v1', 'batch schema differs');
     ref(v.session_ref);
     captureCounter(v.transport_epoch);
@@ -92,7 +98,7 @@ export function readNativeCapture(value: unknown, reading: NativePerformanceRead
     const rate = integer(v.sample_rate, 8000, 192000);
     need(reading.device.client_rate === 0 || rate === reading.device.client_rate, 'capture rate differs from the actual native device reading');
     need(typeof v.capture_enabled === 'boolean', 'capture enrollment unavailable');
-    const audio = v.audio_blocks, device = v.device_blocks, c = object(v.counters);
+    const audio = v.audio_blocks, device = v.device_blocks, c = temporalKeys(v.counters,['has_callback_readback',...captureCounterNames]);
     need(Array.isArray(audio) && audio.length <= 16 && Array.isArray(device) && device.length <= 128, 'original queue capacity differs');
     need(typeof c.has_callback_readback === 'boolean', 'actual callback observation is undisclosed');
     for (const key of captureCounterNames)
@@ -100,7 +106,9 @@ export function readNativeCapture(value: unknown, reading: NativePerformanceRead
     const cursor = BigInt(reading.samples_elapsed);
     for (const raw of audio as unknown[]) {
         const a = object(raw);
-        need(a.schema === 'ql.native-audio-capture/v1', 'audio block schema differs');
+        const mixed=a.schema==='ql.native-audio-capture/v2';
+        need(a.schema==='ql.native-audio-capture/v1'||mixed,'audio block schema differs');
+        temporalKeys(a,['schema','identity','end_identity','preparation_ref','state_ref','body_revision','sample_rate','start_sample','frames','start_applied_sequence','end_applied_sequence','start_application_ordinal','end_application_ordinal','force_newtons','note_force_newtons','contact_force_newtons','body_gain_linear','monitor_gain_linear','force_scale_newtons','pickup_linear','received_linear','output_linear','has_receiving','receiving_manifest','route_force_newtons',...(mixed?['live_temporal','source_spans','source_force_vector_newtons','source_force_absolute_load_newtons']:[])]);
         identity(a.identity, reading);
         identity(a.end_identity, reading);
         ref(a.preparation_ref);
@@ -115,7 +123,12 @@ export function readNativeCapture(value: unknown, reading: NativePerformanceRead
         for (const key of ['force_newtons', 'note_force_newtons', 'contact_force_newtons', 'body_gain_linear', 'monitor_gain_linear', 'force_scale_newtons', 'pickup_linear', 'received_linear', 'output_linear'])
             samples(a[key], frames);
         need(typeof a.has_receiving === 'boolean' && Array.isArray(a.route_force_newtons) && a.route_force_newtons.length <= 9, 'original receiving/routes absent');
-        if (a.has_receiving) {
+        if (mixed) {
+            readTemporalCaptureAudio(a,rate,reading.samples_elapsed);
+            const current=reading.live_temporal;
+            need(current&&a.live_temporal.programme_ref===current.programme_ref&&a.live_temporal.next<=current.next,'captured programme differs from the SAME original native readback');
+        }
+        else if (a.has_receiving) {
             const m = object(a.receiving_manifest);
             need(m.version === 1 && m.sample_rate === rate, 'original callback receiving manifest rate/version differs');
             for (const key of ['receiving_identity', 'event', 'subject', 'preparation', 'state', 'source_coordinate', 'source_revision', 'eigenbasis', 'receiver', 'context', 'source_motion', 'receiver_motion', 'policy', 'policy_revision', 'standing'])
@@ -131,7 +144,7 @@ export function readNativeCapture(value: unknown, reading: NativePerformanceRead
             samples(route, frames);
     }
     for (const raw of device as unknown[]) {
-        const d = object(raw);
+        const d = temporalKeys(raw,['schema','device_id','device_epoch','sample_rate','native_start_sample','frames','device_sample_time','has_host_time','has_device_sample_time','clock_continuous','host_time','callback_begin_host_time','callback_end_host_time','output_linear']);
         need(d.schema === 'ql.native-device-capture/v1', 'device block schema differs');
         integer(d.device_id, 1, 0xffffffff);
         need(BigInt(captureCounter(d.device_epoch)) > 0n, 'actual device epoch absent');
@@ -146,7 +159,17 @@ export function readNativeCapture(value: unknown, reading: NativePerformanceRead
         need(BigInt(d.callback_end_host_time as string) >= BigInt(d.callback_begin_host_time as string), 'callback timestamps regressed');
         samples(d.output_linear, frames);
     }
-    need(c.has_callback_readback === true || !(audio as unknown[]).length && !(device as unknown[]).length, 'sound blocks have no actual callback readback');
+    if(Object.hasOwn(v,'source_applications')){
+        need(Array.isArray(v.source_applications)&&v.source_applications.length<=255&&reading.live_temporal,'source application cohort has no actual native programme');
+        const progress=readLiveTemporalProgress(reading.live_temporal,reading.samples_elapsed);
+        let previous:NativeSourceApplication|null=null;
+        for(const raw of v.source_applications as unknown[]){const step=readSourceApplication(raw,reading.samples_elapsed);
+            need(BigInt(step.source_application_ordinal)<=BigInt(progress.next),'source application is ahead of SAME committed progress');
+            if(previous)need(BigInt(step.source_application_ordinal)===BigInt(previous.source_application_ordinal)+1n&&step.before_source_ref===previous.after_source_ref&&step.before_source_index===previous.after_source_index&&step.before_body_revision===previous.after_body_revision&&BigInt(step.original_native_request_id)>BigInt(previous.original_native_request_id),'original source application cohort lost ordering or a descendant');
+            previous=step;
+        }
+    }
+    need(c.has_callback_readback === true || !(audio as unknown[]).length && !(device as unknown[]).length && !(v.source_applications as unknown[]|undefined)?.length, 'sound blocks have no actual callback readback');
     return structuredClone(v) as unknown as NativeCaptureBatch;
 }
 /** Native JSON numbers are kept as their actual binary64 values, including

@@ -32,7 +32,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  sourceAuthorship.dataset.performance='native-source-authorship';sourceAuthorship.hidden=true;sourceAuthorship.append(sourceAuthorshipSummary,sourceAuthorshipBody,sourceAuthorshipDepth);
  musicPanel.append(musicHeader,sourceAuthorship,musicBody);
  document.getElementById('app')!.append(musicPanel);
- const music=mountNativePerformance(musicBody,controller.performance,controller.score,controller.physicalDisplay,controller.physicalEdits,controller.acousticEdits,controller.takes);music.setVisible(false);
+ const music=mountNativePerformance(musicBody,controller.performance,controller.score,controller.physicalDisplay,controller.physicalEdits,controller.acousticEdits,controller.takes,controller.scorePlayback);music.setVisible(false);
  const musicOpen=document.createElement('button');musicOpen.type='button';musicOpen.textContent='Prepare and play selected body';musicOpen.dataset.performance='prepare-current-scene';
  const showMusic=async()=>{musicOpen.disabled=true;try{if(!controller.musicalReading){if(!prepareMusical)throw Error('This application has no current native Scene preparation join.');await prepareMusical();}else controller.assertCurrentPerformance();musicPanel.hidden=false;music.setVisible(true);}catch(error){fail(error);}finally{musicOpen.disabled=false;}};
  musicOpen.addEventListener('click',()=>{void showMusic();});

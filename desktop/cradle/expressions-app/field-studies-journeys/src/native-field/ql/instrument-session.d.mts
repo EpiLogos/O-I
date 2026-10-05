@@ -163,5 +163,5 @@ export class InstrumentSession {
  dispose(): void;
  physicalEdit(edit:unknown):Promise<{physical_edit:any;physical_cas:any}>;
  acousticEdit(configuration:unknown):Promise<{acoustic_edit:any;acoustic_cas:any}>;
- performance(command:{operation:'performance-continue-act';[key:string]:unknown}):Promise<{performance:any;recording:any}>;
+ performance(command:{operation:'performance-continue-act'|'performance-playback'|'performance-edited-render';[key:string]:unknown}):Promise<{performance:any;recording:any}>;
 }

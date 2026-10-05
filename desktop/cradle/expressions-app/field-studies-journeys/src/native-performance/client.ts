@@ -1,4 +1,4 @@
-import {readReply,readPerformance,inspectAdmittedReadingImmutability,type NativePerformanceCommand,type NativePerformanceExchange,type NativePerformanceReading,type NativePerformanceReply,type NativeTransportAcknowledgement} from './protocol.js';
+import {counter,readReply,readPerformance,inspectAdmittedReadingImmutability,type NativePerformanceCommand,type NativePerformanceExchange,type NativePerformanceReading,type NativePerformanceReply,type NativeTransportAcknowledgement} from './protocol.js';
 class NativeRefusalError extends Error {}
 export interface PerformanceClientState {reading:NativePerformanceReading|null;reason:string|null;pending:number;pressed:ReadonlySet<string>}
 /** One client of the existing serial owner. Only copied readbacks and bounded
@@ -11,18 +11,48 @@ export class NativePerformanceClient {
  private parameterPending=new Map<string,{value:number;done:Promise<NativePerformanceReply>}>();
  private unsubscribe:()=>void;
  private lastTransport:NativeTransportAcknowledgement|null=null;
+ private transportBaseline:NativePerformanceReading|null=null;private observedTransportBoundary:string|null=null;
  private listeners=new Set<()=>void>();
- constructor(private owner:NativePerformanceExchange){this.unsubscribe=owner.subscribe(update=>{if(this.dead)return;if(!owner.current){this.reason='The current native Document or selected source changed; the instrument is held.';this.changed();return;}try{if(update.schema!=='ql.performance-management-update/v1')throw Error('Native performance readback stream schema differs.');const ack=update.transport_transition;const duplicate=ack&&this.lastTransport&&JSON.stringify(ack)===JSON.stringify(this.lastTransport);this.reading=readPerformance(update.reading,this.reading??undefined,duplicate?null:ack);if(ack)this.lastTransport=ack;this.reason=this.reading.reason;this.changed();}catch(error){this.reason=error instanceof Error?error.message:String(error);owner.holdPerformance(this.reason);this.changed();}});}
+ constructor(private owner:NativePerformanceExchange){this.unsubscribe=owner.subscribe(update=>{
+  if(this.dead)return;
+  try{
+   // The actual original Start may acknowledge an epoch before the first source
+   // callback. Preserve its exact ACK internally, without displaying old P as
+   // current or granting input while the owner's currentness remains false.
+   const original=owner.transportObservation?.();
+   if(original){
+    counter(original.request_id);if(typeof original.lease!=='string'||!original.lease)throw Error('The original transport observation has no owned native lease.');
+    const key=original.lease+'@'+original.request_id;
+    if(key!==this.observedTransportBoundary){this.transportBaseline=readPerformance(original.reading,this.transportBaseline??this.reading??undefined,original.transport_transition);this.observedTransportBoundary=key;if(original.transport_transition)this.lastTransport=original.transport_transition;}
+   }
+   if(!owner.current){this.reason='The current native sound and body source is pending or held.';this.changed();return;}
+   if(update.schema!=='ql.performance-management-update/v1')throw Error('Native performance readback stream schema differs.');
+   const ack=update.transport_transition,duplicate=ack&&this.lastTransport&&JSON.stringify(ack)===JSON.stringify(this.lastTransport);
+   this.reading=readPerformance(update.reading,this.transportBaseline??this.reading??undefined,duplicate?null:ack);this.transportBaseline=null;if(ack)this.lastTransport=ack;
+   this.reason=this.reading.reason;this.changed();
+  }catch(error){this.reason=error instanceof Error?error.message:String(error);owner.holdPerformance(this.reason);this.changed();}
+ });}
+
  get state():PerformanceClientState{return{reading:this.reading,reason:this.reason,pending:this.pending,pressed:new Set([...this.held.values()].map(v=>v.cell))};}
  subscribe(listener:()=>void){this.listeners.add(listener);return()=>{this.listeners.delete(listener);};}
  private changed(){for(const listener of this.listeners)listener();}
  private async request(command:NativePerformanceCommand):Promise<NativePerformanceReply>{
-  if(this.dead||!this.owner.current)throw Error('The retained native performance lifetime is unavailable.');
+  const originalPending=command.operation==='performance-panic'&&!this.owner.current?this.owner.transportObservation?.():null;
+  if(this.dead||!this.owner.current&&(!originalPending||!this.transportBaseline))throw Error('The retained native performance lifetime is unavailable.');
   const critical=command.operation==='performance-panic'||command.operation==='performance-gesture'&&command.phase==='release'||command.operation==='performance-sustain'&&!command.down;
   if(this.pending>=(critical?192:64)){this.owner.holdPerformance('Native performance request admission bound exceeded.');throw Error('The bounded native request lane is full; input is held.');}
-  const atSubmission=this.reading;
+  const atSubmission=originalPending?this.transportBaseline:this.reading;
   this.pending++;this.changed();
-  try{const reply=readReply(await this.owner.exchange(command),command,atSubmission??undefined);if(this.dead||!this.owner.current)throw Error('The native lifetime closed before acknowledgement.');const current=this.reading,next=reply.reading;if(!current||next.transport_epoch===current.transport_epoch&&BigInt(next.samples_elapsed)>=BigInt(current.samples_elapsed)&&BigInt(next.accepted_sequence)>=BigInt(current.accepted_sequence)||BigInt(next.transport_epoch)>BigInt(current.transport_epoch))this.reading=readPerformance(next,current??undefined,current?.transport_epoch===next.transport_epoch?null:reply.transport_transition);if(reply.transport_transition&&this.reading?.transport_epoch===next.transport_epoch)this.lastTransport=reply.transport_transition;this.reason=reply.accepted?this.reading?.reason??null:reply.refusal!.reason;if(!reply.accepted)throw new NativeRefusalError(this.reason??'Native operation refused.');return reply;}
+  try{const reply=readReply(await this.owner.exchange(command),command,atSubmission??undefined);
+   if(this.dead)throw Error('The native lifetime closed before acknowledgement.');
+   if(!this.owner.current){
+    const retained=this.owner.transportObservation?.();
+    if(!originalPending||!retained||retained.lease!==originalPending.lease||retained.request_id!==originalPending.request_id)throw Error('The original pending native lifetime closed before protective acknowledgement.');
+    // Genuine Panic acknowledged on the same pending owner; retain transport
+    // history without displaying this observation as a current body.
+    this.transportBaseline=reply.reading;this.reason=reply.accepted?'The original native programme still awaits its first current body callback.':reply.refusal!.reason;
+    if(!reply.accepted)throw new NativeRefusalError(this.reason??'Native protective operation refused.');return reply;
+   }const current=this.reading,next=reply.reading;if(!current||next.transport_epoch===current.transport_epoch&&BigInt(next.samples_elapsed)>=BigInt(current.samples_elapsed)&&BigInt(next.accepted_sequence)>=BigInt(current.accepted_sequence)||BigInt(next.transport_epoch)>BigInt(current.transport_epoch))this.reading=readPerformance(next,current??undefined,current?.transport_epoch===next.transport_epoch?null:reply.transport_transition);if(reply.transport_transition&&this.reading?.transport_epoch===next.transport_epoch)this.lastTransport=reply.transport_transition;this.reason=reply.accepted?this.reading?.reason??null:reply.refusal!.reason;if(!reply.accepted)throw new NativeRefusalError(this.reason??'Native operation refused.');return reply;}
   catch(error){this.reason=error instanceof Error?error.message:String(error);if(critical||!(error instanceof NativeRefusalError))this.owner.holdPerformance(this.reason);throw error;}
   finally{this.pending--;this.changed();}
  }

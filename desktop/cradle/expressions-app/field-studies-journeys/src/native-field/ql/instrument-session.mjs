@@ -253,7 +253,7 @@ export function validateNativeDefinitionOutcome(result, originalRequest, context
 const EVENT_OPERATIONS = ['m1-advance', 'replace-event'];
 const READ_OPERATIONS = ['procedure', 'read', 'inspect', 'influence', 'personal', 'receive-personal'];
 const SOURCE_OPERATIONS = ['selected-source-retain','selected-source-bootstrap'];
-const PERFORMANCE_OPERATIONS = ['performance-prepare','performance-prepare-current','performance-scene-prepare','performance-recording-begin','performance-save-cut','performance-continue-act','performance-exchange'];
+const PERFORMANCE_OPERATIONS = ['performance-prepare','performance-prepare-current','performance-scene-prepare','performance-recording-begin','performance-save-cut','performance-continue-act','performance-playback','performance-edited-render','performance-exchange'];
 
 export class InstrumentSession {
   #context; #owner; #port; #field; #audio; #native; #instance; #sequence;
@@ -611,7 +611,7 @@ export class InstrumentSession {
       if(command.operation==='performance-scene-prepare'||command.operation==='performance-recording-begin'||command.operation==='performance-save-cut')
         need(reply.recording?.schema==='oi.native-scene-recording-result/v1'&&reply.recording.accepted===true,'original native recording transaction omitted');
       else {need(reply.performance?.schema === 'ql.performance-management-reply/v1', 'native performance reply omitted');
-        if(command.operation==='performance-continue-act')need(reply.recording?.schema==='oi.native-scene-recording-result/v1'&&reply.recording.accepted===true&&reply.performance.operation==='performance-continue-act'&&reply.performance.accepted===true,'original native continuation transaction omitted');}
+        if(command.operation==='performance-continue-act'||command.operation==='performance-playback'||command.operation==='performance-edited-render')need(reply.recording?.schema==='oi.native-scene-recording-result/v1'&&reply.recording.accepted===true&&reply.performance.operation===command.operation&&reply.performance.accepted===true,'original native Act transaction omitted');}
       return { performance: reply.performance, recording: reply.recording };
     } finally { this.#busy = false; this.#releaseProcedures(); }
   }

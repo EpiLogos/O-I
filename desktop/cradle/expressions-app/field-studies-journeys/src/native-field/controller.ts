@@ -1,8 +1,10 @@
+import {readNativeEditedRender} from '../native-performance/render.js';
 import {NativeTakeRecorder,type NativeTakePort} from '../native-performance/nativeTake.js';
 import {readNativeCapture,type NativeCaptureBatch} from '../native-performance/nativeCapture.js';
 import {acousticSnapshot,appliedAcousticSource,readAuthoredAcousticConfiguration,type AuthoredAcousticConfiguration,type NativeAcousticEditPort} from '../native-performance/acousticEdit.js';
 import {readCurrentOutputCalibration,type NativeCurrentOutputCalibration,readPerformance,type NativePerformanceCommand,type NativePerformanceExchange,type NativePerformanceReading,type NativePerformanceUpdate,type NativeTransportAcknowledgement} from '../native-performance/protocol.js';
 import {physicalEditSnapshot,appliedPhysicalBasis,samePhysicalJson,type AuthoredPhysicalEdit,type NativePhysicalEditPort} from '../native-performance/physicalEdit.js';
+import {readPlaybackRange,readNativeActPlayback,readNativePlaybackStartPhase,hasNativePlaybackDeviceCallback,readNativePlaybackCurrentSource,sameNativePlaybackJson,type NativeScorePlaybackPort,type NativeScorePlaybackRange,type NativeScorePlaybackSnapshot,type NativePlaybackSourceCustody} from '../native-performance/playback.js';
 import type {RetainedPerformanceAct} from '../native-performance/retainedAct.js';
 import {readNativeActContinuation,sameNativeContinuationJson} from '../native-performance/continuation.js';
 import type {NativeStageAuthorshipRequest} from '../proceduralStageAuthoring.js';
@@ -17,7 +19,7 @@ import type {NativePort} from './channel';
 import {validateNativeDefinitionTarget,validateNativeDefinitionRequest,type NativeDefinitionPort,type NativeDefinitionTarget,type PendingNativeDefinition,type NativeDefinitionRequest} from '../proceduralNativeDefinition';
 
 import type {NativeScoreOperation,NativeScorePort,NativeScoreSnapshot} from '../native-performance/scoreProtocol.js';
-import type {NativeSceneRecordingBinding,NativeRecordingDefinition} from '../native-performance/sceneRecording.js';
+import type {NativeSceneRecordingBinding,NativeRecordingDefinition,NativeRecordingCas} from '../native-performance/sceneRecording.js';
 import {PhysicalSnapshotProjection,type PhysicalTargetMap,type PhysicalRetainedPort} from '../native-performance/physicalSnapshotProjection.js';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
@@ -295,7 +297,7 @@ export class NativeFieldController {
  private performanceSaving=false;private lastRecordingCas:any=null;private performanceSaveCut:{result:any;cas:any}|null=null;
  private performanceReading:NativePerformanceReading|null=null;
  private physicalProjection:PhysicalSnapshotProjection|null=null;
- private lastNativePhysicalEdit:any=null;private lastNativeAcousticEdit:any=null;private currentSourceArtifact:any=null;private currentRetainedSource:any=null;
+ private lastNativePhysicalEdit:any=null;private lastNativeAcousticEdit:any=null;private currentSourceArtifact:any=null;private currentRetainedSource:any=null;private playbackCurrentSource:NativePlaybackSourceCustody|null=null;
  private performanceListeners=new Set<(update:NativePerformanceUpdate)=>void>();
  private performancePolling=false;private lastPerformancePoll=0;private performancePreparing=false;
  private performanceHoldPending=false;private performanceFailure:string|null=null;
@@ -316,9 +318,169 @@ export class NativeFieldController {
  },apply:edit=>this.editNativePhysical(edit),custody:()=>this.lastNativePhysicalEdit===null?null:structuredClone(this.lastNativePhysicalEdit)};
  readonly acousticEdits:NativeAcousticEditPort={snapshot:()=>{const binding=this.recordingBinding,reading=this.performanceReading;if(!binding||!reading||!this.hasCurrentPerformance())return null;try{return acousticSnapshot(binding.document(),binding.capture(),reading,this.currentSourceArtifact,this.currentRetainedSource);}catch{return null;}},apply:configuration=>this.editNativeSource('acoustic',readAuthoredAcousticConfiguration(configuration)),custody:()=>this.lastNativeAcousticEdit===null?null:structuredClone(this.lastNativeAcousticEdit)};
  readonly score:NativeScorePort={snapshot:()=>this.scoreSnapshot(),subscribe:listener=>{this.scoreListeners.add(listener);return()=>{this.scoreListeners.delete(listener);};},edit:operations=>this.editNativeScore(operations),resolve:()=>this.resolveNativeScore()};
+ private retainedScoreAdmission:{cas:NativeRecordingCas;selected:RetainedPerformanceAct}|null=null;
+ private nativeScoreTransportObservation:{lease:string;request_id:string;reading:NativePerformanceReading;transport_transition:NativeTransportAcknowledgement|null}|null=null;
+ private scoreRenderCustody:{selected:RetainedPerformanceAct;range:NativeScorePlaybackRange;cas:any;before:NativePerformanceReading;transaction_ref:string;request:any;result:any;reason:string|null;held:boolean;file:string|null}|null=null;
+ private scorePlaybackCustody:{selected:RetainedPerformanceAct;range:NativeScorePlaybackRange;cas:any;transaction_ref:string;request:any;result:any;reason:string|null;held:boolean;start_observation:{reading:NativePerformanceReading;transition:NativeTransportAcknowledgement|null}|null;first_current_pending:boolean;pending_reading:NativePerformanceReading|null;pending_result:any;source_observation:{result:any;document:any;cas:any;reading:NativePerformanceReading}|null;first_current:{request:any;result:any;cas:any;document:any;reading:NativePerformanceReading;transition:NativeTransportAcknowledgement|null}|null;stop_result:any}|null=null;
+ readonly scorePlayback:NativeScorePlaybackPort={snapshot:()=>this.scorePlaybackSnapshot(),subscribe:listener=>{this.scoreListeners.add(listener);return()=>{this.scoreListeners.delete(listener);};},play:range=>this.playNativeRetainedScore(range),render:range=>this.renderNativeRetainedScore(range),stop:()=>this.stopNativeRetainedScore(),custody:()=>this.scorePlaybackCustody===null?null:structuredClone(this.scorePlaybackCustody),renderCustody:()=>this.scoreRenderCustody===null?null:structuredClone(this.scoreRenderCustody)};
+ private scorePlaybackSnapshot():NativeScorePlaybackSnapshot|null{
+  const binding=this.recordingBinding,reading=this.performanceReading;
+  if(!binding||!reading||(!this.hasCurrentPerformance()&&!this.hasRetainedScoreAdmission()&&!this.hasPendingNativePlayback()))return null;
+  try{
+   const cas=binding.capture(),scene=binding.document().scenes.find(row=>row.scene_ref===cas.scene_ref),performance=scene?.performance as any;
+   if(!performance||!Array.isArray(performance.checkpoints))return null;
+   const compiled=this.lastNativeRecording?.recording_operations?.includes('playback')===true;
+   const custody=this.scorePlaybackCustody,current=custody?.cas.expression_ref===cas.expression_ref&&custody?.cas.scene_ref===cas.scene_ref,pending=current&&this.hasPendingNativePlayback();
+   return{expression_ref:cas.expression_ref,scene_ref:cas.scene_ref,duration_samples:performance.duration_samples,sample_rate:performance.sample_rate,
+    can_export:!pending&&this.lastNativeRecording?.recording_operations?.includes('edited_render')===true&&!!binding.selectAct&&!this.performancePreparing&&!this.performanceSaving&&!this.performanceSaveCut&&this.nativeTakeRecorder.snapshot()?.status!=='recording'&&!this.scoreRenderCustody?.held&&reading.device.state!=='running',
+    export_file:this.scoreRenderCustody?.cas.expression_ref===cas.expression_ref&&this.scoreRenderCustody?.cas.scene_ref===cas.scene_ref&&this.scoreRenderCustody?.cas.document_revision===cas.document_revision&&this.scoreRenderCustody?.cas.scene_revision===cas.scene_revision&&!this.scoreRenderCustody.held?this.scoreRenderCustody.file:null,
+    available:!pending&&compiled&&!!binding.selectAct&&!this.performancePreparing&&!this.performanceSaving&&!this.performanceSaveCut&&this.nativeTakeRecorder.snapshot()?.status!=='recording'&&!(current&&custody?.held)&&reading.device.state==='prepared',
+    running:current&&!pending&&!custody?.held&&!!custody?.first_current&&reading.device.state==='running',device_started:current&&!custody?.held&&custody?.result?.accepted===true&&(pending||reading.device.state==='running'),first_current_pending:!!pending,programme_ref:current&&!custody?.held?custody?.result?.native_reply?.result?.native_programme_admission?.programme_ref??null:null,
+    reason:current&&custody?.reason?custody.reason:!compiled?'Native retained-score playback is unavailable for this instrument.':reading.device.state==='closed'?'Open native audio output before playing the retained score.':null,
+    checkpoints:performance.checkpoints.map((row:any,index:number)=>({index,checkpoint_ref:row.checkpoint_ref,sample:row.sample,stopped:row.acknowledged_stopped===true}))};
+  }catch{return null;}
+ }
+ private playNativeRetainedScore(input:NativeScorePlaybackRange){return this.serial(async()=>{
+  this.requirePerformanceCurrent();if(!this.hasCurrentPerformance()&&!this.hasRetainedScoreAdmission())throw Error('The actual unchanged body or retained edited-score admission is unavailable.');const binding=this.recordingBinding,session=this.session,opened=this.opened;
+  if(!binding?.selectAct||!session||!opened||this.performancePreparing||this.performanceSaving||this.performanceSaveCut||this.nativeTakeRecorder.snapshot()?.status==='recording'||this.scorePlaybackCustody?.held||this.scoreRenderCustody?.held)throw Error('Reconcile the original native work and stop its sound take before score playback.');
+  if(!this.lastNativeRecording?.recording_operations?.includes('playback'))throw Error('This native instrument has no retained-score playback consumer.');
+  const before=this.performanceReading!;
+  if(before.device.state!=='prepared'||before.active_touches||before.sustain)throw Error('Stop output and release all touches and sustain before playing this score.');
+  const range=readPlaybackRange(input,binding.score().performance.duration_samples);
+  this.performancePreparing=true;session.hold('native retained score programme');this.scoreChanged();this.changed();
+  let issued=false;
+  try{
+   await this.idle();const cas=binding.capture(),document=binding.document();
+   const selected=await binding.selectAct();this.requirePerformanceCurrent();
+   if(!sameNativePlaybackJson(binding.capture(),cas)||!sameNativePlaybackJson(selected.document,document)||!sameNativePlaybackJson(binding.document(),document))throw Error('The actual retained Act edition differs from the selected unchanged Document.');
+   const transaction_ref=`transaction:${crypto.randomUUID()}`;
+   this.playbackCurrentSource=null;this.scorePlaybackCustody={selected,range,cas,transaction_ref,request:null,result:null,reason:null,held:false,start_observation:null,first_current_pending:false,pending_reading:null,pending_result:null,source_observation:null,first_current:null,stop_result:null};issued=true;
+   const reply=await session.performance({operation:'performance-playback',act_ref:selected.act_ref,selection:selected.selection,...range,transaction_ref});
+   const custody=this.scorePlaybackCustody,requestId=custody.request?.request?.request_id;
+   if(!requestId||reply.recording!==custody.result)throw Error('The original native programme lost its same-session request/result custody.');
+   const started=readNativeActPlayback(reply.recording,reply.performance,selected,range,cas,requestId,transaction_ref);
+   custody.start_observation={reading:started.reading,transition:started.transition};
+   this.nativeScoreTransportObservation={lease:custody.request.lease,request_id:requestId,reading:started.reading,transport_transition:started.transition};
+   await this.acceptRecording(reply.recording);this.requirePerformanceCurrent();
+   if(this.nativeCaptureFailure)throw Error('The original native playback capture requires reconciliation: '+this.nativeCaptureFailure.reason);
+   if(readNativePlaybackStartPhase(started.returned,started.programme,started.reading,this.playbackCurrentSource!==null)==='pending-first-callback'){
+    this.retainPendingNativePlaybackSource(started.reading,started.returned,started.programme,started.plan);
+    custody.first_current_pending=true;custody.pending_reading=started.reading;custody.pending_result=reply.recording;
+    this.status='held';custody.reason=this.reason='Audio output started; waiting for its first native sound and body response.';
+    // Previous P/reading remain historical; only the existing frame observer
+    // and protective Stop/Hold/Panic may use this accepted native lifetime.
+    // Subscribers may preserve the original epoch/ACK as historical transport
+    // only. owner.current is false and the displayed P/reading is unchanged.
+    const observation=this.performance.transportObservation?.();if(observation)for(const listener of this.performanceListeners)listener({schema:'ql.performance-management-update/v1',reading:observation.reading,transport_transition:observation.transport_transition});
+    this.scoreChanged();this.changed();return reply.recording;
+   }
+   this.adoptNativePlaybackSource(started.reading,started.returned,started.programme,started.plan);
+   custody.first_current={request:structuredClone(this.lastNativeRecordingRequest),result:reply.recording,cas:binding.capture(),document:binding.document(),reading:started.reading,transition:started.transition};
+   this.applyPhysicalReading(started.reading);this.recordingReady=true;this.retainedScoreAdmission=null;this.publishPerformance(started.reading,started.transition);this.scoreChanged();this.reason='The native score programme and its actual sound/body source are current.';this.changed();return reply.recording;
+  }catch(error){
+   const custody=this.scorePlaybackCustody;
+   if(issued&&custody){custody.reason=String(error);custody.held=true;this.recordingReady=false;
+    // An accepted or unknown start cannot be retried or left exciting the old
+    // displayed body. Close the exact owned lifetime; retain original results.
+    if(custody.result?.delivery_attempted!==false){try{await this.closeOwner(opened);}catch(closeError){custody.reason+='; exact native close failed: '+String(closeError);}}
+   }
+   this.performanceFailure=String(error);this.status=issued?'unavailable':'held';this.reason=String(error);this.changed();this.scoreChanged();throw error;
+  }finally{
+   this.performancePreparing=false;
+   const custody=this.scorePlaybackCustody,first=custody?.first_current;
+   // Fast Start was source-qualified while preparation held client input.
+   // Notify its SAME admitted reading after releasing that hold, so keys/body
+   // cannot remain on the old source until a later native observer request.
+   // Pending/refused Start still publishes no current body. Its original ACK
+   // remains separately retained and is not attached to an advanced reading.
+   if(first&&first.reading===this.performanceReading&&!custody!.held&&!custody!.first_current_pending&&this.hasCurrentPerformance())for(const listener of this.performanceListeners)listener({schema:'ql.performance-management-update/v1',reading:first.reading,transport_transition:null});
+   this.scoreChanged();this.changed();
+  }
+ });}
+ /** Retain genuine source evidence from a stopped/offline callback without
+  * changing current basis, P/GPU, displayed reading or live-input readiness. */
+ private retainPendingNativePlaybackSource(reading:NativePerformanceReading,returned:any,programme:any,plan:any){
+  if(!Object.hasOwn(returned,'current_source_selection'))return;
+  const binding=this.recordingBinding;if(!binding)throw Error('The original pending native source has no actual Scene binding.');
+  this.requirePerformanceCurrent(true);
+  const document=binding.document(),cas=binding.capture();
+  this.playbackCurrentSource=readNativePlaybackCurrentSource(returned,programme,plan,document,cas,reading,this.playbackCurrentSource).custody;
+  // One bounded original per current source epoch, borrowed from the actual
+  // returned result. This supplies independent source replay, never input.
+  if(Object.hasOwn(returned,'source_artifact')&&this.scorePlaybackCustody)this.scorePlaybackCustody.source_observation={result:this.lastNativeRecording,document,cas,reading};
+ }
+ /** Original same-pulse native evidence validates all source descendants before
+  * either renderer texture becomes active. A later body is never a label bind. */
+ private adoptNativePlaybackSource(reading:NativePerformanceReading,returned:any,programme:any,plan:any){
+  const binding=this.recordingBinding;if(!binding)throw Error('The current native source/renderer binding is absent.');
+  this.requirePerformanceCurrent(true);const cas=binding.capture(),document=binding.document();
+  const current=readNativePlaybackCurrentSource(returned,programme,plan,document,cas,reading,this.playbackCurrentSource);
+  if(!this.scorePlaybackCustody?.first_current){
+   const original=returned.native_pulse?.native_capture,capture=this.lastNativeCapture;
+   if(this.nativeCaptureFailure||original?.capture_enabled!==true||original?.counters?.has_callback_readback!==true||!capture||capture.session_ref!==reading.session_ref||capture.transport_epoch!==reading.transport_epoch||this.lastCaptureCursor!==reading.samples_elapsed||!hasNativePlaybackDeviceCallback(returned,programme,reading))throw Error('The first current native source lacks its SAME original callback capture fence.');
+  }
+  const existing=this.physicalProjection?.inspect();
+  if(existing?.scope?.preparation_ref!==reading.scope.preparation_ref||existing?.scope?.state_ref!==reading.scope.state_ref||existing?.scope?.body_revision!==reading.scope.body_revision||existing?.transport_epoch!==reading.transport_epoch){
+   const replacement=new PhysicalSnapshotProjection(this.renderer.retainedTargetPort(),binding.receivingMap(reading),null);
+   try{replacement.prepareAdmission(reading,this.physicalReceivingTargets(),binding.physicalRest(reading));this.requirePerformanceCurrent(true);
+    if(!sameNativePlaybackJson(binding.capture(),cas)||!sameNativePlaybackJson(binding.document(),document))throw Error('The actual current Document changed during native body admission.');
+    replacement.commitPreparedAdmission();const old=this.physicalProjection;this.physicalProjection=replacement;old?.dispose();
+   }catch(error){replacement.dispose();throw error;}
+  }
+  binding.basis=current.selector.basis_index;this.playbackCurrentSource=current.custody;this.currentSourceArtifact=current.artifact;this.currentRetainedSource=null;
+  // One actual original for the current epoch supports independent return
+  // inspection; the first device callback remains separately immutable.
+  if(Object.hasOwn(returned,'source_artifact')&&this.scorePlaybackCustody)this.scorePlaybackCustody.source_observation={result:this.lastNativeRecording,document,cas,reading};
+ }
+ private renderNativeRetainedScore(input:NativeScorePlaybackRange){return this.serial(async()=>{
+  this.requirePerformanceCurrent();if(!this.hasCurrentPerformance()&&!this.hasRetainedScoreAdmission())throw Error('The actual unchanged body or retained edited-score admission is unavailable.');const binding=this.recordingBinding,session=this.session,opened=this.opened,before=this.performanceReading;
+  if(!binding?.selectAct||!session||!opened||!before||this.performancePreparing||this.performanceSaving||this.performanceSaveCut||this.nativeTakeRecorder.snapshot()?.status==='recording'||this.scoreRenderCustody?.held||this.scorePlaybackCustody?.held)throw Error('Reconcile the native work and stop its sound take before exporting this score.');
+  if(!this.lastNativeRecording?.recording_operations?.includes('edited_render'))throw Error('This native owner has no whole-score WAV export consumer.');
+  if(before.device.state==='running'||before.active_touches||before.sustain)throw Error('Stop output and release touches/sustain before the native WAV render.');
+  const range=readPlaybackRange(input,binding.score().performance.duration_samples);
+  this.performancePreparing=true;session.hold('native edited score WAV');this.scoreChanged();this.changed();let issued=false;
+  try{await this.idle();const cas=binding.capture(),document=binding.document(),selected=await binding.selectAct();this.requirePerformanceCurrent();
+   if(!sameNativePlaybackJson(binding.capture(),cas)||!sameNativePlaybackJson(selected.document,document)||!sameNativePlaybackJson(binding.document(),document))throw Error('The actual current Act edition changed before WAV export.');
+   const transaction_ref=`transaction:${crypto.randomUUID()}`;this.scoreRenderCustody={selected,range,cas,before,transaction_ref,request:null,result:null,reason:null,held:false,file:null};issued=true;
+   const reply=await session.performance({operation:'performance-edited-render',act_ref:selected.act_ref,selection:selected.selection,...range,transaction_ref});
+   const custody=this.scoreRenderCustody,id=custody.request?.request?.request_id;
+   if(!id||reply.recording!==custody.result)throw Error('Native WAV export lost the original same-session request/result.');
+   const rendered=readNativeEditedRender(reply.recording,reply.performance,selected,range,cas,id,before);
+   await this.acceptRecording(reply.recording);this.requirePerformanceCurrent();
+   if(!sameNativePlaybackJson(binding.document(),document))throw Error('The current Document changed during native WAV export.');
+   // The native restitution returned its exact genuine restored source/body, qualified by
+   // the closed native/C original cohort. Prepare its acknowledged new epoch
+   // before committing retained GPU bindings; it grants no replacement body.
+   const projection=new PhysicalSnapshotProjection(this.renderer.retainedTargetPort(),binding.receivingMap(rendered.reading),null);
+   try{projection.prepareAdmission(rendered.reading,this.physicalReceivingTargets(),binding.physicalRest(rendered.reading));this.requirePerformanceCurrent();projection.commitPreparedAdmission();const old=this.physicalProjection;this.physicalProjection=projection;old?.dispose();}
+   catch(error){projection.dispose();throw error;}
+   binding.basis=rendered.restoredSource.basis;this.currentSourceArtifact=rendered.restoredSource.artifact;this.currentRetainedSource=rendered.restoredSource.retainedSource;
+   this.playbackCurrentSource=null;custody.file=rendered.files.directory.replace(/\/$/,'')+'/'+rendered.wav.file;
+   this.nativeScoreTransportObservation={lease:custody.request.lease,request_id:id,reading:rendered.reading,transport_transition:rendered.transition};
+   this.publishPerformance(rendered.reading,rendered.transition);this.scoreChanged();this.reason='The native WAV and all original render receipts were saved; the stopped performance was restored.';this.changed();return reply.recording;
+  }catch(error){const custody=this.scoreRenderCustody;if(issued&&custody){custody.held=true;custody.reason=String(error);this.recordingReady=false;if(custody.result?.delivery_attempted!==false){try{await this.closeOwner(opened);}catch(closeError){custody.reason+='; exact native close failed: '+String(closeError);}}}this.performanceFailure=String(error);this.reason=String(error);this.status=issued?'unavailable':'held';this.changed();throw error;}
+  finally{this.performancePreparing=false;this.scoreChanged();this.changed();}
+ });}
+ private stopNativeRetainedScore(){return this.serial(async()=>{
+  this.requirePerformanceCurrent(true);const session=this.session,custody=this.scorePlaybackCustody;
+  if(!session||!this.captureNativePulses||this.performancePreparing||this.performanceSaving||this.performanceSaveCut)throw Error('The same native score owner is not available to stop.');
+  const reply=await session.performance({operation:'performance-exchange',command:{operation:'performance-device-stop'}});
+  if(custody)custody.stop_result=reply.recording;
+  await this.acceptRecording(reply.recording);
+  if(reply.performance.accepted!==true||reply.performance.reading?.device.state==='running')throw Error('The actual native output did not acknowledge Stop.');
+  this.receivePerformance(reply.performance.reading,reply.performance.transport_transition??null);
+  if(custody?.first_current_pending){
+   // A Stop before the first callback grants no replacement P. Retire the exact
+   // lifetime after genuine Stop, retaining both original acknowledgements.
+   custody.held=true;custody.reason=this.reason='Native output stopped before its first current body response. Original start and stop are retained.';
+   this.recordingReady=false;this.status='held';const opened=this.opened;
+   try{if(opened)await this.closeOwner(opened);}catch(error){custody.reason+='; exact native close failed: '+String(error);this.reason=custody.reason;throw error;}
+  }
+  this.scoreChanged();this.changed();
+ }).catch(error=>{this.failPendingNativePlayback(error);throw error;});}
  private scoreSnapshot():NativeScoreSnapshot|null{
   const binding=this.recordingBinding,reading=this.performanceReading;if(!binding||!reading)return null;
-  try{return{...binding.score(),stopped:reading.device.state!=='running',playback_current:this.hasCurrentPerformance(),reason:this.reason};}catch{return null;}
+  try{return{...binding.score(),stopped:!this.hasPendingNativePlayback()&&reading.device.state!=='running',playback_current:this.hasCurrentPerformance(),reason:this.reason};}catch{return null;}
  }
  private scoreChanged(){for(const listener of this.scoreListeners)listener();}
  private editNativeScore(operations:NativeScoreOperation[]){return this.serial(async()=>{
@@ -328,20 +490,58 @@ export class NativeFieldController {
   if(this.performanceReading!.device.state==='running'){
    const reply=await session.performance({operation:'performance-exchange',command:{operation:'performance-device-stop'}});if(reply.recording)await this.acceptRecording(reply.recording);this.receivePerformance(reply.performance.reading,reply.performance.transport_transition??null);
   }
-  const cas=binding.capture();
-  try{await binding.edit(operations,cas);this.recordingReady=false;this.status='held';this.reason='The edited native score is retained; its exact native Act must be admitted before playback.';this.changed();this.scoreChanged();const snapshot=this.scoreSnapshot();if(!snapshot)throw Error('The edited native score readback disappeared.');return snapshot;}
+  await this.retainPreEditStoppedCut();const cas=binding.capture(),before=binding.document();this.retainedScoreAdmission=null;
+  try{await binding.edit(operations,cas);this.recordingReady=false;await this.retainEditedScoreAdmission(before,cas);this.status='held';this.reason='The edited score is ready to play or export. Keys stay held until the instrument responds to playback.';this.changed();this.scoreChanged();const snapshot=this.scoreSnapshot();if(!snapshot)throw Error('The edited native score readback disappeared.');return snapshot;}
   catch(error){this.recordingReady=false;this.reason=String(error);this.status='held';this.changed();this.scoreChanged();throw error;}
  });}
 
  private resolveNativeScore(){return this.serial(async()=>{
   this.requirePerformanceCurrent();const binding=this.recordingBinding;
   if(!binding||!this.performanceReading||this.performanceReading.device.state==='running')throw Error('Stop the exact native output before reconciling its score.');
-  await binding.resolve();this.recordingReady=false;this.status='held';this.reason='The score edit is reconciled from the native Document; actual Act admission is required before playback.';this.changed();this.scoreChanged();
+  const before=binding.document(),cas=binding.capture();this.retainedScoreAdmission=null;
+  await binding.resolve();this.recordingReady=false;await this.retainEditedScoreAdmission(before,cas);this.status='held';this.reason='The reconciled score is ready to play or export. Keys remain held until the instrument responds to playback.';this.changed();this.scoreChanged();
   const snapshot=this.scoreSnapshot();if(!snapshot)throw Error('The reconciled native score readback is unavailable.');return snapshot;
  });}
 
+ /** Preserve actual physical history BEFORE authoring a different score past.
+  * A fresh unique same-cursor cut is native-qualified, including pending queues;
+  * UI sample/sequence equality never substitutes for the original native cut. */
+ private async retainPreEditStoppedCut(){
+  if(this.hasRetainedScoreAdmission())return; // unchanged quiet edited custody
+  this.requirePerformanceCurrent();const session=this.session;
+  if(!session||!this.hasCurrentPerformance()||!this.captureNativePulses||this.performanceReading?.device.state==='running'||!this.lastNativeRecording?.recording_operations?.includes('save_cut'))throw Error('The actual stopped native state must be retained before editing its score.');
+  try{
+   if(this.nativeTakeRecorder.snapshot()?.status==='recording')await this.nativeTakeRecorder.stop(this.performanceReading!);
+   const cut=await session.performance({operation:'performance-save-cut',checkpoint_ref:`checkpoint:${crypto.randomUUID()}`});
+   await this.acceptRecording(cut.recording);this.requirePerformanceCurrent();
+   if(cut.recording?.accepted!==true||cut.recording?.original_cut_files?.available!==true)throw Error('The original pre-edit native cut/files require reconciliation. The score was not edited.');
+   this.receivePerformance(cut.performance.reading,cut.performance.transport_transition??null);
+  }catch(error){this.recordingReady=false;this.status='held';this.reason=String(error);this.changed();this.scoreChanged();throw error;}
+ }
+
+ private hasRetainedScoreAdmission(){
+  const admission=this.retainedScoreAdmission,binding=this.recordingBinding;
+  if(!admission||!binding||!this.hasOwnedPerformance()||this.pendingPlaybackBoundary()||this.performancePreparing||this.performanceSaving||this.performanceSaveCut||this.performanceStale||this.performanceCurrent?.()!==true)return false;
+  try{return sameNativePlaybackJson(binding.capture(),admission.cas)&&sameNativePlaybackJson(binding.document(),admission.selected.document);}catch{return false;}
+ }
+ private async retainEditedScoreAdmission(before:any,beforeCas:NativeRecordingCas){
+  this.requirePerformanceCurrent();const binding=this.recordingBinding;
+  if(!binding?.selectAct||!this.hasOwnedPerformance()||this.performanceReading?.device.state==='running')throw Error('The actual stopped native body and same-store Act reader are required for edited-score admission.');
+  const document=binding.document(),cas=binding.capture(),original=before.scenes.find((row:any)=>row.scene_ref===beforeCas.scene_ref)?.performance,after=document.scenes.find((row:any)=>row.scene_ref===cas.scene_ref)?.performance;
+  if(cas.expression_ref!==beforeCas.expression_ref||cas.scene_ref!==beforeCas.scene_ref||!original||!after)throw Error('The score edit returned to another actual native work.');
+  for(const field of ['bases','native_sources','checkpoints'])if(Object.hasOwn(original,field)!==Object.hasOwn(after,field)||!sameNativePlaybackJson(original[field],after[field]))throw Error('The authored score edit changed its original native source, basis or checkpoint custody.');
+  const selected=await binding.selectAct();this.requirePerformanceCurrent();
+  if(!sameNativePlaybackJson(binding.capture(),cas)||!sameNativePlaybackJson(binding.document(),document)||!sameNativePlaybackJson(selected.document,document))throw Error('The actual newly retained native Act edition differs from the current unchanged edited Document.');
+  this.retainedScoreAdmission={cas:structuredClone(cas),selected};
+ }
+
  private performancePort():NativePerformanceExchange{const controller=this;return{
   get current(){return controller.hasCurrentPerformance();},
+  transportObservation:()=>{
+   const original=controller.nativeScoreTransportObservation;
+   if(!original||controller.scorePlaybackCustody?.held||controller.scoreRenderCustody?.held||!controller.hasOwnedPerformance()||controller.performanceStale||controller.performanceCurrent?.()!==true||original.lease!==controller.opened?.lease||controller.opened?.closing)return null;
+   return original;
+  },
   outputCalibration:()=>{if(!controller.hasCurrentPerformance()||!controller.currentOutputCalibration)return null;const admission=controller.lastNativeCalibration?.native_reply?.result?.native_pulse?.payload?.score_admission;return{declaration:structuredClone(controller.currentOutputCalibration),stage:!controller.currentOutputCalibration.required?'not-required':controller.observedCalibrationApplication?'applied':'queued',admission_sequence:admission?.event?.sequence??null,effective_force_newtons:controller.performanceReading?.parameters.find(parameter=>parameter.target_ref==='ql:performance/parameter/force-newtons')?.effective??null};},
   supports:(operation)=>controller.hasCurrentPerformance()&&!(operation==='performance-transpose'&&controller.captureNativePulses),
   exchange:(command:NativePerformanceCommand)=>this.exchangePerformance(command),
@@ -353,11 +553,19 @@ export class NativeFieldController {
   holdPerformance:(reason:string)=>this.holdPerformance(reason),
  };}
  private hasOwnedPerformance(){return !this.performanceFailure&&!!this.performanceReading&&!!this.session&&this.current(this.session)&&this.session.reading.available;}
- private hasCurrentPerformance(){return this.hasOwnedPerformance()&&!this.performanceSaveCut&&!this.performancePreparing&&this.recordingReady&&!this.performanceStale&&this.performanceCurrent?.()===true;}
- private requirePerformanceCurrent(){
-  if(this.performanceCurrent?.()===true&&!this.performanceStale)return;
+ private pendingPlaybackBoundary(){const custody=this.scorePlaybackCustody;return custody?.first_current_pending===true&&typeof custody.request?.lease==='string'&&custody.request.lease===this.opened?.lease;}
+ private hasPendingNativePlayback(){const custody=this.scorePlaybackCustody;return this.hasOwnedPerformance()&&!this.opened?.closing&&this.pendingPlaybackBoundary()&&!custody!.held&&!this.performanceStale&&this.performanceCurrent?.()===true;}
+ private failPendingNativePlayback(error:unknown){
+  if(!this.pendingPlaybackBoundary())return;
+  const custody=this.scorePlaybackCustody!;custody.held=true;custody.reason=String(error);this.recordingReady=false;this.performanceFailure=String(error);this.status='unavailable';this.reason=String(error);
+  const opened=this.opened;if(opened)void this.closeOwner(opened).catch(closeError=>{custody.reason+='; exact native close failed: '+String(closeError);this.reason=custody.reason;this.changed();});
+  this.scoreChanged();this.changed();
+ }
+ private hasCurrentPerformance(){return this.hasOwnedPerformance()&&!this.pendingPlaybackBoundary()&&!this.performanceSaveCut&&!this.performancePreparing&&this.recordingReady&&!this.performanceStale&&this.performanceCurrent?.()===true;}
+ private requirePerformanceCurrent(allowPending=false){
+  if(this.performanceCurrent?.()===true&&!this.performanceStale){if(!allowPending&&this.pendingPlaybackBoundary())throw Error("Wait for the original native programme's first current sound and body response.");return;}
   if(!this.performanceStale){this.performanceStale=true;this.status='held';this.reason='The current Document, Scene or selected native source changed; this physical instrument is held.';
-   this.holdPerformance(this.reason);if(this.performanceReading)for(const listener of this.performanceListeners)listener({schema:'ql.performance-management-update/v1',reading:this.performanceReading,transport_transition:null});this.changed();}
+   if(this.pendingPlaybackBoundary()){this.scorePlaybackCustody!.held=true;this.scorePlaybackCustody!.reason=this.reason;const opened=this.opened;if(opened)void this.closeOwner(opened).catch(error=>{this.reason+='; exact native close failed: '+String(error);this.changed();});}else this.holdPerformance(this.reason);if(this.performanceReading)for(const listener of this.performanceListeners)listener({schema:'ql.performance-management-update/v1',reading:this.performanceReading,transport_transition:null});this.changed();}
   throw Error(this.reason??'The retained native performance source is stale.');
  }
  assertCurrentPerformance(){this.requirePerformanceCurrent();if(!this.recordingReady)throw Error('The current native score and pre-play origin are not yet retained.');return this.performanceReading;}
@@ -408,12 +616,25 @@ export class NativeFieldController {
    if(result.application?.Ok)this.scoreChanged();}
   catch(error){this.recordingReady=false;this.status='held';this.reason='Original native pulse acknowledged; Document adoption requires reconciliation: '+String(error);this.changed();throw error;}
  }
+ private async saveRetainedEditedScore<T>(save:()=>Promise<T>):Promise<T>{
+  if(!this.hasRetainedScoreAdmission())throw Error('The exact retained edited score is unavailable for its original file save.');
+  // Native P describes its authentic pre-edit cut, not the edited past.
+  // Ordinary Workspace Save retains the exact current Act Edition and file;
+  // this serial pause sends no Stop/Inspect/new cut or calibration command.
+  const binding=this.recordingBinding!,cas=binding.capture(),document=binding.document();
+  this.performanceSaving=true;this.changed();
+  try{const saved=await save();if(saved===false)throw Error('The edited score file save/readback remains unresolved.');this.requirePerformanceCurrent();
+   if(!sameNativePlaybackJson(binding.capture(),cas)||!sameNativePlaybackJson(binding.document(),document))throw Error('The edited saved file differs from the actual retained score Edition.');
+   this.status='held';this.reason='Edited score saved and read back. Play or export it; keys remain held.';this.changed();return saved;
+  }finally{this.performanceSaving=false;this.scoreChanged();this.changed();}
+ }
  /** The serial owner remains paused through the native stopped cut AND the
   * ordinary file save/readback. No Inspect can drain a new pulse in between. */
  withNativePerformanceSave<T>(save:()=>Promise<T>):Promise<T>{
   if(!this.performanceReading)return save();
   return this.serial(async()=>{
    this.requirePerformanceCurrent();const session=this.session;
+   if(this.hasRetainedScoreAdmission())return this.saveRetainedEditedScore(save);
    if(!session||!this.recordingBinding||!this.captureNativePulses||!this.recordingReady||this.performanceSaveCut)throw Error('Retain/reconcile the actual native recording before saving its current state.');
    this.performanceSaving=true;
    try{
@@ -433,6 +654,7 @@ export class NativeFieldController {
   if(!this.performanceReading)return save();
   return this.serial(async()=>{
    this.requirePerformanceCurrent();
+   if(this.hasRetainedScoreAdmission())return this.saveRetainedEditedScore(save);
    if(!this.session?.reading.available||this.performanceReading!.device.state==='running'||this.performanceSaveCut?.result?.accepted!==true)throw Error('The original stopped native save cut is unavailable for same-file recovery.');
    this.performanceSaving=true;try{const result=await save();if(result===false)throw Error('The original file save remains pending.');this.requirePerformanceCurrent();this.performanceSaveCut=null;this.reason='Original native stopped cut saved and read back; continue explicitly.';this.changed();return result;}finally{this.performanceSaving=false;}
   });
@@ -441,7 +663,7 @@ export class NativeFieldController {
  get nativeOutputCalibration(){return{declaration:this.currentOutputCalibration===null?null:structuredClone(this.currentOutputCalibration),original_recording:this.lastNativeCalibration===null?null:structuredClone(this.lastNativeCalibration),actual_application:this.observedCalibrationApplication===null?null:structuredClone(this.observedCalibrationApplication),current:this.hasCurrentPerformance(),standing:'original native declaration/admission custody; actual effective Force remains native readback'};}
  get nativeContinuation(){return this.hasCurrentPerformance()&&this.lastNativeContinuation?structuredClone(this.lastNativeContinuation):null;}
  get nativeContinuationCustody(){return this.lastNativeContinuation?structuredClone(this.lastNativeContinuation):null;}
- get musicalCaptureReady(){return this.recordingReady;}
+ get musicalCaptureReady(){return this.recordingReady&&!this.pendingPlaybackBoundary();}
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
@@ -802,7 +1024,7 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
      request_id:request.request_id,expected_generation:request.expected_generation,expected_samples_elapsed:request.expected_samples_elapsed,command:{operation:request.command?.operation}});
     let reply:any;
     const operation=request.command?.operation;
-    const recorded=operation==='performance-scene-prepare'||operation==='performance-recording-begin'||operation==='performance-save-cut'||operation==='performance-continue-act'||operation==='performance-exchange'&&this.captureNativePulses;
+    const recorded=operation==='performance-scene-prepare'||operation==='performance-recording-begin'||operation==='performance-save-cut'||operation==='performance-continue-act'||operation==='performance-playback'||operation==='performance-edited-render'||operation==='performance-exchange'&&this.captureNativePulses;
     if(recorded){
      const binding=this.recordingBinding;if(!binding)throw Error('The actual native Scene recording producer is disconnected.');
      const cas=binding.capture();this.lastRecordingCas=cas;
@@ -810,11 +1032,15 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
       :operation==='performance-recording-begin'?{operation:'begin',basis:binding.basis,checkpoint_ref:request.command.checkpoint_ref}
       :operation==='performance-save-cut'?{operation:'save_cut',basis:binding.basis,layer:binding.layer,checkpoint_ref:request.command.checkpoint_ref}
       :operation==='performance-continue-act'?{operation:'continue_act',act_ref:request.command.act_ref,selection:request.command.selection,checkpoint_index:request.command.checkpoint_index,transaction_ref:request.command.transaction_ref}
+      :operation==='performance-playback'?{operation:'playback',act_ref:request.command.act_ref,selection:request.command.selection,from_sample:request.command.from_sample,to_sample:request.command.to_sample,checkpoint_index:request.command.checkpoint_index,transaction_ref:request.command.transaction_ref}
+      :operation==='performance-edited-render'?{operation:'edited_render',act_ref:request.command.act_ref,selection:request.command.selection,from_sample:request.command.from_sample,to_sample:request.command.to_sample,checkpoint_index:request.command.checkpoint_index,transaction_ref:request.command.transaction_ref}
       :{operation:'command',basis:binding.basis,layer:binding.layer,command:request.command.command};
      if(command.operation==='command'&&(command as any).command?.operation==='performance-transpose')throw Error('Transpose requires a captured native source transition.');
      const recordingRequest={operation:'native-performance-recording',lease:opened.lease,request:{...cas,...command,lease:opened.lease,request_id:request.request_id}};this.lastNativeRecordingRequest=structuredClone(recordingRequest);
      const result=await this.port.request(recordingRequest);
      this.lastNativeRecording=result;
+     if(operation==='performance-edited-render'&&this.scoreRenderCustody){this.scoreRenderCustody.request=structuredClone(recordingRequest);this.scoreRenderCustody.result=result;}
+     if(operation==='performance-playback'&&this.scorePlaybackCustody){this.scorePlaybackCustody.request=structuredClone(recordingRequest);this.scorePlaybackCustody.result=result;}
      if(operation==='performance-continue-act')this.lastNativeContinuation={act_ref:request.command.act_ref,selection:structuredClone(request.command.selection),checkpoint_index:request.command.checkpoint_index,transaction_ref:request.command.transaction_ref,result};
      const host=result?.native_reply?.result?.host_receipt??result?.native_reply?.host_receipt;
      if(host?.schema!=='ql.field-host-receipt/v1'||host.request_id!==request.request_id||host.last_request_id!==request.request_id)throw Error('The original recording pulse omitted its same outer HostReceipt.');
@@ -907,14 +1133,17 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
  frame(delta:number,paused:boolean){
   if(this.session)this.pausePendingPresentation(this.session);
   if(this.performanceReading){
-   try{this.requirePerformanceCurrent();}catch{return 0;}
-   if(paused){if(this.status==='following')this.hold('application paused or hidden');return 0;}
+   try{this.requirePerformanceCurrent(true);}catch{return 0;}
+   if(paused){
+    if(this.hasPendingNativePlayback()&&!this.performanceHoldPending){this.performanceHoldPending=true;void this.stopNativeRetainedScore().catch(error=>{this.failPendingNativePlayback(error);this.performanceFailure=String(error);this.status='unavailable';this.reason=String(error);this.changed();}).finally(()=>{this.performanceHoldPending=false;});}
+    else if(this.status==='following')this.hold('application paused or hidden');return 0;
+   }
    // This is a bounded control read on the application's EXISTING animation
    // frame. The native audio callback alone advances P/audio time. Inspect
    // returns its actual snapshot; there is no browser sample clock or solver.
-   if(!this.performanceSaveCut&&!this.performanceSaving&&!this.performancePolling&&!this.serialDepth&&!this.operating&&this.hasCurrentPerformance()&&performance.now()-this.lastPerformancePoll>=20){
+   if(!this.performanceSaveCut&&!this.performanceSaving&&!this.performancePolling&&!this.serialDepth&&!this.operating&&(this.hasCurrentPerformance()||this.hasPendingNativePlayback())&&performance.now()-this.lastPerformancePoll>=20){
     this.performancePolling=true;this.lastPerformancePoll=performance.now();
-    void this.exchangePerformance({operation:'performance-inspect'}).catch(error=>{this.holdPerformance(String(error));}).finally(()=>{this.performancePolling=false;});
+    void this.exchangePerformance({operation:'performance-inspect'}).catch(error=>{if(this.pendingPlaybackBoundary())this.failPendingNativePlayback(error);else this.holdPerformance(String(error));}).finally(()=>{this.performancePolling=false;});
    }
    return this.status==='following'?delta:0;
   }
@@ -1076,7 +1305,7 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
    await this.observeNativeCapture({native_reply:result.original_application_reply});
    if(result.accepted!==true)throw Error(result.reason??'The native physical edit refused; its original body/document custody remains.');
    await binding.acceptPhysical(result,cas);this.requirePerformanceCurrent();
-   const document=binding.document();binding.basis=kind==='physical'?appliedPhysicalBasis(document,cas,result):appliedAcousticSource(document,cas,result).basis;this.currentSourceArtifact=structuredClone(result.original_application_reply.result.source_artifact);this.currentRetainedSource=null;
+   const document=binding.document();binding.basis=kind==='physical'?appliedPhysicalBasis(document,cas,result):appliedAcousticSource(document,cas,result).basis;this.currentSourceArtifact=structuredClone(result.original_application_reply.result.source_artifact);this.currentRetainedSource=null;this.playbackCurrentSource=null;
    const actual=await session.performance({operation:'performance-exchange',command:{operation:'performance-inspect'}});
    await this.acceptRecording(actual.recording);this.requirePerformanceCurrent();
    const reading=readPerformance(actual.performance.reading,oldReading),map=binding.receivingMap(reading),body=(document as any).scenes.find((row:any)=>row.scene_ref===cas.scene_ref).performance.bases[binding.basis].prepared_body;
@@ -1117,9 +1346,32 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
  }
  private receivePerformance(value:unknown,transition:NativeTransportAcknowledgement|null){
   const session=this.session;if(!session||!this.current(session)||!this.projection||!this.physicalProjection)throw Error('Native musical receiving is no longer current.');
-  const next=readPerformance(value,this.performanceReading??undefined,transition),native=session.reading;
+  const custody=this.scorePlaybackCustody,pending=this.hasPendingNativePlayback();
+  const next=readPerformance(value,pending?custody!.pending_reading??undefined:this.performanceReading??undefined,transition),native=session.reading;
   if(next.scope.instance_ref!==native.instance_ref||next.scope.event_ref!==native.event_ref||next.scope.subject_ref!==native.subject_ref)throw Error('The native musical reply belongs to another source owner.');
-  if(!this.performanceStale&&this.performanceCurrent?.()===true)this.applyPhysicalReading(next);
+  if(pending){
+   custody!.pending_result=this.lastNativeRecording;custody!.pending_reading=next;
+   const returned=this.lastNativeRecording?.native_reply?.result,programme=custody!.result?.native_reply?.result?.native_programme_admission;
+   if(readNativePlaybackStartPhase(returned,programme,next,this.playbackCurrentSource!==null)==='pending-first-callback'){
+    this.retainPendingNativePlaybackSource(next,returned,programme,custody!.result.native_reply.result.original_plan);
+    this.scoreChanged();this.changed();return; // no current P/GPU/publication
+   }
+  }
+  if(!this.performanceStale&&this.performanceCurrent?.()===true){
+   if(next.live_temporal){
+    const custody=this.scorePlaybackCustody,returned=this.lastNativeRecording?.native_reply?.result;
+    if(!custody?.result?.native_reply?.result?.native_programme_admission||custody.held)throw Error('The active native programme lost its original admission/current-source custody.');
+    try{
+     this.adoptNativePlaybackSource(next,returned,custody.result.native_reply.result.native_programme_admission,custody.result.native_reply.result.original_plan);
+     if(custody.first_current_pending){const binding=this.recordingBinding!;custody.first_current={request:structuredClone(this.lastNativeRecordingRequest),result:this.lastNativeRecording,cas:binding.capture(),document:binding.document(),reading:next,transition};custody.first_current_pending=false;custody.reason=null;this.recordingReady=true;this.retainedScoreAdmission=null;}
+    }
+    catch(error){custody.held=true;custody.reason=String(error);this.recordingReady=false;
+     const opened=this.opened;if(opened)void this.closeOwner(opened).catch(closeError=>{custody.reason+='; exact native close failed: '+String(closeError);this.changed();});
+     throw error;
+    }
+   }
+   this.applyPhysicalReading(next);
+  }
   this.publishPerformance(next,transition);
  }
  /** Only already admitted native reading/receiving reaches this notification. */
@@ -1128,17 +1380,18 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
   this.status=!this.performanceStale&&next.available&&next.device.state==='running'?'following':'held';if(!this.performanceStale)this.reason=next.reason??next.device.error;
   const update:NativePerformanceUpdate={schema:'ql.performance-management-update/v1',reading:next,transport_transition:transition};
   for(const listener of this.performanceListeners)listener(update);
-  this.changed();
+  this.scoreChanged();this.changed();
  }
  private exchangePerformance(command:NativePerformanceCommand){return this.serial(async()=>{
   const session=this.session;if(!session||!this.hasOwnedPerformance())throw Error('The retained musical owner is unavailable.');
   const protective=command.operation==='performance-hold'||command.operation==='performance-panic';
-  if(!protective){this.requirePerformanceCurrent();if(this.performanceSaveCut)throw Error('The original stopped file save requires readback before further input or playback.');if(!this.recordingReady)throw Error('Retain the actual native score and pre-play origin before starting output or input.');}
+  const pendingInspect=this.hasPendingNativePlayback()&&command.operation==='performance-inspect';
+  if(!protective){this.requirePerformanceCurrent(pendingInspect);if(this.performanceSaveCut)throw Error('The original stopped file save requires readback before further input or playback.');if(!this.recordingReady&&!pendingInspect)throw Error('Retain the actual native score and pre-play origin before starting output or input.');}
   if(command.operation==='performance-transpose'&&this.captureNativePulses)throw Error('Transpose is unavailable until its recorded native source transition is admitted.');
   if(this.contextLost&&command.operation!=='performance-hold'&&command.operation!=='performance-panic')throw Error('GPU receiving is unavailable; recover the same retained body before playing.');
   const reply=await session.performance({operation:'performance-exchange',command});if(reply.recording)await this.acceptRecording(reply.recording);
   if(!this.current(session))throw Error('The musical reply completed after the native lifetime changed.');
-  if(!protective){try{this.requirePerformanceCurrent();}catch(error){this.receivePerformance(reply.performance.reading,reply.performance.transport_transition??null);throw error;}}
+  if(!protective){try{this.requirePerformanceCurrent(pendingInspect);}catch(error){this.receivePerformance(reply.performance.reading,reply.performance.transport_transition??null);throw error;}}
   this.receivePerformance(reply.performance.reading,reply.performance.transport_transition??null);
   return reply.performance;
  });}
@@ -1435,7 +1688,9 @@ async openSelectedScene(request:NativeSelectedSceneRequest|NativeSelectedSourceB
   const soundFailure=unfinishedTake?this.nativeTakeRecorder.fail('The original native owner was released before its take acknowledged Stop. Captured originals remain; no continuous WAVE or successful native stop is claimed.'):Promise.resolve();
   this.lastNativeCapture=null;this.lastCaptureCursor=null;
   this.sourceAuthorshipWindow=null;this.lastSourceAuthorship=null;this.selectedSourceQualified=false;this.selectedSourceBinding=null;this.selectedSourceAsset=null;this.lastSourceTransaction=null;this.lastRecordingCas=null;this.performanceSaveCut=null;this.performanceSaving=false;
-  this.performanceReading=null;this.performanceFailure=null;this.performanceCurrent=null;this.performanceStale=false;this.recordingBinding=null;this.captureNativePulses=false;this.recordingReady=false;this.lastNativeRecording=null;this.lastNativeContinuation=null;this.currentOutputCalibration=null;this.lastNativeCalibration=null;this.observedCalibrationApplication=null;this.lastNativePhysicalEdit=null;this.lastNativeAcousticEdit=null;this.currentSourceArtifact=null;this.currentRetainedSource=null;
+  this.retainedScoreAdmission=null;this.nativeScoreTransportObservation=null;
+  if(this.scorePlaybackCustody?.first_current_pending){this.scorePlaybackCustody.held=true;this.scorePlaybackCustody.reason='The original native owner was released before its first current source response.';}
+  this.performanceReading=null;this.performanceFailure=null;this.performanceCurrent=null;this.performanceStale=false;this.recordingBinding=null;this.captureNativePulses=false;this.recordingReady=false;this.lastNativeRecording=null;this.lastNativeContinuation=null;this.currentOutputCalibration=null;this.lastNativeCalibration=null;this.observedCalibrationApplication=null;this.lastNativePhysicalEdit=null;this.lastNativeAcousticEdit=null;this.currentSourceArtifact=null;this.currentRetainedSource=null;this.playbackCurrentSource=null;
   this.pause('released');
   const epoch=++this.epoch;const session=this.session;this.lastNative=session?.reading??this.lastNative;
   this.session=null;session?.dispose();this.recovery?.();this.recovery=null;

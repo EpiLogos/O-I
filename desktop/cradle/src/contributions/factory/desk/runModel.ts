@@ -160,7 +160,7 @@ export function projectName(projectKey: string | undefined, centralProject?: str
 export type RunState = "queued" | "running" | "blocked" | "success" | "fail" | "cancelled" | "archived";
 /** Lifecycle is retained history; successful closure requires the native
  * owner admission carried in the same Run reading. */
-export function runState(run: RunReading): RunState {
+export function runState(run: Pick<RunReading, "runRef" | "lifecycle"> & {nativeAttempts?: Pick<NativeAttemptReading, "runRef" | "lifecycle" | "completionVerified" | "archivedFrom" | "wholeRunState"> | null}): RunState {
   const native = nativeAttemptsFor(run);
   if (native?.wholeRunState === "failed") return "fail";
   switch (run.lifecycle) {
@@ -175,7 +175,7 @@ export function runState(run: RunReading): RunState {
 }
 /** Accepted unit counts come from the same native owner snapshot. A readable
  * Return can remain produced material after its acceptance has been rejected. */
-export function acceptedUnitProgress(run: RunReading): {accepted: number; required: number} | undefined {
+export function acceptedUnitProgress(run: Pick<RunReading, "runRef"> & {nativeAttempts?: Pick<NativeAttemptReading, "runRef" | "requiredUnits" | "currentReturnedUnits"> | null}): {accepted: number; required: number} | undefined {
   const native = nativeAttemptsFor(run);
   if (!Array.isArray(native?.requiredUnits) || !Array.isArray(native.currentReturnedUnits)) return undefined;
   return {accepted: native.currentReturnedUnits.length, required: native.requiredUnits.length};
