@@ -97,6 +97,9 @@ fn performance(actual: &Value) -> Performance {
         native_sources: assets,
         native_recordings: vec![],
         native_reservations: vec![],
+        // This retained mixed native-source history has no authored contacts.
+        // The owner omits the empty legacy default from serialization and seal.
+        contact_definitions: vec![],
         layers: vec![Layer {
             layer_ref: "performance:mixed-source/layer".into(),
             title: "Actual original mixed source epochs".into(),

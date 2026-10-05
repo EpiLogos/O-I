@@ -2249,7 +2249,8 @@
      "key": "`oi-cradle.unplaced-draft.v1:${id}`",
      "basis": [
       "KEY = \"oi-cradle.workspaces.v1\"",
-      "legacyRaw = localStorage.getItem(\"oi-cradle.layout.v1\")",
+      "candidates = Array.isArray(raw.workspaces) ? raw.workspaces : saved.sourceKey === \"oi-cradle.layout.v1\" ? [{ name: \"Recovered arrangement\", layout: raw }] : []",
+      "carryLegacyWriting = {\n    const text = typeof workspace.writing === \"string\" ? workspace.writing : \"\";\n    if (!text.trim())\n        return workspace;\n    const held = Object.values(workspace.layout.surfaces).some(binding => binding.kind === \"draft\");\n    if (held)\n        return workspace;\n    const id = `${workspace.id}:carried-writing`;\n    try {\n        localStorage.setItem(`oi-cradle.unplaced-draft.v1:${id}`, JSON.stringify({ text, at: Date.now() }));\n    }\n    catch {\n        return workspace;\n    }\n    const binding = { id, kind: \"draft\", title: \"Draft\", project: workspace.project };\n    const layout = openBinding(workspace.layout, binding);\n    return { ...workspace, writing: \"\", writingMode: false, layout };\n}",
       "raw = localStorage.getItem(KEY)"
      ]
     },
@@ -2285,9 +2286,9 @@
     },
     {
      "family": "`oi-cradle.unplaced-draft.v1:${id}`",
-     "classification": "presentation-local",
-     "rationale": "Workspace arrangement book, legacy migration and unsaved drafts. Classification provisional pending Lane B disclosure, not semantic ownership.",
-     "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+     "classification": "device-draft",
+     "rationale": "Unsaved text carried from the legacy workspace writing field into the existing Draft Surface. carryLegacyWriting derives the draft ID from that workspace, keeps the text on this device, and clears the old field only after retention succeeds. DraftSurface reads that exact key; native Central placement remains a separate explicit Save and its owner receipt.",
+     "review": "Current 6fa source review: src/workspace/store.ts carryLegacyWriting/recoverAvailable, src/flow/unplacedDrafts.ts DRAFT_KEY/readUnplacedDraft, src/flow/DraftSurface.tsx Save, and src/CradleFrame.tsx placeDraft. Device retention creates no native source identity, currentness or permission. Existing scanner/negative assertions are unchanged; installed recovery/placement acceptance remains open."
     }
    ]
   }
