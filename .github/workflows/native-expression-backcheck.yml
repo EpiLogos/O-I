@@ -37,7 +37,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: native-expression-backcheck-${{ github.ref }}
+  group: native-expression-backcheck-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: false
 jobs:
   native-kernel-regressions:

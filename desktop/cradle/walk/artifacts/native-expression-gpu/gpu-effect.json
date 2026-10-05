@@ -1,0 +1,11 @@
+{
+  "schema": "oi.native-expression-gpu-effect/v1",
+  "standing": "controlled native target changes through actual production GPU; not native model/installed material proof",
+  "pass": true,
+  "position_effect": 33.836591720581055,
+  "velocity_effect": 244.66432666778564,
+  "particles": 1024,
+  "steps": 24,
+  "browser": "153.0.8010.12",
+  "disconnected_effect": 0
+}
