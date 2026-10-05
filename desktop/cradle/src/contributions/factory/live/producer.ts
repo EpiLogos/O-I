@@ -552,11 +552,16 @@ export class LiveProducer {
   /** Tier 1: an explicitly selected Expression (or Scene) for this Run. */
   select(fileRef: string | undefined): Promise<void> {
     const selected = (async () => {
+      if (this.state.status !== "following" && this.state.status !== "degraded")
+        throw new Error("The native Run Expression is not ready to select material; its existing reading is retained");
       this.config = {...this.config, context: {...this.config.context, explicit: fileRef}};
       this.resolve(this.repertoire.material);
       if (this.state.status === "following" || this.state.status === "degraded") {
-        const act = await this.openAct(this.state.cast).catch(() => undefined);
-        if (act) this.set({act});
+        // The caller reports native refusal/uncertainty. A failed selection
+        // must not resolve as though the requested material was admitted.
+        const act = await this.openAct(this.state.cast);
+        if (!act) throw new Error("The native Expression selection did not return its act; retained material is still on stage");
+        this.set({act});
       }
     })();
     this.selections.add(selected);

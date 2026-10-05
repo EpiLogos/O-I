@@ -282,8 +282,12 @@ export function useRunLive(runKey: string | undefined): LiveState | undefined {
 export async function selectRunExpression(runKey: string, fileRef: string | undefined): Promise<void> {
   // The person's choice outlives this view: reopening the Run's Live (or
   // coming back from Technè) keeps the Expression they chose.
+  const holder = liveHolders.get(runKey);
+  if (!holder || holder.holders <= 0) throw new Error("The Run's live Expression is no longer open; reopen it before selecting material");
+  if (holder.producer.state.status !== "following" && holder.producer.state.status !== "degraded")
+    throw new Error("The native Run Expression is not ready to select material; its existing reading is retained");
   if (fileRef) explicitByRun.set(runKey, fileRef); else explicitByRun.delete(runKey);
-  await liveHolders.get(runKey)?.producer.select(fileRef);
+  await holder.producer.select(fileRef);
 }
 const explicitByRun = new Map<string, string>();
 /** Tests / diagnostics: how many producers are held. */
