@@ -1,0 +1,439 @@
+{
+  "schema": "oi.architecture.consumed-owner-returns/v1",
+  "standing": "agent-inference; source-only candidates",
+  "consumed_on": "2026-10-02",
+  "governing_sources": [
+    "docs/positions/FOUNDING-POSITIONS.md",
+    "docs/CORE-PRIMITIVE-FIELD.md",
+    ".wayfinder/maps/agent-praxis-document-world.md"
+  ],
+  "programme_return": "https://github.com/EpiLogos/O-I/issues/220#issuecomment-5941350019",
+  "bounds": [
+    "No authored meaning, row/cell, capability identity, H, evidence grade or diagram-arrow promotion.",
+    "basis_git_revision is a worktree base; working_tree_files hashes identify the uncommitted candidate, not an immutable committed blob.",
+    "Only source reads/hash comparison completed here; runtime, independent amended review and installed acceptance remain pending.",
+    "The existing six diagrams retain their original source-basis and render cuts."
+  ],
+  "owner_candidates": [
+    {
+      "id": "shared",
+      "return_sha256": "73075deaf8bd510c638ddb06f3329d86139e06caa0db31c701844b0dbdec0b31",
+      "patch_sha256": "5d420909aab5702386a3af2b63620942a5fdd690e299206bc53479c85343d70f",
+      "product": "O:I",
+      "semantic_owner": "SharedField native relation admission; source owners retain the contributed material",
+      "implementation_form": "provider backing tables, Views and transactional reducers",
+      "operations": [
+        "findLiteralTuple",
+        "persistentAuthorityForRead",
+        "reconcile_field_tuple_keys",
+        "field_presence",
+        "activity_liveness",
+        "ingest_authorized_exchange_contribution"
+      ],
+      "question": "Real SDK/database selected-field migration and rollback, literal-tuple collision controls, Stage caller/sentinel and rebind replay; finite reducer grants versus clockless Views and truthful consumer readback remain pending.",
+      "capability_ids": [],
+      "return_clearing_ref": "central:now:control:root:6e25031956740de092c2779c8b26ae6925b390b3f9e9709bf6795ac6f2729c0f",
+      "return_relative_path": "T/shared-tuple-source-v2.1-return.json",
+      "basis_git_revision": "7cb463fed737f60ea9a14a5453e77441ce7f09c5",
+      "working_tree_files": [
+        {
+          "path": "shared-field/spacetimedb/src/index.ts",
+          "sha256": "3dbf7e08fa7ef8cd798e9e3db376876cd73927f8aad112fa1504a5916f5b6a42",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "shared-field/spacetimedb/src/tuple-keys.ts",
+          "sha256": "f5de60d9f583514c1aba06197f22305a83ec8e7cc60ee74f7b4ec70bf55203e1",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "shared-field/spacetimedb/tests/tuple-keys.test.mjs",
+          "sha256": "3b48067e2ae0c67489bfbc8d207cd03674ca931a81490b1430237308034b2efd",
+          "inspection": "matching owner-seat bytes"
+        }
+      ],
+      "patch_relative_path": "T/shared-tuple-source-v2.patch",
+      "standing": "uncommitted source candidate; no new compile/test/install/producer acceptance"
+    },
+    {
+      "id": "transport",
+      "return_sha256": "2c069a368c1bb42c7d23a2b03f031f3019e2283fd2eeb6417d3af5f71fd3b351",
+      "patch_sha256": "aa06229a6332758f56e61bebf84a87cbb31eb17a48c9324dfa8669c96c7192a7",
+      "product": "O:I",
+      "semantic_owner": "Each called native product retains admission, effect classification and response decoding",
+      "implementation_form": "stateless finite process/pipe adapter in the desktop kernel; no new primitive, broker, registry or semantic service",
+      "operations": [
+        "native_process::run",
+        "native_process::run_cancellable",
+        "knowledge::{run,run_input}",
+        "routine::call",
+        "action.rs native knowledge-open dispatch",
+        "inhabitation native calls"
+      ],
+      "question": "Classification v1.1 corrects the original blanket read-only claim; physical v2 adds cancellation and actual exit diagnostics. Separate mutation outcome-unknown, ActionResult/Flow presentation, platform cleanup, v2 independent review and remaining consumer rewiring are pending.",
+      "capability_ids": [],
+      "return_clearing_ref": "central:now:control:root:6e25031956740de092c2779c8b26ae6925b390b3f9e9709bf6795ac6f2729c0f",
+      "return_relative_path": "T/native-physical-transport-source-v1-return.json",
+      "basis_git_revision": "7cb463fed737f60ea9a14a5453e77441ce7f09c5",
+      "working_tree_files": [
+        {
+          "path": "desktop/cradle/kernel/src/native_process.rs",
+          "sha256": "f5d626f53cbc674dc9899f52855ef2303df9c316454d4d95aa78bc1a8c690916",
+          "inspection": "frozen owner patch reconstructed; exact sha256 verified; owner-seat bytes already advanced"
+        },
+        {
+          "path": "desktop/cradle/kernel/src/inhabitation.rs",
+          "sha256": "1257cf1c79c817002382ac63b00f688c4cd96f027d02f9e485086547abed1829",
+          "inspection": "frozen patch inspected; candidate sha256 declared by owner; later owner-seat bytes differ"
+        },
+        {
+          "path": "desktop/cradle/kernel/src/knowledge.rs",
+          "sha256": "258d95e28b39f7f961aff4eca8df0d0ed8165f94cf69d7b01d93deb7b2040d23",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "desktop/cradle/kernel/src/lib.rs",
+          "sha256": "382914ab0a37d2377e594aca541ae1b716fa7b4af1d7a3e595caab62c3e57a00",
+          "inspection": "matching owner-seat bytes"
+        }
+      ],
+      "patch_relative_path": "T/native-physical-transport-source-v1.patch",
+      "standing": "uncommitted source candidate; no new compile/test/install/producer acceptance",
+      "additional_caller_inspection": {
+        "path": "desktop/cradle/kernel/src/routine.rs",
+        "sha256": "423132383d41b93339ee63be318abc6db917171a64d34b8be66cd3996b67eea1",
+        "relation": "call passes Request::Disable/RunNow to knowledge::run; inspect definition, no execution"
+      },
+      "classification_successor": {
+        "return_clearing_ref": "central:now:control:root:6e25031956740de092c2779c8b26ae6925b390b3f9e9709bf6795ac6f2729c0f",
+        "return_relative_path": "T/native-physical-transport-source-v1.1-return.json",
+        "return_sha256": "eee0f40f5c21259570737bc95846ab424db0999aff5210b55554520633bcf65c",
+        "effect": "corrects read-only classification; does not change original source hashes or prove runtime qualification"
+      },
+      "physical_successor": {
+        "return_clearing_ref": "central:now:control:root:6e25031956740de092c2779c8b26ae6925b390b3f9e9709bf6795ac6f2729c0f",
+        "return_relative_path": "T/native-physical-transport-source-v2-return.json",
+        "return_sha256": "57a2f8d6427e10f377b8696822b5dfbc872a78715c0a0229a2d01454eaa03da9",
+        "basis_git_revision": "9fa900210afe61ec0a56183debc795bb7439ffbe",
+        "patch_relative_path": "T/native-physical-transport-source-v2.patch",
+        "patch_sha256": "21a14e75bd725a7a45fa3fb5aa6c11f7233185ad8e791015e92ef3544f2b64e2",
+        "working_tree_files": [
+          {
+            "path": "desktop/cradle/kernel/src/native_process.rs",
+            "sha256": "db4d1fe3bbd60e3c812c97f9736cf80979c9dd98de4f6300ad8e53ac2e09b9bb",
+            "inspection": "frozen patch reconstructed and exact hash verified; owner-seat bytes already advanced"
+          },
+          {
+            "path": "desktop/cradle/kernel/src/inhabitation.rs",
+            "sha256": "d3978efd9ef77a20107039e69e7a734a26213fd49b9b23335c3c51ba0551e634",
+            "inspection": "matching owner-seat bytes"
+          }
+        ],
+        "amendment": "Borrowed finite pure caller stop/lease cancellation; actual ExitStatus diagnostics; spawn cannot be interrupted before its OS call returns.",
+        "standing": "source-only; amended independent review, compile/OS/native/install gates pending; no mutation consumer acceptance"
+      },
+      "independent_source_review": {
+        "return_clearing_ref": "central:now:control:root:309d2f7b27a4de3ba13c5f0e1686784175c07a200e20838c7bd337a598dc00ac",
+        "return_relative_path": "T/r3-native-physical-transport-independent-source-v1-review.json",
+        "sha256": "c74fef36b31e631ce5ef44fffa1f1ed247c17d5579f9444e91ebd5139d02c3cb",
+        "standing": "v1 source review only; v2 amended independent review pending"
+      }
+    },
+    {
+      "id": "central",
+      "return_sha256": "f88033756aae74582b565ebf7af4691c006edeae6f07485fcf719a44b3323e0c",
+      "patch_sha256": "6eac76bfb72f980170f3a7c8c3949f5e69692df12eeadf4df28ae45d751781e2",
+      "product": "Central",
+      "semantic_owner": "ProjectCentral structural lifecycle and root Wiki federation; machine.adopt-current owns adoption",
+      "implementation_form": "native file owner and compatibility CLI delegation",
+      "operations": [
+        "initialize_projectcentral",
+        "adopt_in_place",
+        "migrate_selected",
+        "ensure_root_federation",
+        "Publication::{acquire,replace,create_new,copy_new}",
+        "machine.adopt-current"
+      ],
+      "question": "Cross-owner Central/AIKit concurrency, owner-death/exec lock release, metadata and post-effect readback, original installed race and default connector replay remain unexecuted for this candidate.",
+      "capability_ids": [
+        "cap.central.projectcentral-lifecycle"
+      ],
+      "return_clearing_ref": "central:now:control:root:309d2f7b27a4de3ba13c5f0e1686784175c07a200e20838c7bd337a598dc00ac",
+      "return_relative_path": "T/central-publication-source-v5-return.json",
+      "basis_git_revision": "6bcfc1661cd0eccec1a4a691503ea401d411023a",
+      "working_tree_files": [
+        {
+          "path": "ctrl/src/projectcentral_ops.rs",
+          "sha256": "aa9e2e559fd0dfb9ec42809cb4bb11dfad73553576e946ac3b19a9bb78132183",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "ctrl/src/wiki_publication.rs",
+          "sha256": "455feb65b59fcd7761d9ccd53f60aa16148b7dc4f60b291a501f4427aaf5ed2f",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "ctrl/src/lib.rs",
+          "sha256": "cac8089168cc17b93dd859fe5990481ff24c362d032212e48ee64086384f3551",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "ctrl/src/bin/central-machine-adopt.rs",
+          "sha256": "2485e52cc7a05c9d26874b7a445a1b96a8deacc17713bce8bc74833cc8fb42c5",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "ctrl/tests/wiki_publication.rs",
+          "sha256": "da12521c398d311c68fb2fb85bb1f5db521164454899cb1fc68483e7f060fb65",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "ctrl/tests/machine_adopt_compat.rs",
+          "sha256": "047a131748184a5fffada855e142ee15518922b1ceb7c2f7b546625f2f9997bd",
+          "inspection": "matching owner-seat bytes"
+        }
+      ],
+      "patch_relative_path": "T/central-publication-machine-delegation-v5.patch",
+      "standing": "uncommitted source candidate; no new compile/test/install/producer acceptance"
+    },
+    {
+      "id": "workcell",
+      "return_sha256": "d9d4085bdd04c9bfd1ce0705cb607627c9cc20f37d44c143b4120cc11338dedc",
+      "patch_sha256": "0a92bb663df16b9bd756d266a359f5852d34d60c193e9e10420e26fa443d9157",
+      "product": "Workcell",
+      "semantic_owner": "InstanceRegistry material identity, declarations, adoption and liveness",
+      "implementation_form": "native registry source, locked publication and per-record compare-before-mutate; not Control Service child custody",
+      "operations": [
+        "InstanceRegistry::{register,declare,adopt,apply_liveness}",
+        "instance_scan::reconcile",
+        "build_instance_record"
+      ],
+      "question": "Real parallel declarations, stale scan/newer registration, restart/lineage, owner-death/exec and Mac/Linux metadata controls remain queued. Whole-scan intake and other Workcell source writers are separate residuals.",
+      "capability_ids": [
+        "cap.workcell.instance-registry"
+      ],
+      "return_clearing_ref": "central:now:control:root:5ef152f4c1ac0bb28f8c99183b23c45cf57e080e1fcc5fe7ca0b71bbaf23459d",
+      "return_relative_path": "T/workcell-instance-publication-source-v4-return.json",
+      "basis_git_revision": "99024c125bad13156633f7e62af98125877802aa",
+      "working_tree_files": [
+        {
+          "path": "crates/workcell-runtime/src/instance_registry.rs",
+          "sha256": "6b5f3d0df33d1fabda4720d476655f6a68eccad1ad1ed116288f9d467162f3a5",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/workcell-runtime/src/instance_scan.rs",
+          "sha256": "2d76ca6dfd4e756c891975577d022f0b505c9a7b3b4524a23116ad1d8b130a0d",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/workcell-runtime/src/lib.rs",
+          "sha256": "b50e6c886b169c4e41ce5bbb9eb896f6ed5e929c248e1529bba232afb52cc023",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/workcell-runtime/src/instance_publication.rs",
+          "sha256": "24bbdaa1a6a225b64fb0dcfeaadd72efd0fc749674e3479d1f261c94e65893eb",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/workcell-runtime/tests/instance_publication.rs",
+          "sha256": "b544209f5ce611c76514ed236f2050bb58c00efaddf5f40c63d00745f0393f0e",
+          "inspection": "matching owner-seat bytes"
+        }
+      ],
+      "patch_relative_path": "T/workcell-instance-publication-source-v4.patch",
+      "standing": "uncommitted source candidate; no new compile/test/install/producer acceptance"
+    },
+    {
+      "id": "factory",
+      "return_sha256": "c3a5dbb8ebd3588f9a85f8a1ab63893d59934b1a2b775f996560ebc6a5b299a8",
+      "patch_sha256": "f3f56a8b7c5aa65019bcbbf246bd15454083c934d10b7591a682c4da838cc7eb",
+      "product": "Factory",
+      "semantic_owner": "BuildAction state and ProjectDevelopment Run ledger",
+      "implementation_form": "owner-native locked transactions, durable JSON publication and a subordinate in-memory cache",
+      "operations": [
+        "FactoryBuildFileProvider::execute_action",
+        "FileProjectDevelopmentStore::transact",
+        "transact_developmental_state"
+      ],
+      "question": "Real competing writers, CLI learning/concurrency, killed owner and capacity/permission controls remain queued. Old installed cached writers ignore the new locks and must be inventoried/drained before cutover.",
+      "capability_ids": [
+        "cap.factory.build-evidence",
+        "cap.factory.development-persistence",
+        "cap.factory.owner-return"
+      ],
+      "return_clearing_ref": "central:now:control:root:9db97ebf39957fb3702a17aee687762a66a91ba6a99b3902b2e487a072a5cc82",
+      "return_relative_path": "T/factory-owner-transactions-source-held.json",
+      "basis_git_revision": "ef2817ce1453e20f3d7862032fd7df64e74fc2f1",
+      "working_tree_files": [
+        {
+          "path": "factory/src/build_provider.rs",
+          "sha256": "58f0a67dc9fe3026eeebafd6198df3db80fc0dba6a3dc15b6389bfca40104c92",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/src/project_development_store.rs",
+          "sha256": "d0cbdf49d6450f5fcbb7c2a7441648752b82802d66dcf59401bb76086f2d367e",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/src/development_field_cli.rs",
+          "sha256": "e04ddba66bb611e2c2225aebdcb9a4735ca32cb1b60376c39612c91ef15fa6cd",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/src/cli.rs",
+          "sha256": "b371abdc3f548378c0efd125b0699ec7ced965a19a9295f8ece775670e9728f6",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/src/attempt_learning.rs",
+          "sha256": "2b166dd1bab0e46d80825d0f9cf3bc33b1a57a8f7a7bdda5c04e5e551f865593",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/tests/build_file_provider.rs",
+          "sha256": "85a9142b391062dfa3f73efde44ebc3d6c7db1b7a6248bccd5cfb57971a4fc9f",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/tests/project_development_persistence.rs",
+          "sha256": "a849b95a12d74da3a9ffb029aa1058d6cec195fe73afcb7bab06779f2cb7cbb1",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "factory/tests/native_store_transactions.rs",
+          "sha256": "64a5762296dbe315987aa51e368d36841ce8d6763a3a0034d13c5be8725a6e1d",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "docs/canon/PROJECT-DEVELOPMENT-ORIENTATION-AND-RETURN.md",
+          "sha256": "a31167e2f81f17fcc0d46af0eec9e4baede7da9eb1aef4e2fd313697cd915357",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "README.md",
+          "sha256": "75a2666953d4f6685329b8b2d9ec93e4aadb08456cbcd93972a0b1fde8aec261",
+          "inspection": "matching owner-seat bytes"
+        }
+      ],
+      "patch_relative_path": "T/factory-owner-transactions-source-held-v2.patch",
+      "standing": "uncommitted source candidate; no new compile/test/install/producer acceptance"
+    },
+    {
+      "id": "aikit",
+      "return_sha256": "ec996b4683656ccd9c1280602317cf7850f6ad0c749b2c6ffa4cba770bc04d62",
+      "patch_sha256": "50c4ce8cfe56f1ef2d533eab0974150fc664e418a2387ea799ff80f1884569a4",
+      "product": "AIKit",
+      "semantic_owner": "Wiki object semantics, writes, shapes and construction; SourcePool and ProjectMap remain separate owners/providers",
+      "implementation_form": "semantic operations over native Wiki source plus a file-publication adapter",
+      "operations": [
+        "publish_wiki",
+        "native Wiki writes/shapes/construction",
+        "constellation_readback"
+      ],
+      "question": "Amended helper and native construction tests, real cross-owner writers/restart/permission/federation controls and preservation of the original operation_ref after a published effect remain pending.",
+      "capability_ids": [
+        "cap.aikit.wiki-write",
+        "cap.aikit.wiki-shapes",
+        "cap.aikit.knowledge-navigation"
+      ],
+      "return_clearing_ref": "central:now:control:root:7969ee30f9def954854559b9261ca3d9962fa500f8121f77193389153d51d689",
+      "return_relative_path": "T/wiki-publication-amended-v2-return.json",
+      "basis_git_revision": "377bfe674191df5ab721be54c4ebb78a391a2905",
+      "working_tree_files": [
+        {
+          "path": "crates/aikit-adapters/src/projectcentral.rs",
+          "sha256": "292d4133c4d99a79cf6be1a2ab40e57da16c649777a81541e460316df157e2ea",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/aikit-adapters/src/wiki_publication.rs",
+          "sha256": "07c9b779bcad1a95bc9705f18775b06c36de58e8c155ebf9db25111ee17d9a7c",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/aikit-core/src/knowledge_wiki_write.rs",
+          "sha256": "c4bf6aa5e49311cf3a2e1ea68de630a90ce55602abf26d75de4c4a8307e0298d",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/aikit-cli/src/wiki.rs",
+          "sha256": "b8c7b6458606e1cefe77c469be7d4a8ebaa5efc817b2f18598096202f3cfd037",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/aikit-cli/src/wiki_shape.rs",
+          "sha256": "587b911f45d5e7f9979d5cca0e7932e9a969f5ea79ad2bd518dbeda2d94c324e",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/aikit-cli/src/wiki_construct.rs",
+          "sha256": "402694239cc0a329e5abe99297007ee512210f6d61b3a33bf188067fa03966c3",
+          "inspection": "matching owner-seat bytes"
+        },
+        {
+          "path": "crates/aikit-cli/tests/wiki_commands.rs",
+          "sha256": "9f797b25f5a75cd20720eafb44fc9d869d3dbe0a4012ac0d172dad134f4c56f2",
+          "inspection": "matching owner-seat bytes"
+        }
+      ],
+      "patch_relative_path": "T/wiki-publication-cumulative-amended-v2.patch",
+      "standing": "uncommitted source candidate; no new compile/test/install/producer acceptance"
+    }
+  ],
+  "fresh_navigation": {
+    "standing": "fresh read-only source navigation; no code/runtime acceptance",
+    "question": "An older Workcell liveness scan returns after a newer native registration: identify the operation, owner, lifecycle/admission/storage, source cut and verification.",
+    "record_clearing_ref": "central:now:control:root:746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d",
+    "record_relative_path": "T/frozen-primitive-doc-reconciliation/fresh-workcell-primitive-navigation.json",
+    "sha256": "f25f7c7bf2db20dfc6f8a662bd2c6ce3c793d987423a6b2aed39c13dc41d2750",
+    "native_source_cuts": {
+      "source:project:O-I:docs/architecture/README.md": "central.content-fnv1a64/v1:8432:cc3b026ec1f2534f",
+      "source:project:Workcell:docs/ARCHITECTURE-NAVIGATION.md": "central.content-fnv1a64/v1:4014:0e7bbddaa0dadaaf"
+    },
+    "route": [
+      "published native entries",
+      "cap.workcell.instance-registry",
+      "candidate operation table",
+      "Workcell v4 frozen Return",
+      "exact owner/caller/test source hashes"
+    ],
+    "operation": "InstanceRegistry::apply_liveness(&[LivenessUpdate]) -> Result<()>",
+    "public_cli": "workcell instances scan",
+    "unchanged_cli_source": {
+      "path": "crates/workcell-cli/src/main.rs",
+      "sha256": "c58eee645942afbcef12a27b8e531eb0add0d40bc146f9b6c9c76b0bda7f8d82",
+      "basis_git_revision": "99024c125bad13156633f7e62af98125877802aa",
+      "matches_committed_base": true,
+      "inspection": "Native instances scan string-dispatch branch delegates to scan_live; no CLI executed"
+    },
+    "test_definition": {
+      "path": "crates/workcell-runtime/tests/instance_publication.rs:142",
+      "name": "stale_liveness_basis_refuses_all_updates_and_retains_newer_owner_state",
+      "description": "Uses real InstanceRegistry APIs/files, actual executable-backed live records and a newly created material seam; saves two bases, registers newer second record, applies old batch, checks error and exact unchanged source bytes/first miss count/new seam, then applies fresh basis. This is an unexecuted definition."
+    },
+    "candidate_file_hashes_match": true,
+    "candidate_execution": "none; definition only",
+    "original_installed_race": {
+      "return_clearing_ref": "central:now:control:root:5ef152f4c1ac0bb28f8c99183b23c45cf57e080e1fcc5fe7ca0b71bbaf23459d",
+      "return_relative_path": "T/instance-publication-race-evidence.json",
+      "sha256": "95ee7db4659f173ee624d854fe9b3544adf1af08f1a6f206995498166e75ad68",
+      "source_revision": "c7261e23bc9306a7ce3481405db79dbee26dffe6",
+      "installed_cut": "workcell0.1.0(50c134a9cf7d)",
+      "actual_declarations": 12,
+      "successes": 10,
+      "successful_but_missing": [
+        "campaign-harness-00",
+        "campaign-harness-05"
+      ],
+      "failed_but_present": [
+        "campaign-harness-01",
+        "campaign-harness-06"
+      ],
+      "standing": "Retained observed installed declaration/publication race. Separately, old source apply_liveness accepted unconditional tuples and had no previous-record comparison. The packet is not an installed stale-scan replay or acceptance of the candidate."
+    },
+    "navigation_correction": "Exact SourcePool-ref syntax added; initial wrong absolute-path/source-ref inputs are not missing native documentation. SourcePool primary cut and unpublished candidate cut remain distinct."
+  }
+}

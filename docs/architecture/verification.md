@@ -17,6 +17,56 @@ uncommitted O:I source cuts and the consumed Epi audit have retained verificatio
 copies with exact hashes; those copies preserve inspection evidence and confer
 no source authority or implementation publication.
 
+## Current documentation publication — 4 October 2026, 23:21 UTC
+
+The architecture field now has canonical native entries on Main. The two remaining
+documentation closures merged normally: [AIKit #489](https://github.com/EpiLogos/ai-kit/pull/489)
+at `509ec40dcaebb14e9a146f2ecd5258d2f7457783` ([native entry](https://github.com/EpiLogos/ai-kit/blob/509ec40dcaebb14e9a146f2ecd5258d2f7457783/docs/ARCHITECTURE-NAVIGATION.md)),
+and [Actuation #131](https://github.com/EpiLogos/Actuation/pull/131) at
+`2139d78ceed15f8359e75a8a185648f80a604b8a` ([native entry](https://github.com/EpiLogos/Actuation/blob/2139d78ceed15f8359e75a8a185648f80a604b8a/docs/ARCHITECTURE-NAVIGATION.md)).
+Their four/six-file changes preserve seed meanings, domain coordinates, standing,
+outcomes and unknown fields, repair relocation/retirement links, and reconcile
+architecture, diagram and praxis relations through the existing protocol. Native
+Main readbacks equal the independently reviewed afterimages. The later code-lane
+revisions and their native/installed claims retain their separate qualifications.
+
+The suite's sixteen-document/export correction merged through [O:I #583](https://github.com/EpiLogos/O-I/pull/583)
+at `696a5fbbb5da44aa425746ef55bc8b7ccc798e73`. All five required checks
+passed; the actual clean full landing receipt at
+`7a667da3a2442efa7a42e2f653506dacd8a824cc` records nineteen passed gates,
+zero failures and zero flakes. Six portable SVG exports were independently
+parsed, opened and visually inspected at readable scale. All fifty-nine arrows
+remain bound to named relations; this publication adds no architecture arrow
+or Epi numerical/domain determination. The O:I primary received these exact
+sixteen Main documents through native revision-checked writes; all 1,426
+unrelated recorded paths retained their recorded bytes and physical state.
+Its code/index/HEAD remain a separate cut. At this checkpoint the AIKit and
+Actuation primary-document refresh is still a separate coordinated operation.
+
+The hosted workflow badges do not close the broader capability audit.
+[AIKit's actual maintenance result](https://github.com/EpiLogos/ai-kit/actions/runs/37242631292/job/111554211427)
+at `1d45e7c27ef96d91a43d73e8770956c6a1abb81a` returns exit 1 with
+511 predicates: 105 historical code-basis comparisons, 403 unmapped CLI
+identities and three matrix CLI identities not found by discovery.
+[Actuation's actual maintenance result](https://github.com/EpiLogos/Actuation/actions/runs/37242636120/job/111554226196)
+at `a868bffd18540e18dc937a3b0824cc936531bf67` returns exit 1 with
+44 predicates: 27 historical code-basis comparisons and seventeen unmapped
+CLI identities. Their retained artifacts are `11318155641` and `11317158809`.
+Existing structural, seed, repository-link and companion checks pass for the
+documentation correction; source-code evidence digests and execution grades
+were not rewritten to hide these findings. Code-basis reconciliation and CLI
+coverage remain with each native capability owner and the existing programme.
+
+An independent unfamiliar-feature walk starts at the Actuation account,
+follows the selected-handoff companion and its immutable `ac036` SDK source,
+and locates the public `projectcentral.now.return` operation, Central's record
+owner and root/Project storage, the returned `read_path`, and the real
+no-resubmission test. The dated `b91` Linux/macOS seven-case SDK evidence
+qualifies its stated activity; it does not establish production capture repair
+or installed acceptance. The [upgrade companion](upgrade-lifecycle.md) retains
+the missing whole-set/receipt recovery join as an open defect. Installed
+experience, human Recognition and the #65/#220 whole remain open.
+
 Retained publication snapshot, checked 4 October 2026, 18:58 UTC: Central's
 native-operation and architecture corrections are on `main` through
 [Central #257](https://github.com/EpiLogos/Central/pull/257) at
@@ -279,6 +329,82 @@ actual native determinant effect and receiving, two-person live causal return,
 fresh Nara/Epii, managed installed replay, physical audio and H remain open.
 No diagram arrow or numerical/domain mapping is changed by this consumption;
 the diagram basis retains its exact earlier cut.
+
+## Consumed primitive source candidates — 2 October 2026
+
+Retained source-candidate inspection from 2 October 2026. The named Returns,
+tests and pending gates below describe that historical cut. Use the current
+publication and later owner-qualified companions above for operative standing.
+This reading grants no new code, installed, capability or human acceptance.
+
+The [implementation navigation](README.md#primitive-implementation-navigation--2-october-2026)
+and [evidence manifest](evidence/primitive-source-candidates-20261002.json)
+consume Central publication v5, Workcell instance publication v4, AIKit's
+amended Wiki publication v2, Factory's held owner transactions, SharedField
+tuple v2.1 and finite physical transport v1, followed by its classification
+v1.1 and physical v2 successors. This is bounded source inspection
+and owner-Return consumption under the programme's resource hold. No build,
+test, renderer, app, producer, installer or provider restart ran in this pass.
+The earlier executed diagram and matrix checks retain their recorded cuts;
+they do not verify the new candidate source.
+
+The named Central, Workcell, AIKit, Factory and SharedField files matched their
+frozen Return hashes when read. Two transport files had already advanced in
+the owner seat. The v1 helper was recovered from its retained patch and matched
+its exact hash; the remaining changed caller was read as the frozen patch,
+not relabelled as current code. The later v2 physical helper was also recovered
+from its exact patch; one v2 owner-seat file had already advanced again.
+`routine.rs::call` independently confirms that
+`knowledge::run` carries `disable`/`run-now` mutations. The wider knowledge
+`open`/`route` familiarity finding is attributed to the parent's independent
+R3 review at its exact retained hash. v1.1 corrects the classification; v2 adds
+physical cancellation/exit diagnostics. The separate mutation-bearing caller
+contract, v2 independent review and operational qualification remain pending.
+
+The owner packets contain real filesystem/process/concurrency test definitions,
+including stale record bases, stage substitution, exec descriptor inheritance,
+competing writers and interrupted publication. They are not executed results.
+Central/AIKit cross-owner concurrency, Workcell original installed-race replay,
+Factory old-writer drainage, SharedField SDK/database migration and the actual
+physical-adapter failure path must qualify their own source/build/install/
+running cuts before a whole-programme acceptance claim.
+
+A fresh read-only agent then navigated an older Workcell liveness scan arriving
+after a newer registration. Published native entries, the existing instance
+capability, the candidate operation table and exact v4 Return led it to
+`workcell instances scan → scan_live → reconcile → apply_liveness`.
+It recovered the full previous-record comparison for every batch member before
+any mutation, the registry/child-custody/projection distinction, stable material
+lineage and the dedicated real-owner test
+`stale_liveness_basis_refuses_all_updates_and_retains_newer_owner_state`.
+All five frozen file hashes matched. That test remains unexecuted.
+The unchanged CLI caller also matched its immutable base Git blob.
+
+The agent independently recovered the original installed race: 12 declarations,
+10 acknowledgements, two acknowledged records missing and two reported failures
+nevertheless committed, at installed `50c134a9cf7d` / source `c7261e23…`.
+This proves that declaration-publication defect, not a stale-scan replay or
+v4 acceptance. Its [navigation evidence](evidence/primitive-source-candidates-20261002.json)
+retains exact source/read/Return hashes and the original race packet. The walk
+also found and repaired the missing native SourcePool-ref examples; wrong
+absolute-path input was not classified as absent native documentation.
+The current primary O:I read still yields an earlier published cut, so the
+candidate locator stays explicit until integration and source-horizon refresh.
+
+Native capability evidence proposals use the existing Central lifecycle,
+AIKit Wiki write/shapes/navigation, Factory Build/development/Return and
+Workcell instance-registry records. They must pass each named owner's ordinary
+HTML/CSV reconciliation and inventory protocol before integration; no new
+capability registry, coordinate assignment, seed/H change or evidence promotion
+is made here. The concrete capability IDs are in the consumed-source manifest.
+Architecture/diagram/praxis relations from the earlier verified pass stay at
+that standing until the reviewed owner transaction changes them.
+
+The governing #65 obligations remain the original native Day/NOW/Flow and
+material episode, grounded source/praxis before Agency launch, interruption and
+late Return, two independently grounded people, and exact source/build/install/
+running/provider/material/H evidence. Its closed issue status and #220's source
+campaign are not substitute acceptance receipts.
 
 ## Current process successor and documentation result — 4 October 2026, 18:48 UTC
 

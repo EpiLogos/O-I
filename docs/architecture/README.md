@@ -37,6 +37,32 @@ Every arrow is indexed in [relations.json](relations.json). Use a later
 owner return only after reading the source it cites; a branch name is not an
 evidence revision.
 
+## Current documentation publication — 4 October 2026, 23:21 UTC
+
+The remaining native architecture entries and matrix/account relations are on Main:
+[AIKit #489](https://github.com/EpiLogos/ai-kit/pull/489) at `509ec40dcaebb14e9a146f2ecd5258d2f7457783`
+([entry](https://github.com/EpiLogos/ai-kit/blob/509ec40dcaebb14e9a146f2ecd5258d2f7457783/docs/ARCHITECTURE-NAVIGATION.md)),
+and [Actuation #131](https://github.com/EpiLogos/Actuation/pull/131) at
+`2139d78ceed15f8359e75a8a185648f80a604b8a` ([entry](https://github.com/EpiLogos/Actuation/blob/2139d78ceed15f8359e75a8a185648f80a604b8a/docs/ARCHITECTURE-NAVIGATION.md)).
+These four/six-file corrections repair relocation and retired links, preserve
+seed meanings and standing, and keep later code-lane evidence at its stated cut.
+
+[O:I #583](https://github.com/EpiLogos/O-I/pull/583) merged the sixteen
+suite documents/exports at `696a5fbbb5da44aa425746ef55bc8b7ccc798e73`.
+Its five required checks passed; the clean full landing receipt records 19/19.
+Six portable, independently inspected SVGs retain all fifty-nine sourced arrows.
+The primary received the exact sixteen documents through native revision-checked
+writes, preserving all 1,426 unrelated recorded paths and leaving code/index/HEAD separate.
+AIKit/Actuation primary-document refresh remains coordinated separately at this cut.
+
+Existing structural, seed, link and companion checks passed. A fresh reader
+located the unfamiliar handoff operation, owner, lifecycle, source and real
+no-resubmission verification. The broader hosted capability advisories still
+return exit 1 with 511 AIKit and 44 Actuation predicates; [exact Source/job
+provenance and navigation proof](verification.md#current-documentation-publication--4-october-2026-2321-utc)
+retain those findings. The [upgrade recovery gap](upgrade-lifecycle.md), Epi owner
+audit, installed experience and human Recognition remain open at their own standing.
+
 Retained publication snapshot, checked 4 October 2026, 18:58 UTC: Central's
 native-operation and architecture corrections are on `main` through
 [Central #257](https://github.com/EpiLogos/Central/pull/257) at
@@ -158,6 +184,77 @@ To navigate a feature: find its operation in the companion, open its native
 owner module in `relations.json`, read its lifecycle and storage boundary, then
 follow the cited test and returned result. The source-basis manifest identifies
 the inspected bytes even when the checkout contains an uncommitted change.
+
+For native reading, use the actual SourcePool ref, for example
+`aikit knowledge read source=source:project:O-I:docs/architecture/README.md --json`
+or `source:project:Workcell:docs/ARCHITECTURE-NAVIGATION.md` as the source value.
+An absolute file path is not that command's SourcePool identity. A primary
+SourcePool read can disclose an older published cut while a repair lives in a
+named seat: use the recorded candidate locator and hash for that inspection,
+without calling it the installed or published successor.
+
+## Primitive implementation navigation — 2 October 2026
+
+Retained source-candidate inspection from 2 October 2026. The named Returns,
+tests and pending gates below describe that historical cut. Use the current
+publication and later owner-qualified companions above for operative standing.
+This reading grants no new code, installed, capability or human acceptance.
+
+The [core primitive field](../CORE-PRIMITIVE-FIELD.md) supplies the ratified
+organisational meanings. Its JSON/CSV row and cell anchors do not describe the
+current implementation or confer acceptance. The table below is a bounded
+Agent reading of six frozen owner Returns and the transport classification/physical successors from the
+[primitive reconciliation campaign](https://github.com/EpiLogos/O-I/issues/220#issuecomment-5941350019).
+It uses existing owners and operations, without assigning new coordinates.
+Exact working-tree hashes, base revisions, Return locators and pending gates
+are in the [consumed-source evidence](evidence/primitive-source-candidates-20261002.json).
+All six are source candidates: compile, native regression, amended independent
+review and installed qualification remain pending. A base Git revision does
+not commit the candidate bytes.
+
+| Concern and native owner | Operation and implementation carrier | Why the boundary exists; remaining join |
+| --- | --- | --- |
+| SharedField relation admission, O:I | `shared-field/spacetimedb/src/index.ts`: `findLiteralTuple`, `reconcile_field_tuple_keys`, `field_presence`, `activity_liveness` and Exchange ingress; `tuple-keys.ts` supplies injective physical keys. | A storage key is not authority. Admission also compares literal field/participant/operation tuples. Owner-only, selected-field migration retains identities, grants, budgets and attribution; ambiguous Presence ancestry refuses. Real SDK/database migration and rollback, rebind replay and Stage caller/sentinel controls are pending. |
+| ProjectCentral structure and federation, Central | `ctrl/src/projectcentral_ops.rs`: initialise/adopt/migrate, `ensure_root_federation`; `wiki_publication.rs`: `Publication::{acquire,replace,create_new,copy_new}`. The compatibility machine CLI delegates to `machine.adopt-current`. | Structural creation, migration and root child relations remain Central operations. The shared file lock does not transfer AIKit's Wiki semantic authority. Actual cross-owner publication and the default machine connector replay remain pending. |
+| Wiki semantic operations, AIKit | `knowledge_wiki_write.rs`, `wiki.rs`, `wiki_shape.rs`, `wiki_construct.rs`; `aikit-adapters/src/wiki_publication.rs::publish_wiki`. | Writes, shapes and construction retain their native semantic admission and original operation identity. Existing-source publication uses Central's canonical-parent/`.basename.publication.lock` protocol. SourcePool, ProjectMap and source history are not replaced by the Wiki file. Amended helper/construction and real cross-owner tests remain pending. |
+| Build and developmental Run state, Factory | `build_provider.rs::FactoryBuildFileProvider::execute_action`; `project_development_store.rs::FileProjectDevelopmentStore::transact`. | Authority and duplicate admission act on durable state reloaded under the owner lock; durable publication precedes acknowledgement and cache refresh. The Run ledger preserves Intent, praxis, material and Return. Unsupported nonempty unknown extensions refuse mutation rather than silently losing bytes. Old installed cached writers ignore the new locks; inventory/drain and real competing-writer replay remain pending. |
+| Material instance records, Workcell | `workcell instances scan` → `scan_live` → `instance_scan.rs::reconcile`; `InstanceRegistry::{register,declare,adopt,apply_liveness}` publishes through `instance_publication.rs`. | Durable registry records differ from service child-handle custody and audience projections. Every liveness update compares its exact inspected record before any batch mutation; stale or duplicate input refuses the whole publication. New records retain exact `identity_material`; legacy missing material stays unknown, with no backfill or semantic-ID rewrite. Concurrency, stale scan, restart and lineage tests remain pending. |
+| Finite physical command transport, O:I kernel | `desktop/cradle/kernel/src/native_process.rs::{run,run_cancellable}`; caller routes in `knowledge.rs` and `inhabitation.rs`. | The helper bounds stdin, stdout/stderr, exit and pipe EOF while each native product retains admission, decoding and effect classification. It is a stateless adapter, not a new semantic primitive or service. Mutation outcome uncertainty, actual platform cleanup and remaining consumer rewiring are pending. |
+
+Central, AIKit and Workcell's publication candidates hold the parent/source
+identity and an exclusive stage, preserve native metadata, and retain failed
+stages rather than performing unsafe pathname cleanup. Their owners retain
+separate limits and creation rules. A successful rename followed by failed
+sync/readback may already have published: preserve the operation and inspect
+its native source before retrying. AIKit's construction amendment carries
+`published:true` and the original `operation_ref` through later readback
+failure. These are candidate contracts, not evidence that every caller
+currently presents uncertainty correctly.
+
+Two gaps must remain visible. First, `knowledge::run` also serves Routine
+`disable`/`run-now`; the independent R3 review additionally identifies native
+familiarity effects on knowledge `open`/`route`. The v1 Return's blanket
+read-only classification was incorrect; v1.1 corrects that claim. The physical
+v2 candidate adds borrowed caller stop/lease cancellation and preserves actual
+exit diagnostics. Its amended independent review and OS gates are pending;
+spawn time can only be accounted after the OS call returns. Knowledge
+`CallError` and remaining stdin/Flow consumers still need the separate truthful
+post-launch mutation-uncertainty repair. Second, reducers accept finite authority, while the
+clockless SDK Views admit persistent grants for protected reads and
+Presence/Activity eligibility. Receipt/readback consumers still need repair;
+this mismatch is not an adopted product restriction or proof that finite
+participation works end to end.
+
+Actuation's authority/event ownership and QL-MEF's formal/Epi meanings remain
+as described in the existing companions; none of these six Returns replaces
+them. The existing diagrams retain their exact earlier source and render cuts.
+No candidate repair promotes a dashed join, a capability evidence grade, H,
+or the Bimba/Personal Pratibimba domain audit.
+
+The #65/#220 programme still has unproved acceptance obligations. #65 is
+closed as an issue; that status does not discharge its Day/NOW, grounded Agency,
+native material, two-person, upgrade and exact source/build/install/running
+requirements. A useful diagram or component result does not prove them.
 
 ## Work in progress and open boundaries
 
