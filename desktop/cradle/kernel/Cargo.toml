@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 libc = "0.2"
 serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1", features = ["float_roundtrip"] }
+serde_json = { version = "1", features = ["float_roundtrip", "arbitrary_precision", "raw_value"] }
 sha2 = "0.10"
 getrandom = "0.3"
 url = "2"

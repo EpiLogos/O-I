@@ -48,6 +48,7 @@ pub mod expression_act_store;
 pub mod expression_asset;
 pub mod expression_blueprint;
 pub mod expression_carrier;
+pub mod expression_file;
 pub mod expression_material;
 pub mod expression_profile;
 pub mod expression_recovery;
@@ -83,6 +84,7 @@ mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
 pub mod native_owner_transport;
+mod native_wire;
 pub mod owner_read;
 pub mod presentation;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -1569,6 +1571,7 @@ impl Kernel {
                 return Err("This native host has reached its Nara context bound".into());
             }
             if let Some(current) = completed.current_candidate {
+                current.retain(&completed.project)?;
                 self.nara_voice
                     .invalidate_expression(&binding.expression_ref);
                 self.nara_contexts
@@ -1586,6 +1589,13 @@ impl Kernel {
         })
     }
 
+    // Serialize the same complete admitted Document that public Inspect reads,
+    // without constructing and cloning its unrelated inspection envelope.
+    fn nara_current_document(&self, expression_ref: &str) -> Result<serde_json::Value, String> {
+        serde_json::to_value(self.expressions.document(expression_ref)?)
+            .map_err(|error| error.to_string())
+    }
+
     pub fn prepare_nara_current(
         &mut self,
         op: &KernelOp,
@@ -1594,16 +1604,7 @@ impl Kernel {
             return Ok(None);
         };
         let binding = request.binding();
-        let document = self
-            .expressions
-            .apply(
-                &self.client,
-                expression::Request::Inspect {
-                    expression_ref: binding.expression_ref.clone(),
-                },
-            )?
-            .0["document"]
-            .clone();
+        let document = self.nara_current_document(&binding.expression_ref)?;
         let profile = self.nara_expression_profile(&document)?;
         let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
         let project_ref = self.agent_project_ref(project, &cwd)?;
@@ -1626,16 +1627,7 @@ impl Kernel {
         completed: nara_current::Completed,
     ) -> Result<KernelOpOutcome, String> {
         let binding = &completed.binding;
-        let document = self
-            .expressions
-            .apply(
-                &self.client,
-                expression::Request::Inspect {
-                    expression_ref: binding.expression_ref.clone(),
-                },
-            )?
-            .0["document"]
-            .clone();
+        let document = self.nara_current_document(&binding.expression_ref)?;
         if document != completed.document
             || self.nara_expression_profile(&document)? != completed.profile
         {
@@ -1664,6 +1656,7 @@ impl Kernel {
             if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
                 return Err("This native host has reached its Nara context bound".into());
             }
+            pin.retain(&completed.project)?;
             let entry = self.nara_contexts.entry(key).or_default();
             if entry.personal_current.as_ref().map(|old| old.context()) != Some(pin.context()) {
                 self.nara_voice
@@ -2482,6 +2475,35 @@ impl Kernel {
                 self.apply(*request)
             }
             KernelOp::Expression { request } => {
+                if let expression::Request::ProfileDefineMany { definitions } = &request {
+                    self.expressions
+                        .profile_definition_batch_reply_budget(&self.client, definitions)?;
+                    let mut profiles = Vec::new();
+                    let mut receipts = Vec::new();
+                    // Each definition follows the same native path, including
+                    // changed ancestor voice/M3 invalidation. A refusal leaves
+                    // the already acknowledged prefix, as separate calls do.
+                    for (index, request) in expression::profile_definition_requests(definitions)?
+                        .into_iter()
+                        .enumerate()
+                    {
+                        let outcome = self.apply(KernelOp::Expression { request }).map_err(|error|
+                            format!("Profile definition {} refused after {index} admitted definitions: {error}", index + 1))?;
+                        receipts.extend(outcome.receipts);
+                        let KernelOpResult::Expression { data } = outcome.result else {
+                            return Err(
+                                "The native profile owner returned another operation".into()
+                            );
+                        };
+                        profiles.push(data);
+                    }
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::Expression {
+                            data: serde_json::json!({"state":"profiles","profiles":profiles}),
+                        },
+                    });
+                }
                 let selection_only = matches!(&request, expression::Request::Edit { changes, .. }
                     if !changes.is_empty() && changes.iter().all(|change| matches!(change,
                         expression::Change::Focus { .. } | expression::Change::RelationFocus { .. })));
@@ -5220,6 +5242,73 @@ fn native_owner_reading<T: Serialize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn personal_current_snapshot_reads_the_complete_actual_admitted_document() {
+        use sha2::{Digest, Sha256};
+        let bytes = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes.as_bytes())),
+            "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let actual = expression_file::decode(bytes).unwrap();
+        let reference = actual.expression_ref.clone();
+        let revision = actual.revision;
+        let actor = "agent:controlled-native-snapshot".to_owned();
+        let mut kernel = Kernel::new(CentralClient::discover());
+        kernel
+            .apply(KernelOp::Expression {
+                request: expression::Request::Open {
+                    document: Box::new(actual),
+                    actor: actor.clone(),
+                },
+            })
+            .unwrap();
+        let inspect = |kernel: &mut Kernel| {
+            let outcome = kernel
+                .apply(KernelOp::Expression {
+                    request: expression::Request::Inspect {
+                        expression_ref: reference.clone(),
+                    },
+                })
+                .unwrap();
+            let KernelOpResult::Expression { data } = outcome.result else {
+                panic!("Expected native Expression Inspect");
+            };
+            data["document"].clone()
+        };
+        let before = inspect(&mut kernel);
+        assert_eq!(kernel.nara_current_document(&reference).unwrap(), before);
+        kernel
+            .apply(KernelOp::Expression {
+                request: expression::Request::Edit {
+                    expression_ref: reference.clone(),
+                    expected_revision: revision,
+                    actor,
+                    changes: vec![expression::Change::Rename {
+                        title: "Controlled continuing native snapshot".into(),
+                    }],
+                },
+            })
+            .unwrap();
+        let current = inspect(&mut kernel);
+        assert_ne!(current, before);
+        assert_eq!(kernel.nara_current_document(&reference).unwrap(), current,
+            "The personal-current fence must read the complete current native document, not a cached opening");
+        let unknown = format!("{reference}:not-open");
+        let public_error = kernel
+            .apply(KernelOp::Expression {
+                request: expression::Request::Inspect {
+                    expression_ref: unknown.clone(),
+                },
+            })
+            .unwrap_err();
+        assert_eq!(
+            kernel.nara_current_document(&unknown).unwrap_err(),
+            public_error
+        );
+        assert_eq!(public_error, "Expression is not open");
+    }
 
     #[test]
     fn state_and_listing_ops_emit_nothing() {

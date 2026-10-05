@@ -236,6 +236,7 @@ pub enum OwnerRequest {
         #[serde(default)]
         resume: Option<Value>,
         #[serde(default)]
+        #[serde(deserialize_with = "crate::expression_file::optional_finite_number")]
         duration_secs: Option<f64>,
         #[serde(default)]
         max_events: Option<u32>,

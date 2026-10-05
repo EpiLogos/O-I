@@ -56,7 +56,7 @@ mod unix {
     use serde_json::{json, Value};
     use std::{
         fs,
-        io::{BufRead, BufReader, Read, Write},
+        io::{BufRead, BufReader, BufWriter, Read, Write},
         os::unix::{
             fs::{FileTypeExt, PermissionsExt},
             net::{UnixListener, UnixStream},
@@ -68,7 +68,11 @@ mod unix {
         },
         time::Duration,
     };
-    const MAX_BYTES: u64 = 1024 * 1024;
+    const REQUEST_BYTES: u64 = 1024 * 1024;
+    // Requests retain their existing admission bound. Complete public replies
+    // can contain an 8 MiB Document or a retained Act; use the existing native
+    // expanded-Act reply budget, not the smaller stored-file encoding bound.
+    const RESPONSE_BYTES: u64 = crate::native_wire::LIVE_BYTES as u64;
     pub struct Server {
         path: PathBuf,
         running: Arc<AtomicBool>,
@@ -83,16 +87,24 @@ mod unix {
             let _ = fs::remove_file(&self.path);
         }
     }
-    fn line(stream: &mut UnixStream) -> Result<String, String> {
+    fn line(stream: &mut UnixStream, limit: u64, face: &str) -> Result<String, String> {
         stream
             .set_read_timeout(Some(Duration::from_secs(5)))
             .map_err(|e| e.to_string())?;
         let mut value = String::new();
-        BufReader::new(stream.take(MAX_BYTES + 1))
+        BufReader::new(stream.take(limit + 1))
             .read_line(&mut value)
-            .map_err(|e| e.to_string())?;
-        if value.len() as u64 > MAX_BYTES || !value.ends_with('\n') {
-            return Err("Expression request/response exceeds limit or lacks newline".into());
+            .map_err(|e| match e.kind() {
+                std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut => {
+                    format!("Expression {face} timed out after 5 seconds")
+                }
+                _ => e.to_string(),
+            })?;
+        if value.len() as u64 > limit {
+            return Err(format!("Expression {face} exceeds {limit}-byte limit"));
+        }
+        if !value.ends_with('\n') {
+            return Err(format!("Expression {face} lacks newline"));
         }
         Ok(value)
     }
@@ -154,17 +166,33 @@ mod unix {
                         }
                         let apply = apply.clone();
                         std::thread::spawn(move || {
-                            let result = line(&mut stream)
+                            let result = line(&mut stream, REQUEST_BYTES, "request")
                                 .and_then(|raw| {
-                                    serde_json::from_str::<R>(&raw).map_err(|e| e.to_string())
+                                    crate::expression_file::read_native_json::<R>(raw.as_bytes())
+                                        .map_err(|e| e.to_string())
                                 })
                                 .and_then(|request| apply(request));
-                            let response = match result {
+                            let mut response = match result {
                                 Ok(outcome) => json!({"ok":true,"outcome":outcome}),
                                 Err(error) => json!({"ok":false,"error":error}),
                             };
+                            // Count without allocating another complete reply,
+                            // and refuse before writing any success prefix. A
+                            // partial or truncated Document is never a reply.
+                            if crate::native_wire::measure(&response, (RESPONSE_BYTES - 1) as usize)
+                                .is_err()
+                            {
+                                response = json!({"ok":false,"error":format!(
+                                    "Expression response exceeds {RESPONSE_BYTES}-byte limit"
+                                )});
+                            }
                             let _ = stream.set_write_timeout(Some(Duration::from_secs(5)));
-                            let _ = writeln!(stream, "{response}");
+                            let mut writer = BufWriter::with_capacity(64 * 1024, &mut stream);
+                            if serde_json::to_writer(&mut writer, &response).is_ok()
+                                && writer.write_all(b"\n").is_ok()
+                            {
+                                let _ = writer.flush();
+                            }
                         });
                     }
                     Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
@@ -188,14 +216,58 @@ mod unix {
             )
         })?;
         let body = serde_json::to_string(request).map_err(|e| e.to_string())?;
-        if body.len() as u64 >= MAX_BYTES {
+        if body.len() as u64 >= REQUEST_BYTES {
             return Err("Expression request exceeds limit".into());
         }
         stream
             .set_write_timeout(Some(Duration::from_secs(5)))
             .map_err(|e| e.to_string())?;
         writeln!(stream, "{body}").map_err(|e| e.to_string())?;
-        serde_json::from_str(&line(&mut stream)?).map_err(|e| e.to_string())
+        crate::expression_file::read_native_json(
+            line(&mut stream, RESPONSE_BYTES, "response")?.as_bytes(),
+        )
+        .map_err(|e| e.to_string())
+    }
+
+    #[cfg(test)]
+    mod frame_tests {
+        use super::*;
+
+        // Real socket framing negatives, not a simulated application response.
+        #[test]
+        fn real_socket_response_still_refuses_the_finite_upper_bound() {
+            let (mut reader, mut writer) = UnixStream::pair().unwrap();
+            let sender = std::thread::spawn(move || {
+                writer
+                    .set_write_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let chunk = [b' '; 64 * 1024];
+                for _ in 0..RESPONSE_BYTES / chunk.len() as u64 {
+                    writer.write_all(&chunk).unwrap();
+                }
+                writer.write_all(b"\n").unwrap();
+            });
+            assert_eq!(
+                line(&mut reader, RESPONSE_BYTES, "response").unwrap_err(),
+                format!("Expression response exceeds {RESPONSE_BYTES}-byte limit")
+            );
+            sender.join().unwrap();
+        }
+
+        #[test]
+        fn real_socket_missing_response_keeps_the_five_second_deadline() {
+            let (mut reader, _peer_held_open) = UnixStream::pair().unwrap();
+            let started = std::time::Instant::now();
+            assert_eq!(
+                line(&mut reader, RESPONSE_BYTES, "response").unwrap_err(),
+                "Expression response timed out after 5 seconds"
+            );
+            assert!(started.elapsed() >= Duration::from_secs(4));
+            println!(
+                "actual_silent_peer_read_timeout_ms={}",
+                started.elapsed().as_millis()
+            );
+        }
     }
 }
 #[cfg(unix)]

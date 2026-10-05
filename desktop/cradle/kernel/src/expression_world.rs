@@ -1169,6 +1169,7 @@ pub enum Request {
         #[serde(default)]
         text: Option<String>,
         #[serde(default)]
+        #[serde(deserialize_with = "crate::expression_file::optional_finite_number")]
         value: Option<f64>,
         #[serde(default)]
         field: Option<String>,

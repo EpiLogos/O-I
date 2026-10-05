@@ -16,6 +16,13 @@ pub(crate) const DOCUMENT_MEMBERS: usize = 2048;
 /// Outer storage bound for one native Expression document.
 pub(crate) const DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 pub(crate) const MAX_REVISION: u64 = 9_007_199_254_740_991;
+/// Reusable ES3 catalog, distinct from four adoptions per Document and the
+/// lineage bound. The count admits 64 open worlds with up to 64 definitions
+/// each; the aggregate byte bound prevents large grammars filling that count.
+/// Profiles are not evicted: exact ref/revision and dependency semantics stay
+/// available across authored versions, people and coordinate traversals.
+const PROFILE_CATALOG_COUNT: usize = 64 * 64;
+const PROFILE_CATALOG_BYTES: usize = 16 * 1024 * 1024;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -67,8 +74,11 @@ pub struct SubjectBinding {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Automation {
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub min: f64,
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub max: f64,
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub rate_hz: f64,
     pub waveform: Waveform,
 }
@@ -685,6 +695,15 @@ pub enum Request {
     OpenFile {
         location: files::Location,
         actor: String,
+        #[serde(default)]
+        expected_file_revision: Option<String>,
+    },
+    /// Validate the exact ordinary file without opening, touching or saving
+    /// any working Expression. The prior revision makes a second read's race
+    /// explicit; file provenance stays distinct from its expanded Document.
+    InspectFile {
+        location: files::Location,
+        expected_file_revision: String,
     },
     Fork {
         expression_ref: String,
@@ -759,6 +778,11 @@ pub enum Request {
         profile: crate::expression_profile::ExpressionProfile,
         actor: String,
     },
+    /// Ordered registry definitions, with the same per-definition authority
+    /// and failure prefix as separate native calls. Never a Document edit.
+    ProfileDefineMany {
+        definitions: Vec<ProfileDefinition>,
+    },
     ProfileInspect {
         profile_ref: String,
     },
@@ -808,6 +832,30 @@ pub enum Request {
         actor: String,
     },
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ProfileDefinition {
+    pub profile: crate::expression_profile::ExpressionProfile,
+    pub actor: String,
+}
+
+pub(crate) fn profile_definition_requests(
+    definitions: &[ProfileDefinition],
+) -> Result<Vec<Request>, String> {
+    if definitions.is_empty() || definitions.len() > 64 {
+        return Err("A native profile batch requires 1–64 definitions".into());
+    }
+    crate::native_wire::measure(definitions, DOCUMENT_BYTES)
+        .map_err(|_| "Native profile batch input byte budget exceeded".to_owned())?;
+    Ok(definitions
+        .iter()
+        .map(|definition| Request::ProfileDefine {
+            profile: definition.profile.clone(),
+            actor: definition.actor.clone(),
+        })
+        .collect())
+}
 #[derive(Clone, Debug, Serialize)]
 pub struct Changed {
     pub expression_ref: String,
@@ -827,6 +875,9 @@ pub struct Application {
     file_bindings: BTreeMap<String, Value>,
     /// ES3 reusable presentation profiles, keyed by profile_ref.
     profiles: BTreeMap<String, crate::expression_profile::ExpressionProfile>,
+    /// Sum of compact serialized typed profile values. Account only the
+    /// incoming/replaced profile; never serialize the whole catalog per op.
+    profile_bytes: usize,
     /// ES3 portable editions, keyed by edition_ref.
     editions: BTreeMap<String, crate::expression_profile::ExpressionEdition>,
     /// ES3A admission + occurrence index over real asset use.
@@ -835,8 +886,8 @@ pub struct Application {
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
-            "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
+        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
+            "profile_define","profile_define_many","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
         "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
         "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
@@ -845,7 +896,7 @@ pub fn capabilities() -> Value {
             "register":crate::expression_material::MATERIAL_REGISTER,"discovery":"expression_world material_list"},
         "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
         "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
-        "composition_budget":{"scenes":64,"entities":DOCUMENT_MEMBERS,"scene_members":DOCUMENT_MEMBERS,"render_formations":10,"render_pins":8},
+        "composition_budget":{"scenes":64,"entities":DOCUMENT_MEMBERS,"scene_members":DOCUMENT_MEMBERS,"render_formations":64,"render_pins":64},
         "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
         "scene_body":{"carriers":["engine_composition","text_source","glyph_form","image_media","file_thing","knowledge_whole","html_surface","agent_surface","expression_ref"],
@@ -858,7 +909,7 @@ pub fn capabilities() -> Value {
             "portal_placements":["preview","overlay","beside","full","detached","re-dock"],
             "portal_runtime":"portal_open/portal_close/portal_redock through the expression world seam over the existing Surface host, canonical target ref preserved — oi.expression-world-capabilities/v1",
             "script_bodies":"refused"},
-        "profiles":{"ref_prefix":"profile:","lineage":"parents must be defined first; defaults resolve parents-first and overrides stay legible","budget":64},
+        "profiles":{"ref_prefix":"profile:","lineage":"parents must be defined first; defaults resolve parents-first and overrides stay legible","budget":PROFILE_CATALOG_COUNT,"byte_budget":PROFILE_CATALOG_BYTES,"byte_basis":"sum of compact serialized typed profile values","lifecycle":"catalog; no automatic eviction; exact revision and lineage guards retained"},
         "editions":{"ref_prefix":"edition:","law":"an edition re-opens as a reading; it never opens or rewrites the Expression","budget":64},
         "assets":{"ref_prefix":"asset:","law":"admission + occurrence index over real use, not an advance procurement catalogue or a second semantic store","traversals":["asset_ref→uses","subject_ref→assets"],"budget":256},
         "collections":{"law":"Library-as-view: Expressions stay addressable by ref; the Library is one collection/index reading over the same refs"},
@@ -1676,7 +1727,38 @@ impl Application {
             .collect()
     }
 
-    fn document(&self, r: &str) -> Result<&Document, String> {
+    /// Qualify reply weight before any real registry or encounter effect.
+    /// A semantic refusal is left to the real ordered path, which retains its
+    /// successful prefix. The shadow owns only a bounded profile catalog.
+    pub(crate) fn profile_definition_batch_reply_budget(
+        &self,
+        client: &CentralClient,
+        definitions: &[ProfileDefinition],
+    ) -> Result<(), String> {
+        let requests = profile_definition_requests(definitions)?;
+        let mut catalog = Self {
+            profiles: self.profiles.clone(),
+            profile_bytes: self.profile_bytes,
+            ..Self::default()
+        };
+        let mut bytes = b"{\"state\":\"profiles\",\"profiles\":[]}".len();
+        for (index, request) in requests.into_iter().enumerate() {
+            let Ok((profile, _)) = catalog.apply(client, request) else {
+                return Ok(());
+            };
+            let weight = crate::native_wire::measure(&profile, DOCUMENT_BYTES)
+                .map_err(|_| "Native profile batch reply byte budget exceeded".to_owned())?;
+            bytes = bytes
+                .checked_add(weight + usize::from(index > 0))
+                .ok_or("Native profile batch reply byte accounting overflow")?;
+            if bytes > DOCUMENT_BYTES {
+                return Err("Native profile batch reply byte budget exceeded".into());
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn document(&self, r: &str) -> Result<&Document, String> {
         self.documents
             .get(r)
             .ok_or_else(|| "Expression is not open".into())
@@ -1794,10 +1876,40 @@ impl Application {
                 return self.open(d, actor);
             }
             Request::Open { document, actor } => return self.open(*document, actor),
-            Request::OpenFile { location, actor } => {
+            Request::InspectFile {
+                location,
+                expected_file_revision,
+            } => {
+                text(&expected_file_revision)?;
                 let file = files::read(client, &location)?;
-                let d: Document = serde_json::from_str(&file.content)
-                    .map_err(|e| format!("Invalid Expression file: {e}"))?;
+                if file.revision != expected_file_revision {
+                    return Ok((
+                        json!({"state":"file_revision_conflict","expected_revision":expected_file_revision,"current_revision":file.revision}),
+                        None,
+                    ));
+                }
+                let document = crate::expression_file::decode(&file.content)?;
+                return Ok((
+                    json!({"state":"ready","document":document,"file":{"location":file.location,"revision":file.revision}}),
+                    None,
+                ));
+            }
+            Request::OpenFile {
+                location,
+                actor,
+                expected_file_revision,
+            } => {
+                let file = files::read(client, &location)?;
+                if let Some(expected) = expected_file_revision {
+                    text(&expected)?;
+                    if expected != file.revision {
+                        return Ok((
+                            json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":file.revision}),
+                            None,
+                        ));
+                    }
+                }
+                let d = crate::expression_file::decode(&file.content)?;
                 let r = d.expression_ref.clone();
                 let revision = d.revision;
                 let (mut value, event) = self.open(d, actor)?;
@@ -2157,7 +2269,7 @@ impl Application {
                     return Ok((conflict, None));
                 }
                 let document = self.document(&expression_ref)?.clone();
-                let content = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
+                let content = crate::expression_file::encode(&document)?;
                 // The explicit directory already supplies root identity. Suppress the
                 // generic project fallback before the strict file-owner call.
                 match client.run("central.files.create", json!({"project":null,"parent":parent,"name":name,"content":content,
@@ -2195,13 +2307,14 @@ impl Application {
                     ));
                 }
                 // Protect other ordinary material from an accidental Expression save target.
-                let original: Document = serde_json::from_str(&current.content)
-                    .map_err(|_| "Save destination is not an Expression file")?;
-                original.validate()?;
+                let original =
+                    crate::expression_file::decode(&current.content).map_err(|error| {
+                        format!("Save destination is not an Expression file: {error}")
+                    })?;
                 if original.expression_ref != expression_ref {
                     return Err("Save destination belongs to another Expression".into());
                 }
-                let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":serde_json::to_string_pretty(self.document(&expression_ref)?).map_err(|e|e.to_string())?,"actor":actor,"actor_kind":actor_kind}));
+                let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":crate::expression_file::encode(self.document(&expression_ref)?)?,"actor":actor,"actor_kind":actor_kind}));
                 match result {
                     Ok(data) => {
                         // Central can refuse CAS in a successful protocol response.
@@ -2290,6 +2403,19 @@ impl Application {
             // profiles/editions/assets: they return their full resulting
             // state and emit no expression_changed receipt, because they
             // never change an Expression document. ———
+            Request::ProfileDefineMany { definitions } => {
+                self.profile_definition_batch_reply_budget(client, &definitions)?;
+                let mut profiles = Vec::new();
+                for (index, request) in profile_definition_requests(&definitions)?
+                    .into_iter()
+                    .enumerate()
+                {
+                    let (value, _) = self.apply(client, request).map_err(|error|
+                        format!("Profile definition {} refused after {index} admitted definitions: {error}", index + 1))?;
+                    profiles.push(value);
+                }
+                json!({"state":"profiles","profiles":profiles})
+            }
             Request::ProfileDefine { profile, actor } => {
                 text(&actor)?;
                 profile.validate()?;
@@ -2305,8 +2431,37 @@ impl Application {
                     if profile.revision == existing.revision && &profile != existing {
                         return Err("A profile revision cannot name different content".into());
                     }
-                } else if self.profiles.len() >= 64 {
-                    return Err("Profile budget exceeded".into());
+                } else if self.profiles.len() >= PROFILE_CATALOG_COUNT {
+                    return Err(format!(
+                        "Profile catalog count budget exceeded ({}/{PROFILE_CATALOG_COUNT})",
+                        self.profiles.len()
+                    ));
+                }
+                // Admit before cloning the candidate catalog. Replacement
+                // subtracts its old value; exact replay consumes no new bytes.
+                // Commit accounting only after every lineage validates.
+                let old_bytes = self
+                    .profiles
+                    .get(&profile.profile_ref)
+                    .map(|old| {
+                        serde_json::to_vec(old)
+                            .map(|bytes| bytes.len())
+                            .map_err(|e| e.to_string())
+                    })
+                    .transpose()?
+                    .unwrap_or(0);
+                let new_bytes = serde_json::to_vec(&profile)
+                    .map_err(|e| e.to_string())?
+                    .len();
+                let candidate_bytes = self
+                    .profile_bytes
+                    .checked_sub(old_bytes)
+                    .and_then(|bytes| bytes.checked_add(new_bytes))
+                    .ok_or("Profile catalog byte accounting overflow")?;
+                if candidate_bytes > PROFILE_CATALOG_BYTES {
+                    return Err(format!(
+                        "Profile catalog byte budget exceeded ({candidate_bytes}/{PROFILE_CATALOG_BYTES})"
+                    ));
                 }
                 // Refused lineage changes must not leave an invalid profile
                 // behind in the owner's live registry.
@@ -2318,6 +2473,7 @@ impl Application {
                     crate::expression_profile::resolve_lineage(&candidate, reference)?;
                 }
                 self.profiles = candidate;
+                self.profile_bytes = candidate_bytes;
                 json!({"state":"profile","profile":profile,"resolved_defaults":resolved})
             }
             Request::ProfileInspect { profile_ref } => {
@@ -2504,9 +2660,7 @@ impl Application {
             if data["revision"] != current.revision {
                 return Err("Native source changed before readback".into());
             }
-            let read: Document =
-                serde_json::from_str(&current.content).map_err(|e| e.to_string())?;
-            read.validate()?;
+            let read = crate::expression_file::decode(&current.content)?;
             if &read != document {
                 return Err("Native readback differs from the saved Expression".into());
             }

@@ -128,11 +128,11 @@ impl Prepared {
                 if !coordinate.is_object() {
                     return Err("The native coordinate source reading is unavailable".into());
                 }
-                Ok((origin, targets, coordinate))
+                Ok((origin, targets, coordinate, resolved))
             });
         match &self.request {
             Request::Delegate { brief, .. } => {
-                let (origin, targets, coordinate) = current?;
+                let (origin, targets, coordinate, resolved) = current?;
                 let brief = brief.trim();
                 if brief.is_empty() || brief.len() > 16_384 {
                     return Err("Enter a bounded Epii inquiry".into());
@@ -162,10 +162,17 @@ impl Prepared {
                 }
                 let mut epii_context = origin.clone();
                 epii_context["agent_session_ref"] = json!(native.agent_session);
+                let (selected_source_basis, selected_source_content) =
+                    selected_source_turn(&resolved["selected_source_content"])?;
                 let input = json!({"schema":"oi.nara-dialogue-input/v1","role":"epii","question":brief,
                     "instruction":INSTRUCTION,"context":epii_context,"origin_context":origin,
                     "epii_delegation":delegation,"focus_targets":targets,
                     "coordinate_binding":coordinate,
+                    "containing_coordinate_binding":resolved["containing_coordinate_binding"],
+                    "selected_source_basis":selected_source_basis,
+                    "selected_source_content":selected_source_content,
+                    "selected_source_relation":resolved["selected_source_relation"],
+                    "selected_scene_native_basis":resolved["selected_scene_native_basis"],
                     "personal_current":crate::nara_current::disclosed_reading(&self.context_state.personal_current_reading),
                     "identity":{"source":identity["source"],"input_revision":identity["reading"]["input_revision"]},
                     "selected":selected(&self.document),
@@ -211,7 +218,7 @@ impl Prepared {
                     &json!({"delegation":delegation,"enrichment":enrichment}),
                 )?;
                 let admission = (|| -> Result<Vec<Value>, String> {
-                    let (origin, targets, coordinate) = current?;
+                    let (origin, targets, coordinate, _) = current?;
                     // Reconstruct through QL instead of admitting the transcript's
                     // claimed registry, scope, basis or delegation state.
                     let reconstructed = crate::nara_identity::run_ql_nara(
@@ -362,6 +369,32 @@ fn parse_enrichment(text: &str) -> Result<Value, String> {
     };
     serde_json::from_str(json)
         .map_err(|e| format!("Epii did not return a structured enrichment: {e}"))
+}
+
+/// Match the ordinary Nara turn's source disclosure bound. Preserve an exact
+/// native entrance when full properties/qualified relations exceed the turn
+/// allowance; never replace source content with a generated answer.
+fn selected_source_turn(source: &Value) -> Result<(Value, Value), String> {
+    if !source.is_object() {
+        return Ok((Value::Null, Value::Null));
+    }
+    let complete = serde_json::to_vec(source).map_err(|e| e.to_string())?.len() <= 64 * 1024;
+    let mut identity = source["identity"].clone();
+    if let Some(properties) = identity.as_object_mut() {
+        properties.remove("properties");
+    }
+    let basis = json!({"source_revision":source["source_revision"],
+        "registry_revision":source["registry_revision"],"identity":identity,
+        "relation_count":source["relations"].as_array().map_or(0, Vec::len),
+        "content_in_turn":if complete {"complete"} else {"native-source-entrance"}});
+    Ok((
+        basis,
+        if complete {
+            source.clone()
+        } else {
+            Value::Null
+        },
+    ))
 }
 
 fn scope_context(mut context: Value, document: &Value) -> Result<(Value, Vec<Value>), String> {

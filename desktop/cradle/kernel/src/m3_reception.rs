@@ -1,6 +1,6 @@
 //! Subject-bound reception of QL's existing transactional M3 producer.
 //! Optional activity uses an explicitly selected source policy; no closure or rendering law is inferred.
-use crate::{flow::CentralClient, nara_current, nara_dialogue, nara_identity};
+use crate::{flow::CentralClient, nara_current, nara_dialogue};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -140,6 +140,7 @@ pub struct Prepared {
     existing: Option<Resident>,
 }
 pub struct Completed {
+    pub project: String,
     pub binding: nara_dialogue::Request,
     pub document: Value,
     pub profile: nara_dialogue::ProfileBasis,
@@ -301,7 +302,8 @@ impl Prepared {
                 }
                 Request::Read { .. } => unreachable!(),
             };
-            let reading = nara_identity::run_ql_m3(&input)?;
+            let prior = pin.ok_or("Protected personal current disappeared")?;
+            let reading = prior.run_native_m3(&input)?;
             if reading["state"]["schema"] != "ql.m3-state/v1"
                 || reading["state"]["subject_ref"] != binding.person_ref
                 || reading["state"]["identity"]["event_ref"] != event
@@ -309,13 +311,11 @@ impl Prepared {
                 return Err("QL M3 returned another subject or event".into());
             }
             if reading["activity"]["status"] == "available" {
-                let prior = pin.ok_or("Protected personal current disappeared")?;
-                let recomposed = nara_identity::run_ql_nara(
-                    "personal-recompose",
+                let recomposed = prior.recompose_native_activity(
                     &json!({
                     "schema":"ql.nara-personal-recompose-request/v1","current":prior.reading(),"m3_input":input}),
                 )?;
-                current_candidate = Some(prior.with_native_activity(recomposed)?);
+                current_candidate = Some(prior.with_native_activity(recomposed, input.clone())?);
             }
             let revision = format!(
                 "sha256:{:x}",
@@ -345,6 +345,7 @@ impl Prepared {
             "personal_current":current_candidate.as_ref().or(pin).map(|p|json!({"context":p.context(),"reading":p.reading()})),
             "private":true,"public_export":false,"activity_admitted":visible.is_some_and(|r|r.reading["activity"]["status"]=="available")});
         Ok(Completed {
+            project: self.project,
             binding,
             document: self.document,
             profile: self.profile,
