@@ -12,23 +12,145 @@ use serde_json::{json, Value};
 pub struct Request {
     pub coordinate_ref: String,
     pub face: String,
+    /// Complete shared source disclosure also admits non-M and prime sources;
+    /// those are not falsely promoted into a face-bearing M profile.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub source_only: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub include_content: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub related_coordinates: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inventory: Option<InventoryPage>,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct InventoryPage {
+    pub offset: usize,
+    pub limit: usize,
 }
 
 pub fn execute(request: Request) -> Result<crate::KernelOpOutcome, String> {
     if request.coordinate_ref.is_empty()
         || request.coordinate_ref.len() > 4096
         || !matches!(request.face.as_str(), "bimba" | "pratibimba")
+        || request.related_coordinates.len() > 63
+        || request
+            .related_coordinates
+            .iter()
+            .any(|r| r.is_empty() || r.len() > 4096)
+        || request
+            .inventory
+            .as_ref()
+            .is_some_and(|p| p.limit == 0 || p.limit > 256)
     {
         return Err(
             "A bounded native coordinate and its Bimba or Pratibimba face are required".into(),
         );
     }
-    let binding = crate::nara_identity::run_ql_nara("coordinate", &json!(request))?;
-    let data = project(binding)?;
+    let data = if request.source_only {
+        if request.include_content || !request.related_coordinates.is_empty() {
+            return Err("Source disclosure cannot adopt or construct a coordinate profile".into());
+        }
+        if let Some(page) = request.inventory {
+            crate::nara_identity::run_ql_nara(
+                "source-inventory",
+                &json!({"offset":page.offset,"limit":page.limit}),
+            )?
+        } else {
+            crate::nara_identity::run_ql_nara(
+                "coordinate-content",
+                &json!({"coordinate_ref":request.coordinate_ref}),
+            )?
+        }
+    } else if request.include_content
+        || !request.related_coordinates.is_empty()
+        || request.inventory.is_some()
+    {
+        let mut refs = vec![request.coordinate_ref.clone()];
+        for reference in request.related_coordinates {
+            if !refs.contains(&reference) {
+                refs.push(reference);
+            }
+        }
+        let bundle = crate::nara_identity::run_ql_nara(
+            "coordinate-bundle",
+            &json!({
+            "coordinate_refs":refs,"face":request.face,"inventory":request.inventory}),
+        )?;
+        project_bundle(bundle)?
+    } else {
+        let binding = crate::nara_identity::run_ql_nara(
+            "coordinate",
+            &json!({"coordinate_ref":request.coordinate_ref,"face":request.face}),
+        )?;
+        project(binding)?
+    };
     Ok(crate::KernelOpOutcome {
         receipts: vec![],
         result: crate::KernelOpResult::NaraCoordinate { data },
     })
+}
+
+fn project_bundle(bundle: Value) -> Result<Value, String> {
+    if bundle["schema"] != "ql.coordinate-content-bundle/v1" {
+        return Err("The native owner returned a different content bundle".into());
+    }
+    let rows = bundle["items"]
+        .as_array()
+        .filter(|v| !v.is_empty() && v.len() <= 64)
+        .ok_or("Native coordinate material bundle is absent or exceeds its bound")?;
+    let mut projected = Vec::new();
+    let mut registry: Option<String> = None;
+    for row in rows {
+        let mut reading = project(row["binding"].clone())?;
+        let source = &row["source_content"];
+        let source_revision = required(source, "source_revision")?;
+        let revision = required(&reading["binding"]["rooted_world"], "registry_revision")?;
+        if source["schema"] != "ql.bimba-coordinate-content/v1"
+            || source["registry_revision"] != revision
+            || source["identity"]["native_coordinate"] != reading["binding"]["coordinate_ref"]
+            || !source["identity"]["properties"].is_object()
+            || !source["relations"].is_array()
+            || registry.as_deref().is_some_and(|prior| prior != revision)
+        {
+            return Err(
+                "Full source material does not match its exact native coordinate/registry".into(),
+            );
+        }
+        if !reading["binding"]["property_sources"]
+            .as_array()
+            .is_some_and(|records| {
+                records.iter().any(|record| {
+                    record["source_revision"] == source_revision
+                        && record["record"]["payload_sha256"]
+                            == source["identity"]["properties_sha256"]
+                })
+            })
+        {
+            return Err("Full properties are not the coordinate's admitted source record".into());
+        }
+        registry = Some(revision.to_owned());
+        reading["source_content"] = source.clone();
+        projected.push(reading);
+    }
+    let mut result = projected.remove(0);
+    result["related_readings"] = json!(projected);
+    if !bundle["inventory"].is_null() {
+        if bundle["inventory"]["schema"] != "ql.bimba-inventory/v1"
+            || bundle["inventory"]["registry_revision"].as_str() != registry.as_deref()
+            || bundle["inventory"]["source_revision"] != result["source_content"]["source_revision"]
+        {
+            return Err("The Bimba inventory is not current with the material bundle".into());
+        }
+        result["source_inventory"] = bundle["inventory"].clone();
+    }
+    Ok(result)
 }
 
 fn required<'a>(value: &'a Value, key: &str) -> Result<&'a str, String> {

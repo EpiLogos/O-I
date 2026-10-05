@@ -128,7 +128,7 @@ pub(crate) fn read(
         "expression",
         "observed",
         json!({"profile":context["profile"],
-        "lineage":context["coordinate_binding"]["inherited_profiles"],"authored_variant_refs":context["coordinate_binding"]["authored_variant_refs"],
+        "lineage":context["containing_coordinate_binding"]["inherited_profiles"],"authored_variant_refs":context["containing_coordinate_binding"]["authored_variant_refs"],
         "variant_standing":"only variants resolved by the current source producer; empty is not a complete source census"}),
         None,
     );
@@ -202,7 +202,11 @@ pub(crate) fn read(
             None,
         )
     };
-    let material = missing("renderer", "oi-host", "Native context does not observe renderer mounting or physical output; use the actual host/effect receipt");
+    let material = missing(
+        "renderer",
+        "oi-host",
+        "Native context does not observe renderer mounting or physical output; use the actual host/effect receipt",
+    );
     let mut organs = Vec::new();
     let faculties = context["coordinate_binding"]["ta_onta_faculties"]
         .as_array()
@@ -212,12 +216,41 @@ pub(crate) fn read(
     }
     for faculty in faculties {
         let readings = match faculty["id"].as_str() {
-            Some("S0′") => vec![source.clone(),profile.clone(),session.clone(),material.clone()],
-            Some("S1′") => vec![profile.clone(),capabilities.clone()],
-            Some("S2′") => vec![session.clone(),provider.clone(),speech.clone(),actions.clone(),capabilities.clone()],
-            Some("S3′") => vec![source.clone(),occasion.clone(),current.clone(),provider.clone(),act.clone()],
-            Some("S4′") => vec![attention.clone(),session.clone(),speech.clone(),actions.clone()],
-            Some("S5′") => vec![act.clone(),missing("returned-praxis", "aikit/factory/central", "This context does not contain an accepted Method proof, Factory Return or human Recognition receipt")],
+            Some("S0′") => vec![
+                source.clone(),
+                profile.clone(),
+                session.clone(),
+                material.clone(),
+            ],
+            Some("S1′") => vec![profile.clone(), capabilities.clone()],
+            Some("S2′") => vec![
+                session.clone(),
+                provider.clone(),
+                speech.clone(),
+                actions.clone(),
+                capabilities.clone(),
+            ],
+            Some("S3′") => vec![
+                source.clone(),
+                occasion.clone(),
+                current.clone(),
+                provider.clone(),
+                act.clone(),
+            ],
+            Some("S4′") => vec![
+                attention.clone(),
+                session.clone(),
+                speech.clone(),
+                actions.clone(),
+            ],
+            Some("S5′") => vec![
+                act.clone(),
+                missing(
+                    "returned-praxis",
+                    "aikit/factory/central",
+                    "This context does not contain an accepted Method proof, Factory Return or human Recognition receipt",
+                ),
+            ],
             _ => return Err("Unknown native Ta-Onta faculty identity".into()),
         };
         organs.push(json!({"id":faculty["id"],"label":faculty["label"],"capability_refs":faculty["capability_refs"],
