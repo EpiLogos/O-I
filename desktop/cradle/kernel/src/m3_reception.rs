@@ -1,6 +1,6 @@
 //! Subject-bound reception of QL's existing transactional M3 producer.
 //! Optional activity uses an explicitly selected source policy; no closure or rendering law is inferred.
-use crate::{flow::CentralClient, nara_current, nara_dialogue, nara_identity};
+use crate::{flow::CentralClient, nara_current, nara_dialogue};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};

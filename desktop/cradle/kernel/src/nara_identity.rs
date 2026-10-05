@@ -722,39 +722,7 @@ mod raw_profile_source_admission_tests {
 }
 
 
-#[cfg(test)]
-mod scientific_profile_input_tests {
-    use super::*;
-    #[test]
-    fn existing_typed_profile_policy_accepts_equal_scientific_values_but_not_changed_basis() {
-        let entered: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.00001,"role_weights":[1,0,2]}}"#).unwrap();
-        let returned: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":1e-05,"role_weights":[1.0,0.0,2.0]}}"#).unwrap();
-        assert_ne!(entered, returned, "full Value/receipt equality retains exact token custody");
-        assert!(same_input(&entered, &returned), "typed profile admission retains its existing finite representation policy");
-        let changed: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":1.000000000000001e-05,"role_weights":[1.0,0.0,2.0]}}"#).unwrap();
-        assert!(!same_input(&entered, &changed));
-        let mut other = returned.clone(); other["person_ref"] = json!("controlled:two");
-        assert!(!same_input(&entered, &other));
-        other = returned; other["encoding_policy"]["new_authority"] = Value::Null;
-        assert!(!same_input(&entered, &other));
-    }
-}
 
-
-#[cfg(test)]
-mod raw_profile_source_admission_tests {
-    use super::*;
-    #[test]
-    fn original_identity_source_json_cannot_impersonate_finite_profile_values() {
-        let raw = r#"{"schema":"ql.nara-identity-profile/v1","person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.00001}}"#;
-        let profile: Value = crate::expression_file::read_native_json(raw.as_bytes()).unwrap();
-        assert_eq!(profile["encoding_policy"]["lens_element_factor"].as_f64(), Some(0.00001));
-        for value in [r#"{"$serde_json::private::Number":"0.00001"}"#, r#"{"$serde_json::private::RawValue":"0.00001"}"#, "1e400"] {
-            let wrong = raw.replace("0.00001", value);
-            assert!(crate::expression_file::read_native_json::<Value>(wrong.as_bytes()).is_err());
-        }
-    }
-}
 
 #[cfg(test)]
 mod source_coordinate_bounds_tests {

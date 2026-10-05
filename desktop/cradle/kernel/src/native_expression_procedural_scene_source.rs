@@ -957,7 +957,6 @@ mod tests {
 
 #[cfg(test)]
 mod source_delivery_reply_capture_tests {
-    use super::*;
     use crate::native_expression::procedural::stage_library::SourceDeliveryCapture;
     use std::io::Cursor;
 

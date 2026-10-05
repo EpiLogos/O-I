@@ -295,7 +295,7 @@ impl crate::Kernel {
         request["command"]["request"]["input"] = issued.request(&intent)?;
         let intake = super::lifecycle::SourceIntake::capture_with_resource(
             &self.native_expression,&input.lease,&request,
-            &mut _capture_guard.lock().map_err(|_|"Source capture lock poisoned")?,
+            &mut *(_capture_guard.lock().map_err(|_|"Source capture lock poisoned")?),
         )?;
         let scene_revision = before
             .scenes

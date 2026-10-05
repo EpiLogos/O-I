@@ -2,7 +2,6 @@
 //! capability and no caller outcome, ACK or Source label can construct it.
 use super::*;
 use crate::expression::procedural::scene_receiver::SceneOwner;
-use crate::expression::Document;
 use crate::native_expression::procedural::conduct::Request;
 use crate::native_expression::procedural::stage_library::SourceDeliveryCapture;
 use sha2::{Digest, Sha256};

@@ -12,6 +12,7 @@ import {createHash} from "node:crypto";
 const D = await import("../src/contributions/factory/desk/runModel.ts");
 const E = await import("../src/contributions/factory/live/eventMap.ts");
 const I = await import("../src/contributions/factory/inhabitation/model.ts");
+const X = await import("../src/contributions/factory/run-expression.ts");
 const directory = new URL("./fixtures/factory-native-owner-projections/", import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL("manifest.json", directory), "utf8"));
 const load = name => {
@@ -217,4 +218,80 @@ test("a stale native execution pointer yields no body and duplicate identity sta
   const currentNative = duplicate.nativeAttempts.attempts.find(a => a.executionRef === duplicate.nativeAttempts.legs[unit].executionRef);
   duplicate.nativeAttempts.attempts.push({...structuredClone(currentNative), attemptRef: "attempt:hostile-duplicate"});
   assert.equal(I.currentAttemptOf(D.attemptsForRun(duplicate, undefined, unit)).outcome, "ambiguous");
+});
+
+
+// These consumer checks use the unchanged genuine native owner captures above.
+// Hostile mutations below test refusal only; they create no successful owner fact.
+const returnedSceneAttempts = (run, expressionRef) => {
+  const document = X.composeRunExpression({run, statePath: source.statePath}, expressionRef);
+  const scenes = document.scenes.filter(scene => scene.title === "Returned work");
+  assert.equal(scenes.every(scene => scene.entity_refs.length <= 10), true);
+  return scenes.flatMap(scene => scene.entity_refs.map(ref => document.entities[ref].subject.subject_ref));
+};
+
+test("current Return scenes retain both genuine native units without inferring undertaking completion", () => {
+  for (const run of [finished, archived, aborted]) {
+    const expected = run.nativeAttempts.currentReturnedUnits.map(unit => {
+      const [selected] = current(run, unit);
+      return run.nativeAttempts.attempts.find(attempt => attempt.attemptRef === selected.attemptRef);
+    });
+    assert.equal(expected.length, 2, "the unchanged native capture contains two returned units");
+    const selected = X.currentReturnedAttempts(run);
+    assert.deepEqual(selected.map(attempt => attempt.attemptRef).sort(), expected.map(attempt => attempt.attemptRef).sort());
+    for (const attempt of selected) assert.strictEqual(attempt, expected.find(native => native.attemptRef === attempt.attemptRef));
+    assert.deepEqual(returnedSceneAttempts(run, "expression:captured-multi-return").sort(), expected.map(attempt => attempt.attemptRef).sort());
+  }
+  assert.equal(E.ownerRunComplete(aborted.nativeAttempts, aborted.runRef), false,
+    "the genuine aborted Run retains returned unit material without admitted completion");
+});
+
+test("current Return scenes exclude the genuine superseded Return even when native history is reversed", () => {
+  const retry = load("native-current-retry-passed");
+  assert.equal(retry.nativeAttempts.attempts.length, 2);
+  assert.ok(retry.nativeAttempts.attempts[0].readableReturn, "the genuine first historical attempt has a Return");
+  assert.equal(retry.nativeAttempts.attempts[0].attemptRef, "attempt:native-inspect-source");
+  const expected = "attempt:native-inspect-source-retry";
+  assert.deepEqual(X.currentReturnedAttempts(retry).map(attempt => attempt.attemptRef), [expected]);
+  assert.deepEqual(returnedSceneAttempts(retry, "expression:captured-current-return"), [expected]);
+  const reversed = structuredClone(retry);
+  reversed.nativeAttempts.attempts.reverse();
+  assert.deepEqual(X.currentReturnedAttempts(reversed), X.currentReturnedAttempts(retry));
+  assert.deepEqual(returnedSceneAttempts(reversed, "expression:captured-reordered-return"), [expected]);
+  assert.equal(E.ownerRunComplete(retry.nativeAttempts, retry.runRef), false);
+});
+
+test("genuine rejected current Returns stay readable while native verification remains rejected", () => {
+  for (const name of ["native-old-attempt-failed", "native-current-retry-failed", "native-current-retry-unknown"]) {
+    const run = load(name);
+    const [selected] = current(run, run.nativeAttempts.requiredUnits[0]);
+    const returned = X.currentReturnedAttempts(run);
+    assert.equal(returned.length, 1);
+    assert.equal(returned[0].attemptRef, selected.attemptRef);
+    assert.deepEqual(returned[0].readableReturn, selected.return);
+    assert.equal(run.nativeAttempts.legs[selected.workflowUnitRef].status, "failed");
+    assert.equal(E.ownerRunComplete(run.nativeAttempts, run.runRef), false);
+    assert.equal(E.mapEvents(live(run), {}).some(op => op.basis.entry === "attempt.run-complete"), false);
+    assert.deepEqual(returnedSceneAttempts(run, "expression:captured-rejected-return"), [selected.attemptRef]);
+  }
+});
+
+test("current Return composition refuses hostile duplicate, foreign and changed basis without borrowing history", () => {
+  const retry = load("native-current-retry-passed");
+  const unit = retry.nativeAttempts.requiredUnits[0];
+  const stale = structuredClone(retry);
+  stale.nativeAttempts.legs[unit].executionRef = "execution:unadmitted-new-candidate";
+  assert.deepEqual(X.currentReturnedAttempts(stale), []);
+  assert.deepEqual(returnedSceneAttempts(stale, "expression:refused-stale-return"), []);
+  const duplicate = structuredClone(retry);
+  const now = duplicate.nativeAttempts.attempts.find(attempt => attempt.executionRef === duplicate.nativeAttempts.legs[unit].executionRef);
+  duplicate.nativeAttempts.attempts.push({...structuredClone(now), attemptRef: "attempt:hostile-duplicate"});
+  assert.throws(() => X.currentReturnedAttempts(duplicate), /conflicting current executions/);
+  assert.throws(() => returnedSceneAttempts(duplicate, "expression:refused-duplicate-return"), /conflicting current executions/);
+  const foreign = structuredClone(retry);
+  foreign.nativeAttempts.runRef = "run:foreign-native-reading";
+  assert.throws(() => X.currentReturnedAttempts(foreign));
+  const changed = structuredClone(retry.nativeAttempts);
+  changed.workflowSourceDigest = "hostile-changed-source-digest";
+  assert.throws(() => X.currentReturnedAttempts(retry, changed));
 });

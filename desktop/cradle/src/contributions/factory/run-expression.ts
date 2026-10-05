@@ -21,6 +21,8 @@ import type {ExpressionDocument,Entity,ReadingRef,Relation,Scene,SubjectBinding}
  * that the Factory Live act performs into. */
 import {developmentRead,attemptRead} from "./development";
 import {castOf,type CastMember} from "./live/eventMap";
+import {attemptsForRun, type InspectionLeg} from "./desk/runModel";
+import {currentAttemptOf} from "./inhabitation/model";
 
 /** The owner CLI serialises these readings camelCase; the desktop decodes
  * them as loose readings and never re-keys owner data. */
@@ -36,11 +38,11 @@ export interface RunReading {
 export interface AttemptReading {
   contract:string; runRef:string; revision:number; runRevision:number; topologyRevision:number;
   workflowKey:string; workflowSourceRef:string; workflowSourceRevision:string; workflowSourceDigest:string;
-  attempts:{attemptRef:string;taskRef:string;workflowUnitRef:string;executionRef?:string|null;
+  attempts:{attemptRef:string;taskRef:string;workflowUnitRef:string;executionRef?:string|null;reservedExecutionRef?:string;
     verifications:{verificationRef:string;ownerRef:string;sourceRevision?:string;outcome:"passed"|"failed"|"unknown";evidenceRefs?:string[]}[];
     observations?:unknown[];failureEvidenceRefs?:string[];
     readableReturn?:{returnRef:string;summary:string;artifactRefs?:string[];evidenceRefs?:string[];receivingRef?:string|null}|null}[];
-  legs:Record<string,unknown>;
+  legs:Record<string,InspectionLeg>;
 }
 export interface UnitListReading {contract:string;units:{workflowUnitRef:string;key:string;locator:string}[]}
 /** One cast member with the character its profile carries (absent when the
@@ -75,6 +77,27 @@ function nativeAttemptsOf(run:RunReading,supplied?:AttemptReading):AttemptReadin
   const basis=["contract","runRef","revision","runRevision","topologyRevision","workflowKey","workflowSourceRef","workflowSourceRevision","workflowSourceDigest"] as const;
   if(supplied!=null&&basis.some(field=>supplied[field]!==native[field]))throw new Error("An independent attempt reading conflicts with the canonical Run snapshot");
   return native;
+}
+
+/** Current Returns are selected by the same native leg/execution relation as
+ * the Desk. The owner may return several current units; history and array
+ * order never choose a current Return or claim whole-Run completion. */
+export function currentReturnedAttempts(run:RunReading,supplied?:AttemptReading):AttemptReading["attempts"] {
+  const reading=nativeAttemptsOf(run,supplied);
+  if(!reading)return [];
+  const marked=attemptsForRun({runRef:run.runRef,nativeAttempts:{
+    runRef:reading.runRef,legs:reading.legs,
+    attempts:reading.attempts.map(attempt=>({attemptRef:attempt.attemptRef,
+      workflowUnitRef:attempt.workflowUnitRef,executionRef:attempt.executionRef,
+      reservedExecutionRef:attempt.reservedExecutionRef})),
+  }});
+  const current=new Set<string>();
+  for(const unitRef of new Set(marked.map(attempt=>attempt.workflowUnitRef))){
+    const selected=currentAttemptOf(marked.filter(attempt=>attempt.workflowUnitRef===unitRef));
+    if(selected.outcome==="ambiguous")throw new Error(`Factory returned conflicting current executions for ${unitRef}`);
+    if(selected.outcome==="one")current.add(selected.entries[0].attemptRef);
+  }
+  return reading.attempts.filter(attempt=>current.has(attempt.attemptRef)&&!!attempt.readableReturn);
 }
 
 function runSubjectBinding(run:RunReading,statePath:string,attempt?:AttemptReading):SubjectBinding {
@@ -235,9 +258,11 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
         entity_refs:executions.slice(i,i+10)});
     }
   }
-  const returned=attempt?.attempts.find(a=>a.readableReturn);
-  if(returned) scenes.push({scene_ref:sRef("return"),revision:1,title:"Return",
-    entity_refs:[eRef(localSuffix(returned.attemptRef))]});
+  const returned=currentReturnedAttempts(run,attempt);
+  for(let i=0;i<returned.length;i+=10)scenes.push({
+    scene_ref:sRef(i===0?"return":`return-${i/10+1}`),revision:1,title:"Returned work",
+    entity_refs:returned.slice(i,i+10).map(attempt=>eRef(localSuffix(attempt.attemptRef))),
+  });
 
   return {
     schema:"oi.expression/v1",

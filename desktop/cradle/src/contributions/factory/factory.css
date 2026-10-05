@@ -119,9 +119,9 @@
 /* Run-in-Expressions: the Run's own Expression performed by the Expressions
    engine (the engine-backed field is the Factory presentation); the frontier
    and the Return ride as its caption. */
-.factory-run-expression{display:flex;flex-direction:column;gap:10px;font-size:13px}
+.factory-run-expression{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0;flex:1;font-size:13px}
 .factory-run-expression__header h3{margin:0;font-size:15px}
 .factory-run-expression__frontier{margin:2px 0;opacity:.75}
-.factory-run-expression__stage{position:relative;height:420px;border-radius:10px;overflow:hidden}
+.factory-run-expression__stage{position:relative;flex:1;min-height:min(76dvh,900px);overflow:hidden}
 .factory-run-expression__stage .pcd-host{position:absolute;inset:0}
 .factory-run-expression__actions-note{opacity:.6;margin:2px 0;font-size:12px}

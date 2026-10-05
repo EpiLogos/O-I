@@ -440,7 +440,7 @@ impl crate::Kernel {
             "instance_ref":identity["instance_ref"],"event_ref":identity["event_ref"],"subject_ref":identity["subject_ref"],
             "command":{"operation":"procedure","request":{"action":"lifecycle","input":source_input}}});
         let intake = SourceIntake::capture_with_resource(&self.native_expression, &lease, &request,
-            &mut _capture_guard.lock().map_err(|_|"Source capture lock poisoned")?)?;
+            &mut *(_capture_guard.lock().map_err(|_|"Source capture lock poisoned")?))?;
         let scene_revision = before
             .scenes
             .iter()

@@ -10,7 +10,6 @@ use std::collections::BTreeSet;
 use super::lifecycle::{CompletedSourceIntake, ReceivingBoundary};
 #[path = "native_expression_procedural_definition.rs"]
 mod definition;
-pub(crate) use definition::NativePendingDefinition;
 
 #[path = "native_expression_procedural_physical_map.rs"]
 mod physical_map;

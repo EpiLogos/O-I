@@ -177,7 +177,7 @@ impl crate::Kernel {
             "command":{"operation":"procedure","request":{"action":"lifecycle_cancel","input":input}}});
         let intake = super::lifecycle::SourceIntake::capture_with_resource(
             &self.native_expression,&lease,&request,
-            &mut _capture_guard.lock().map_err(|_|"Source capture lock poisoned")?)?;
+            &mut *(_capture_guard.lock().map_err(|_|"Source capture lock poisoned")?))?;
         let scene_revision = before
             .scenes
             .iter()

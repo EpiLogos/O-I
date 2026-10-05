@@ -518,11 +518,15 @@ impl crate::Kernel {
                 // The qualified callback borrows the SAME actual Manager.
                 // Reserve before cloning; no Manager reference outlives the
                 // mutable guarded entry and no preparation can bypass it.
+                // Both borrowed groups are counted by the original native
+                // budget before cloning. Keep all eighteen original inputs;
+                // serde implements tuples only through sixteen elements.
                 let capture = owner.stage_library_replays.reserve_source_delivery(&(
-                    before, before, before, intent, intent, intent, intent,
-                    installed, installed, &source_intents, lease, identity,
-                    source, provenance, reply, contract,
-                    &owner.procedural_source, &owner.procedural_definitions,
+                    (before, before, before, intent, intent, intent, intent,
+                        installed, installed),
+                    (&source_intents, lease, identity, source, provenance,
+                        reply, contract, &owner.procedural_source,
+                        &owner.procedural_definitions),
                 ))?;
                 Ok(PreparedMutation {
                     before: before.clone(),
