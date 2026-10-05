@@ -4021,20 +4021,57 @@ mod shared_fingerprint_buffer_tests {
             "pending":{"request":{"material":body},"submitted":{"journey":{"material":body}}}});
         for occasion in [0, 1] {
             value["view"]["journey"]["occasion"] = json!(occasion);
-            let make = || StoredRecord {
-                schema: STORAGE_SCHEMA.into(),
-                record: Record {
-                    schema: SCHEMA.into(),
-                    scope: Scope::Expressions,
-                    kind: Kind::Checkpoint,
-                    id: "actual-native-memo-oracle".into(),
-                    revision: 1,
-                    value: value.clone(),
-                },
-                images: Vec::new(),
-                expanded_value_sha256: crate::expression_file::digest(
-                    &serde_json::to_vec(&value).unwrap(),
-                ),
+            let make = || {
+                // Match encode_record's real ordering: shared rescue receives
+                // PNG-compacted material, not an unprepared public checkpoint.
+                let mut counts = BTreeMap::new();
+                crate::expression_file::count_images(&value, &mut counts);
+                let refs: BTreeMap<String, String> = counts
+                    .into_iter()
+                    .filter(|(_, count)| *count > 1)
+                    .take(crate::expression_file::MAX_IMAGES)
+                    .map(|(url, _)| {
+                        (
+                            url.to_owned(),
+                            crate::expression_file::digest(url.as_bytes()),
+                        )
+                    })
+                    .collect();
+                assert_eq!(refs.len(), 6, "Keep every genuine native image");
+                let mut compact = value.clone();
+                crate::expression_file::intern(&mut compact, &refs);
+                qualify_expansion(
+                    Kind::Checkpoint,
+                    &compact,
+                    &refs
+                        .iter()
+                        .map(|(url, reference)| (reference.clone(), url.clone()))
+                        .collect(),
+                )
+                .unwrap();
+                let mut images: Vec<_> = refs
+                    .into_iter()
+                    .map(|(url, reference)| crate::expression_file::StoredImage {
+                        r#ref: reference,
+                        data_url: url,
+                    })
+                    .collect();
+                images.sort_by(|a, b| a.r#ref.cmp(&b.r#ref));
+                StoredRecord {
+                    schema: STORAGE_SCHEMA.into(),
+                    record: Record {
+                        schema: SCHEMA.into(),
+                        scope: Scope::Expressions,
+                        kind: Kind::Checkpoint,
+                        id: "actual-native-memo-oracle".into(),
+                        revision: 1,
+                        value: compact,
+                    },
+                    images,
+                    expanded_value_sha256: crate::expression_file::digest(
+                        &serde_json::to_vec(&value).unwrap(),
+                    ),
+                }
             };
             let uncached = encode_shared_record_with_fingerprint_limit(make(), 0)
                 .unwrap()
