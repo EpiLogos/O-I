@@ -1895,7 +1895,12 @@ impl Kernel {
                         return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit".into());
                     }
                     if let Some(candidate) = retained_candidate {
-                        crate::expression_act_store::ActStore::encoded_record(&candidate)?;
+                        // prepare_append already qualifies the complete physical
+                        // Record before allocation, then proves every byte of this
+                        // unchanged materialized Act against that prospective basis.
+                        // Retain that synchronous preflight here. The final Store
+                        // still encodes and checks the timestamped Act under CAS;
+                        // prospective bytes never become its committed record.
                         let expected_document = passage
                             .edition
                             .take()
