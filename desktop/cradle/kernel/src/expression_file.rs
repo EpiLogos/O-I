@@ -197,7 +197,7 @@ pub(crate) fn png(value: &str) -> bool {
 /// The one admitted `constructor` key shape: the native world-construction
 /// source-inputs record (schema, identity profile, natal, sky, occasion,
 /// calibration, return context). Every other `constructor` key is unsafe.
-fn native_constructor_metadata(object: &serde_json::Map<String, Value>) -> bool {
+pub(crate) fn native_constructor_metadata(object: &serde_json::Map<String, Value>) -> bool {
     const KEYS: [&str; 9] = [
         "schema",
         "constructor",
