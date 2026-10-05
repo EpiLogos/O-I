@@ -226,11 +226,11 @@ def main():
                 assert response is not None and response.status == 200
                 expect(page.locator('.graph-container')).to_have_count(0)
                 expect(page.locator('.pl')).to_be_visible()
-                expect(page.get_by_role('heading', name='A world to act within. A way to understand it.', exact=True)).to_have_count(1)
+                expect(page.get_by_role('heading', name='The world an agent acts from.', exact=True)).to_have_count(1)
                 expect(page.locator('nav[aria-label="Primary"]')).to_be_visible()
                 Path('evidence/library').mkdir(parents=True, exist_ok=True)
                 page.screenshot(path='evidence/library/essay-vercel-restored-home.png')
-                print('PASS vercel / retains the original hero and developed home', flush=True)
+                print('PASS vercel / retains the original hero and the redesigned home', flush=True)
             except Exception as exc:
                 failures.append(f'restored-home: {exc}')
                 print('FAIL restored-home', exc, flush=True)

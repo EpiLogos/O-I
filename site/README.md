@@ -2,22 +2,25 @@
 
 The public O:I web surface is a React + TypeScript application with a shadcn-compatible component layout and Tailwind CSS.
 
-The front door is no longer a one-page document. The public navigation is:
+The front door is one page. Its header carries two links, top right: **Essay** (the published essay field at `./essay/`) and **O:I on GitHub**. The home reads, in order:
 
 ```text
-O:I · Products · Shared Field · Research · Build · Explore
+hero        Objective : Internality
+[what]      Objective Internality, made into technology. — what O:I is and what the six products do
+[essay]     the essay, Confronting the Limit, with its entrance
+[means]     Mind and World
+[return]    A steward of relations
+[centres]   Our products — the six products as developing work, with the README link
 ```
 
 The public entries are:
 
 ```text
-index.html          landing / front door
-oi.html             whole-level O:I account
-products.html       six native products + current architecture views
-shared-field.html   World, Projection, SharedField and Objective Co-Internality
-research.html       agentic-engineering research field + protocol + collective extension + QL entry
-build.html          installation, source, SDK/extension direction and development entry
-explore.html        standalone Explore application
+index.html          the home above (shell.html renders the same shell)
+essay/              the published essay field (Quartz build of the essay)
+library.html        read-only Expressions Library (explore.html is a copy of it)
+oi.html, products.html, shared-field.html, research.html, build.html
+                    compatibility addresses; each opens its account inside the Library
 ```
 
 Explore remains a distinct application surface and is not authored by the public prose document below.
@@ -144,9 +147,9 @@ The same rule applies to community extension, Objective Co-Internality, Return, 
 
 ## Front door
 
-`index.html` is deliberately a landing page rather than the complete public essay. It keeps the parallax identity, a plain account of an agent acting through a technological world, the existing-world entry, the minimal-to-developed possibility field, concise entrances to our six products, and apertures into Shared Field and Build.
+`index.html` is deliberately a landing page rather than the complete public essay. It keeps the parallax identity, then says what Objective Internality is and plainly what the six products and the Cradle do, enters the essay, gives the Mind and World figure and the steward-of-relations account, and closes on the six products as developing work with the README link. The earlier existing-world, possibility-field, Shared Field and Build home bands are removed.
 
-The deeper authored material remains present but has room on the O:I, Products, Shared Field and Research pages.
+The deeper authored material remains present in `content/public-site.md` and is read through the Library's O:I, Products, Shared Field and Research accounts.
 
 The visible hero title is **Objective : Internality**. Title/heading uses of the name follow the colon form while prose may still discuss the concept of Objective Internality normally.
 

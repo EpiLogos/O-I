@@ -1,37 +1,18 @@
-.sn__library{margin-left:auto;margin-right:2rem;font-size:.8rem;letter-spacing:.06em;text-decoration:none;color:inherit}
-.sn__library:hover{text-decoration:underline;text-underline-offset:.3em}
-@media(max-width:600px){.sn__library{margin-right:1rem}}
 /* Compact controls retain both their icon and explicit accessible name. */
 @media(max-width:700px){.library-host .reader-library>.library-icon,.library-host .read-source-action>.library-icon,.library-host .return-field>.library-icon{display:inline-flex}}
 
-/* The editorial column may be taller than two tile rows. Its height must not
-   stretch the independent 3x2 product grid beyond the authored square form. */
-.shell .sec--offices .office-grid{align-self:start}
-/* These six tiles sit in a narrow column even on a wide display. Viewport-sized
-   type made the new authored descriptions expand them beyond their 1:1 form.
-   Size the typography to the actual tile; retain every word and the square. */
-.shell .office-tile{container-type:inline-size}
-.shell .office-tile__link{min-height:0;gap:clamp(6px,5cqw,14px);padding:clamp(10px,7cqw,20px)}
-.shell .office-tile__head{gap:clamp(5px,3cqw,9px)}
-.shell .office-tile__copy{gap:clamp(4px,2.5cqw,7px)}
-.shell .office-tile .sec__cell-name{font-size:clamp(14px,8cqw,23px);line-height:1.15}
-.shell .office-tile .sec__detail{font-size:clamp(10px,5cqw,13px);line-height:1.4}
-
-/* Multiply belongs to the light hero. Over the band's dark ground it erased
-   the image; retain the native media, mask, cover crop and reading shade. */
-.shell .band .vf__frame{mix-blend-mode:normal}
-
-/* Reading entrances join the existing header and editorial spaces. */
-.sn__reading{display:flex;align-items:center;gap:1.3rem;margin-left:auto;font-size:.8rem;letter-spacing:.06em}
+/* The essay entrance joins the existing header and editorial spaces. */
+.sn__reading{display:flex;align-items:center;gap:1.3rem;font-size:.8rem;letter-spacing:.06em}
 .sn__reading a{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
 .sn__reading a:hover{text-decoration:underline;text-underline-offset:.3em}
 .sec__reading{display:flex;flex-wrap:wrap;gap:1rem 2rem;color:var(--s-fg,inherit);font-size:.9rem}
 .sec--statement .sec__reading{grid-column:6/-1}
-.band .sec__reading{grid-column:2}
-@media(max-width:760px){.sec--statement .sec__reading,.band .sec__reading{grid-column:1}}
-@media(max-width:600px){
- .sn{gap:.6rem}
- .sn__brand{width:clamp(5.2rem,20vw,6.5rem)}
- .sn__reading{gap:.65rem}
- .sn__toggle-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-}
+.sec__link-label{display:inline}
+.sec__entrance{display:grid;gap:.7rem;max-width:38rem}
+.sec__entrance .sec__link{display:grid;gap:.45rem;text-decoration:none}
+.sec__entrance .sec__link-label{font-size:.72rem;font-weight:650;letter-spacing:var(--track);text-transform:uppercase}
+.sec__link-title{font-size:clamp(1.15rem,1.9vw,1.55rem);line-height:1.25;letter-spacing:-.015em;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent)}
+.sec__entrance .sec__link:hover .sec__link-title{text-decoration-color:currentColor}
+.sec__caption{margin:0;color:var(--s-muted,inherit);font-size:.92rem;line-height:1.6}
+.sec--index .sec__reading{margin-top:1.25rem}
+@media(max-width:760px){.sec--statement .sec__reading{grid-column:1}}
