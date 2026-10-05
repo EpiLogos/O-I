@@ -11,30 +11,39 @@ pub struct PreparedRead {
     lease: Option<String>,
     identity: Option<Value>,
     source_intents: Vec<(String, Result<super::bootstrap::Intent, String>)>,
+    capture: Option<std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>>,
 }
 pub struct CompletedRead {
-    prepared: PreparedRead,
     catalogue: Result<Value, String>,
     issued: Vec<(String, Result<super::bootstrap::IssuedSceneRead, String>)>,
+    prepared: PreparedRead,
 }
 impl PreparedRead {
     pub fn execute(self) -> CompletedRead {
         // Catalogue is a read-only Source operation. It supplies no native
         // performance ordinal, currentness capability or consumer observation.
-        let catalogue = super::execute_stateless(
-            "authored_catalog",
-            "authored_catalog",
-            Value::Null,
-            8 * 1024 * 1024,
-        );
+        let catalogue_limit = self.capture.as_ref()
+            .map(reserve_catalogue_allowance).transpose();
+        let catalogue = catalogue_limit.and_then(|limit| match &self.capture {
+            Some(capture) => super::execute_stateless_with_capture(
+                "authored_catalog", "authored_catalog", Value::Null,
+                limit.ok_or("Original authored catalogue allowance is absent")?, capture.clone(),
+            ),
+            None => super::execute_stateless("authored_catalog", "authored_catalog", Value::Null, 8*1024*1024),
+        });
         let issued = self
             .source_intents
             .iter()
-            .map(|(scene_ref, intent)| {
+            .enumerate()
+            .map(|(index, (scene_ref, intent))| {
                 let issued = match (intent, &self.identity) {
-                    (Ok(intent), Some(identity)) => {
-                        super::bootstrap::read_selected_scene(&self.before, identity, intent)
-                    }
+                    (Ok(intent), Some(identity)) => self.capture.as_ref()
+                        .ok_or_else(||"Actual native Source read resource is absent".to_owned())
+                        .and_then(|capture| {
+                            super::bootstrap::read_selected_scene_with_capture(
+                                &self.before, identity, intent, capture, self.source_intents.len() - index,
+                            )
+                        }),
                     (Err(error), _) => Err(error.clone()),
                     _ => Err("Actual native Source owner is unavailable".into()),
                 };
@@ -99,21 +108,20 @@ impl crate::Kernel {
         intake.value(request)?;
         intake.value(&borrowed_intents)?;
         intake.reserve(4096)?;
-        let source_intents = borrowed_intents
-            .into_iter()
-            .map(|(reference, intent)| (reference.to_owned(), Ok(intent.clone())))
-            .collect();
-        let owner = self
-            .native_expression
-            .active
-            .as_ref()
-            .filter(|owner| !owner.stopped);
+        let owner = self.native_expression.active.as_ref().filter(|owner|!owner.stopped);
+        let capture = owner.map(|owner|owner.stage_library_replays.reserve_source_delivery(&(
+            before,before,request,request,&borrowed_intents,&owner.identity,
+            &owner.procedural_source,&owner.procedural_definitions,
+        )).map(|capture|std::sync::Arc::new(std::sync::Mutex::new(capture)))).transpose()?;
+        let source_intents = borrowed_intents.into_iter()
+            .map(|(reference,intent)|(reference.to_owned(),Ok(intent.clone()))).collect();
         Ok(Some(PreparedRead {
             before: before.clone(),
             intent: request.clone(),
             lease: owner.map(|o| o.lease.clone()),
             identity: owner.map(|o| o.identity.clone()),
             source_intents,
+            capture,
         }))
     }
 
@@ -164,7 +172,7 @@ impl crate::Kernel {
         match catalogue {
             Ok(reply) => {
                 // Charge all retained response/catalogue copies before cloning.
-                super::bootstrap::preflight_source_message(&(
+                crate::expression::procedural::bootstrap::preflight_source_message(&(
                     current,
                     &prepared.intent,
                     &reply,
@@ -374,28 +382,51 @@ pub struct PreparedMutation {
     identity: Value,
     installed: Value,
     source_intents: Vec<(String, super::bootstrap::Intent)>,
+    // SAME private process reservation, admitted while every heavy value was
+    // still borrowed. Last field keeps admission through full context drop.
+    capture: std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
 }
 pub struct CompletedMutation {
-    prepared: PreparedMutation,
     catalogue: Value,
     issued: Vec<(String, super::bootstrap::IssuedSceneRead)>,
+    // The preparation's resource is released only after both real replies.
+    prepared: PreparedMutation,
 }
+fn reserve_catalogue_allowance(
+    capture: &std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
+) -> Result<usize, String> {
+    let mut capture = capture.lock().map_err(|_| "Original authored catalogue resource unavailable")?;
+    let limit = capture.reply_limit() / 8;
+    if limit == 0 { return Err("Original authored catalogue has no bounded capacity".into()); }
+    // The complete raw reply, parsed catalogue and its retained/outward forms
+    // coexist while all subsequent Scene issuance consumes the same horizon.
+    let copies = limit.checked_mul(32).and_then(|n|n.checked_add(4096))
+        .ok_or("Original authored catalogue copy allowance overflow")?;
+    capture.preflight_copy_bytes(copies)?;
+    Ok(limit)
+}
+
 impl PreparedMutation {
     pub fn execute(self) -> Result<CompletedMutation, String> {
-        let catalogue = super::execute_stateless(
+        let catalogue_limit = reserve_catalogue_allowance(&self.capture)?;
+        if catalogue_limit == 0 {
+            return Err("Original authored preparation has no bounded catalogue capacity".into());
+        }
+        let catalogue = super::execute_stateless_with_capture(
             "authored_catalog",
             "authored_catalog",
             Value::Null,
-            8 * 1024 * 1024,
+            catalogue_limit,
+            self.capture.clone(),
         )?;
-        let issued = self
-            .source_intents
-            .iter()
-            .map(|(reference, intent)| {
-                super::bootstrap::read_selected_scene(&self.before, &self.identity, intent)
-                    .map(|issued| (reference.clone(), issued))
-            })
-            .collect::<Result<Vec<_>, String>>()?;
+        let mut issued = Vec::with_capacity(self.source_intents.len());
+        for (index, (reference, intent)) in self.source_intents.iter().enumerate() {
+            let actual = super::bootstrap::read_selected_scene_with_capture(
+                &self.before, &self.identity, intent,
+                &self.capture, self.source_intents.len() - index,
+            )?;
+            issued.push((reference.clone(), actual));
+        }
         Ok(CompletedMutation {
             prepared: self,
             catalogue,
@@ -441,7 +472,7 @@ impl crate::Kernel {
         let targets = procedural::resolve(before, scope)?;
         // A shared property belongs to the complete Expression. Every Scene
         // keeps its own accepted source intent, in the actual Document order.
-        let shared = target["kind"] == "expression_shared";
+        let shared = target.kind == "expression_shared";
         let scene_refs = if shared {
             before
                 .scenes
@@ -462,50 +493,51 @@ impl crate::Kernel {
                     .map(|intent| (*reference, intent))
             })
             .collect::<Result<Vec<_>, String>>()?;
-        let owner = self
-            .native_expression
-            .active
-            .as_ref()
-            .ok_or("Actual authored Source owner absent")?;
-        if owner.stopped || owner.process_exited()? {
-            return Err("Actual authored native Source owner closed".into());
-        }
-        let lease = &owner.lease;
-        let identity = &owner.identity;
-        let installed = self.native_expression.procedural_definition_borrowed(
-            lease,
-            expression_ref,
-            procedure_ref,
+        let prepared = self.native_expression.with_registered_source_context_owner(
+            &self.expressions, before, scene_ref,
+            |manager, source, provenance, reply, contract| {
+                let owner = manager.active.as_ref()
+                    .ok_or("Actual authored Source owner absent")?;
+                if owner.stopped || owner.process_exited()? {
+                    return Err("Actual authored native Source owner closed".into());
+                }
+                let lease = &owner.lease;
+                let identity = &owner.identity;
+                let installed = manager.procedural_definition_borrowed(
+                    lease, expression_ref, procedure_ref,
+                )?;
+                procedural::validate_retained_procedural_definition(before, installed)?;
+                if installed["procedure"]["revision"] != *expected_procedure_revision
+                    || targets.is_empty() {
+                    return Err("Authored operation has another actual installed Procedure revision or empty scope".into());
+                }
+                crate::expression::procedural::bootstrap::preflight_source_message(&(
+                    before, before, intent, installed, installed,
+                    &source_intents, lease, identity,
+                ))?;
+                // The qualified callback borrows the SAME actual Manager.
+                // Reserve before cloning; no Manager reference outlives the
+                // mutable guarded entry and no preparation can bypass it.
+                let capture = owner.stage_library_replays.reserve_source_delivery(&(
+                    before, before, before, intent, intent, intent, intent,
+                    installed, installed, &source_intents, lease, identity,
+                    source, provenance, reply, contract,
+                    &owner.procedural_source, &owner.procedural_definitions,
+                ))?;
+                Ok(PreparedMutation {
+                    before: before.clone(),
+                    intent: intent.clone(),
+                    lease: lease.clone(),
+                    identity: identity.clone(),
+                    installed: installed.clone(),
+                    source_intents: source_intents.iter()
+                        .map(|(reference, intent)| ((*reference).to_owned(), (*intent).clone()))
+                        .collect(),
+                    capture: std::sync::Arc::new(std::sync::Mutex::new(capture)),
+                })
+            },
         )?;
-        procedural::validate_retained_procedural_definition(before, installed)?;
-        if installed["procedure"]["revision"] != *expected_procedure_revision || targets.is_empty()
-        {
-            return Err(
-                "Authored operation has another actual installed Procedure revision or empty scope"
-                    .into(),
-            );
-        }
-        super::bootstrap::preflight_source_message(&(
-            before,
-            before,
-            intent,
-            installed,
-            installed,
-            &source_intents,
-            lease,
-            identity,
-        ))?;
-        Ok(Some(PreparedMutation {
-            before: before.clone(),
-            intent: intent.clone(),
-            lease: lease.clone(),
-            identity: identity.clone(),
-            installed: installed.clone(),
-            source_intents: source_intents
-                .into_iter()
-                .map(|(reference, intent)| (reference.to_owned(), intent.clone()))
-                .collect(),
-        }))
+        Ok(Some(prepared))
     }
 
     #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -513,6 +545,9 @@ impl crate::Kernel {
         &mut self,
         completed: CompletedMutation,
     ) -> Result<crate::KernelOpOutcome, String> {
+        // Declare the shared guard before all moved heavy locals so every
+        // early-return path drops those locals before releasing admission.
+        let preparation_capture = completed.prepared.capture.clone();
         let CompletedMutation {
             prepared,
             catalogue,
@@ -525,7 +560,9 @@ impl crate::Kernel {
             identity,
             installed,
             source_intents,
+            capture: prepared_capture,
         } = prepared;
+        drop(prepared_capture); // preparation_capture holds the SAME slot.
         let Request::AuthoredDriver {
             expression_ref,
             scene_ref,
@@ -563,7 +600,7 @@ impl crate::Kernel {
                     .into(),
             );
         }
-        let shared = target["kind"] == "expression_shared";
+        let shared = target.kind == "expression_shared";
         let expected_refs = if shared {
             before
                 .scenes
@@ -600,6 +637,7 @@ impl crate::Kernel {
         ))?;
         bounded.value(&intent)?;
         bounded.value(&intent)?;
+        let retained_context_bytes = bounded.charged_bytes();
         let targets = procedural::resolve(&before, scope)?;
         for (reference, actual) in &issued {
             actual.charge_closed_source_read(&mut bounded)?;
@@ -633,6 +671,10 @@ impl crate::Kernel {
         bounded.value(&installed["procedure"])?;
         bounded.value(&installed["procedure"])?;
         bounded.reserve(16 * 1024)?;
+        preparation_capture.lock()
+            .map_err(|_| "Original authored preparation resource unavailable")?
+            .preflight_copy_bytes(bounded.charged_bytes().checked_sub(retained_context_bytes)
+                .ok_or("Authored prospective reading budget moved backwards")?)?;
         let mut readings = Vec::with_capacity(issued.len());
         let mut scene_reads = Vec::with_capacity(issued.len());
         for (reference, actual) in &issued {
@@ -729,6 +771,7 @@ impl crate::Kernel {
             &identity,
             scene_ref,
             &request,
+            &preparation_capture,
             &(
                 &before,
                 &before,
@@ -836,6 +879,7 @@ impl crate::Kernel {
                     intake,
                     native_receipt,
                 ));
+                drop(preparation_capture);
                 return self.retain_authored_original_outcome(anchor, result, Some(diagnostics));
             }
         };
@@ -952,6 +996,7 @@ impl crate::Kernel {
             native_receipt,
             channel,
         ));
+        drop(preparation_capture);
         self.retain_authored_original_outcome(anchor, result, None)
     }
 
@@ -980,7 +1025,7 @@ impl crate::Kernel {
         };
         // Current Document disclosure is optional on an already-consumed
         // native refusal. Never allocate an unbounded post-edit Document clone.
-        if super::bootstrap::preflight_source_message(&(
+        if crate::expression::procedural::bootstrap::preflight_source_message(&(
             document,
             document,
             intent,
@@ -1099,7 +1144,7 @@ struct OutcomeAnchor {
     ordinal: u64,
     original_document_sha256: String,
     // Private, non-Clone/non-serde resource from the original shared registry.
-    resource: std::sync::Mutex<super::stage_library::SourceDeliveryCapture>,
+    resource: std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
 }
 impl OriginalOutcome {
     pub(crate) fn original(&self) -> &Request {
@@ -1303,6 +1348,7 @@ impl crate::Kernel {
         identity: &Value,
         scene_ref: &str,
         request: &Value,
+        preparation_capture: &std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
         complete_borrowed_context: &impl serde::Serialize,
     ) -> Result<OutcomeAnchor, String> {
         if self
@@ -1336,29 +1382,26 @@ impl crate::Kernel {
         }
         // The Source context is the genuine original private completion. Caller
         // JSON, a saved outcome and the selected anchor cannot reconstruct it.
-        let resource = self
-            .native_expression
-            .with_registered_source_context_owner(
-                &self.expressions,
-                before,
-                scene_ref,
-                |manager, source, provenance, reply, contract| {
-                    let owner = manager
-                        .active
-                        .as_ref()
-                        .ok_or("Actual authored owner closed")?;
-                    owner.stage_library_replays.reserve_source_delivery(&(
-                        complete_borrowed_context,
-                        source,
-                        provenance,
-                        reply,
-                        contract,
-                        &owner.identity,
-                        &owner.procedural_source,
-                        &owner.procedural_definitions,
+        self.native_expression.with_registered_source_context_owner(
+            &self.expressions, before, scene_ref,
+            |manager, source, provenance, reply, contract| {
+                let owner = manager.active.as_ref().ok_or("Actual authored owner closed")?;
+                // Keep the full original local aperture checked. Its Document
+                // and Source context were already admitted at preparation.
+                crate::expression::procedural::bootstrap::preflight_source_message(&(
+                    complete_borrowed_context, source, provenance, reply, contract,
+                    &owner.identity, &owner.procedural_source, &owner.procedural_definitions,
+                ))?;
+                // Only the NEW retained anchor copies consume the original
+                // reply allowance here. No second capture slot or reservation.
+                preparation_capture.lock()
+                    .map_err(|_| "Original authored preparation resource unavailable")?
+                    .preflight_copies(&(
+                        intent, lease, identity, &owner.procedural_source,
+                        &owner.procedural_executable, &owner.native_field_epoch,
                     ))
-                },
-            )?;
+            },
+        )?;
         let owner = self
             .native_expression
             .active
@@ -1373,7 +1416,7 @@ impl crate::Kernel {
             field_epoch: owner.native_field_epoch.clone(),
             ordinal,
             original_document_sha256: super::bootstrap::fingerprint(before)?,
-            resource: std::sync::Mutex::new(resource),
+            resource: preparation_capture.clone(),
         })
     }
     fn retain_authored_original_outcome(
@@ -1571,5 +1614,36 @@ mod readonly_original_retry_tests {
         assert!(kernel.native_expression.active.is_none());
         assert!(kernel.native_expression.procedural_authored_outcomes.is_empty());
         assert!(kernel.apply(op).is_err());
+    }
+}
+
+#[cfg(test)]
+mod source_catalogue_custody_tests {
+    use super::*;
+    #[test]
+    fn actual_native_catalogue_and_installed_selector_preserve_same_resource() {
+        let candidate = std::env::var_os("OI_BIN").filter(|value| !value.is_empty())
+            .expect("OI_BIN must name the native publisher's pinned candidate");
+        assert!(std::path::Path::new(&candidate).is_absolute());
+        let capture = std::sync::Arc::new(std::sync::Mutex::new(
+            super::super::stage_library::SourceDeliveryCapture::isolated_resource_for_test(
+                &"native catalogue custody; no Scene/current Source authority",
+            ).unwrap(),
+        ));
+        let prior = capture.lock().unwrap().reply_limit();
+        let limit = reserve_catalogue_allowance(&capture).unwrap();
+        assert!(capture.lock().unwrap().reply_limit() < prior);
+        let ordinary = super::super::execute_stateless(
+            "authored_catalog", "authored_catalog", Value::Null, 8 * 1024 * 1024,
+        ).unwrap();
+        let bounded = super::super::execute_stateless_with_capture(
+            "authored_catalog", "authored_catalog", Value::Null, limit, capture,
+        ).unwrap();
+        assert_eq!(bounded["native_result"], ordinary["native_result"]);
+        assert_eq!(bounded["source"]["ql_executable"], ordinary["source"]["ql_executable"]);
+        assert_eq!(bounded["source"]["ql_selection"], ordinary["source"]["ql_selection"]);
+        assert_eq!(bounded["source"]["ql_revision"], ordinary["source"]["ql_revision"]);
+        assert_eq!(bounded["source"]["original_request"], Value::Null);
+        assert!(!bounded["native_result"]["result"]["catalog"].is_null());
     }
 }

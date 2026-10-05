@@ -140,8 +140,8 @@ fn validate_fresh_continuation_semantics(installed: &Value, source: &Value) -> R
             || old_evidence[0] != installed["procedure"]["profile"]["source_ref"]
             || new_evidence[0] != source["native_scene_source"]["source_basis"]["source_ref"]
             || new_evidence[1] != source["native_scene_source"]["material_fingerprint"]
-            || old_evidence != old_steps[0]["basis"]["evidence"]
-            || new_evidence != new_steps[0]["basis"]["evidence"]
+            || old_evidence != &old_steps[0]["basis"]["evidence"]
+            || new_evidence != &new_steps[0]["basis"]["evidence"]
             || old_step[coordinate].as_str().is_none_or(str::is_empty)
             || new_step[coordinate].as_str().is_none_or(str::is_empty)
         {

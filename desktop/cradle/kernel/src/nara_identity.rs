@@ -10,7 +10,7 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::mpsc,
+    sync::{mpsc, Arc},
     time::{Duration, Instant},
 };
 
@@ -163,22 +163,168 @@ pub(crate) fn run_ql_selected(
     command.args([family, operation, "-", "--json"]);
     run_ql_command(command, input)
 }
-fn run_ql_command(mut command: Command, input: &Value) -> Result<Value, String> {
-    let bytes = profile_bytes(input)?;
+fn run_ql_command(command: Command, input: &Value) -> Result<Value, String> {
+    run_ql_command_inner(command, input, None)
+}
+
+/// A private Source caller has already reserved these bytes in its SAME
+/// delivery capture. This cap grants no executable, coordinate or Source.
+pub(crate) fn run_ql_source_coordinate(
+    input: &Value, limit: usize, capture: Arc<dyn Send + Sync>,
+) -> Result<Value, String> {
+    source_limit(limit)?;
+    let executable = std::env::var_os("OI_BIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| "oi".into());
+    let mut command = Command::new(executable);
+    command.args(["ql", "nara", "coordinate", "-", "--json"]);
+    // Private reduction-only transport cap, not an authorship/grant operand.
+    // Never mutate the desktop environment or change ordinary Nara requests.
+    command.env("QL_NATIVE_SOURCE_COORDINATE_BYTE_CAP", limit.to_string());
+    run_ql_command_inner(command, input, Some((limit, capture)))
+}
+
+fn source_limit(limit: usize) -> Result<(), String> {
+    if limit == 0 || limit > MAX_OUTPUT as usize {
+        return Err("Private Source coordinate cap is absent or exceeds ordinary Nara".into());
+    }
+    Ok(())
+}
+
+struct SourceInputCounter { remaining: usize }
+impl Write for SourceInputCounter {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.remaining = self.remaining.checked_sub(bytes.len()).ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::OutOfMemory, "native Source coordinate input")
+        })?;
+        Ok(bytes.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
+}
+fn source_profile_bytes(input: &Value, limit: usize) -> Result<Vec<u8>, String> {
+    source_limit(limit)?;
+    let mut counter = SourceInputCounter { remaining: limit.min(MAX_PROFILE) };
+    // Check the exact original pretty input before allocating its encoded Vec.
+    serde_json::to_writer_pretty(&mut counter, input)
+        .map_err(|_| "Native Source coordinate input exceeds its reserved cap")?;
+    profile_bytes(input)
+}
+fn source_bytes<R: Read>(pipe: R, limit: usize) -> Result<Vec<u8>, String> {
+    source_limit(limit)?;
+    let mut bytes = Vec::new();
+    pipe.take(limit as u64 + 1).read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+    if bytes.len() > limit {
+        return Err("Native Source coordinate output exceeds its reserved cap".into());
+    }
+    Ok(bytes)
+}
+// A queued result owns the SAME capture until its bytes have been destroyed.
+// The resource is last, including send-error and receiver-drop paths.
+pub(crate) struct SourceReadOutcome {
+    pub(crate) result: Result<Vec<u8>, String>,
+    _capture: Option<Arc<dyn Send + Sync>>,
+}
+struct SourceReaderWork<R> {
+    pipe: R,
+    tx: mpsc::Sender<SourceReadOutcome>,
+    limit: usize,
+    capture: Arc<dyn Send + Sync>,
+}
+impl<R: Read> SourceReaderWork<R> {
+    fn run(mut self) {
+        let result = source_bytes(&mut self.pipe, self.limit);
+        let outcome = SourceReadOutcome {
+            result,
+            _capture: Some(Arc::clone(&self.capture)),
+        };
+        // A descendant may keep this real pipe open after the original child
+        // exits. The work object keeps admission until read and send terminate.
+        let _ = self.tx.send(outcome);
+    }
+}
+fn source_reader<R: Read + Send + 'static>(
+    pipe: R, limit: usize, capture: Arc<dyn Send + Sync>,
+) -> mpsc::Receiver<SourceReadOutcome> {
+    let (tx, rx) = mpsc::channel();
+    let work = SourceReaderWork { pipe, tx, limit, capture };
+    std::thread::spawn(move || work.run());
+    rx
+}
+#[cfg(test)]
+pub(crate) fn source_reader_for_test<R: Read + Send + 'static>(
+    pipe: R, limit: usize, capture: Arc<dyn Send + Sync>,
+) -> mpsc::Receiver<SourceReadOutcome> {
+    source_reader(pipe, limit, capture)
+}
+struct SourceWriterWork {
+    stdin: std::process::ChildStdin,
+    bytes: Vec<u8>,
+    tx: mpsc::Sender<Result<(), String>>,
+    capture: Arc<dyn Send + Sync>,
+}
+impl SourceWriterWork {
+    fn run(mut self) {
+        let result = self.stdin.write_all(&self.bytes).map_err(|e| e.to_string());
+        let _ = self.tx.send(result);
+        // Named work fields drop in order: encoded bytes before admission.
+        // Keep this owned guard live even after the outer receive times out.
+        let _ = &self.capture;
+    }
+}
+enum OutputReader {
+    Ordinary(mpsc::Receiver<Result<Vec<u8>, String>>),
+    Source(mpsc::Receiver<SourceReadOutcome>),
+}
+impl OutputReader {
+    fn receive(&self) -> Result<SourceReadOutcome, String> {
+        match self {
+            Self::Ordinary(receiver) => Ok(SourceReadOutcome {
+                result: receiver.recv_timeout(Duration::from_secs(2))
+                    .map_err(|e| e.to_string())?,
+                _capture: None,
+            }),
+            Self::Source(receiver) => receiver.recv_timeout(Duration::from_secs(2))
+                .map_err(|e| e.to_string()),
+        }
+    }
+}
+fn run_ql_command_inner(
+    mut command: Command, input: &Value,
+    source: Option<(usize, Arc<dyn Send + Sync>)>,
+) -> Result<Value, String> {
+    // This borrowed input and the SAME capture parameter survive every local
+    // encoded/raw buffer. Worker/message guards also survive outer failures.
+    let bytes = match &source {
+        Some((limit, _)) => source_profile_bytes(input, *limit)?,
+        None => profile_bytes(input)?,
+    };
     let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("QL Nara owner unavailable: {e}"))?;
-    let stdout = reader(child.stdout.take().ok_or("QL stdout unavailable")?);
-    let stderr = reader(child.stderr.take().ok_or("QL stderr unavailable")?);
-    // A bounded writer also lets a broken owner that never reads stdin time out.
+    let stdout_pipe = child.stdout.take().ok_or("QL stdout unavailable")?;
+    let stderr_pipe = child.stderr.take().ok_or("QL stderr unavailable")?;
+    let (stdout, stderr) = match &source {
+        Some((limit, capture)) => (
+            OutputReader::Source(source_reader(stdout_pipe, *limit, Arc::clone(capture))),
+            OutputReader::Source(source_reader(stderr_pipe, *limit, Arc::clone(capture))),
+        ),
+        None => (OutputReader::Ordinary(reader(stdout_pipe)), OutputReader::Ordinary(reader(stderr_pipe))),
+    };
+    // Only Source work adds shared resource custody. Ordinary Nara keeps its
+    // existing 60-second process deadline, 2-second receives and diagnostics.
     let mut stdin = child.stdin.take().ok_or("QL stdin unavailable")?;
     let (tx, rx) = mpsc::channel();
-    std::thread::spawn(move || {
-        let _ = tx.send(stdin.write_all(&bytes).map_err(|e| e.to_string()));
-    });
+    if let Some((_, capture)) = &source {
+        let work = SourceWriterWork { stdin, bytes, tx, capture: Arc::clone(capture) };
+        std::thread::spawn(move || work.run());
+    } else {
+        std::thread::spawn(move || {
+            let _ = tx.send(stdin.write_all(&bytes).map_err(|e| e.to_string()));
+        });
+    }
     let deadline = Instant::now() + Duration::from_secs(60);
     let status = loop {
         match child.try_wait() {
@@ -196,19 +342,17 @@ fn run_ql_command(mut command: Command, input: &Value) -> Result<Value, String> 
     };
     rx.recv_timeout(Duration::from_secs(2))
         .map_err(|e| e.to_string())??;
-    let output = stdout
-        .recv_timeout(Duration::from_secs(2))
-        .map_err(|e| e.to_string())??;
-    let errors = stderr
-        .recv_timeout(Duration::from_secs(2))
-        .map_err(|e| e.to_string())??;
+    let output = stdout.receive()?;
+    let errors = stderr.receive()?;
+    let output_bytes = output.result.as_ref().map_err(Clone::clone)?;
+    let error_bytes = errors.result.as_ref().map_err(Clone::clone)?;
     if !status.success() {
         return Err(format!(
             "QL Nara refused: {}",
-            String::from_utf8_lossy(&errors)
+            String::from_utf8_lossy(error_bytes)
         ));
     }
-    serde_json::from_slice(&output).map_err(|e| format!("QL Nara response: {e}"))
+    serde_json::from_slice(output_bytes).map_err(|e| format!("QL Nara response: {e}"))
 }
 
 /// QL's typed float fields can serialize an entered JSON integer as `0.0`.
@@ -574,5 +718,23 @@ mod raw_profile_source_admission_tests {
             let wrong = raw.replace("0.00001", value);
             assert!(crate::expression_file::read_native_json::<Value>(wrong.as_bytes()).is_err());
         }
+    }
+}
+
+#[cfg(test)]
+mod source_coordinate_bounds_tests {
+    use super::*;
+    #[test]
+    fn reserved_coordinate_input_and_real_read_refuse_before_expansion() {
+        let input = json!({"coordinate_ref":"ql:m-coordinate:bimba:#3-2", "face":"bimba"});
+        let bytes = serde_json::to_vec_pretty(&input).unwrap();
+        assert_eq!(source_profile_bytes(&input, bytes.len()).unwrap(), bytes);
+        assert!(source_profile_bytes(&input, bytes.len()-1).is_err());
+        let native_bytes = br##"{"native_coordinate":"#3-2"}"##;
+        assert_eq!(source_bytes(std::io::Cursor::new(native_bytes), native_bytes.len()).unwrap(), native_bytes);
+        assert!(source_bytes(std::io::Cursor::new(native_bytes), native_bytes.len()-1).is_err());
+        assert!(source_bytes(std::io::Cursor::new(native_bytes), 0).is_err());
+        assert!(source_limit(MAX_OUTPUT as usize + 1).is_err());
+        assert_eq!(MAX_OUTPUT,16*1024*1024, "ordinary Nara output limit remains independent");
     }
 }

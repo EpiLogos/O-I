@@ -97,6 +97,48 @@ pub fn execute(request: Request) -> Result<crate::KernelOpOutcome, String> {
     })
 }
 
+/// The original Source capture fixes this finite allowance BEFORE native input
+/// encoding or output reading. Optional content/bundle operations stay ordinary.
+pub(crate) fn execute_source_bounded(
+    request: Request, limit: usize, capture: std::sync::Arc<dyn Send + Sync>,
+)
+    -> Result<crate::KernelOpOutcome, String> {
+    if request.coordinate_ref.is_empty() || request.coordinate_ref.len() > 4096
+        || !matches!(request.face.as_str(), "bimba" | "pratibimba")
+        || request.source_only || request.include_content
+        || !request.related_coordinates.is_empty() || request.inventory.is_some() {
+        return Err("Private Source requires the original bounded two-key coordinate read".into());
+    }
+    let binding = crate::nara_identity::run_ql_source_coordinate(
+        &json!({"coordinate_ref":request.coordinate_ref,"face":request.face}), limit, capture,
+    )?;
+    let data = project_source_bounded(binding, limit)?;
+    Ok(crate::KernelOpOutcome { receipts: vec![], result: crate::KernelOpResult::NaraCoordinate { data } })
+}
+
+fn project_source_bounded(binding: Value, limit: usize) -> Result<Value,String> {
+    // Complete original binding, typed profiles/subject and their Value output
+    // coexist. The capture reserved 32 raw caps plus this fixed profile cover;
+    // this exact borrowed prepass happens BEFORE the shared projector copies.
+    let mut prospective = crate::expression::procedural::budget::Budget::new();
+    prospective.value(&(&binding,&binding,&binding,&binding))?;
+    let layers = binding["inherited_profiles"].as_array()
+        .filter(|layers| !layers.is_empty() && layers.len()<=4)
+        .ok_or("Native coordinate profile lineage exceeds the admitted inheritance depth")?;
+    for layer in layers {
+        prospective.value(&(layer,layer,layer,layer,layer,layer,layer,layer))?;
+    }
+    // All profile vocabulary and struct keys are static; native string data
+    // and repeated provenance/parent references are in the full layer cohort.
+    prospective.reserve(16*1024)?;
+    let reserved = limit.checked_mul(32).and_then(|n|n.checked_add(16*1024))
+        .ok_or("Source coordinate prospective cap overflow")?;
+    if prospective.charged_bytes()>reserved {
+        return Err("Native coordinate projection exceeds original reserved custody".into());
+    }
+    project(binding)
+}
+
 fn project_bundle(bundle: Value) -> Result<Value, String> {
     if bundle["schema"] != "ql.coordinate-content-bundle/v1" {
         return Err("The native owner returned a different content bundle".into());
@@ -255,4 +297,26 @@ pub(crate) fn project(binding: Value) -> Result<Value, String> {
     Ok(
         json!({"schema":"oi.nara-coordinate/v1", "binding":binding, "profiles":profiles, "subject_binding":subject}),
     )
+}
+
+#[cfg(test)]
+mod native_source_coordinate_projection_tests {
+    use super::*;
+    #[test]
+    fn actual_native_coordinate_producer_and_shared_projector_preserve_both_faces() {
+        let owner=std::env::var_os("OI_BIN")
+            .filter(|owner|!owner.is_empty()).expect("OI_BIN must be the native publisher's pinned candidate");
+        assert!(std::path::Path::new(&owner).is_absolute());
+        for face in ["bimba","pratibimba"] {
+            let input=json!({"coordinate_ref":"#3","face":face});
+            let binding=crate::nara_identity::run_ql_nara("coordinate",&input).unwrap();
+            let cap=serde_json::to_vec_pretty(&binding).unwrap().len()+32*1024;
+            let original=project(binding.clone()).unwrap();
+            let bounded=project_source_bounded(binding,cap).unwrap();
+            assert_eq!(bounded,original);
+            assert_eq!(bounded["subject_binding"]["presentation_role"],"thing");
+            assert_eq!(bounded["binding"]["face"],face);
+
+        }
+    }
 }

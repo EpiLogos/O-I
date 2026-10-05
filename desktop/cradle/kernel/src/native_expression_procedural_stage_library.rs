@@ -1410,3 +1410,13 @@ impl Memos {
 #[cfg(test)]
 #[path = "native_expression_source_capture_tests.rs"]
 mod source_capture_tests;
+
+#[cfg(test)]
+impl SourceDeliveryCapture {
+    pub(in crate::native_expression) fn isolated_resource_for_test(
+        context:&impl Serialize,
+    )->Result<Self,String> {
+        Memos { captures: std::sync::Arc::new(capture::Registry::default()),
+            ..Memos::default() }.reserve_source_delivery(context)
+    }
+}

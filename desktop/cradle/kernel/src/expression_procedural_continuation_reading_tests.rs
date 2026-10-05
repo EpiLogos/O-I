@@ -238,14 +238,15 @@ fn actual_continuation_saved_pending_labels_never_replace_private_producer_and_j
 fn actual_continuation_missing_planned_scene_json_never_grants_constructed_output_custody() {
     let d = retained_document();
     let (app, mut installed) = installed_reading(&d);
-    installed["materialization"]["scenes"]
-        .as_array_mut()
-        .unwrap()
-        .push(json!({
+    let planned_scene = json!({
         "scene_ref":format!("{EXPRESSION}:scene:uncreated"),"document_revision":d.revision,
         "existing_retention":null,"current_presentation":null,
         "principal":installed["current_readings"][0]["subject"],"contributors":[],
-        "locus":{"ref":"source:actual-place","revision":"place-r1","availability":"available"}}));
+        "locus":{"ref":"source:actual-place","revision":"place-r1","availability":"available"}});
+    installed["materialization"]["scenes"]
+        .as_array_mut()
+        .unwrap()
+        .push(planned_scene);
     assert!(app
         .procedural_continuation_reading(&d, &d.scenes[0].scene_ref, &installed)
         .unwrap_err()

@@ -35,7 +35,7 @@ impl crate::Kernel {
         input.source_producer_ref.as_deref()
             .ok_or("Actual first native compiler admission absent")?;
         let anchor=self.capture_current_native_definition_delivery(&input,scene_ref)?;
-        let mut delivery=super::super::stage_library::SourceDeliveryContext {
+        let mut delivery=crate::native_expression::procedural::stage_library::SourceDeliveryContext {
             data:input,resource:anchor};
         let input=&delivery.data;
         let producer_ref=input.source_producer_ref.as_deref()
@@ -78,7 +78,7 @@ impl crate::Kernel {
             return Err("Continuation accepts original installed identity only".into());
         }
         let anchor=self.capture_current_native_definition_delivery(&input,scene_ref)?;
-        let mut delivery=super::super::stage_library::SourceDeliveryContext {
+        let mut delivery=crate::native_expression::procedural::stage_library::SourceDeliveryContext {
             data:input,resource:anchor};
         let input=&delivery.data;
         let procedure_ref=input.request["command"]["request"]["procedure_ref"].as_str()
@@ -116,7 +116,7 @@ impl crate::Kernel {
         work: Work,
         anchor:crate::native_expression::definition_outcome::DeliveryAnchor,
     ) -> Result<crate::KernelOpOutcome, String> {
-        let mut delivery=super::super::stage_library::SourceDeliveryContext {
+        let mut delivery=crate::native_expression::procedural::stage_library::SourceDeliveryContext {
             data:(input,before,Some(work)),resource:Some(anchor)};
         let (input,before,work)=&mut delivery.data;
         let anchor=delivery.resource.as_mut().ok_or("Original delivery resource absent")?;

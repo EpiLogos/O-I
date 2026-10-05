@@ -37,11 +37,40 @@ pub(crate) fn execute_stateless(
     request: Value,
     max_bytes: usize,
 ) -> Result<Value, String> {
-    let payload = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
+    execute_stateless_inner(verb, operation, &request, max_bytes, None)
+}
+
+struct StatelessCustodiedRequest {
+    request: Value,
+    capture: std::sync::Arc<dyn Send + Sync>,
+}
+/// Resource custody only: no public JSON can mint a Source or native ACK.
+pub(crate) fn execute_stateless_with_capture(
+    verb: &'static str, operation: &'static str, request: Value, max_bytes: usize,
+    capture: std::sync::Arc<dyn Send + Sync>,
+) -> Result<Value, String> {
+    let context = StatelessCustodiedRequest { request, capture };
+    execute_stateless_inner(verb, operation, &context.request, max_bytes, Some(&context.capture))
+}
+fn execute_stateless_inner(
+    verb: &'static str, operation: &'static str, request: &Value, max_bytes: usize,
+    capture: Option<&std::sync::Arc<dyn Send + Sync>>,
+) -> Result<Value, String> {
+    if capture.is_some() {
+        let mut prospective = crate::expression::procedural::budget::Budget::new();
+        prospective.value(request)?;
+        if prospective.charged_bytes() > max_bytes {
+            return Err("Native procedural Source intake exceeds its declared byte bound".into());
+        }
+    }
+    let payload = serde_json::to_vec(request).map_err(|e| e.to_string())?;
     if payload.len() > max_bytes {
         return Err("Native procedural Source intake exceeds its declared byte bound".into());
     }
-    let executables = compose_executables(false)?;
+    let executables = match capture {
+        Some(capture) => super::compose_executables_with_capture(false, max_bytes, capture.clone())?,
+        None => compose_executables(false)?,
+    };
     let now = unix_ms()?;
     let serial = SEQUENCE
         .try_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
@@ -57,12 +86,11 @@ pub(crate) fn execute_stateless(
         file.0.as_os_str(),
         "--json".as_ref(),
     ];
-    let output = run_bounded(
-        executables.ql.as_os_str(),
-        &args,
-        BINDING_TIMEOUT,
-        max_bytes,
-    )
+    let output = match capture {
+        Some(capture) => super::run_bounded_with_capture(executables.ql.as_os_str(), &args,
+            BINDING_TIMEOUT, max_bytes, capture.clone()),
+        None => run_bounded(executables.ql.as_os_str(), &args, BINDING_TIMEOUT, max_bytes),
+    }
     .map_err(|e| {
         format!(
             "native-expression.procedural_source_unavailable: {}",

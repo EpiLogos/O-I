@@ -14,17 +14,17 @@ pub struct Prepared {
     record: Value,
     original_preparation: Value,
     original_position: Value,
+    capture: std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
 }
 pub struct Completed {
-    prepared: Prepared,
     issued: super::bootstrap::IssuedSceneRead,
+    prepared: Prepared,
 }
 impl Prepared {
     pub fn execute(self) -> Result<Completed, String> {
-        let issued = super::bootstrap::read_selected_scene(
-            &self.before,
-            &self.identity,
-            &self.source_intent,
+        let issued = super::bootstrap::read_selected_scene_with_capture(
+            &self.before, &self.identity, &self.source_intent,
+            &self.capture, 1,
         )?;
         Ok(Completed {
             prepared: self,
@@ -43,29 +43,37 @@ impl crate::Kernel {
         else {
             return Ok(None);
         };
-        if !matches!(
-            request,
-            crate::expression::procedural::Request::LifecycleCancel { .. }
-        ) {
-            return Ok(None);
+        let crate::expression::procedural::Request::LifecycleCancel {
+            expression_ref, expected_revision, ..
+        } = request else { return Ok(None); };
+        let before = self.expressions.procedural_source_borrow(
+            expression_ref,*expected_revision,
+        )?;
+        let owner = self.native_expression.active.as_ref()
+            .ok_or("Lifecycle has no actual current native Source owner")?;
+        if owner.stopped || owner.process_exited()? {
+            return Err("Lifecycle actual native Source owner has closed".into());
         }
+        let capture = std::sync::Arc::new(std::sync::Mutex::new(
+            owner.stage_library_replays.reserve_source_delivery(&(
+                before,before,before,before,request,request,request,
+                &owner.identity,&owner.procedural_source,&owner.procedural_definitions,
+            ))?,
+        ));
         let intent = CancelIntent::from_request(request)?;
-        let before = self
-            .expressions
-            .procedural_source_snapshot(&intent.expression_ref, intent.expected_revision)?;
-        crate::expression::procedural::bootstrap::preflight_native_intake(&before, &intent)?;
+        crate::expression::procedural::bootstrap::preflight_native_intake(before, &intent)?;
         let record = self
             .expressions
-            .procedural_cancelled_readback(&before, &intent)?;
+            .procedural_cancelled_readback(before, &intent)?;
         let original_preparation = self
             .expressions
-            .procedural_cancelled_preparation(&before, &intent)?;
+            .procedural_cancelled_preparation(before, &intent)?;
         let original_position = self
             .expressions
-            .procedural_cancelled_position(&before, &intent)?;
+            .procedural_cancelled_position(before, &intent)?;
         let source_intent = self
             .expressions
-            .lifecycle_source_intent(&before, &intent.scene_ref)?;
+            .lifecycle_source_intent(before, &intent.scene_ref)?;
         let owner = self
             .native_expression
             .active
@@ -82,10 +90,10 @@ impl crate::Kernel {
             &intent.procedure_ref,
         )?;
         crate::expression::procedural::validate_retained_procedural_definition(
-            &before, &installed,
+            before, &installed,
         )?;
         Ok(Some(Prepared {
-            before,
+            before: before.clone(),
             lease,
             identity,
             installed,
@@ -94,6 +102,7 @@ impl crate::Kernel {
             record,
             original_preparation,
             original_position,
+            capture,
         }))
     }
 
@@ -101,6 +110,7 @@ impl crate::Kernel {
         &mut self,
         completed: Completed,
     ) -> Result<crate::KernelOpOutcome, String> {
+        let _capture_guard = completed.prepared.capture.clone();
         let Completed { prepared, issued } = completed;
         let Prepared {
             before,
@@ -112,7 +122,9 @@ impl crate::Kernel {
             record,
             original_preparation,
             original_position,
+            capture,
         } = prepared;
+        drop(capture);
         if self
             .expressions
             .procedural_source_snapshot(&intent.expression_ref, intent.expected_revision)?
@@ -163,8 +175,9 @@ impl crate::Kernel {
         let request = json!({"schema":"ql.field-host-request/v1","request_id":request_id.to_string(),
             "instance_ref":identity["instance_ref"],"event_ref":identity["event_ref"],"subject_ref":identity["subject_ref"],
             "command":{"operation":"procedure","request":{"action":"lifecycle_cancel","input":input}}});
-        let intake =
-            super::lifecycle::SourceIntake::capture(&self.native_expression, &lease, &request)?;
+        let intake = super::lifecycle::SourceIntake::capture_with_resource(
+            &self.native_expression,&lease,&request,
+            &mut _capture_guard.lock().map_err(|_|"Source capture lock poisoned")?)?;
         let scene_revision = before
             .scenes
             .iter()
@@ -173,11 +186,14 @@ impl crate::Kernel {
             .revision;
         let outcome = self.with_native_document_scene(
             &before.expression_ref, before.revision, &intent.scene_ref, scene_revision,
-            |manager, reader| Ok(manager.procedural_lifecycle_scene_read(
+            |manager, reader| {
+                let resource=_capture_guard.lock().map_err(|_|"Source capture lock poisoned")?;
+                manager.with_source_delivery_reply_capture(&lease,&resource,|manager|manager.procedural_lifecycle_scene_read(
                 &lease,
                 &crate::expression_procedural_scene_reader::NativeSceneSourceReader::CurrentDocument(reader),
                 &issued, &source_intent, request,
-            )),
+                ))
+            },
         )?;
         let (native_receipt, channel_receipt) = match outcome.result? {
             Ok(receipts) => receipts,

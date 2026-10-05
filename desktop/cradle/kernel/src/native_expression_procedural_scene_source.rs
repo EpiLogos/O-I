@@ -86,6 +86,37 @@ struct NativeIssuedSceneSource {
 }
 
 impl Manager {
+    /// Private finite capacity borrowed from the SAME admitted Source slot.
+    /// This sets no public grant and changes no ordinary channel limit. Full
+    /// native post-channel refusals remain the underlying operation's custody.
+    pub(crate) fn with_source_delivery_reply_capture<T>(
+        &mut self,
+        lease:&str,
+        capture:&crate::native_expression::procedural::stage_library::SourceDeliveryCapture,
+        operation:impl FnOnce(&mut Self)->T,
+    )->Result<T,String>{
+        // Eight raw-copy units already belong to the original reservation.
+        // A factor-four reduction covers the Source result's nested original
+        // native payload, parsed/retained/refusal and outward coexistence.
+        let limit=capture.reply_limit()/4;
+        if limit==0 {return Err("Source reply has no reserved finite capacity".into());}
+        let owner=self.active.as_mut().ok_or("Source reply owner absent")?;
+        if owner.lease!=lease || owner.stopped || owner.process_exited()? {
+            return Err("Source reply has another or closed native owner".into());
+        }
+        if owner.definition_reply_limit.is_some(){
+            return Err("Source reply capacity is already in use by the native owner".into());
+        }
+        owner.definition_reply_limit=Some(limit);
+        let result=operation(self);
+        // The actual C operation is synchronous under this SAME Manager. A
+        // consumed/refused outcome restores the original scoped limit alike.
+        if let Some(owner)=self.active.as_mut().filter(|owner|owner.lease==lease){
+            owner.definition_reply_limit=None;
+        }
+        Ok(result)
+    }
+
     /// Explicit declared Return seed through the same qualified current source
     /// operation; the caller cannot supply a source artifact or clock.
     #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -616,6 +647,10 @@ impl Manager {
                 owner
                     .definition_reply_limit
                     .ok_or("Private definition response capacity was not reserved")?
+            } else if matches!(mode,"source-bootstrap"|"source-lifecycle") {
+                // Scoped callers borrow a genuine resource; legacy ordinary
+                // operations retain their original 64MiB protocol limit.
+                owner.definition_reply_limit.unwrap_or(super::MAX_REPLY)
             } else {
                 super::MAX_REPLY
             };
@@ -917,5 +952,40 @@ mod tests {
             json!({"operation":"inspect","expression_ref":doc["expression_ref"]}),
         );
         assert_eq!(current["document"], *doc);
+    }
+}
+
+#[cfg(test)]
+mod source_delivery_reply_capture_tests {
+    use super::*;
+    use crate::native_expression::procedural::stage_library::SourceDeliveryCapture;
+    use std::io::Cursor;
+
+    #[test]
+    fn same_real_capture_limits_the_actual_native_line_before_parse() {
+        let capture=SourceDeliveryCapture::isolated_resource_for_test(&serde_json::json!({"original":"source delivery"})).unwrap();
+        let limit=capture.reply_limit()/4;
+        assert!(limit>0 && limit<super::super::MAX_REPLY);
+        // The SAME original native line reader is exercised with real bytes.
+        // This is IO/resource evidence, not a private Scene/Source admission.
+        let allowed=serde_json::json!({"schema":"native-line-boundary","payload":"current"});
+        let mut bytes=serde_json::to_vec(&allowed).unwrap();bytes.push(b'\n');
+        assert_eq!(super::super::line_bounded(&mut Cursor::new(bytes),limit).unwrap(),allowed);
+        let mut too_large=vec![b' ';limit+1];too_large.push(b'\n');
+        assert!(super::super::line_bounded(&mut Cursor::new(too_large),limit).is_err());
+        assert!(capture.reply_limit()/4==limit);
+    }
+
+    #[test]
+    fn original_shared_capture_copy_charge_reduces_the_actual_response_allowance() {
+        let mut capture=SourceDeliveryCapture::isolated_resource_for_test(&serde_json::json!({"original":"source delivery"})).unwrap();
+        let original=capture.reply_limit()/4;
+        capture.preflight_copies(&vec!["source-current-byte";4096]).unwrap();
+        let current=capture.reply_limit()/4;
+        assert!(current>0 && current<original);
+        let mut exact=vec![b' ';current+1];exact.push(b'\n');
+        assert!(super::super::line_bounded(&mut Cursor::new(exact),current).is_err());
+        // Ordinary channel reads keep their original independent limit.
+        assert_eq!(super::super::MAX_REPLY,64*1024*1024);
     }
 }

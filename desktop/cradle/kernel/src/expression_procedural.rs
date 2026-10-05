@@ -422,7 +422,7 @@ fn validate_address_borrowed(document: &Document, address: &Address) -> Result<(
     address_material::root(document, address)?.validate()
 }
 
-fn address(
+pub(crate) fn address(
     document: &Document,
     scene: Option<&str>,
     entity: Option<&str>,
@@ -611,7 +611,7 @@ pub fn validate_scene_sources(material: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn source_exact_binding_borrowed<'a>(
+pub(crate) fn source_exact_binding_borrowed<'a>(
     document: &'a Document,
     target: &Address,
 ) -> Result<Option<&'a Value>, String> {

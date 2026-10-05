@@ -322,6 +322,12 @@ impl InstalledQl {
         Self::parse(&installed_where()?)
     }
 
+    fn discover_with_capture(limit: usize, capture: Arc<dyn Send + Sync>) -> Result<Self, String> {
+        let reading = run_where_with_capture(oi_executable().as_os_str(), WHERE_TIMEOUT,
+            limit.min(MAX_WHERE), capture)?;
+        Self::parse(&reading)
+    }
+
     /// Read an `oi.product-location/v1` reading. A primary is usable when it
     /// is absolute and the suite digested it; a companion when it is
     /// absolute and reported present.
@@ -472,23 +478,27 @@ fn resolve_oi(
 }
 
 fn run_where(oi: &std::ffi::OsStr, timeout: Duration) -> Result<Vec<u8>, String> {
+    run_where_inner(oi, timeout, MAX_WHERE, None)
+}
+fn run_where_with_capture(
+    oi: &std::ffi::OsStr, timeout: Duration, limit: usize, capture: Arc<dyn Send + Sync>,
+) -> Result<Vec<u8>, String> {
+    run_where_inner(oi, timeout, limit, Some(capture))
+}
+fn run_where_inner(
+    oi: &std::ffi::OsStr, timeout: Duration, limit: usize, capture: Option<Arc<dyn Send + Sync>>,
+) -> Result<Vec<u8>, String> {
     let unavailable = |why: String| {
         format!(
             "native-expression.unavailable: `{} where quaternal-logic --json` {why}",
             PathBuf::from(oi).display()
         )
     };
-    let ran = run_bounded(
-        oi,
-        &[
-            "where".as_ref(),
-            "quaternal-logic".as_ref(),
-            "--json".as_ref(),
-        ],
-        timeout,
-        MAX_WHERE,
-    )
-    .map_err(|e| unavailable(e.describe(timeout, MAX_WHERE)))?;
+    let args = ["where".as_ref(), "quaternal-logic".as_ref(), "--json".as_ref()];
+    let ran = match capture {
+        Some(capture) => run_bounded_with_capture(oi, &args, timeout, limit, capture),
+        None => run_bounded(oi, &args, timeout, limit),
+    }.map_err(|e| unavailable(e.describe(timeout, limit)))?;
     if !ran.status.success() {
         return Err(unavailable(format!("exited {}", ran.status)));
     }
@@ -500,6 +510,51 @@ struct Ran {
     status: std::process::ExitStatus,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
+    // Every returned raw buffer dies before its SAME private resource guard.
+    _custody: Option<RunCustody>,
+}
+
+#[derive(Clone)]
+struct RunCustody { _capture: Arc<dyn Send + Sync> }
+impl std::fmt::Debug for RunCustody {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("private source resource custody")
+    }
+}
+struct CustodiedBytes {
+    bytes: Result<Vec<u8>, String>,
+    _custody: Option<RunCustody>,
+}
+struct BoundedReaderWork<R> {
+    pipe: Option<R>,
+    tx: mpsc::Sender<CustodiedBytes>,
+    limit: usize,
+    diagnostic: bool,
+    custody: Option<RunCustody>,
+}
+impl<R: Read> BoundedReaderWork<R> {
+    fn run(mut self) {
+        let mut bytes = Vec::new();
+        let result = if self.diagnostic {
+            if let Some(pipe) = &mut self.pipe {
+                let mut chunk = [0; 4096];
+                while let Ok(n) = pipe.read(&mut chunk) {
+                    if n == 0 { break; }
+                    let room = self.limit.saturating_sub(bytes.len()).min(n);
+                    bytes.extend_from_slice(&chunk[..room]);
+                }
+            }
+            Ok(bytes)
+        } else {
+            match &mut self.pipe {
+                Some(pipe) => pipe.take(self.limit as u64 + 1).read_to_end(&mut bytes)
+                    .map_err(|e| e.to_string()).map(|_| bytes),
+                None => Err("no stdout".into()),
+            }
+        };
+        let outcome = CustodiedBytes { bytes: result, _custody: self.custody.clone() };
+        let _ = self.tx.send(outcome);
+    }
 }
 
 #[derive(Debug)]
@@ -533,6 +588,20 @@ fn run_bounded(
     timeout: Duration,
     max_stdout: usize,
 ) -> Result<Ran, RunError> {
+    run_bounded_inner(program, args, timeout, max_stdout, None)
+}
+
+fn run_bounded_with_capture(
+    program: &std::ffi::OsStr, args: &[&std::ffi::OsStr], timeout: Duration,
+    max_stdout: usize, capture: Arc<dyn Send + Sync>,
+) -> Result<Ran, RunError> {
+    run_bounded_inner(program, args, timeout, max_stdout, Some(RunCustody { _capture: capture }))
+}
+
+fn run_bounded_inner(
+    program: &std::ffi::OsStr, args: &[&std::ffi::OsStr], timeout: Duration,
+    max_stdout: usize, custody: Option<RunCustody>,
+) -> Result<Ran, RunError> {
     let mut command = Command::new(program);
     command
         .args(args)
@@ -548,33 +617,14 @@ fn run_bounded(
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
     let (out_tx, out_rx) = mpsc::channel();
-    let limit = max_stdout as u64 + 1;
-    thread::spawn(move || {
-        let mut bytes = Vec::new();
-        let read = match stdout {
-            Some(mut pipe) => (&mut pipe)
-                .take(limit)
-                .read_to_end(&mut bytes)
-                .map_err(|e| e.to_string()),
-            None => Err("no stdout".into()),
-        };
-        let _ = out_tx.send(read.map(|_| bytes));
-    });
+    let out_work = BoundedReaderWork { pipe: stdout, tx: out_tx, limit: max_stdout,
+        diagnostic: false, custody: custody.clone() };
+    thread::spawn(move || out_work.run());
     let (err_tx, err_rx) = mpsc::channel();
-    thread::spawn(move || {
-        let mut kept = Vec::new();
-        if let Some(mut pipe) = stderr {
-            let mut chunk = [0; 4096];
-            while let Ok(n) = pipe.read(&mut chunk) {
-                if n == 0 {
-                    break;
-                }
-                let room = MAX_DIAGNOSTIC.saturating_sub(kept.len()).min(n);
-                kept.extend_from_slice(&chunk[..room]);
-            }
-        }
-        let _ = err_tx.send(kept);
-    });
+    let diagnostic_limit = if custody.is_some() { MAX_DIAGNOSTIC.min(max_stdout) } else { MAX_DIAGNOSTIC };
+    let err_work = BoundedReaderWork { pipe: stderr, tx: err_tx, limit: diagnostic_limit,
+        diagnostic: true, custody: custody.clone() };
+    thread::spawn(move || err_work.run());
     let kill = |child: &mut Child| {
         #[cfg(unix)]
         if let Ok(pid) = i32::try_from(child.id()) {
@@ -592,7 +642,7 @@ fn run_bounded(
     let (mut exited, mut output) = (false, None);
     loop {
         if output.is_none() {
-            match out_rx.try_recv() {
+            match out_rx.try_recv().map(|outcome| outcome.bytes) {
                 Ok(Ok(bytes)) if bytes.len() > max_stdout => {
                     kill(&mut child);
                     return Err(RunError::Overflow);
@@ -631,11 +681,12 @@ fn run_bounded(
             let stdout = output.take().unwrap_or_default();
             let stderr = err_rx
                 .recv_timeout(Duration::from_millis(200))
-                .unwrap_or_default();
+                .ok().and_then(|outcome| outcome.bytes.ok()).unwrap_or_default();
             return Ok(Ran {
                 status,
                 stdout,
                 stderr,
+                _custody: custody,
             });
         }
         if std::time::Instant::now() >= deadline {
@@ -1484,6 +1535,16 @@ struct ComposeExecutables {
 /// neither; otherwise the installed suite answers (one cut, so the sky's
 /// registry revision is the one `ql` checks against).
 fn compose_executables(needs_sky: bool) -> Result<ComposeExecutables, String> {
+    compose_executables_inner(needs_sky, None)
+}
+fn compose_executables_with_capture(
+    needs_sky: bool, limit: usize, capture: Arc<dyn Send + Sync>,
+) -> Result<ComposeExecutables, String> {
+    compose_executables_inner(needs_sky, Some((limit, capture)))
+}
+fn compose_executables_inner(
+    needs_sky: bool, capture: Option<(usize, Arc<dyn Send + Sync>)>,
+) -> Result<ComposeExecutables, String> {
     let var = |key| std::env::var_os(key).filter(|value| !value.is_empty());
     match (var("OI_QL_BIN"), var("OI_QL_SKY_BIN")) {
         (Some(ql), Some(sky)) => {
@@ -1499,7 +1560,10 @@ fn compose_executables(needs_sky: bool) -> Result<ComposeExecutables, String> {
             })
         }
         (None, None) => {
-            let installed = InstalledQl::discover()?;
+            let installed = match capture {
+                Some((limit, capture)) => InstalledQl::discover_with_capture(limit, capture)?,
+                None => InstalledQl::discover()?,
+            };
             Ok(ComposeExecutables {
                 ql: installed.executable()?,
                 sky: if needs_sky {
@@ -3258,3 +3322,38 @@ for line in sys.stdin:
 #[cfg(test)]
 #[path = "native_expression_source_delivery_tests.rs"]
 mod source_delivery_tests;
+
+#[cfg(test)]
+mod source_stateless_worker_custody_tests {
+    use super::*;
+    use std::os::unix::net::UnixStream;
+
+    #[test]
+    fn actual_stdout_diagnostic_and_queued_buffers_keep_original_capture() {
+        for diagnostic in [false, true] {
+            let capture = Arc::new(Mutex::new(
+                super::procedural::stage_library::SourceDeliveryCapture::isolated_resource_for_test(
+                    &"native stateless real pipe custody; no Source authority",
+                ).unwrap(),
+            ));
+            let held = Arc::downgrade(&capture);
+            let (pipe, mut writer) = UnixStream::pair().unwrap();
+            let (tx, rx) = mpsc::channel();
+            let work = BoundedReaderWork { pipe: Some(pipe), tx, limit: 16, diagnostic,
+                custody: Some(RunCustody { _capture: capture.clone() }) };
+            let worker = thread::spawn(move || work.run());
+            drop(capture);
+            assert!(held.upgrade().is_some());
+            writer.write_all(b"native stdout and diagnostic").unwrap();
+            drop(writer);
+            worker.join().unwrap();
+            assert!(held.upgrade().is_some()); // full queued bytes still charged.
+            let outcome = rx.recv().unwrap();
+            let bytes = outcome.bytes.as_ref().unwrap();
+            assert_eq!(bytes.len(), if diagnostic { 16 } else { 17 });
+            assert_eq!(bytes.as_slice(), if diagnostic { &b"native stdout an"[..] } else { &b"native stdout and"[..] });
+            drop(outcome);
+            assert!(held.upgrade().is_none());
+        }
+    }
+}

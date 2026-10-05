@@ -19,6 +19,7 @@ pub struct Prepared {
     input: super::conduct::Request,
     intent: Intent,
     scene_owner: crate::expression::procedural::scene_receiver::SceneOwner,
+    capture: std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
 }
 pub struct Completed {
     before: Document,
@@ -26,29 +27,38 @@ pub struct Completed {
     input: super::conduct::Request,
     intent: Intent,
     issued: IssuedSceneRead,
+    capture: std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
 }
 impl Prepared {
     pub fn execute(self) -> Result<Completed, String> {
-        let issued = read_selected_scene(&self.before, &self.identity, &self.intent)?
-            .with_scene_owner(self.scene_owner, &self.before, &self.intent)?;
+        let issued = read_selected_scene_with_capture(
+            &self.before, &self.identity, &self.intent,
+            &self.capture, 1,
+        )?.with_scene_owner(self.scene_owner, &self.before, &self.intent)?;
         Ok(Completed {
             before: self.before,
             identity: self.identity,
             input: self.input,
             intent: self.intent,
             issued,
+            capture: self.capture,
         })
     }
 }
 
-/// Execute the existing coordinate owner over the original accepted source
-/// authorship and a fresh actual Document. Only protected native operations
-/// can obtain the non-deserializable selected-Scene read.
-pub(super) fn read_selected_scene(
+/// SAME admitted native delivery resource bounds the existing coordinate
+/// owner before input encoding, pipe reading, projection or issuer copies.
+pub(super) fn read_selected_scene_with_capture(
     before: &Document,
     identity: &Value,
     intent: &Intent,
+    capture: &std::sync::Arc<std::sync::Mutex<super::stage_library::SourceDeliveryCapture>>,
+    remaining_issuers: usize,
 ) -> Result<IssuedSceneRead, String> {
+    let mut resource = capture.lock().map_err(|_| "Original Source issuance resource unavailable")?;
+    if remaining_issuers == 0 || remaining_issuers > before.scenes.len() {
+        return Err("Original Source issuer count differs from its actual Document cohort".into());
+    }
     intent.validate()?;
     let ground = intent.authorship["ground_ref"]
         .as_str()
@@ -60,15 +70,24 @@ pub(super) fn read_selected_scene(
     if !matches!(face, "bimba" | "pratibimba") {
         return Err("Source authorship has no native Bimba/Pratibimba face".into());
     }
-    // Use the existing original coordinate wire. Optional disclosure and
-    // inventory extensions remain owned by the current native adapter.
+    // Source-specific native work gets only the remaining capacity from this
+    // original shared reservation. Raw stdout/stderr, parser, binding, typed
+    // profiles and projected/issuer Values coexist under this same allowance.
+    let coordinate_limit = reserve_coordinate_allowance(&mut resource,ground,face,remaining_issuers)?;
+    // Original two-key wire; no resource field enters the public request.
     let coordinate_request: crate::nara_coordinate::Request =
         serde_json::from_value(json!({"coordinate_ref":ground,"face":face}))
             .map_err(|e| e.to_string())?;
-    let outcome = crate::nara_coordinate::execute(coordinate_request)?;
+    let outcome = crate::nara_coordinate::execute_source_bounded(
+        coordinate_request, coordinate_limit, capture.clone(),
+    )?;
     let crate::KernelOpResult::NaraCoordinate { data: coordinate } = outcome.result else {
         return Err("The actual coordinate owner returned another result".into());
     };
+    let mut prospective = crate::expression::procedural::budget::Budget::new();
+    prospective.value(&(&coordinate, &coordinate["subject_binding"],
+        &coordinate["subject_binding"]))?;
+    resource.preflight_copy_bytes(prospective.charged_bytes())?;
     let subject: crate::expression::SubjectBinding =
         serde_json::from_value(coordinate["subject_binding"].clone()).map_err(|e| e.to_string())?;
     let locus = subject
@@ -133,6 +152,20 @@ pub(super) fn read_selected_scene(
             return Err("The actual adopted native coordinate profile is stale; refresh its original owner reading".into());
         }
     }
+    {
+        let presentation = scene.presentation.as_ref()
+            .ok_or("Procedural intervention requires actual native Scene material")?;
+        // from_selected_owner serializes this exact presentation and then its
+        // reading, retaining the real issuer receipt. The original native
+        // source/locus refs are also copied into the reading and validator.
+        // Stream the COMPLETE borrowed cohort before receipt construction,
+        // material serialization or original read-sequence advancement.
+        prospective.value(&(&coordinate, intent, identity, &before.expression_ref,
+            &intent.scene_ref, presentation, presentation,
+            source, source, source, locus, locus, locus))?;
+        prospective.reserve(2048)?;
+        resource.preflight_copy_bytes(prospective.charged_bytes())?;
+    }
     let sequence = READ_SEQUENCE
         .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
         .map_err(|_| "Native selected Scene read sequence exhausted")?;
@@ -157,6 +190,24 @@ pub(super) fn read_selected_scene(
     Ok(issued)
 }
 
+fn reserve_coordinate_allowance(
+    capture:&mut super::stage_library::SourceDeliveryCapture,
+    ground:&str,face:&str,remaining_issuers:usize,
+)->Result<usize,String> {
+    capture.preflight_copies(&(ground, ground, face, face))?;
+    if remaining_issuers == 0 { return Err("Original Source issuer cohort is empty".into()); }
+    // Actual private caller passes its remaining ordered Scene count. Charge
+    // each prospective raw/projection cohort without consuming half the whole
+    // horizon repeatedly for a many-Scene expression.
+    let coordinate_limit = capture.reply_limit() / 8 / remaining_issuers;
+    if coordinate_limit == 0 { return Err("Original Source issuer has no bounded coordinate capacity".into()); }
+    let coordinate_copies = coordinate_limit.checked_mul(32)
+        .and_then(|bytes| bytes.checked_add(16*1024))
+        .ok_or("Native coordinate copy allowance overflow")?;
+    capture.preflight_copy_bytes(coordinate_copies)?;
+    Ok(coordinate_limit)
+}
+
 impl crate::Kernel {
     pub fn prepare_native_procedural_bootstrap(
         &mut self,
@@ -177,31 +228,33 @@ impl crate::Kernel {
         {
             return Err("Source bootstrap requires the original scoped native host intent".into());
         }
-        let intent: Intent =
-            serde_json::from_value(input.request["command"]["request"]["input"].clone())
-                .map_err(|e| e.to_string())?;
-        intent.validate()?;
-        let before = self
-            .expressions
-            .procedural_source_snapshot(&input.expression_ref, input.document_revision)?;
-        crate::expression::procedural::bootstrap::preflight_native_intake(&before, input)?;
-        let scene_owner = self
-            .expressions
-            .procedural_scene_owner(&before, &intent.scene_ref)?;
-        let owner = self
-            .native_expression
-            .active
-            .as_mut()
+        let before = self.expressions.procedural_source_borrow(
+            &input.expression_ref, input.document_revision,
+        )?;
+        crate::expression::procedural::bootstrap::preflight_native_intake(before, input)?;
+        let owner = self.native_expression.active.as_mut()
             .ok_or("No current native Scene source owner")?;
         if owner.lease != input.lease || owner.stopped || owner.process_exited()? {
             return Err("Source bootstrap belongs to another or closed native owner".into());
         }
+        let capture = std::sync::Arc::new(std::sync::Mutex::new(
+            owner.stage_library_replays.reserve_source_delivery(&(
+                before, before, before, input, input, input, &owner.identity,
+                &owner.procedural_source, &owner.procedural_definitions,
+            ))?,
+        ));
+        let intent: Intent = serde_json::from_value(
+            input.request["command"]["request"]["input"].clone(),
+        ).map_err(|e|e.to_string())?;
+        intent.validate()?;
+        let scene_owner = self.expressions.procedural_scene_owner(before,&intent.scene_ref)?;
         Ok(Some(Prepared {
-            before,
+            before: before.clone(),
             identity: owner.identity.clone(),
             input: input.clone(),
             intent,
             scene_owner,
+            capture,
         }))
     }
 
@@ -209,13 +262,13 @@ impl crate::Kernel {
         &mut self,
         completed: Completed,
     ) -> Result<crate::KernelOpOutcome, String> {
+        // SAME guard declared before all heavy moved locals; every early
+        // return destroys those locals before releasing their admission.
+        let _capture_guard = completed.capture.clone();
         let Completed {
-            before,
-            identity,
-            input,
-            intent,
-            issued,
+            before, identity, input, intent, issued, capture,
         } = completed;
+        drop(capture);
         let current = self
             .expressions
             .procedural_source_snapshot(&input.expression_ref, input.document_revision)?;
@@ -235,12 +288,14 @@ impl crate::Kernel {
         {
             return Err("Native Scene source owner changed during coordinate reading".into());
         }
+        // Charge the actual issuer/input conversions before copying material.
+        _capture_guard.lock().map_err(|_|"Source capture lock poisoned")?.preflight_copies(&(
+            issued.retained_source_payload(),issued.retained_source_payload(),&intent,&intent))?;
         let mut request = input.request;
         request["command"]["request"]["input"] = issued.request(&intent)?;
-        let intake = super::lifecycle::SourceIntake::capture(
-            &self.native_expression,
-            &input.lease,
-            &request,
+        let intake = super::lifecycle::SourceIntake::capture_with_resource(
+            &self.native_expression,&input.lease,&request,
+            &mut _capture_guard.lock().map_err(|_|"Source capture lock poisoned")?,
         )?;
         let scene_revision = before
             .scenes
@@ -250,11 +305,14 @@ impl crate::Kernel {
             .revision;
         let outcome = self.with_native_document_scene(
             &input.expression_ref, input.document_revision, &intent.scene_ref, scene_revision,
-            |manager, reader| Ok(manager.procedural_bootstrap_scene_read(
+            |manager, reader| {
+                let resource=_capture_guard.lock().map_err(|_|"Source capture lock poisoned")?;
+                manager.with_source_delivery_reply_capture(&input.lease,&resource,|manager|manager.procedural_bootstrap_scene_read(
                 &input.lease,
                 &crate::expression_procedural_scene_reader::NativeSceneSourceReader::CurrentDocument(reader),
                 &issued, &intent, request,
-            )),
+                ))
+            },
         )?;
         let (reply, channel_receipt) = match outcome.result? {
             Ok(receipts) => receipts,
@@ -632,11 +690,17 @@ impl IssuedSceneRead {
     }
 
     pub(crate) fn qualify(
-        self,
+        &self,
         before: &Document,
         intent: &Intent,
         native_receipt: &Value,
     ) -> Result<crate::expression::procedural::bootstrap::Admission, String> {
+        // Original opaque issuer remains available for the SAME registered
+        // definition read. Charge every prospective admission copy BEFORE
+        // owned conversion; no cloned bytes acquire issuer authority.
+        crate::expression::procedural::bootstrap::preflight_source_message(&(
+            before,intent,intent,&self.reading,&self.reading,
+            &self.issuer_receipt,&self.issuer_receipt,native_receipt,native_receipt))?;
         intent.validate()?;
         if self.before_fingerprint != fingerprint(before)? {
             return Err("The original private selected-Scene read has another Document".into());
@@ -724,8 +788,8 @@ impl IssuedSceneRead {
         crate::expression::procedural::bootstrap::Admission::from_native_owner(
             before,
             intent.clone(),
-            self.reading,
-            self.issuer_receipt,
+            self.reading.clone(),
+            self.issuer_receipt.clone(),
             native_receipt,
         )
     }
@@ -862,5 +926,91 @@ impl crate::Kernel {
             "document_revision":revision,"document_receipt":inspected,
             "native_receipt":null,"historical_native_receipt":null,"native_procedural_receipts":[],
             "source_current":false,"replayed":false,"qualification":"unqualified"}))
+    }
+}
+
+#[cfg(test)]
+mod bounded_coordinate_reservation_tests {
+    use super::*;
+    #[test]
+    fn actual_shared_resource_precedes_native_coordinate_input_and_issuer_sequence() {
+        let mut capture=super::super::stage_library::SourceDeliveryCapture::isolated_resource_for_test(
+            &"actual private resource test; no Scene or Source grant",
+        ).unwrap();
+        let old_limit=capture.reply_limit();
+        let sequence=READ_SEQUENCE.load(Ordering::Relaxed);
+        let limit=reserve_coordinate_allowance(&mut capture,"ql:m-coordinate:bimba:#3","bimba",1).unwrap();
+        assert!(limit>0 && limit<old_limit);
+        assert!(capture.reply_limit()<old_limit);
+        assert_eq!(READ_SEQUENCE.load(Ordering::Relaxed),sequence);
+        drop(capture);
+        let near_bound="x".repeat(crate::expression::procedural::budget::SOURCE_BYTES-12*1024);
+        let mut capture=super::super::stage_library::SourceDeliveryCapture::isolated_resource_for_test(&near_bound).unwrap();
+        assert!(reserve_coordinate_allowance(&mut capture,"ql:m-coordinate:bimba:#3","bimba",1).is_err());
+        assert_eq!(READ_SEQUENCE.load(Ordering::Relaxed),sequence);
+    }
+}
+
+#[cfg(test)]
+mod source_coordinate_worker_custody_tests {
+    use super::*;
+    use std::io::Write;
+    use std::os::unix::net::UnixStream;
+    use std::sync::{Arc, Mutex};
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn actual_source_pipe_and_queued_bytes_retain_original_shared_resource() {
+        let capture = Arc::new(Mutex::new(
+            super::super::stage_library::SourceDeliveryCapture::isolated_resource_for_test(
+                &serde_json::json!({"operation":"native-coordinate-reader"}),
+            ).unwrap(),
+        ));
+        let retained = Arc::downgrade(&capture);
+        let (reader, mut writer) = UnixStream::pair().unwrap();
+        let rx = crate::nara_identity::source_reader_for_test(reader, 64, capture.clone());
+        drop(capture); // Simulate the outer preparation's actual early return.
+        assert!(retained.upgrade().is_some());
+        assert!(matches!(rx.try_recv(), Err(std::sync::mpsc::TryRecvError::Empty)));
+        writer.write_all(b"native coordinate pipe").unwrap();
+        drop(writer);
+        let outcome = rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        assert_eq!(outcome.result.as_ref().unwrap(), b"native coordinate pipe");
+        assert!(retained.upgrade().is_some()); // queued/result bytes still charged.
+        drop(outcome);
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while retained.upgrade().is_some() && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        assert!(retained.upgrade().is_none());
+    }
+
+    #[test]
+    fn actual_bounded_native_owner_preserves_projection_with_same_resource() {
+        let executable = std::env::var_os("OI_BIN").filter(|p| !p.is_empty())
+            .expect("OI_BIN must name the publisher's pinned native candidate");
+        assert!(std::path::Path::new(&executable).is_absolute());
+        for face in ["bimba", "pratibimba"] {
+            let capture = Arc::new(Mutex::new(
+                super::super::stage_library::SourceDeliveryCapture::isolated_resource_for_test(
+                    &serde_json::json!({"operation":"native-coordinate-projection"}),
+                ).unwrap(),
+            ));
+            let limit = reserve_coordinate_allowance(&mut capture.lock().unwrap(), "#3", face, 1).unwrap();
+            let input = serde_json::json!({"coordinate_ref":"#3","face":face});
+            let ordinary = crate::nara_coordinate::execute(serde_json::from_value(input.clone()).unwrap()).unwrap();
+            let actual = crate::nara_coordinate::execute_source_bounded(
+                serde_json::from_value(input.clone()).unwrap(), limit, capture.clone(),
+            ).unwrap();
+            let crate::KernelOpResult::NaraCoordinate { data: ordinary } = ordinary.result
+                else { panic!("native coordinate result required") };
+            let crate::KernelOpResult::NaraCoordinate { data: actual } = actual.result
+                else { panic!("bounded native coordinate result required") };
+            assert_eq!(actual, ordinary);
+            assert_eq!(actual["subject_binding"]["presentation_role"], "thing");
+            let mut wrong: crate::nara_coordinate::Request = serde_json::from_value(input).unwrap();
+            wrong.include_content = true;
+            assert!(crate::nara_coordinate::execute_source_bounded(wrong, limit, capture).is_err());
+        }
     }
 }
