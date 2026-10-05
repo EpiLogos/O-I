@@ -60,7 +60,7 @@ export function getList(node: ContentNode): string[] {
 
 const requiredPages = ['home', 'oi', 'products', 'shared-field', 'research', 'build'];
 const productIds = ['central', 'actuation', 'aikit', 'factory', 'workcell', 'ql'];
-const requiredProductFields = ['summary', 'lede', 'what', 'why', 'change', 'capabilities', 'repo'];
+const requiredProductFields = ['summary', 'role', 'cli', 'lede', 'what', 'why', 'change', 'capabilities', 'repo'];
 
 for (const pageId of requiredPages) {
   getPage(pageId);

@@ -7,6 +7,7 @@ Screenshots, source coverage and viewport results are retained even on failure.
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import traceback
@@ -69,9 +70,28 @@ def inspect_route(browser, engine, width, height, reduced, expected):
         expect(page.locator('h1')).to_have_count(1)
         expect(page.locator('.pl')).to_have_count(1)
         expect(page.locator('[data-pl-layer]')).to_have_count(4)
-        expect(page.locator('.office-grid .office-tile')).to_have_count(6)
-        expect(page.locator('.band')).to_have_count(1)
+        # The six facets and their products are one component; the office tiles are gone.
+        expect(page.locator('.facets__grid .facet')).to_have_count(6)
+        expect(page.locator('.office-grid, .office-tile')).to_have_count(0)
+        # The home is O:I with its six facets and their products, the Cradle, the essay and its authorship.
+        expect(page.locator('.band')).to_have_count(0)
+        expect(page.locator('[data-layout="band"]')).to_have_count(0)
         expect(page.locator('.entrance__door')).to_have_count(0)
+        # Header: one right-aligned cluster, the essay then O:I on GitHub. No
+        # mark, menu foldout or Library entrance anywhere on the home.
+        github = page.locator('.sn__cluster > a.sn__github')
+        expect(github).to_have_attribute('href', SOURCE['github']['href'])
+        expect(github).to_have_attribute('aria-label', 'O:I on GitHub')
+        expect(github).to_be_visible()
+        expect(page.locator('.sn a')).to_have_count(len(READING_LINKS) + 1)
+        expect(page.locator('.sn svg')).to_have_count(1)
+        expect(page.locator('.sn button, .sn dialog, .sn__toggle, .sn__brand, .sn__mark')).to_have_count(0)
+        g, e = github.bounding_box(), page.locator('.sn__reading a').last.bounding_box()
+        assert e['x'] + e['width'] <= g['x'] + 1, 'GitHub icon is not after the essay link'
+        assert g['x'] + g['width'] >= width * .85 and g['y'] < 120, ('GitHub icon is not top-right', g, width)
+        assert e['x'] > width / 2, ('header cluster is not right-aligned', e, width)
+        expect(page.locator('.sn__reading a')).to_have_count(len(READING_LINKS))
+        expect(page.locator('a[href^="#/library"]')).to_have_count(0)
         for source in READING_LINKS:
             header = page.locator('.sn__reading a').filter(has_text=source['label'])
             expect(header).to_have_attribute('href', source['href'])
@@ -87,7 +107,7 @@ def inspect_route(browser, engine, width, height, reduced, expected):
             section = sections.nth(index)
             assert section.locator('h2').text_content() == source['title']
             paragraphs = section.locator('.sec__prose > p').all_text_contents()
-            wanted = source.get('body', '').split('\n\n') if source.get('body') else []
+            wanted = [re.sub(r'\*([^*\n]+)\*', r'\1', paragraph) for paragraph in source.get('body', '').split('\n\n')] if source.get('body') else []
             assert paragraphs == wanted, f'{route}/{index}: body changed or omitted'
             count += len(wanted)
             if source.get('sub'):
@@ -108,31 +128,61 @@ def inspect_route(browser, engine, width, height, reduced, expected):
             image.scroll_into_view_if_needed()
             if MEDIA_READY:
                 expect(image).not_to_have_js_property('naturalWidth', 0)
-            expected_fit = 'cover' if image.evaluate("node => !!node.closest('.band')") else 'contain'
-            assert image.evaluate('node => getComputedStyle(node).objectFit') == expected_fit
+            assert image.evaluate('node => getComputedStyle(node).objectFit') == 'contain'
         if reduced:
             expect(page.locator('video')).to_have_count(0)
             assert not movies, 'reduced motion downloaded a video'
             assert not page.evaluate("document.documentElement.classList.contains('lenis')")
-        # Authored band zoom and immersive cover fit must not silently regress
-        # to the hero's independent composition/framing policy.
-        for band in page.locator('.band').all():
-            zoom = float(band.locator('.vf').evaluate("node => getComputedStyle(node).getPropertyValue('--vf-zoom')"))
-            assert zoom >= 1.25, f'band zoom capped again: {zoom}'
+        if route == 'home':
+            # Hero, then What is O:I with the six facets and their products, the Cradle, the essay, authorship.
+            expect(sections.nth(0).locator('h2')).to_have_text(expected['sections'][0]['title'])
+            expect(sections.nth(0).locator('h2')).to_have_text('The world an agent acts from.')
+            expect(sections.nth(0).locator('.sec__prose > p').first).to_contain_text('O:I stands for Objective : Internality')
+            expect(sections.nth(0).locator('.sec__prose em')).to_have_count(0)
+            assert len(sections.nth(0).locator('.sec__prose > p').all()) == 2, 'What is O:I runs to two paragraphs'
+            # Each facet shows its role, its line, then the product: name linked to its repository, and its command.
+            facet_set = expected['sections'][0]['facetSet']
+            facets = sections.nth(0).locator('.facets__grid > li.facet')
+            expect(facets).to_have_count(len(facet_set['facets']))
+            for i, source in enumerate(facet_set['facets']):
+                facet = facets.nth(i)
+                expect(facet.locator('h3.facet__role')).to_have_text(source['role'])
+                expect(facet.locator('.facet__line')).to_have_text(source['line'])
+                link = facet.locator('a.facet__product')
+                expect(link).to_have_attribute('href', source['repo'])
+                expect(link).to_contain_text(source['product'])
+                expect(facet.locator('code.facet__cli')).to_have_text('$' + source['cli'])
+                assert link.bounding_box()['height'] >= 44, ('repository target too small', source['product'])
+                assert facet.evaluate('node => node.scrollWidth <= node.clientWidth + 1'), ('facet clips', source['role'])
+            assert sections.nth(0).locator('.facets__grid').get_attribute('aria-label') == facet_set['label']
+            note = sections.nth(0).locator('.facets__note')
+            expect(note).to_contain_text('All six are in use and still developing')
+            expect(note.locator('a')).to_have_attribute('href', facet_set['readme']['href'])
+            columns = sections.nth(0).locator('.facets__grid').evaluate("node => getComputedStyle(node).gridTemplateColumns.split(' ').length")
+            assert columns == (1 if width <= 640 else 2 if width <= 1000 else 3), ('facet columns', width, columns)
+            expect(sections.nth(1).locator('h2')).to_have_text('Before the harness.')
+            assert len(sections.nth(1).locator('.sec__prose > p').all()) <= 2, 'the Cradle runs to two paragraphs at most'
+            home_text = page.locator('main').inner_text()
+            for gone in ('A living field', 'capable model', 'The means can become a question', 'Library', 'harness before the harness', 'Six products, one for each facet', 'Central holds the ground'):
+                assert gone not in home_text, ('removed home copy still rendered', gone)
+            expect(sections.nth(2).locator('.sec__prose em')).to_have_count(3)
+            expect(sections.nth(2).locator('.sec__entrance a[href="./essay/"]')).to_have_count(1)
+            expect(page.locator('main .sec__reading a[href="./essay/"]')).to_have_count(1)
+            # Rhythm: no section becomes a wall. The facet section carries the six facets, so it has its own bound.
+            heights = sections.evaluate_all('nodes => nodes.map(node => node.getBoundingClientRect().height)')
+            if width >= 1280:
+                assert heights[0] <= 1600 and all(h <= 1000 for h in heights[1:]), ('section heights', width, heights)
+            elif width >= 760:
+                assert heights[0] <= 1800 and all(h <= 1200 for h in heights[1:]), ('section heights', width, heights)
+            elif width >= 375:
+                assert heights[0] <= 2600 and all(h <= 1300 for h in heights[1:]), ('section heights', width, heights)
         for panel in page.locator('[data-presentation]').all():
             kind = panel.get_attribute('data-presentation')
-            selector = {'offices': '.office-grid', 'sequence': '.method-sequence', 'atlas': '.resource-atlas'}[kind]
+            selector = {'sequence': '.method-sequence', 'atlas': '.resource-atlas'}[kind]
             grid = panel.locator(selector)
             columns = grid.evaluate("node => getComputedStyle(node).gridTemplateColumns.split(' ').length")
-            expected_columns = (2 if width <= 600 else 3) if kind == 'offices' else ((2 if width <= 900 else 5) if kind == 'sequence' else (2 if width <= 1100 else 3))
+            expected_columns = (2 if width <= 900 else 5) if kind == 'sequence' else (2 if width <= 1100 else 3)
             assert columns == expected_columns, (kind, width, columns)
-            if kind == 'offices':
-                expect(grid.locator('li')).to_have_count(6)
-                for tile in grid.locator('.office-tile__link').all():
-                    bounds = tile.bounding_box()
-                    assert bounds and abs(bounds['width'] - bounds['height']) < 3, ('non-square office', width, bounds)
-                    assert tile.get_attribute('href').startswith('#/library/')
-                    assert tile.evaluate("node => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1"), 'tile clips its label'
             if kind == 'sequence' and width >= 1000:
                 assert grid.bounding_box()['height'] < 400, 'method returned to a sprawling vertical list'
         assert page.locator('.sec__rows').count() == 0, 'obsolete full-width index renderer remains'
@@ -201,32 +251,21 @@ def interactions(browser):
         assert page.get_by_role('button', name='Pause motion').count() == 0, 'motion is unconditional; no pause control may exist'
     check('live-os-preference', preference, page)
 
-    def menu():
-        trigger = page.locator('.sn > .sn__toggle')
-        trigger.click()
-        dialog = page.get_by_role('dialog', name='Site navigation')
-        expect(dialog).to_be_visible()
-        expect(dialog.locator('[aria-current="page"]')).to_have_attribute('href', '#/')
-        for _ in range(12):
-            page.keyboard.press('Tab')
-            assert page.evaluate("!document.querySelector('main').contains(document.activeElement)"), 'focus escaped modal into content'
-        dialog.evaluate('node => Promise.all(node.getAnimations().map(animation => animation.finished))')
-        page.screenshot(path=str(OUT / 'menu-desktop.png'))
-        page.keyboard.press('Escape')
-        expect(dialog).not_to_be_visible()
-        expect(trigger).to_be_focused()
-        assert page.evaluate('document.body.style.overflow') != 'hidden'
-        trigger.click()
-        expect(dialog.locator('a[href="./essay/"]')).to_have_attribute('aria-label', READING_LINKS[1]['accessibleName'])
-        dialog.locator('a[href="#/library?published=1"]').click()
+    def header():
+        expect(page.get_by_role('dialog')).to_have_count(0)
+        expect(page.get_by_role('button', name='Menu')).to_have_count(0)
+        github = page.get_by_role('link', name='O:I on GitHub', exact=True)
+        expect(github).to_have_attribute('href', 'https://github.com/EpiLogos/O-I')
+        essay = page.locator('.sn__reading a[href="./essay/"]')
+        expect(essay).to_have_attribute('aria-label', READING_LINKS[0]['accessibleName'])
+        page.screenshot(path=str(OUT / 'header-desktop.png'))
+        # The Library keeps its own address even without a home entrance.
+        page.evaluate("location.hash = '/library?published=1'")
         expect(page.locator('.native-public-library')).to_be_visible()
-        assert page.evaluate('scrollY') < 2
         assert not page.evaluate("document.documentElement.classList.contains('lenis')")
         page.go_back()
         expect(page.locator('main')).to_have_attribute('data-page', 'home')
-        page.go_forward()
-        expect(page.locator('.native-public-library')).to_be_visible()
-    check('modal-focus-escape-links-history-and-route-focus', menu, page)
+    check('header-essay-then-github-no-menu-and-library-address', header, page)
 
     def rapid():
         page.evaluate("location.hash = '/oi'")
@@ -249,22 +288,24 @@ def interactions(browser):
     context = browser.new_context(viewport={'width': 390, 'height': 844}, reduced_motion='reduce')
     page = context.new_page()
     page.goto(route_url('home'))
-    def mobile_menu():
-        for source in PAGES:
-            page.locator('.sn > .sn__toggle').click()
-            dialog = page.get_by_role('dialog')
-            expect(dialog).to_be_visible()
-            assert dialog.evaluate('node => node.scrollWidth <= innerWidth + 1')
-            href = '#/' + ('' if source['id'] == 'home' else source['id'])
-            link = dialog.locator(f'.sn__link[href="{href}"]')
-            link.scroll_into_view_if_needed()
-            if source == PAGES[-1]:
-                page.screenshot(path=str(OUT / 'menu-mobile.png'))
-            link.click()
-            expect(page.locator('main')).to_have_attribute('data-page', source['id'])
-            assert page.evaluate('document.body.style.overflow') != 'hidden'
-        return {'routes_reached': [source['id'] for source in PAGES]}
-    check('mobile-menu-every-source-route-reachable', mobile_menu, page)
+    def mobile_header():
+        bar = page.locator('header.sn')
+        expect(page.locator('.sn button, .sn dialog')).to_have_count(0)
+        github = page.locator('.sn__github')
+        essay = page.locator('.sn__reading a[href="./essay/"]')
+        expect(github).to_be_visible()
+        expect(essay).to_be_visible()
+        g, e, b = github.bounding_box(), essay.bounding_box(), bar.bounding_box()
+        vw = page.evaluate('innerWidth')
+        assert g['x'] + g['width'] >= vw * .85 and g['y'] < b['y'] + b['height'], ('GitHub icon not top-right', g)
+        assert e['x'] + e['width'] <= g['x'] + 1 and e['x'] > vw / 2, ('essay link not beside GitHub on the right', e)
+        assert g['width'] >= 44 and g['height'] >= 44, ('GitHub target too small', g)
+        assert g['x'] + g['width'] <= vw + 1, ('GitHub icon overflows', g)
+        assert abs((g['y'] + g['height'] / 2) - (e['y'] + e['height'] / 2)) < 4, 'header controls are not on one row'
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+        page.screenshot(path=str(OUT / 'header-mobile.png'))
+        return {'github': g, 'essay': e}
+    check('mobile-header-essay-and-github-top-right', mobile_header, page)
     context.close()
 
     context = browser.new_context()

@@ -1,8 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { ShellNav } from './ShellNav';
 import { HeroParallax } from './HeroParallax';
-import { VideoField } from './VideoField';
-import { IndexCollection, collectionKind } from './IndexCollection';
+import { IndexCollection, FacetField, collectionKind } from './IndexCollection';
 import { MotionProvider, motionSettings, useMotion } from './motion';
 import { PAGES, type Page, type Section, type Item, type ReadingLink } from './content';
 import './shell.css';
@@ -15,9 +14,14 @@ const isUrl = (value: string) => /^https?:\/\//.test(value);
 
 // Presentation only: source strings remain unchanged, including punctuation.
 const notation = /(Objective Internality ≠ Subjective Immediacy|Ref → Relation → Operation → Consequence → Return|exists ≠ available ≠ relevant ≠ permitted ≠ selected ≠ operative|intention → action → experience → learning)/g;
+// Authored *emphasis* (titles of works) renders as <em>; nothing else is parsed.
+const emphasis = /\*([^*\n]+)\*/g;
+function Emphasis({ text }: { text: string }) {
+  return <>{text.split(emphasis).map((part, index) => index % 2 ? <em key={index}>{part}</em> : part)}</>;
+}
 function Inline({ text }: { text: string }) {
   return <>{text.split(notation).map((part, index) => index % 2
-    ? <span className="sec__notation" key={index}>{part}</span> : part)}</>;
+    ? <span className="sec__notation" key={index}>{part}</span> : <Emphasis key={index} text={part} />)}</>;
 }
 function Prose({ text }: { text: string }) {
   return <>{text.split('\n\n').map((paragraph, index) => (
@@ -41,9 +45,18 @@ function Copy({ section }: { section: Section }) {
 }
 function ReadingLinks({ links }: { links: ReadingLink[] }) {
   return <nav className="sec__reading" aria-label="Read the work">
-    {links.map(link => <a className="sec__link" key={link.href} href={link.href} aria-label={link.accessibleName}>
-      {link.label}<span className="sec__arrow" aria-hidden="true"> ↗</span>
-    </a>)}
+    {links.map(link => {
+      const external = isUrl(link.href);
+      const anchor = <a className="sec__link" key={link.href} href={link.href} aria-label={link.accessibleName}
+        {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}>
+        <span className="sec__link-label">{link.label}<span className="sec__arrow" aria-hidden="true"> ↗</span></span>
+        {link.title && <span className="sec__link-title">{link.title}</span>}
+        {external && !link.accessibleName && <span className="sr-only"> (opens in a new tab)</span>}
+      </a>;
+      return link.caption
+        ? <div className="sec__entrance" key={link.href}>{anchor}<p className="sec__caption">{link.caption}</p></div>
+        : anchor;
+    })}
   </nav>;
 }
 function ItemLink({ detail }: { detail: string }) {
@@ -75,19 +88,11 @@ function SectionView({ section }: { section: Section }) {
   const id = useId();
   const tone = section.tone === 'light' ? 'sec--light' : 'sec--dark';
   const collection = section.items ? collectionKind(section.items) : undefined;
-  if (section.layout === 'band') {
-    return <section className="band sec--dark" data-layout="band" aria-labelledby={id}>
-      <VideoField media={section.media?.media ?? 'b'} poster={section.media?.poster ?? 1}
-        zoom={section.media?.zoom ?? 1.3} className="band__video" />
-      <div className="band__shade" aria-hidden="true" />
-      <div className="band__inner" data-reveal><Title section={section} id={id} /><Copy section={section} /></div>
-    </section>;
-  }
-  return <section className={`sec sec--${section.layout} ${tone}${section.flip ? ' sec--feature--flip' : ''}${section.layout === 'index' && collection ? ` sec--${collection}` : ''}`} data-layout={section.layout} data-presentation={section.layout === 'index' ? collection : undefined} aria-labelledby={id}>
+  return <section className={`sec sec--${section.layout} ${tone}${section.flip ? ' sec--feature--flip' : ''}${section.layout === 'index' && collection ? ` sec--${collection}` : ''}${section.facetSet ? ' sec--facets' : ''}`} data-layout={section.layout} data-presentation={section.layout === 'index' ? collection : undefined} aria-labelledby={id}>
     <div className="sec__inner" data-reveal>
       {section.layout === 'feature' ? <>
         <Figure n={section.figure ?? 1} />
-        <div className="sec__side"><Title section={section} id={id} /><Copy section={section} />{section.items && (collection === 'offices' ? <IndexCollection items={section.items} /> : <Meta items={section.items} />)}</div>
+        <div className="sec__side"><Title section={section} id={id} /><Copy section={section} />{section.items && <Meta items={section.items} />}</div>
       </> : section.layout === 'split' ? <>
         <div className="sec__head"><Title section={section} id={id} /></div>
         <div className="sec__side"><Copy section={section} />{section.items && <ItemsList items={section.items} />}</div>
@@ -102,6 +107,7 @@ function SectionView({ section }: { section: Section }) {
         ))}</div>}
         {section.layout === 'index' && section.items && <IndexCollection items={section.items} />}
         {section.layout === 'statement' && section.items && <ItemsList items={section.items} />}
+        {section.facetSet && <FacetField set={section.facetSet} />}
       </>}
     </div>
   </section>;
@@ -203,20 +209,13 @@ function Shell() {
     };
   }, [page.id, still]);
 
-  const navigateTo = (id: string) => {
-    if (pageFromHash() === id) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      mainRef.current?.focus({ preventScroll: true });
-    } else window.location.hash = id === 'home' ? '/' : `/${id}`;
-  };
-
   return <div className="shell" data-motion={still ? 'still' : 'full'}>
     <a className="skip-link" href="#main-content" onClick={event => {
       event.preventDefault();
       mainRef.current?.focus({ preventScroll: true });
       (mainRef.current?.querySelector('[data-layout]') ?? mainRef.current)?.scrollIntoView();
     }}>Skip to content</a>
-    <ShellNav page={page.id} onNavigate={navigateTo} />
+    <ShellNav page={page.id} />
     <main id="main-content" ref={mainRef} tabIndex={-1} key={page.id} data-page={page.id}>
       {page.id === 'home' ? <><h1 className="sr-only">{page.intro.title}</h1><HeroParallax /></> : <Opening page={page} />}
       {page.sections.map((section, index) => <SectionView key={index} section={section} />)}

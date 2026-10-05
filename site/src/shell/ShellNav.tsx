@@ -1,84 +1,23 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { ShellMark } from './ShellMark';
-import { READING_LINKS, ESSAY_HREF } from './content';
-const PAGES=[{id:'home',index:'00',label:'Home',hint:'World and Life'},{id:'library',index:'01',label:'Library',hint:'Enter the published work'}];
+import { READING_LINKS, GITHUB } from './content';
 
-type ShellNavProps = { page: string; onNavigate: (id: string) => void };
-const hrefFor = (id: string) => id === 'home' ? '#/' : `#/${id}`;
+type ShellNavProps = { page: string };
 
-/** Native modal supplies inert background, Escape, focus containment and return. */
-export function ShellNav({ page, onNavigate }: ShellNavProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(false);
-  const previousOverflow = useRef<string | null>(null);
-  const unlock = () => {
-    if (previousOverflow.current === null) return;
-    document.body.style.overflow = previousOverflow.current;
-    previousOverflow.current = null;
-  };
-  useEffect(() => () => unlock(), []);
-
-  // Release synchronously with dismissal, not in a later passive React effect.
-  const close = () => { unlock(); dialogRef.current?.close(); setOpen(false); };
-  const go = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    close();
-    onNavigate(id);
-  };
-  const brand = (
-    <a className="sn__brand" href="#/" onClick={event => go(event, 'home')} aria-label="O:I home">
-      <ShellMark className="sn__mark" />
-    </a>
-  );
-
+/** One right-aligned header cluster: the essay, then O:I on GitHub. */
+export function ShellNav({ page }: ShellNavProps) {
   return (
     <header className={`sn${page === 'home' ? ' sn--light' : ''}`}>
-      {brand}
-      <nav className="sn__reading" aria-label="Primary">
-        {READING_LINKS.map(link => <a key={link.href} href={link.href} aria-label={link.accessibleName}>
-          {link.label}
-        </a>)}
-      </nav>
-      <button type="button" className="sn__toggle" aria-expanded={open} aria-controls="shell-menu" onClick={() => {
-        dialogRef.current?.showModal();
-        if (previousOverflow.current === null) previousOverflow.current = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        setOpen(true);
-      }}>
-        <span className="sn__toggle-label">Menu</span>
-        <span className="sn__toggle-icon" aria-hidden="true">+</span>
-      </button>
-      <dialog ref={dialogRef} id="shell-menu" className="sn__panel" aria-label="Site navigation" onCancel={event => { event.preventDefault(); close(); }} onClose={() => { if (!dialogRef.current?.open) { unlock(); setOpen(false); } }} data-lenis-prevent>
-        <div className="sn__panel-head">
-          {brand}
-          <button type="button" className="sn__toggle" onClick={close} autoFocus>
-            <span className="sn__toggle-label">Close</span>
-            <span className="sn__toggle-icon" aria-hidden="true">×</span>
-          </button>
-        </div>
-        <nav aria-label="Main navigation">
-          <ol className="sn__list">
-            {PAGES.map(entry => (
-              <li key={entry.id} className="sn__item">
-                <a className={`sn__link${page === entry.id ? ' sn__link--active' : ''}`} href={entry.id === 'library' ? READING_LINKS[0].href : hrefFor(entry.id)} onClick={event => go(event, entry.id === 'library' ? 'library?published=1' : entry.id)} aria-current={page === entry.id ? 'page' : undefined}>
-                  <span className="sn__index">{entry.index}</span>
-                  <span className="sn__label">{entry.label}</span>
-                  <span className="sn__hint">{entry.hint}</span>
-                </a>
-              </li>
-            ))}
-            <li className="sn__item">
-              <a className="sn__link" href={ESSAY_HREF} aria-label={READING_LINKS[1].accessibleName}>
-                <span className="sn__index">02</span>
-                <span className="sn__label">{READING_LINKS[1].label}</span>
-                <span className="sn__hint">Read the foundation and field</span>
-              </a>
-            </li>
-          </ol>
+      <div className="sn__cluster">
+        <nav className="sn__reading" aria-label="Primary">
+          {READING_LINKS.map(link => <a key={link.href} href={link.href} aria-label={link.accessibleName}>
+            {link.label}
+          </a>)}
         </nav>
-        <div className="sn__foot">O:I — World and Life</div>
-      </dialog>
+        <a className="sn__github" href={GITHUB.href} aria-label={GITHUB.label}>
+          <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" />
+          </svg>
+        </a>
+      </div>
     </header>
   );
 }
