@@ -50,6 +50,28 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const local=reading.neighbourhood.relations;
   check(await encounter.getAttribute('data-focus-ref')===wiki.ref&&Number(await encounter.getAttribute('data-node-count'))===local.nodes.length&&Number(await encounter.getAttribute('data-relation-count'))===local.edges.length,'Desktop renders the owner-returned bounded whole without adding nodes or relations',{focus:local.focus,nodes:local.nodes.length,relations:local.edges.length});
   const graph=encounter.getByRole('group',{name:'Bounded typed knowledge constellation'});await graph.waitFor();
+  const geometry=async(region,ref)=>region.locator('.knowledge-encounter__graph').evaluate((svg,ref)=>{
+    const node=[...svg.querySelectorAll('[data-knowledge-ref]')].find(row=>row.getAttribute('data-knowledge-ref')===ref);
+    if(!node)throw new Error(`Current owner node is absent: ${ref}`);
+    const point=new DOMPoint(0,0).matrixTransform(node.getScreenCTM());
+    const box=svg.viewBox.baseVal,centre=new DOMPoint(box.x+box.width/2,box.y+box.height/2).matrixTransform(svg.getScreenCTM());
+    const camera=svg.getScreenCTM().inverse().multiply(svg.firstElementChild.getScreenCTM());
+    return {dx:point.x-centre.x,dy:point.y-centre.y,zoom:camera.a,picked:svg.getAttribute('data-selected')};
+  },ref);
+  const centred=await geometry(encounter,wiki.ref);
+  check(Math.hypot(centred.dx,centred.dy)<2,'Follow centres the actual owner locus in SVG geometry',centred);
+  await graph.locator(`[data-knowledge-ref=${JSON.stringify(wiki.ref)}]`).click();
+  const bounds=await graph.boundingBox();if(!bounds)throw new Error('Native graph has no viewport');
+  await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
+  await page.keyboard.down('Control');try{await page.mouse.wheel(0,-30);}finally{await page.keyboard.up('Control');}
+  await page.waitForFunction(()=>{const svg=document.querySelector('.knowledge-encounter__graph');return svg&&svg.getScreenCTM().inverse().multiply(svg.firstElementChild.getScreenCTM()).a>1;},null,{timeout:15000});
+  await page.mouse.wheel(37,19);
+  await page.waitForFunction(ref=>{const svg=document.querySelector('.knowledge-encounter__graph');if(!svg)return false;const node=[...svg.querySelectorAll('[data-knowledge-ref]')].find(node=>node.getAttribute('data-knowledge-ref')===ref);if(!node)return false;const point=new DOMPoint(0,0).matrixTransform(node.getScreenCTM()),box=svg.viewBox.baseVal,centre=new DOMPoint(box.width/2,box.height/2).matrixTransform(svg.getScreenCTM());return Math.hypot(point.x-centre.x,point.y-centre.y)>10;},wiki.ref,{timeout:15000});
+  const beforeModes=await geometry(encounter,wiki.ref);
+  check(beforeModes.zoom>1&&Math.hypot(beforeModes.dx,beforeModes.dy)>10&&beforeModes.picked===wiki.ref,'Real zoom/pan and single selection change disposable geometry without opening another owner ref',beforeModes);
+  for(const mode of ['list','page','graph'])await encounter.getByRole('button',{name:mode,exact:true}).click();
+  const afterModes=await geometry(encounter,wiki.ref);
+  check(afterModes.picked===wiki.ref&&Math.abs(afterModes.zoom-beforeModes.zoom)<1e-6&&Math.hypot(afterModes.dx-beforeModes.dx,afterModes.dy-beforeModes.dy)<2,'Graph/list/page return preserves actual camera offset, zoom and exact single-selected ref', {beforeModes,afterModes});
   const titles=await graph.locator('title').allTextContents();
   check(local.edges.every(edge=>titles.some(title=>title.includes(edge.relation)&&edge.provenance.every(row=>title.includes(row.ref)&&(!row.revision||title.includes(row.revision))))),'Graph labels preserve exact relation kinds and provenance revisions',{relations:local.edges.map(edge=>({relation:edge.relation,provenance:edge.provenance}))});
   await encounter.getByRole('button',{name:'list',exact:true}).click();
@@ -77,11 +99,17 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check(await encounter.getByRole('navigation',{name:'Subjects in this Expression'}).getByRole('button').count()===local.nodes.length,'Every live Expression member remains labelled and addressable through the same subject refs');
   await shot('living-knowledge-expression');
   await encounter.getByRole('button',{name:'Pin',exact:true}).click();
-  check(await encounter.getByRole('button',{name:'Pinned',exact:true}).getAttribute('aria-pressed')==='true'&&await encounter.getByRole('button',{name:wiki.ref,exact:true}).count()===1,'Pin persists the exact projected semantic ref in the knowledge presentation');
+  // Human-facing labels come from the current owner reading. The pin's
+  // exact semantic address is carried separately by its existing native binding.
+  const pin=encounter.locator(`.knowledge-encounter__pins button[data-subject-ref=${JSON.stringify(wiki.ref)}]`);
+  const storedPins=await page.evaluate(world=>JSON.parse(localStorage.getItem(`oi-cradle.knowledge.${encodeURIComponent(world)}.pins.v2`)??'null'),reading.entry.world_ref);
+  check(await encounter.getByRole('button',{name:'Pinned',exact:true}).getAttribute('aria-pressed')==='true'&&await pin.count()===1&&Array.isArray(storedPins)&&storedPins.includes(wiki.ref),'Pin persists the exact projected semantic ref in the knowledge presentation',{world_ref:reading.entry.world_ref,subject_ref:wiki.ref,storedPins});
   await encounter.getByRole('button',{name:'Following locus',exact:true}).click();
   check(await encounter.getByRole('button',{name:'Follow locus',exact:true}).getAttribute('aria-pressed')==='false','Follow can freeze the visual locus without creating a second navigation history');
   await encounter.getByRole('button',{name:'graph',exact:true}).click();
   check(!(await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('explore-knowledge-expression:')),'Changing presentation releases the hidden Expression stage');
+  const heldCentre=await geometry(encounter,wiki.ref);
+  check(Math.hypot(heldCentre.dx,heldCentre.dy)<2,'Hold recentres the actual retained locus after deliberate pan',heldCentre);
   const neighbour=local.nodes.find(node=>node.ref!==local.focus&&node.availability!=='unavailable');
   check(Boolean(neighbour),'The real owner relation state supplies a recenterable neighbour',{nodes:local.nodes.map(node=>node.ref)});
   const firstEntity=Object.values(document.entities).find(entity=>entity.subject);
@@ -114,9 +142,15 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check((await explore.getAttribute('data-selected-ref'))===neighbour.ref,'Neighbour activation recentres through the existing Explore selection with the exact ref');
   await explore.getByRole('region',{name:'Projected knowledge local whole'}).waitFor({timeout:60000});
   check(!(await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('explore-knowledge-expression:')),'A late native Expression reply cannot remount a departed knowledge Surface');
+  await explore.locator(`[data-knowledge-ref=${JSON.stringify(wiki.ref)}]`).waitFor({timeout:60000});
+  const heldAfterOpen=await geometry(encounter,wiki.ref);
+  check(Math.hypot(heldAfterOpen.dx,heldAfterOpen.dy)<2,'Opening an admitted neighbour preserves the actual held owner locus at the centre',heldAfterOpen);
+  await encounter.getByRole('button',{name:'Follow locus',exact:true}).click();
+  const followed=await geometry(encounter,neighbour.ref);
+  check(Math.hypot(followed.dx,followed.dy)<2,'Follow recentres on the new actual owner locus',followed);
   const afterCancellation=(await channel('invoke.kernel_op',[{op:'expression',request:{operation:'inspect',expression_ref:expressionRef}}])).data.outcome.data.document;
   check(JSON.stringify(afterCancellation)===JSON.stringify(changed),'Departing during native inspect prevents the cancelled request from editing the owner document');
-  check(await explore.getByRole('button',{name:wiki.ref,exact:true}).isEnabled(),'Pinned semantic ref remains traversable after recentering');
+  check(await pin.count()===1&&await pin.isEnabled(),'Pinned semantic ref remains traversable after recentering',{subject_ref:await pin.getAttribute('data-subject-ref'),label:await pin.innerText()});
   await explore.getByRole('button',{name:'Back',exact:true}).click();await explore.locator(`[data-selected-ref=${JSON.stringify(wiki.ref)}]`).waitFor({timeout:60000});
   await explore.getByRole('button',{name:'Forward',exact:true}).click();await explore.locator(`[data-selected-ref=${JSON.stringify(neighbour.ref)}]`).waitFor({timeout:60000});
   check(true,'Back and Forward restore exact knowledge refs through Explore’s existing bounded history');
@@ -141,4 +175,23 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await encounter.waitFor({timeout:60000});
   check(await encounter.getAttribute('data-focus-ref')===wiki.ref&&await encounter.getByRole('button',{name:'Pinned',exact:true}).getAttribute('aria-pressed')==='true','Restored hosted access reopens the same bounded knowledge subject and semantic pin');
   await shot('living-knowledge-restored');
+  const restoredGraph=encounter.locator('.knowledge-encounter__graph');await restoredGraph.waitFor();
+  await restoredGraph.locator(`[data-knowledge-ref=${JSON.stringify(wiki.ref)}]`).click();
+  const restartBounds=await restoredGraph.boundingBox();if(!restartBounds)throw new Error('Restored graph has no viewport');
+  await page.mouse.move(restartBounds.x+restartBounds.width/2,restartBounds.y+restartBounds.height/2);await page.mouse.wheel(29,13);
+  await page.waitForFunction(ref=>{
+    const svg=document.querySelector('[aria-label="Explore"] .knowledge-encounter__graph');if(!svg)return false;
+    const node=[...svg.querySelectorAll('[data-knowledge-ref]')].find(node=>node.getAttribute('data-knowledge-ref')===ref);if(!node)return false;
+    const point=new DOMPoint(0,0).matrixTransform(node.getScreenCTM()),box=svg.viewBox.baseVal,centre=new DOMPoint(box.width/2,box.height/2).matrixTransform(svg.getScreenCTM());
+    return Math.hypot(point.x-centre.x,point.y-centre.y)>10;
+  },wiki.ref,{timeout:15000});
+  const beforeRestart=await geometry(encounter,wiki.ref);
+  await encounter.getByRole('button',{name:'page',exact:true}).click();
+  await page.reload();await channel('info');await explore.waitFor({timeout:60000});await encounter.waitFor({timeout:60000});
+  check(await encounter.locator('[data-knowledge-presentation="page"]').isVisible(),'Existing Explore travel restores the selected presentation mode on reload');
+  await encounter.getByRole('button',{name:'graph',exact:true}).click();
+  const afterRestart=await geometry(encounter,wiki.ref);
+  const reread=(await channel('invoke.kernel_op',[{op:'shared_field',request:{kind:'read',ref:wiki.ref}}])).data.outcome.data;
+  check(reread.state==='hosted'&&reread.entry.ref===reading.entry.ref&&reread.entry.world_ref===reading.entry.world_ref&&reread.entry.revision===reading.entry.revision,'Restart retains no graph authority and reacquires the same actual owner identity/revision');
+  check(afterRestart.picked===wiki.ref&&Math.abs(afterRestart.zoom-beforeRestart.zoom)<1e-6&&Math.hypot(afterRestart.dx-beforeRestart.dx,afterRestart.dy-beforeRestart.dy)<2,'Global restart restores actual camera and selected ref through the existing bounded travel codec',{beforeRestart,afterRestart});
 }

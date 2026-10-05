@@ -625,10 +625,11 @@
     }
    ],
    "key_literals": [
-    "oi-cradle.knowledge.${…}"
+    "oi-cradle.knowledge.${…}",
+    "oi.cradle.knowledge-encounter-view/v1"
    ],
    "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
-   "rationale": "Presentation mode, pinned refs and held locus; material is reread from the owner.",
+   "rationale": "Presentation mode, pinned refs and held locus; material is reread from the owner. The knowledge-encounter-view/v1 literal discriminates disposable camera, selection and mode in existing Explore travel state; it is not a browser-storage key or source body.",
    "keys": [
     {
      "family": "name",
@@ -660,10 +661,11 @@
     }
    ],
    "key_literals": [
+    "oi.cradle.knowledge-encounter-view/v1",
     "oi:explore-navigate"
    ],
    "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
-   "rationale": "Explore travel history and exact refs for restoration, not authoritative focus.",
+   "rationale": "Explore travel history and exact refs for restoration, not authoritative focus. The knowledge-encounter-view/v1 type discriminator belongs to this existing presentation checkpoint and introduces no storage key.",
    "keys": [
     {
      "family": "EXPLORE_TRAVEL_KEY",
@@ -2287,9 +2289,10 @@
    "owner": "src/explore/travel.mjs",
    "key_literals": [
     "oi-cradle.explore.v1",
-    "oi.cradle.explore-travel/v1"
+    "oi.cradle.explore-travel/v1",
+    "oi.cradle.knowledge-encounter-view/v1"
    ],
-   "rationale": "Imported/caller-supplied storage key definition; access owner is separately registered."
+   "rationale": "Imported/caller-supplied storage key definition; access owner is separately registered. The knowledge-encounter-view/v1 literal is the view discriminator decoded inside travel visits, not a storage key."
   },
   {
    "owner": "src/techne/MaterialDepth.tsx",

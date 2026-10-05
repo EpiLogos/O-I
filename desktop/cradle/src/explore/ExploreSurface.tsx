@@ -80,6 +80,15 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
     return()=>window.removeEventListener(TRAVEL_EVENT,wake);
   },[pinned]);
   useEffect(()=>{if(pinned)return;const timer=setTimeout(()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");},200);return()=>clearTimeout(timer);},[travel,pinned]);
+  useEffect(()=>{
+    if(pinned)return;
+    // The debounce above loses the last ~200ms of view commits across an
+    // unload (reload, close): a continuation that forgets its final camera
+    // or mode is not a continuation. Flush on pagehide and on unmount.
+    const flush=()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");};
+    window.addEventListener("pagehide",flush);
+    return()=>{window.removeEventListener("pagehide",flush);saveTravel(latest.current);};
+  },[pinned]);
 
   const selected=visit.selected;
   const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:")&&!selected.startsWith("relation:");
@@ -187,7 +196,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
         </ol>
       </div>}
     </>}
-    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
+    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} knowledgeView={visit.knowledge} onKnowledgeView={knowledge=>setTravel(t=>amendVisit(t,{knowledge}))} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
     {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:selected.startsWith("relation:")?<RelationBody ref_={selected} view={view}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
     {selected&&!isEntry&&snapshot&&!isUnavailable(snapshot)&&(()=>{const being=view.state==="available"?view.beings.find(b=>b.ref===selected):undefined;const relation=view.state==="available"?view.relations.find(r=>r.relation_ref===selected):undefined;const field_ref=selected.startsWith("oi:field:")?selected:being?.field_ref??snapshot.relation_fields[selected];return field_ref?<ContextContributionPanel key={selected} transport={transport} snapshot={snapshot} target={{kind:selected.startsWith("oi:field:")?"oi.shared-field":being?"oi.participant":"oi.relation",ref:selected,label:being?.label??(relation?relationLabel(relation.relation):subjectLabel(snapshot.fields.find(field=>field.field_ref===selected),"Shared undertaking")),field_ref}} onChanged={()=>setGeneration(n=>n+1)}/>:null;})()}
   </section>;

@@ -1,6 +1,7 @@
-import {useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent} from "react";
+import {useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent} from "react";
 import {useLayout} from "../knowledge/useLayout";
 import type {GraphReading} from "../knowledge/graph";
+import type {KnowledgeEncounterView} from "./navigate";
 
 export type EncounterGraphNode = {ref:string; kind:string; label:string; revision?:string; availability?:string};
 export type EncounterGraphEdge = {from:string; to:string; relation:string; origin:string; provenance:{ref:string; revision?:string}[]};
@@ -15,7 +16,7 @@ const clamp = (value:number, low:number, high:number) => Math.min(high, Math.max
  * neighbourhood answer, the ground pans, and only a deliberate double-click
  * (or Enter) opens the subject. Positions are disposable presentation; the
  * encounter's own nodes and relations are never altered. */
-export function EncounterGraph({nodes, edges, focus, visualLocus, onOpen}:{nodes:EncounterGraphNode[]; edges:EncounterGraphEdge[]; focus:string; visualLocus:string; onOpen:(ref:string)=>void}) {
+export function EncounterGraph({nodes, edges, focus, visualLocus, camera, picked, onCamera, onPick, onOpen}:{nodes:EncounterGraphNode[]; edges:EncounterGraphEdge[]; focus:string; visualLocus:string; camera:KnowledgeEncounterView["camera"]; picked?:string; onCamera:(camera:KnowledgeEncounterView["camera"])=>void; onPick:(ref?:string)=>void; onOpen:(ref:string)=>void}) {
   const reading = useMemo<GraphReading>(() => ({
     schema:"oi.cradle.graph-reading/v1",
     nodes:nodes.map(node => ({ref:node.ref, kind:node.kind, label:node.label, native_owner:"shared-field", provenance:{source:"explore.local-whole"}, actions:[]})),
@@ -25,8 +26,12 @@ export function EncounterGraph({nodes, edges, focus, visualLocus, onOpen}:{nodes
   }), [nodes, edges]);
   const layout = useLayout(reading);
   const svg = useRef<SVGSVGElement>(null);
-  const [camera, setCamera] = useState({x:0, y:0, zoom:1});
-  const [picked, setPicked] = useState<string>();
+  const callbacks = useRef({onCamera, onPick}); callbacks.current = {onCamera, onPick};
+  const setCamera = (next:KnowledgeEncounterView["camera"] | ((current:KnowledgeEncounterView["camera"])=>KnowledgeEncounterView["camera"])) => {
+    const value = typeof next === "function" ? next(cameraRef.current) : next;
+    cameraRef.current = value; callbacks.current.onCamera(value);
+  };
+  const setPicked = (ref?:string) => callbacks.current.onPick(ref);
   const cameraRef = useRef(camera); cameraRef.current = camera;
   const drag = useRef<{id:number; sx:number; sy:number; camera:typeof camera; ref?:string; world?:{x:number;y:number}; moved:boolean}>();
   const lastTap = useRef<{ref:string; at:number}>();
@@ -34,7 +39,6 @@ export function EncounterGraph({nodes, edges, focus, visualLocus, onOpen}:{nodes
   const index = new Map(nodes.map((node, i) => [node.ref, i]));
   const at = (ref:string) => layout.points[index.get(ref) ?? -1] ?? CENTRE;
 
-  useEffect(() => {if(picked && !index.has(picked))setPicked(undefined);}, [nodes]);
   // Ctrl/⌘ + wheel (and trackpad pinch) zooms; a plain wheel pans. Registered
   // natively because React's wheel listener is passive.
   useEffect(() => {
@@ -87,7 +91,10 @@ export function EncounterGraph({nodes, edges, focus, visualLocus, onOpen}:{nodes
     return set;
   }, [shown, edges]);
   const showAllEdgeLabels = !near && edges.length <= 16;
-  const transform = `translate(${CENTRE.x + camera.x},${CENTRE.y + camera.y}) scale(${camera.zoom}) translate(${-CENTRE.x},${-CENTRE.y})`;
+  // Geometry follows the exact admitted locus, including its live worker
+  // position. Camera offsets are deliberate pan relative to that locus.
+  const anchor = at(visualLocus);
+  const transform = `translate(${CENTRE.x + camera.x},${CENTRE.y + camera.y}) scale(${camera.zoom}) translate(${-anchor.x},${-anchor.y})`;
   return <svg ref={svg} className="knowledge-encounter__graph" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="group" aria-label="Bounded typed knowledge constellation. Drag a subject to move it, drag the background or scroll to pan, Control plus scroll to zoom. Select a subject with a click and open it with a double-click or Enter." data-visual-locus={visualLocus} data-selected={shown} data-layout-error={layout.error}
     onPointerDown={down} onPointerMove={move} onPointerUp={event => finish(event, false)} onPointerCancel={event => finish(event, true)}>
     <g transform={transform}>

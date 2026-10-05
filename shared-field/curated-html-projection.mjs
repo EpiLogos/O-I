@@ -148,7 +148,11 @@ function nativeDocumentBodies(reading, exported) {
       if (closing) active.depth -= 1;
       else if (!/\/\s*$/.test(tag)) active.depth += 1;
       if (active.depth === 0) {
-        bodies.set(active.key, html.slice(active.start, open)); active = undefined;
+        // Remove only the native carrier's leading attribution headers. They
+        // belong to source depth; the contribution's authored prose is intact.
+        let fragment = html.slice(active.start, open).replace(/^<header>[^<]*<\/header>/, '');
+        fragment = fragment.replace(/(<section data-contribution-id="[^"]*">)<header>[^<]*<\/header>/g, '$1');
+        bodies.set(active.key, fragment); active = undefined;
       }
     }
   }
@@ -168,7 +172,7 @@ export function curatedArtifactFromCentralDocument(reading, nativeExport) {
   const pointer = (path) => String(path ?? '').split('/').filter(Boolean).reduce((value, key) => (value && typeof value === 'object' ? value[key] : undefined), payload);
   const entries = [
     ...(document.fields ?? []).map((field) => ({ id: `field:${field.id}`, author: 'H', at: '', kind: 'field', label: field.label ?? field.id, html: nativeBodies?.get('field:' + field.id) ?? `<p>${escapeHtml(String(pointer(field.template_pointer) ?? ''))}</p>` })),
-    ...(document.entries ?? []).map((entry) => ({ id: text(entry.id, 'entry.id'), author: entry.actor_kind === 'human' ? 'H' : 'A', at: entry.occurred_at_unix_seconds ? new Date(entry.occurred_at_unix_seconds * 1000).toISOString() : '', html: nativeBodies?.get('entry:' + entry.id) ?? String(entry.html ?? ''), reply_to: entry.reply_to ?? null })),
+    ...(document.entries ?? []).map((entry) => ({ id: text(entry.id, 'entry.id'), author: String(entry.author_ref ?? (entry.actor_kind === 'human' ? 'Human' : 'Agent')), at: entry.occurred_at_unix_seconds ? new Date(entry.occurred_at_unix_seconds * 1000).toISOString() : '', html: nativeBodies?.get('entry:' + entry.id) ?? String(entry.html ?? ''), reply_to: entry.reply_to ?? null })),
   ];
   return {
     schema: CURATED_ARTIFACT_SCHEMA,
@@ -310,12 +314,12 @@ export function projectCuratedArtifact(input) {
     portable_renderer: 'oi.presentation/prose/v1',
     subject_ref: `${hostedArtifactRef}#${entry.id}`,
     props: {
-      title: entry.kind === 'field' ? String(entry.label ?? entry.id) : [entry.author, entry.at].filter(Boolean).join(' · '),
+      title: entry.kind === 'field' ? String(entry.label ?? entry.id) : '',
       text: htmlToText(entry.html),
       html: sanitiseEntryHtml(entry.html),
       ...(entry.reply_to ? { reply_to: `${hostedArtifactRef}#${entry.reply_to}` } : {}),
     },
-    fallback: { title: entry.kind === 'field' ? String(entry.label ?? entry.id) : entry.author || 'entry', text: htmlToText(entry.html) },
+    fallback: { title: entry.kind === 'field' ? String(entry.label ?? entry.id) : '', text: htmlToText(entry.html) },
     provenance: bindingProvenance(entry.id),
   }));
   const includedBindings = Object.entries(included).flatMap(([collection, items]) => items.map((item, index) => ({
@@ -330,8 +334,8 @@ export function projectCuratedArtifact(input) {
   })));
   const metaText = Object.entries(meta).map(([key, value]) => `${key}: ${value}`).join(' · ');
   const regions = [
-    { region_ref: 'lede', role: 'lede', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: hostedArtifactRef, props: { title, ...(selection.summary ? { text: selection.summary } : {}) }, fallback: { title }, provenance }] },
-    { region_ref: 'entries', role: 'reading', label: `Selected entries · ${selected.length} of ${artifact.entries.length}`, bindings: entryBindings },
+    ...(selection.summary ? [{ region_ref: 'lede', role: 'lede', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: hostedArtifactRef, props: { text: selection.summary }, fallback: { text: selection.summary }, provenance }] }] : []),
+    { region_ref: 'entries', role: 'reading', bindings: entryBindings },
     ...(includedBindings.length ? [{ region_ref: 'included', role: 'reading', label: 'Explicitly included collections', bindings: includedBindings }] : []),
     ...(selection.replies.length ? [{ region_ref: 'replies', role: 'relation', label: 'Replies from other worlds (admitted)', bindings: selection.replies.map((reply) => ({ schema: 'oi.presentation-binding/v1', binding_ref: `reply:${slug(reply.contribution_ref)}`, component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: reply.contribution_ref, props: { title: reply.label ?? 'Admitted reply', text: reply.summary ?? '', refs: [reply.contribution_ref] }, fallback: { title: reply.label ?? 'Admitted reply' }, provenance: [{ kind: 'admitted-contribution', ref: reply.contribution_ref, source_system: 'o-i', ...(reply.source_revision ? { revision: reply.source_revision } : {}) }] })) }] : []),
     ...(metaText ? [{ region_ref: 'meta', role: 'relation', label: 'Artifact', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'meta', component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: hostedArtifactRef, props: { title: 'Source details', text: metaText, ...(selection.disclose_source_refs ? { refs: [artifact.source.ref] } : {}) }, fallback: { title: 'Source details' }, provenance }] }] : []),
@@ -483,7 +487,7 @@ export function renderArtifactEdition(projectionValue, options = {}) {
     const title = item.props.title ?? item.fallback.title ?? item.component_ref;
     const body = typeof item.props.html === 'string' ? sanitiseEntryHtml(item.props.html) : (item.props.text ? `<p>${escapeHtml(item.props.text)}</p>` : '');
     const refs = Array.isArray(item.props.refs) ? item.props.refs : [];
-    return `<article class="entry" data-binding="${escapeHtml(item.binding_ref)}" data-renderer="${escapeHtml(item.portable_renderer ?? item.component_ref)}"><h3>${escapeHtml(title)}</h3>${body}${item.props.reply_to ? `<p class="reply">replies to ${refLink(item.props.reply_to)}</p>` : ''}${refs.length ? `<ul class="refs">${refs.map((ref) => `<li>${escapeHtml(ref)}</li>`).join('')}</ul>` : ''}</article>`;
+    return `<article class="entry" data-binding="${escapeHtml(item.binding_ref)}" data-renderer="${escapeHtml(item.portable_renderer ?? item.component_ref)}">${title ? `<h3>${escapeHtml(title)}</h3>` : ''}${body}${item.props.reply_to ? `<p class="reply">replies to ${refLink(item.props.reply_to)}</p>` : ''}${refs.length ? `<ul class="refs">${refs.map((ref) => `<li>${escapeHtml(ref)}</li>`).join('')}</ul>` : ''}</article>`;
   };
   const regions = presentation.regions.map((region) => `<section class="region" data-region="${escapeHtml(region.region_ref)}" data-role="${escapeHtml(region.role)}">${region.label ? `<h2>${escapeHtml(region.label)}</h2>` : ''}${region.bindings.map(binding).join('')}</section>`).join('');
   const embedded = JSON.stringify(projection).replace(/</g, '\\u003c');
