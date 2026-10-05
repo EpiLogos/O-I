@@ -72,6 +72,72 @@ if(nativeOwnerExpectation){
  else assert.equal(nativeOwnerExpectation.semantic_metadata_transition,undefined,'Metadata transitions require an independently source-qualified v2 or v3 expectation');
 }
 const json=(name,value)=>writeFileSync(resolve(out,name),JSON.stringify(value,null,2)+'\n');
+// Construction is the one native Create and complete scene-building edit.
+// A later ordinary Save may flush source-initialised material before Acquire;
+// it is continuation only when its complete native Document is conserved.
+function qualifyFirstConstructionEvidence(edits,creates,expressionRef){
+ assert.equal(creates.length,1,'First construction issues exactly one actual native Expression Create');
+ assert.equal(creates[0].expression_ref,expressionRef);
+ const owned=edits.filter(row=>row.request.expression_ref===expressionRef);
+ const constructors=owned.filter(row=>row.request.changes.some(change=>change.change==='scene_create'));
+ assert.equal(constructors.length,1,'The actual constructor submitted exactly one complete world without an already admitted private current');
+ const constructor=constructors[0],changes=constructor.request.changes;
+ const sceneRefs=['cosmic','personal','branches'].map(name=>expressionRef+':scene:'+name);
+ assert.deepEqual(changes.filter(change=>change.change==='scene_create').map(change=>change.scene_ref),sceneRefs,'One construction creates exactly the three required native Scenes');
+ const carriers=row=>row.request.changes.flatMap(change=>change.change==='scene_material_set'&&change.presentation?.scene?.epiWorld?[{artifact:row.artifact,record:change.presentation.scene.epiWorld,change}]:[]);
+ const authored=carriers(constructor);
+ assert.equal(authored.length,1,'Exactly one complete source-bearing carrier occurs in the actual construction edit');
+ const initial=authored[0];assert.equal(initial.record.world.instance_ref,expressionRef);assert.equal(initial.record.receiving.personal.current,null);
+ const documentOf=row=>{
+  assert.equal(row.response.ok,true,'The actual native edit must be acknowledged');
+  assert.equal(row.response.outcome.data.state,'ready');
+  const document=row.response.outcome.data.document;
+  assert.equal(document.expression_ref,expressionRef);assert.equal(document.schema,'oi.expression/v1');return document;
+ };
+ const document=documentOf(constructor);
+ assert.equal(constructor.request.expected_revision,1,'The construction CAS consumes its actual newly created native basis');
+ assert.equal(document.revision,2);
+ assert.deepEqual(document.scenes.map(scene=>scene.scene_ref),sceneRefs);
+ assert.deepEqual(document.scenes.map(scene=>scene.entity_refs.length),[32,9,7]);
+ for(const [kind,key]of [['scene_compose','entity_refs'],['scene_material_set','presentation'],['scene_body_set','body']]){
+  const submitted=changes.filter(change=>change.change===kind);
+  assert.deepEqual(submitted.map(change=>change.scene_ref),sceneRefs,'The actual constructor supplies every '+kind);
+  for(const change of submitted){assert.ok(change[key]&&Object.keys(change[key]).length,'Required constructed material cannot be empty');const expected=kind==='scene_body_set'?{span:null,recursion:null,...change.body}:change[key];assert.deepEqual(document.scenes.find(scene=>scene.scene_ref===change.scene_ref)[key],expected,'The complete native '+kind+' reply equals the actual submitted basis, including only declared native Option defaults');}
+ }
+ const added=changes.filter(change=>change.change==='entity_add');assert.equal(added.length,38);
+ assert.deepEqual(Object.keys(document.entities).sort(),added.map(change=>change.entity_ref).sort());
+ for(const change of added)assert.equal(document.entities[change.entity_ref].title,change.title);
+ const subjects=changes.filter(change=>change.change==='subject_bind');assert.equal(subjects.length,38);
+ for(const change of subjects)assert.deepEqual(document.entities[change.entity_ref].subject,change.binding,'Exact source/person/occasion binding is received by the constructed entity');
+ for(const change of changes.filter(change=>change.change==='parameter_set'))assert.deepEqual(document.entities[change.entity_ref].parameters[change.parameter].value,change.value);
+ const relations=changes.filter(change=>change.change==='relation_bind');
+ assert.deepEqual(Object.keys(document.relations).sort(),relations.map(change=>change.binding.binding_ref).sort());
+ for(const change of relations)assert.deepEqual(document.relations[change.binding.binding_ref],change.binding);
+ for(const change of changes.filter(change=>change.change==='profile_adopt')){const profile=document.profiles.find(profile=>profile.profile_ref===change.adoption.profile_ref);assert.ok(profile);for(const [key,value]of Object.entries(change.adoption))assert.deepEqual(profile[key],value);}
+ const reuse=changes.find(change=>change.change==='reuse_set').reuse;assert.deepEqual(document.reuse,{...reuse,associations:{skill_refs:[],skill_set_refs:[],task_types:[],workflow_keys:[],...reuse.associations}},'Complete native Reuse keeps every submitted field and the declared empty association defaults');
+ const nullContinuations=owned.filter(row=>row!==constructor&&carriers(row).some(carrier=>carrier.record.receiving.personal.current===null));
+ let preceding=document;
+ for(const row of nullContinuations){
+  const continued=carriers(row);assert.equal(continued.length,1);
+  assert.deepEqual(continued[0].record,initial.record,'A pre-acquisition Save continuation preserves the complete originally constructed carrier');
+  assert.equal(row.request.expected_revision,preceding.revision,'The ordinary material flush retains actual complete native CAS order');
+  const expected=structuredClone(preceding);
+  for(const change of row.request.changes){
+   if(change.change==='composition_set')expected.presentation=structuredClone(change.presentation);
+   else if(change.change==='scene_material_set'){const scene=expected.scenes.find(scene=>scene.scene_ref===change.scene_ref);assert.ok(scene);scene.presentation=structuredClone(change.presentation);}
+   else assert.fail('A null-current material continuation cannot reconstruct or remove the world: '+change.change);
+  }
+  if(!isDeepStrictEqual(expected,preceding)){
+   expected.revision++;
+   for(const scene of expected.scenes)if(!isDeepStrictEqual(scene,preceding.scenes.find(previous=>previous.scene_ref===scene.scene_ref)))scene.revision=expected.revision;
+  }
+  const acknowledged=documentOf(row);
+  assert.deepEqual(acknowledged,expected,'The ordinary flush ACK must equal the independently reconstructed complete native Document; no field is masked');
+  preceding=acknowledged;
+ }
+ return{artifact:initial.artifact,record:initial.record,document,null_continuation_artifacts:nullContinuations.map(row=>row.artifact)};
+}
+
 const identities=(config.identity_files??[]).map(path=>JSON.parse(readFileSync(resolve(path),'utf8')));
 assert.equal(identities.length,2,'Two actual saved controlled identities are required');
 for(const identity of identities)assert.ok(identity.source?.source_ref&&identity.source?.revision&&identity.reading?.person_ref,'Use acknowledged native InstrumentIdentity readings');
@@ -766,10 +832,11 @@ try{
   await readyCurrent(identities[0].reading.person_ref);
   const first=await frame.evaluate(()=>{const f=window.__FIELD_STUDIES__;return{record:f.epiWorld(),current:f.epiCurrent(),working:f.nativeWorking()};});
   const document=await nativeDocument(first.working.native_ref),record=first.record;
-  const authored=receipt.artifacts.filter(name=>/^native-expression-edit-issued-\d+\.json$/.test(name))
-   .flatMap(name=>{const request=JSON.parse(readFileSync(resolve(out,name),'utf8'));return(request.request?.changes??[]).flatMap(change=>change.change==='scene_material_set'&&change.presentation?.scene?.epiWorld?[{artifact:name,record:change.presentation.scene.epiWorld}]:[]);})
-   .filter(row=>row.record.world.instance_ref===document.expression_ref&&row.record.receiving.personal.current===null);
-  assert.equal(authored.length,1,'The actual constructor submitted exactly one complete world without an already admitted private current');
+  const constructionEdits=receipt.artifacts.filter(name=>/^native-expression-edit-issued-\d+\.json$/.test(name))
+   .map(name=>({artifact:name,request:JSON.parse(readFileSync(resolve(out,name),'utf8')).request,
+    response:JSON.parse(readFileSync(resolve(out,name.replace('-issued-','-response-')),'utf8')).response}));
+  const constructionCreates=receipt.issued_requests.slice(firstConstructionRequestStart).filter(row=>row.op==='expression'&&row.operation==='create');
+  const construction=qualifyFirstConstructionEvidence(constructionEdits,constructionCreates,document.expression_ref),authored=[construction];
   assert.deepEqual(record.world,authored[0].record.world,'Acquisition retains the complete originally constructed sky/occasion/instance');
   assert.deepEqual(record.identity_source,identities[0].source);assert.equal(record.identity_input_revision,identities[0].reading.input_revision);
   assert.equal(record.person_ref,identities[0].reading.person_ref);assert.equal(record.nara_ref,identities[0].reading.nara_ref);
