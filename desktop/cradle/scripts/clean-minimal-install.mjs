@@ -12,9 +12,10 @@
 //   3. the owner's census, read from the sandbox, reports exactly 0/1/2 + QL (an explicit selection) — never a mode name
 //   4. the installed application starts, serves its expression socket in the sandbox, and dispatches to neither product
 //   5. the bundle records the minimal closure (no hosted SharedField client) and the app carries none
-//   6. remove: only receipt-owned resources go; the sandbox ground and products stay
+//   6. update and rollback (remove -> install) keep the reader's state under OI_HOME/desktop
+//   7. remove: only receipt-owned resources go; the sandbox ground and products stay
 import {execFileSync, spawn} from "node:child_process";
-import {existsSync, mkdirSync, rmSync, cpSync, statSync, readdirSync} from "node:fs";
+import {existsSync, mkdirSync, rmSync, cpSync, statSync, readdirSync, writeFileSync, readFileSync} from "node:fs";
 import {homedir} from "node:os";
 import {tmpdir} from "node:os";
 import {dirname, join, resolve} from "node:path";
@@ -87,6 +88,34 @@ try {
   const bundleJson = JSON.parse(execFileSync("tar", ["-xzOf", bundle, "oi-desktop-bundle/BUNDLE.json"], {encoding: "utf8"}));
   check(bundleJson.closure?.profile === "minimal" && bundleJson.closure.excluded_products.join() === "software-factory,workcell", "BUNDLE.json records the minimal closure", bundleJson.closure);
   check(!existsSync(join(appPath, "Contents/Resources/shared-field")), "the application carries no hosted SharedField client");
+
+  // 6 — update and rollback keep the reader's state: the supported route is remove -> install (the installer refuses
+  // to install over a recorded Desktop), and state under OI_HOME/desktop is never receipt-owned, so it must survive both.
+  try { app?.kill(); app = undefined; } catch { /* gone */ }
+  const sentinel = join(home, "oi-home", "desktop", "reader-state.json");
+  mkdirSync(dirname(sentinel), {recursive: true});
+  writeFileSync(sentinel, JSON.stringify({note: "reader-owned: notes, main/tangent position, scenes, constructions live here, not in the app payload"}));
+  const repack = (version) => {
+    const work = join(root, `bundle-${version}`);
+    mkdirSync(work, {recursive: true});
+    execFileSync("tar", ["-xzf", bundle, "-C", work]);
+    const meta = JSON.parse(readFileSync(join(work, "oi-desktop-bundle/BUNDLE.json"), "utf8"));
+    meta.version = version; meta.name = `oi-cradle-${version}-${meta.target}.tar.gz`;
+    writeFileSync(join(work, "oi-desktop-bundle/BUNDLE.json"), JSON.stringify(meta, null, 2));
+    const out = join(root, meta.name);
+    execFileSync("tar", ["-czf", out, "-C", work, "oi-desktop-bundle"]);
+    const sum = execFileSync("shasum", ["-a", "256", out], {encoding: "utf8"}).split(/\s+/)[0];
+    writeFileSync(`${out}.sha256`, `${sum}  ${meta.name}\n`);
+    return out;
+  };
+  const original = installed.version; // from the first install receipt (status does not carry the version)
+  json(oi, ["desktop", "remove", "--json"]);
+  const v2 = json(oi, ["desktop", "install", "--bundle", repack("0.1.1"), "--json"]);
+  check(v2.version === "0.1.1" && existsSync(join(home, "Applications", "O-I.app", "Contents/MacOS/oi-cradle")), "update (remove -> install 0.1.1) replaces the application", {from: original, to: v2.version});
+  check(existsSync(sentinel) && JSON.parse(readFileSync(sentinel, "utf8")).note.startsWith("reader-owned"), "the reader's state under OI_HOME/desktop survives the update");
+  json(oi, ["desktop", "remove", "--json"]);
+  const back = json(oi, ["desktop", "install", "--bundle", bundle, "--json"]);
+  check(back.version === original && existsSync(sentinel), "rollback to the recorded bundle restores the version and keeps the reader's state", {version: back.version});
 } catch (e) { checks.push({ok: false, label: "unexpected error", detail: String(e?.stack ?? e).slice(0, 600)}); console.log("ERROR —", e?.stack ?? e); }
 finally {
   try { app?.kill(); } catch { /* gone */ }
