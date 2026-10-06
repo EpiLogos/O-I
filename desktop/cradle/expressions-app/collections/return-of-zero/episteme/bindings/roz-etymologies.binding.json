@@ -1,0 +1,214 @@
+{
+  "artifact": "episteme/roz-etymologies.journey.json",
+  "family": "episteme-etymology-wholes",
+  "worker": "E3",
+  "date": "2026-09-17",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "family-etymology-whole"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
+    "records": [
+      {
+        "record_id": "etymology-encounter-region-name-count",
+        "path": "submission-package/essay/symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md",
+        "sha256": "f8724e0409d43ac1bd36a259794a88116a3ea53d80fedc00ed36ab266c6c0d8a",
+        "sha256_census_receipt": "f8724e0409d43ac1bd36a259794a88116a3ea53d80fedc00ed36ab266c6c0d8a",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "etymology-arbitration-hybris-regard-anamnesis",
+        "path": "submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md",
+        "sha256": "58c7e374fe38ac56ce60fcd0180aa0cf0c1f789135cdb92b10c440d49e52bc94",
+        "sha256_census_receipt": "58c7e374fe38ac56ce60fcd0180aa0cf0c1f789135cdb92b10c440d49e52bc94",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "etymology-trust-place-logos-nomos-natio-credere",
+        "path": "submission-package/essay/symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md",
+        "sha256": "00a5ff94e6612747dd8aa3bde467e4e34ee76e6e49aeb594afff0984feffdc44",
+        "sha256_census_receipt": "575c84bd751d3f4e295652839e0761e0aaa42958d8b720b47016458d8e90fe1d",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "etymology-symbol-account-and-trust",
+        "path": "submission-package/essay/symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md",
+        "sha256": "385454d303dc33587582a80c77846a4a4ab1abb310cc60f817ed28a97eba41f9",
+        "sha256_census_receipt": "e0291913d331cea970c433858352c71fd547cbc167f9d11db60ac5bac32865d6",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "etymology-homology-and-analogy",
+        "path": "submission-package/essay/symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md",
+        "sha256": "cfb9d9e20f69a1a185276393fbcd55771fea485133143a55b2c353c35839f998",
+        "sha256_census_receipt": "3ca34b8ab15d6502b7ae83efc93bef2e68609a88ba3afb19f8d854dfcfd4c38a",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "etymology-apportionment-and-economy",
+        "path": "submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md",
+        "sha256": "4f19e8971105b50517cc2582c4f6fe00cf8438e2c1e8f6ff71ec9f2f128bcf8c",
+        "sha256_census_receipt": "4f19e8971105b50517cc2582c4f6fe00cf8438e2c1e8f6ff71ec9f2f128bcf8c",
+        "hash_note": "matches current bytes"
+      }
+    ]
+  },
+  "pointcloud_revision": "f257de5",
+  "journey": {
+    "id": "roz-etymologies",
+    "name": "Return of Zero — Etymology whole-fields",
+    "scenes": 6,
+    "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+  },
+  "scenes": [
+    {
+      "scene_id": "etymology-encounter-region-name-count",
+      "source_ref": "etymology-encounter-region-name-count",
+      "source_path": "submission-package/essay/symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD.md",
+      "sha256": "f8724e0409d43ac1bd36a259794a88116a3ea53d80fedc00ed36ab266c6c0d8a",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "field_id": null,
+        "source_relation": "Argued from",
+        "evidence_register_discipline": "descent, attested sense, operational homology, poetic re-entry kept distinct (the records' own four-register law)"
+      },
+      "form": "centre + envelope + six operation stations"
+    },
+    {
+      "scene_id": "etymology-arbitration-hybris-regard-anamnesis",
+      "source_ref": "etymology-arbitration-hybris-regard-anamnesis",
+      "source_path": "submission-package/essay/symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md",
+      "sha256": "58c7e374fe38ac56ce60fcd0180aa0cf0c1f789135cdb92b10c440d49e52bc94",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "field_id": "E2",
+        "source_relation": "Argued authorial relational construction; source-specific semantic, historical and comparative branches distinguished.",
+        "evidence_register_discipline": "descent, attested sense, operational homology, poetic re-entry kept distinct (the records' own four-register law)"
+      },
+      "form": "centre + envelope + six operation stations"
+    },
+    {
+      "scene_id": "etymology-trust-place-logos-nomos-natio-credere",
+      "source_ref": "etymology-trust-place-logos-nomos-natio-credere",
+      "source_path": "submission-package/essay/symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md",
+      "sha256": "00a5ff94e6612747dd8aa3bde467e4e34ee76e6e49aeb594afff0984feffdc44",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "field_id": null,
+        "source_relation": "Paraphrased lexical and historical witnesses; Argued authorial relational construction; explicitly marked poetic re-entry",
+        "evidence_register_discipline": "descent, attested sense, operational homology, poetic re-entry kept distinct (the records' own four-register law)"
+      },
+      "form": "centre + envelope + six operation stations"
+    },
+    {
+      "scene_id": "etymology-symbol-account-and-trust",
+      "source_ref": "etymology-symbol-account-and-trust",
+      "source_path": "submission-package/essay/symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD.md",
+      "sha256": "385454d303dc33587582a80c77846a4a4ab1abb310cc60f817ed28a97eba41f9",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": null,
+      "relations": {
+        "field_id": null,
+        "source_relation": null,
+        "evidence_register_discipline": "descent, attested sense, operational homology, poetic re-entry kept distinct (the records' own four-register law)"
+      },
+      "form": "centre + envelope + six operation stations"
+    },
+    {
+      "scene_id": "etymology-homology-and-analogy",
+      "source_ref": "etymology-homology-and-analogy",
+      "source_path": "submission-package/essay/symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD.md",
+      "sha256": "cfb9d9e20f69a1a185276393fbcd55771fea485133143a55b2c353c35839f998",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "field_id": null,
+        "source_relation": "Argued from the native Taylor field; historical relations separately scoped in the companion",
+        "evidence_register_discipline": "descent, attested sense, operational homology, poetic re-entry kept distinct (the records' own four-register law)"
+      },
+      "form": "centre + envelope + six operation stations"
+    },
+    {
+      "scene_id": "etymology-apportionment-and-economy",
+      "source_ref": "etymology-apportionment-and-economy",
+      "source_path": "submission-package/essay/symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD.md",
+      "sha256": "4f19e8971105b50517cc2582c4f6fe00cf8438e2c1e8f6ff71ec9f2f128bcf8c",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "field_id": null,
+        "source_relation": "Argued from native relational field; Paraphrased historical branches; operational homology distinguished from descent",
+        "evidence_register_discipline": "descent, attested sense, operational homology, poetic re-entry kept distinct (the records' own four-register law)"
+      },
+      "form": "centre + envelope + six operation stations"
+    }
+  ],
+  "assets": [
+    {
+      "kind": "diagram",
+      "ref": "centre-envelope-operations formations (engine-native shapes)",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "episteme/roz-etymologies.cover.png",
+  "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 6 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
+  "status": "reviewed",
+  "notes": [
+    "One shared grammar for the six wholes (the source form repeats: whole-field with six generated positions — the canonical N / N′ → N+N′ shape; arbitration-hybris-regard-anamnesis names it explicitly as 6 / 6′ generating six earned relations).",
+    "etymology-symbol-account-and-trust declares no claim_status frontmatter (frontmatter is only source_id: whole-field); its kicker carries the id alone and binding claim_status is null — recorded, not invented.",
+    "The packet's etymology record list is the six WHOLE-FIELD.md records; companion HISTORY.md / HISTORICAL-BRANCHES.md files are named in each whole's own standing and were not separately bound.",
+    "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/symbolon/episteme/etymologies/*/WHOLE-FIELD-*.md):",
+    "Grammar: the centre formation sequences the record's OWN word chain / named operations — the etymology's stages are the sequence steps; the six-operation ring (centre, envelope, generated relations) stays.",
+    "etymology-trust-place-logos-nomos-natio-credere: THE 3D SCENE — the six words Fides → Topos → Logos → Nomos → Natio → Credere walk the envelope ring (the record's own section chain) while the centre sits at z −0.35 beneath and the six op discs at z +0.18; depth means the reliance the account rests on: the words circle above fides, and credere returns above them.",
+    "etymology-arbitration-hybris-regard-anamnesis: the six discs now carry the record's six generated relations verbatim (### headers #0–#5→0 map one-to-one); the centre walks hybris → regard → anamnesis — the word field's own arc; vortex/vortex (arbitration turning).",
+    "encounter: the four named operations walk the centre (Encounter-in-Region → Name-through-Count → Count-through-Countenance → Count-to-Account); excitation pulse (encounter's light); ring layout.",
+    "symbol-account-and-trust: the four bolded operations walk the centre verbatim; vortex pointer (the account circulates to its source-field).",
+    "homology-and-analogy: Homologia ↔ Analogia alternate at the centre while op1 drifts (the comparison crossing); repel keeps the two fields distinct; long transition (the qualification develops).",
+    "apportionment-and-economy: the three named operations walk the centre; attract with shove click (measure apportions; liability presses).",
+    "Beats: durations 13–15s, transitions 1.8–2.4; 2 automation lanes; ring layouts on the three six-operation fields."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-episteme-l2",
+    "lane": "enrich/expressions-20261006",
+    "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "note": "records re-read at fc59a719 — etymology wholes live under submission-package/essay/symbolon/episteme/etymologies/*/WHOLE-FIELD-*.md at that revision (bound source_path values keep their dbf3b17 homes)"
+  },
+  "glyph_rationales": {
+    "Encounter-in-Region": "the record's first named operation — the meeting made consequential by its region",
+    "Name-through-Count": "the named operation pairing name with count",
+    "Count-through-Countenance": "the counted answers through countenance",
+    "Count-to-Account": "the account returns its conditions to encounter",
+    "hybris": "the word's stage in the arbitration field — the overreach that arbitrations answer",
+    "regard": "the word's stage — the Other held through the disclosed relation",
+    "anamnesis": "the word's stage — the settlement re-situated in its constitutive relations",
+    "Continuity-in-Indeterminacy": "generated relation #0 of the arbitration whole (record's ### headers #0–#5→0 map one-to-one onto the six discs)",
+    "Criterion-through-Distinction": "generated relation #1",
+    "Delineation-through-Difference": "generated relation #2",
+    "Arbitration-in-Crisis": "generated relation #3",
+    "Con-text-through-Diaphaneity": "generated relation #4",
+    "Resolution-in-Reconciliation": "generated relation #5→0",
+    "Fides": "the chain's first word — reliance before the account (record sections #0–#5→0 are the six words)",
+    "Topos": "the word's stage — where the relation can be answered",
+    "Logos": "the word's stage — the account acquires a public form",
+    "Nomos": "the word's stage — the account distributes authority",
+    "Natio": "the word's stage — inherited belonging remembers its formation",
+    "Credere": "the chain's last word — the examined relation entrusted again",
+    "Symbol answers to source": "the seam operation the record bolds — symbol's answerability",
+    "Account does not replace source": "the record's named operation — the account's office",
+    "Trust keeps the return route active": "the record's named operation — reliance's route",
+    "Account re-enters source-field": "the record's named operation — the account's return",
+    "Homologia": "sameness of account — what survives the crossing (record's Homological agreement)",
+    "Analogia": "proportion across difference — the analogy operation (record's Analogical proportion)",
+    "Power becomes finite by apportionment": "the apportionment record's named operation",
+    "Measure is an apportioned criterion": "the record's named operation — measure's office",
+    "Delegated labour distributes capacity and return": "the record's named operation — commission and return"
+  }
+}
