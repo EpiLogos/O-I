@@ -475,7 +475,7 @@
           },
           "rotation": 0,
           "shape": "text",
-          "text": "Ἡλίου",
+          "text": "·",
           "share": 1,
           "tint": "#d9d2c2",
           "tintWeight": 1,
@@ -490,22 +490,24 @@
           "sequence": {
             "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
                 "id": "st-e105-1",
-                "text": "Ἡλίου",
+                "text": "·",
                 "shape": "text",
                 "hold": 3.2,
                 "transition": 1.2,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.42,
+                    "x": 0.14,
                     "y": 0.14
                   },
                   "rotation": 0,
                   "tint": "#d9d2c2",
-                  "tintWeight": 1,
+                  "tintWeight": 0.9,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -518,7 +520,7 @@
                 "id": "st-e105-2",
                 "text": "☉",
                 "shape": "text",
-                "hold": 3.4,
+                "hold": 3.6,
                 "transition": 1.2,
                 "position": {
                   "x": 0.3,
@@ -541,9 +543,7 @@
                   }
                 }
               }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            ]
           }
         },
         {
@@ -1088,12 +1088,12 @@
             "z": -0.45
           },
           "size": {
-            "x": 0.307,
-            "y": 0.399
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "82",
+          "shape": "disc",
+          "text": "·",
           "share": 1.8,
           "tint": "#c9a227",
           "tintWeight": 1,
@@ -1113,15 +1113,15 @@
             "steps": [
               {
                 "id": "st-e111-1",
-                "text": "82",
-                "shape": "text",
+                "text": "·",
+                "shape": "disc",
                 "hold": 3.2,
                 "transition": 1.6,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.307,
-                    "y": 0.399
+                    "x": 0.34,
+                    "y": 0.34
                   },
                   "rotation": 0,
                   "tint": "#c9a227",
@@ -1136,19 +1136,19 @@
               },
               {
                 "id": "st-e111-2",
-                "text": "82",
-                "shape": "text",
+                "text": "·",
+                "shape": "disc",
                 "hold": 3.2,
                 "transition": 1.6,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.307,
-                    "y": 0.399
+                    "x": 0.34,
+                    "y": 0.34
                   },
                   "rotation": 0,
                   "tint": "#7a6a30",
-                  "tintWeight": 0.75,
+                  "tintWeight": 0.7,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -1159,15 +1159,15 @@
               },
               {
                 "id": "st-e111-3",
-                "text": "82",
-                "shape": "text",
+                "text": "·",
+                "shape": "disc",
                 "hold": 3.6,
                 "transition": 1.6,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.307,
-                    "y": 0.399
+                    "x": 0.34,
+                    "y": 0.34
                   },
                   "rotation": 0,
                   "tint": "#c9a227",

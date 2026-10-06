@@ -579,8 +579,8 @@
           "italic": "",
           "body": "The movement begins when formation grows confident: the view conceals the life from which it was selected, then treats whatever escapes its measure as deficient. Gebser gives perspectivity its achievement — Giotto's depth, Petrarch's landscape, Alberti's construction — and its restriction when one sector claims exclusive validity. Taylor's P5 carrier brings the pressure inside the viewer: body, history,",
           "x": 0.04,
-          "y": 0.47,
-          "width": 620,
+          "y": 0.6,
+          "width": 460,
           "size": 14,
           "align": "left",
           "w": 520
@@ -592,9 +592,9 @@
           "title": "",
           "italic": "",
           "body": "language and concern affect what becomes salient. The absent Father gives concealment its authorial image — lack numbed, a surrogate invoked as ultimate warrant while the view's own position exempts itself from the order it imposes. A20 receives the transition: possession occurs when the image's valuation governs what its source is allowed to be; the difference appears when the source resists.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "x": 0.72,
+          "y": 0.6,
+          "width": 380,
           "size": 14,
           "align": "left"
         }
@@ -914,8 +914,8 @@
           "italic": "",
           "body": "Participation restores the view to the living relation its self-sufficiency concealed. The central plan gives this release the force of dismemberment and death/rebirth: within this Taylor-authored sequence, what dies is the form's claim to stand complete in itself; what returns must acquire a form through which living relation can continue. Nietzsche supplies the artistic relation: in §1, art develops through the duplexity of the Apollonian",
           "x": 0.04,
-          "y": 0.47,
-          "width": 620,
+          "y": 0.6,
+          "width": 460,
           "size": 14,
           "align": "left",
           "w": 520
@@ -927,9 +927,9 @@
           "title": "",
           "italic": "",
           "body": "and Dionysian; in §21, Dionysus speaks Apollo's language and Apollo finally speaks Dionysus's. The formed account must let its participation affect what it says; participation must become communicable enough for a particular speaker to answer for it. Yet openness does not settle the question: participation can itself become an overriding image — unity deciding in advance what another being's difference must mean.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "x": 0.72,
+          "y": 0.6,
+          "width": 380,
           "size": 14,
           "align": "left"
         }
@@ -1233,8 +1233,8 @@
           "italic": "",
           "body": "Daphne changes what the mutuality must accomplish: a relation can be vivid and shared while still failing to let the other answer in their own right. Apollo cannot make illumination into entitlement; Dionysus cannot make participation permission to absorb. Her office is the particular centre whose existence exceeds what either power makes of it.",
           "x": 0.04,
-          "y": 0.47,
-          "width": 620,
+          "y": 0.6,
+          "width": 460,
           "size": 14,
           "align": "left",
           "w": 520
@@ -1246,9 +1246,9 @@
           "title": "",
           "italic": "",
           "body": "Her separate literary whole is Ovid's; the movement-35 return keeps the tree's recoil with the narrator's seeming assent, so no easy union or final refusal replaces it. Appropriation after withdrawal: possession failing at one level need not end the image's symbolic continuation. Unity invoked to cancel refusal repeats appropriation by other means. Occurrences: her required otherness (#3); recoil with seeming assent (Mv 35); Dionysus enters through Taylor, not Ovid.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "x": 0.72,
+          "y": 0.6,
+          "width": 380,
           "size": 14,
           "align": "left"
         }
@@ -1590,8 +1590,8 @@
           "italic": "",
           "body": "The resulting form is diaphanous: its determination remains visible together with the conditions through which it has become a view. Gebser's aperspectivity releases perspective from exclusive validity without amalgamating earlier structures; his Picasso/Braque discussion makes time and multiple aspects material to representation. Q27's contextual-field programme gives the movement its 180°→360° expression: the perspectival triangle opens",
           "x": 0.04,
-          "y": 0.47,
-          "width": 620,
+          "y": 0.6,
+          "width": 460,
           "size": 14,
           "align": "left",
           "w": 520
@@ -1603,9 +1603,9 @@
           "title": "",
           "italic": "",
           "body": "into a field where positions, counter-positions and transitions are available together — and the knower has a position within that field. Wider collections cannot accomplish this by accumulation; limits, relations and means of transformation have to become intelligible. P5's concern gives transparency a lived direction: equanimity requires acknowledging concern; the pose of having no stake can conceal a governing preference.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "x": 0.72,
+          "y": 0.6,
+          "width": 380,
           "size": 14,
           "align": "left"
         }
@@ -1895,6 +1895,48 @@
               }
             ]
           }
+        },
+        {
+          "id": "e147",
+          "name": "the definite image offered again — Apollo's articulation returned, bearing its acknowledged relation",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.21
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st-e147",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
         }
       ],
       "text": [
@@ -1919,8 +1961,8 @@
           "italic": "",
           "body": "The shared Neumann whole grounds the declared A20/A21 relation through differentiation, the image's power and transformed recognition; the composed whole gives that structuration its form–participation–alterity movement. Apollo returns to articulation — a definite image again offered, now bearing an acknowledged relation to the life it expresses and the difference it cannot appropriate. Dionysus remains effective within its communicability; Daphne remains",
           "x": 0.04,
-          "y": 0.47,
-          "width": 620,
+          "y": 0.6,
+          "width": 460,
           "size": 14,
           "align": "left",
           "w": 520
@@ -1932,9 +1974,9 @@
           "title": "",
           "italic": "",
           "body": "effective within that participation — another centre can answer without being pre-assigned the answer completing the speaker's image. Draft 3: truth beyond any frame, truth through this particular angle and life; a form once opened can close again, and renewed encounter must affect its valuation. Declared cross-story: Daphne ↔ the Apollo/Dionysus bracket — distinct casts. Occurrences: renewed finite seeing (#0, #5→0); the answer remaining the other's own (#3, #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "x": 0.72,
+          "y": 0.6,
+          "width": 380,
           "size": 14,
           "align": "left"
         }
