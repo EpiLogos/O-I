@@ -65,6 +65,8 @@ export function worldBase(transport: KernelTransportStatus, routePath: string): 
 export interface PackagedDeps {
   transport?: KernelTransportStatus;
   op?: typeof kernelOp;
+  /** Waits between attempts to ask the kernel; default 400 ms then 1.2 s. */
+  retryDelaysMs?: number[];
 }
 
 /** The installed World package, asked of the kernel and served by the host. An absent or damaged install, or no kernel to ask, is reported
@@ -72,7 +74,16 @@ export interface PackagedDeps {
 export async function resolvePackagedEssayEdition(deps: PackagedDeps = {}): Promise<EssayEdition | { unavailable: string; state: "absent" | "broken" | "unreachable" }> {
   const transport = deps.transport ?? detectTransport();
   if (transport.kind === "unavailable") return { unavailable: `The installed Return-of-Zero World cannot be asked for: ${transport.reason}`, state: "unreachable" };
-  const call = await (deps.op ?? kernelOp)(transport, { op: "world_resolve" } as unknown as KernelOp);
+  // `world_resolve` is a pure read, so a transport that drops it (a keep-alive connection reset, a network change under a busy loopback bridge)
+  // is asked again a couple of times before the World is called unreachable; a kernel that answers is believed at once.
+  const ask = deps.op ?? kernelOp;
+  const delays = deps.retryDelaysMs ?? [400, 1200];
+  let call = await ask(transport, { op: "world_resolve" } as unknown as KernelOp);
+  for (const delay of delays) {
+    if (call.outcome) break;
+    await new Promise(r => setTimeout(r, delay));
+    call = await ask(transport, { op: "world_resolve" } as unknown as KernelOp);
+  }
   if (!call.outcome) return { unavailable: `The kernel could not resolve the installed Return-of-Zero World: ${call.error ?? "no answer"}`, state: "unreachable" };
   const resolution = (call.outcome as unknown as { resolution?: WorldResolution }).resolution;
   if (!resolution) return { unavailable: "The kernel answered world_resolve without a resolution (the host predates the World seam)", state: "unreachable" };

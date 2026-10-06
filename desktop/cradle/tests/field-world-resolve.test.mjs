@@ -56,13 +56,30 @@ test("an absent, damaged or unreachable World is reported with its reason, never
   assert.match(broken.unavailable, /broken: the installed manifest differs/);
   const noKernel = await resolvePackagedEssayEdition({transport: {kind: "unavailable", reason: "no kernel transport"}});
   assert.equal(noKernel.state, "unreachable");
-  const refused = await resolvePackagedEssayEdition({transport: bridge, op: async () => ({outcome: null, error: "unreadable op: unknown variant `world_resolve`"})});
+  const refused = await resolvePackagedEssayEdition({transport: bridge, retryDelaysMs: [1, 1], op: async () => ({outcome: null, error: "unreadable op: unknown variant `world_resolve`"})});
   assert.match(refused.unavailable, /could not resolve.*unknown variant/);
   const predates = await resolvePackagedEssayEdition({transport: bridge, op: async () => ({outcome: {result: "file_read", receipts: []}})});
   assert.match(predates.unavailable, /predates the World seam/);
   // an available answer missing what the adapter needs is not served either
   const partial = await resolvePackagedEssayEdition({...answering({...available, source_addressing: undefined}), transport: bridge});
   assert.match(partial.unavailable, /available/);
+});
+
+test("a transport that drops world_resolve is asked again; a kernel that answers (even 'absent') is believed at once", async () => {
+  let calls = 0;
+  const flaky = async () => { calls++; return calls < 3 ? {outcome: null, error: "TypeError: Failed to fetch"} : {outcome: {result: "world_resolve", receipts: [], resolution: available}}; };
+  const edition = await resolvePackagedEssayEdition({transport: bridge, op: flaky, retryDelaysMs: [1, 1]});
+  assert.equal(calls, 3);
+  assert.equal(edition.pageFiles, true);
+  let dropped = 0;
+  const dead = await resolvePackagedEssayEdition({transport: bridge, op: async () => { dropped++; return {outcome: null, error: "TypeError: Failed to fetch"}; }, retryDelaysMs: [1, 1]});
+  assert.equal(dropped, 3);
+  assert.equal(dead.state, "unreachable");
+  assert.match(dead.unavailable, /Failed to fetch/);
+  let answered = 0;
+  const absent = await resolvePackagedEssayEdition({transport: bridge, op: async () => { answered++; return {outcome: {result: "world_resolve", receipts: [], resolution: {state: "absent", world_id: "w", root: "/r", reason: "no World w is installed under /r"}}}; }, retryDelaysMs: [1, 1]});
+  assert.equal(answered, 1);
+  assert.equal(absent.state, "absent");
 });
 
 test("a configured edition keeps winning (the kernel is not asked); with none configured the installed World is", async () => {
