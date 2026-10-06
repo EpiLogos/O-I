@@ -67,7 +67,9 @@ const config: QuartzConfig = {
         },
         keepBackground: false,
       }),
-      Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false }),
+      // parseTags off: the essay writes `#1-4`, `#5` and the like as prose (stations, positions), and Quartz would turn each into a link to a
+      // tag page that this edition does not emit.
+      Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false, parseTags: false }),
       Plugin.GitHubFlavoredMarkdown(),
       Plugin.TableOfContents(),
       Plugin.CrawlLinks({ markdownLinkResolution: "shortest", lazyLoad: true }),
