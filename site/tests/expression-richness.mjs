@@ -182,7 +182,7 @@ function checkJourney(journey, journeyPath) {
   const noteText = [binding?.notes].flat(Infinity).filter((s) => typeof s === "string").join("\n") + "\n" + JSON.stringify(binding?.glyph_rationales ?? {});
   const used = new Set(scenes.flatMap(glyphsOf));
   const unexplained = [...used].filter((g) => !rationales.has(g) && !noteText.includes(g));
-  const placeholders = [...used].filter((g) => g.length <= 2 && (PLACEHOLDER_GLYPHS.has(g) || (NOTATION_GLYPHS.has(g) && !rationales.has(g) && !noteText.includes(g))));
+  const placeholders = [...used].filter((g) => g.length <= 2 && (PLACEHOLDER_GLYPHS.has(g) || NOTATION_GLYPHS.has(g)) && !rationales.has(g) && !noteText.includes(g));
   if (!binding) fail("glyphs", "no craft note (binding record) beside the journey");
   else {
     if (unexplained.length) fail("glyphs", `glyphs without rationale: ${unexplained.map((g) => JSON.stringify(g)).join(", ").slice(0, 300)}`);
