@@ -84,8 +84,8 @@ body.is-resizing { user-select: none; }
 #quartz-root#quartz-root.page .left { background: var(--panel); border-right: 1px solid var(--rule); }
 #quartz-root#quartz-root.page .right { position: relative; background: var(--field-bg); border-left: 1px solid var(--rule); }
 /* the field panel is one resizable sidebar: drag its left edge (keys: arrows; double-click resets) */
-#quartz-root#quartz-root.page .rsz { position: absolute; z-index: 6; left: -5px; top: 0; bottom: 0; width: 11px; cursor: col-resize; touch-action: none; }
-#quartz-root#quartz-root.page .rsz::after { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background 140ms var(--ease); }
+#quartz-root#quartz-root.page .rsz { position: absolute; z-index: 6; left: 0; top: 0; bottom: 0; width: 10px; cursor: col-resize; touch-action: none; }
+#quartz-root#quartz-root.page .rsz::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; transition: background 140ms var(--ease); }
 #quartz-root#quartz-root.page .rsz:hover::after,
 #quartz-root#quartz-root.page .rsz:focus-visible::after,
 #quartz-root#quartz-root.page[data-resizing] .rsz::after { background: var(--ink); opacity: 0.35; }
