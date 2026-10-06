@@ -160,6 +160,22 @@ export interface SkyRequest {
   zodiac: 'Tropical'; ayanamsha: null; observer: null;
   max_age_seconds: number; backend_policy: 'require-swiss-files' | 'allow-moshier';
 }
+/** Complete owner snapshot is carried unchanged; QL validates its provider,
+ * receipt, body order and registry before deriving a personal current. */
+export interface NativeSkySnapshot {
+  schema: 'ql.sky-snapshot/v1'; snapshot_ref: string;
+  [key: string]: JsonValue;
+}
+export type SnapshotPurpose = 'requested' | 'retained-occasion';
+export interface SkyAdmission {
+  schema:'ql.sky-admission/v1'; purpose:SnapshotPurpose; snapshot_ref:string;
+  original_mode:'current'|'historical'; epoch_utc:string; receipt_utc:string;
+  fresh_current_attested:boolean; validation:'immutable-snapshot-and-current-native-source';
+  validator_source:{source_ref:'providers/sky/kerykeion_snapshot.py';revision:string}; standing:string;
+}
+export type NativePersonalSkySource =
+  | {sky_request: SkyRequest; sky_snapshot?: never; snapshot_purpose?:'requested'}
+  | {sky_snapshot: NativeSkySnapshot; sky_request?: never; snapshot_purpose?:SnapshotPurpose};
 export interface NaraTransitReading {
   schema: 'ql.nara-transit/v1'; status: string;
   sky: {snapshot_ref: string; epoch_utc: string; request: SkyRequest; provider: JsonValue; bodies: {body: string; longitude_degrees: number; retrograde: boolean}[]} | null;
@@ -168,6 +184,7 @@ export interface NaraTransitReading {
   source: JsonValue; effect_authority_granted: false;
 }
 export interface PersonalCurrentReading {
+  sky_admission?:SkyAdmission;
   schema: 'ql.nara-personal-current/v1'; identity: IdentityReading; transit: NaraTransitReading;
   q_identity: {w: number; x: number; y: number; z: number} | null;
   q_identity_transit: {w: number; x: number; y: number; z: number} | null;
@@ -181,7 +198,7 @@ export interface PersonalCurrentReading {
 export type NaraIdentityRequest =
   | {operation: 'inspect' | 'calculate'; profile: IdentityProfile}
   | {operation: 'transit'; request: SkyRequest}
-  | {operation: 'personal_current'; source_ref: string; expected_revision: string; sky_request: SkyRequest}
+  | ({operation: 'personal_current'; source_ref: string; expected_revision: string} & NativePersonalSkySource)
   | {operation: 'list'}
   | {operation: 'open'; source_ref: string}
   | {operation: 'save'; profile: IdentityProfile; source_ref: string | null; expected_revision: string | null};
