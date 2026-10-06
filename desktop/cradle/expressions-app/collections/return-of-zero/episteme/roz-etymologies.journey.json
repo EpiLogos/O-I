@@ -601,19 +601,19 @@
             "steps": [
               {
                 "id": "etymology-arbitration-hybris-regard-anamnesis-centre-enr0",
-                "text": "hybris",
+                "text": "Continuity-in-Indeterminacy",
                 "shape": "disc",
                 "hold": 2.6,
-                "transition": 1.1,
+                "transition": 1,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.4,
-                    "y": 0.4
+                    "x": 0.52,
+                    "y": 0.52
                   },
                   "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.9,
+                  "tint": "#5c6a74",
+                  "tintWeight": 0.6,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -624,19 +624,19 @@
               },
               {
                 "id": "etymology-arbitration-hybris-regard-anamnesis-centre-enr1",
-                "text": "regard",
+                "text": "Criterion-through-Distinction",
                 "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.1,
+                "hold": 2.6,
+                "transition": 1,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.46,
-                    "y": 0.46
+                    "x": 0.56,
+                    "y": 0.56
                   },
                   "rotation": 0,
                   "tint": "#33424e",
-                  "tintWeight": 0.8,
+                  "tintWeight": 0.7,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -647,19 +647,88 @@
               },
               {
                 "id": "etymology-arbitration-hybris-regard-anamnesis-centre-enr2",
-                "text": "anamnesis",
+                "text": "Delineation-through-Difference",
                 "shape": "disc",
-                "hold": 3.2,
-                "transition": 1.1,
+                "hold": 2.6,
+                "transition": 1,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.5,
-                    "y": 0.5
+                    "x": 0.58,
+                    "y": 0.58
+                  },
+                  "rotation": 0,
+                  "tint": "#33424e",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.27,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "etymology-arbitration-hybris-regard-anamnesis-centre-enr3",
+                "text": "Arbitration-in-Crisis",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.6
+                  },
+                  "rotation": 0,
+                  "tint": "#6a2f2a",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.27,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "etymology-arbitration-hybris-regard-anamnesis-centre-enr4",
+                "text": "Con-text-through-Diaphaneity",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.62
+                  },
+                  "rotation": 0,
+                  "tint": "#4a4438",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.27,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "etymology-arbitration-hybris-regard-anamnesis-centre-enr5",
+                "text": "Resolution-in-Reconciliation",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.68,
+                    "y": 0.68
                   },
                   "rotation": 0,
                   "tint": "#20262b",
-                  "tintWeight": 0.9,
+                  "tintWeight": 0.95,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -699,16 +768,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "etymology-arbitration-hybris-regard-anamnesis-ring-step0",
-                "text": "",
+                "id": "etymology-arbitration-hybris-regard-anamnesis-ring-enr0",
+                "text": "hybris",
                 "shape": "ring",
-                "hold": 3,
+                "hold": 2.6,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.3,
+                    "y": 1.3
+                  },
+                  "rotation": 0,
+                  "tint": "#6a2f2a",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.27,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "etymology-arbitration-hybris-regard-anamnesis-ring-enr1",
+                "text": "regard",
+                "shape": "ring",
+                "hold": 2.8,
+                "transition": 1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.34,
+                    "y": 1.34
+                  },
+                  "rotation": 0,
+                  "tint": "#33424e",
+                  "tintWeight": 0.65,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.27,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "etymology-arbitration-hybris-regard-anamnesis-ring-enr2",
+                "text": "anamnesis",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.4,
+                    "y": 1.4
+                  },
+                  "rotation": 0,
+                  "tint": "#20262b",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.27,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
