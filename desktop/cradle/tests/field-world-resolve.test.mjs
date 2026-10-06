@@ -36,6 +36,18 @@ test("an available World becomes an edition: its files route, its addressing, it
   }
 });
 
+test("the packaged edition frames the renderer the World carries, with the same parameters the site uses", async () => {
+  const edition = await resolvePackagedEssayEdition({...answering(available), transport: tauri});
+  const source = createEssayFieldSource(edition);
+  const view = source.expressionView({ref: "expression:roz-room-02-return-of-zero"}, "movement-15", "light");
+  assert.equal(view.kind, "frame");
+  assert.equal(view.url, "oi-material://localhost/__world/epi-logos%2Fconfronting-the-limit/0123456789abcdef/renderer/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light");
+  assert.equal(source.expressionView({ref: "expression:a"}, undefined, "dark").url.endsWith("?x=a&embed=1&theme=dark"), true);
+  // a configured (site) edition still frames the site's renderer beside its essay/
+  const site = createEssayFieldSource({baseUrl: "https://example.test/essay/"});
+  assert.equal(site.expressionView({ref: "expression:a"}, undefined, "light").url, "https://example.test/expression.html?x=a&embed=1&theme=light");
+});
+
 test("an absent, damaged or unreachable World is reported with its reason, never papered over", async () => {
   const absent = await resolvePackagedEssayEdition({...answering({state: "absent", world_id: "w", root: "/r", reason: "no World w is installed under /r"}), transport: bridge});
   assert.deepEqual([absent.state, absent.unavailable], ["absent", "The Return-of-Zero World is absent: no World w is installed under /r"]);
@@ -84,7 +96,18 @@ test("the real walk bridge serves an installed World and the essay source reads 
     assert.ok(index.nodes.every(n => n.ref.startsWith("central:source:project:Antykathera-Essay-Work:submission-package/essay/") && /^sha256:/.test(n.revision)));
     const expressions = await source.expressions();
     assert.equal(expressions.entries.length, 135);
-    assert.equal(source.expressionView(expressions.entries[0], undefined, "light"), null, "the package has no renderer page to frame");
+    const entry = expressions.entries[0];
+    const view = source.expressionView(entry, "movement-15", "dark");
+    const frame = new URL(view.url);
+    assert.equal(view.kind, "frame");
+    assert.equal(frame.origin + frame.pathname, `${url}/world/epi-logos%2Fconfronting-the-limit/${edition.packaged.revision}/renderer/expression.html`);
+    assert.deepEqual([...frame.searchParams], [["x", entry.ref.replace(/^expression:/, "")], ["scene", "movement-15"], ["embed", "1"], ["theme", "dark"]]);
+    // the renderer page and its two files are served by the same route; the index the page names is the edition's
+    const page = await (await fetch(frame.href.split("?")[0])).text();
+    assert.match(page, /<meta name="oi-edition-base" content="\.\.\/edition\/"/);
+    for (const ref of [...page.matchAll(/(?:src|href)="(\.\/[^"]+)"/g)].map(m => new URL(m[1], frame).href)) assert.equal((await fetch(ref)).status, 200, ref);
+    assert.equal((await fetch(new URL("../edition/expressions/index.json", frame))).status, 200);
+    assert.equal((await fetch(new URL("assets/unlisted.js", frame))).status, 404);
     const texts = await source.searchText();
     assert.ok(texts.size > 1000);
     // an unlisted file and a traversal are refused by the host, through the same route

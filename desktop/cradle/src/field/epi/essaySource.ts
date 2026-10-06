@@ -206,10 +206,9 @@ export function createEssayFieldSource(edition: EssayEdition): FieldSource & { m
     async expressions(): Promise<FieldExpressionIndex | null> { return (await ensure()).model.expressions; },
 
     expressionView(entry: FieldExpression, scene, theme) {
-      // The World package carries the Expression bodies and covers but not the renderer page (`expression.html` is a product of the site build,
-      // beside `essay/`, not inside it): a packaged edition has no renderer to name, and says so rather than framing a refusal.
-      if (edition.pageFiles) return null;
-      const u = new URL("../expression.html", base);
+      // The site serves the renderer beside `essay/`; the World package carries it at `renderer/` beside `edition/` (and the page declares that
+      // base), so the same renderer reads the same index and bodies, and checks each body's digest, through the same route.
+      const u = new URL(edition.pageFiles ? "../renderer/expression.html" : "../expression.html", base);
       u.searchParams.set("x", expressionId(entry.ref));
       if (scene) u.searchParams.set("scene", scene);
       u.searchParams.set("embed", "1"); u.searchParams.set("theme", theme);

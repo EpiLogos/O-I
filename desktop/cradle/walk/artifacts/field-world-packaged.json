@@ -2,17 +2,17 @@
   "scenario": "field-world-packaged",
   "spec_ref": "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §5 (the TypeScript contract for the Epi adapter)",
   "grade": "B",
-  "at": "2026-10-06T22:34:52.472Z",
-  "worlds_root": "/private/tmp/claude-501/-Users-admin-Central/2514abd5-9547-470b-8a8f-6b465a1f2645/scratchpad/worlds-root6",
+  "at": "2026-10-06T22:43:45.262Z",
+  "worlds_root": "/private/tmp/claude-501/-Users-admin-Central/2514abd5-9547-470b-8a8f-6b465a1f2645/scratchpad/worlds-root7",
   "installed": {
-    "world_requests": 6,
+    "world_requests": 15,
     "sample": [
-      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/quartz-source.json",
-      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/expressions/index.json",
-      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/static/fieldIndex.json",
-      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/index.html",
-      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/THE-RETURN-OF-ZERO.html",
-      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/static/contentIndex.json"
+      "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/quartz-source.json",
+      "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/expressions/index.json",
+      "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/static/fieldIndex.json",
+      "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/index.html",
+      "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/THE-RETURN-OF-ZERO.html",
+      "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/static/contentIndex.json"
     ],
     "primary": {
       "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
@@ -21,12 +21,12 @@
     }
   },
   "absent": {
-    "reason": "The Return-of-Zero World is absent: no World epi-logos/confronting-the-limit is installed under /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-worlds-empty-BTwhqY"
+    "reason": "The Return-of-Zero World is absent: no World epi-logos/confronting-the-limit is installed under /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-worlds-empty-JNnuHb"
   },
   "passed": true,
   "counts": {
-    "passed": 10,
-    "total": 10
+    "passed": 14,
+    "total": 14
   },
   "checks": [
     {
@@ -47,9 +47,54 @@
     },
     {
       "ok": true,
-      "label": "every edition request went to the bridge's /world/ route and was served",
+      "label": "the passage's text is on screen",
       "detail": {
-        "requests": 6,
+        "chars": 1606707
+      }
+    },
+    {
+      "ok": true,
+      "label": "an Expression opened as the tangent with its scene",
+      "detail": {
+        "ref": "expression:roz-room-02-return-of-zero",
+        "scene": "movement-15"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the frame is the renderer the World carries, served by the /world/ route, asked for this Expression",
+      "detail": "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/renderer/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+    },
+    {
+      "ok": true,
+      "label": "the real Expression renderer is playing in its frame (state ready: the renderer checked the body against the index digest before drawing)",
+      "detail": {
+        "text": 812,
+        "failure": "ready",
+        "canvas": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "the renderer, its assets, the index and the journey body all came through /world/ with 200",
+      "detail": [
+        "edition/expressions/index.json",
+        "edition/expressions/x/sp-factory-fd-sssf-1.cover.webp",
+        "edition/expressions/x/sp-factory-fd-sites.cover.webp",
+        "edition/expressions/x/sp-factory-fd-sssf-2.cover.webp",
+        "edition/expressions/x/roz-room-02-return-of-zero.cover.webp",
+        "renderer/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+        "renderer/assets/expression-BMhN21z-.css",
+        "renderer/assets/expression-C7du7Zi9.js",
+        "edition/expressions/index.json",
+        "edition/expressions/x/roz-room-02-return-of-zero.journey.json"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "every edition and renderer request went to the bridge's /world/ route and was served",
+      "detail": {
+        "requests": 15,
         "statuses": [
           200
         ]
@@ -59,22 +104,15 @@
       "ok": true,
       "label": "the structure index and a page were read through it",
       "detail": [
-        "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/quartz-source.json",
-        "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/expressions/index.json",
-        "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/static/fieldIndex.json"
+        "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/quartz-source.json",
+        "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/expressions/index.json",
+        "/world/epi-logos%2Fconfronting-the-limit/136df66716ca29c5/edition/static/fieldIndex.json"
       ]
     },
     {
       "ok": true,
       "label": "nothing was requested from any other host (no edition server exists)",
       "detail": []
-    },
-    {
-      "ok": true,
-      "label": "the passage's text is on screen",
-      "detail": {
-        "chars": 1606707
-      }
     },
     {
       "ok": true,
@@ -91,7 +129,7 @@
     {
       "ok": true,
       "label": "an empty worlds root: the field names the absence and its reason (no fallback host)",
-      "detail": "The Return-of-Zero World is absent: no World epi-logos/confronting-the-limit is installed under /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-worlds-empty-BTwhqY"
+      "detail": "The Return-of-Zero World is absent: no World epi-logos/confronting-the-limit is installed under /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-worlds-empty-JNnuHb"
     },
     {
       "ok": true,
