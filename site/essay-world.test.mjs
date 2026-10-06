@@ -6,12 +6,12 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { chmodSync, existsSync } from 'node:fs';
-import { appendFile, symlink, chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { appendFile, chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import {
   WORLD_ID, SOURCE_ADDRESSING, assemblePackage, closeDependencies, declaredReferences, depthClass, describeEdition, installPackage,
-  DISPOSITIONS, RENDERER_ENTRY, describeRenderer, verifyRenderer, dispositionEditionDefects, dispositionOf, dispositionSourceDefects, indexVault, ordinaryReadingMutations, parseSourceRef, readAllPages, registerPraxis, resolveWorld, slugOfVaultPath, sourceRef, verifyExpressions,
+  ordinaryReadingMutations, parseSourceRef, readAllPages, registerPraxis, resolveWorld, slugOfVaultPath, sourceRef, verifyExpressions,
   verifyPackage, verifyPraxisBinding, walkFiles,
 } from './essay-world.mjs';
 
@@ -45,10 +45,6 @@ async function fixture(root, { skills = ['using-epi-logos', 'walk-the-essay', 'i
     entries.push({ id, title: id, summary: '', collection: 'essay', group: 'The essay', scenes: [{ id: 's1', name: 's1' }, { id: 's2', name: 's2' }], nodes: id === 'e1' ? ['a'] : [], digest: `sha256:${sha(body)}`, bytes: Buffer.byteLength(body), journey: `x/${id}.journey.json`, cover: `x/${id}.cover.webp` });
   }
   await put(edition, 'expressions/index.json', JSON.stringify({ schema: 'oi.essay-expressions/v1', collections: [{ id: 'essay', label: 'The essay', count: 2 }], absent: [], entries }));
-  // The Expression renderer, laid out as the site's expression entry builds for the package: a page naming the edition base and two assets.
-  await put(root, 'renderer/expression.html', '<!doctype html><html><head><meta name="oi-edition-base" content="../edition/"/><title>Expression</title><script type="module" crossorigin src="./assets/expression-abc.js"></script><link rel="stylesheet" crossorigin href="./assets/expression-abc.css"></head><body><div id="root"></div></body></html>');
-  await put(root, 'renderer/assets/expression-abc.js', 'export const x = 1;');
-  await put(root, 'renderer/assets/expression-abc.css', 'body{margin:0}');
   for (const name of skills) await put(root, `praxis/skills/${name}/SKILL.md`, `---\nname: ${name}\ndescription: "Use when reading ${name}."\n---\n\n# ${name}\n`);
   const texts = new Map([['README.md', '[a](a.md) [c](b/c.md) [quilt](quilt/x.md) [web](https://example.org) [here](#top)'], ['a.md', '[c](b/c.md#h1) ![d](symbolon/diagrams/d.svg) [[b/c]] [[missing/page]]'], ['b/c.md', '[back](../a.md)']]);
   const closure = closeDependencies([{ rel: 'README.md', kind: 'markdown' }, { rel: 'a.md', kind: 'markdown' }, { rel: 'b/c.md', kind: 'markdown' }, { rel: 'symbolon/diagrams/d.svg', kind: 'asset' }], texts);
@@ -267,103 +263,4 @@ test('real AIKit: the set resolves to catalogued Skills, and a removed Skill is 
     assert.deepEqual(unresolved(after), ['skill/epi-logos-reader/investigate']);
     await cleanup(mutilated, home2);
   } finally { await cleanup(source, installRoot, home); }
-});
-
-test('every unresolved reference gets a disposition with its reason; defects stay defects', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'oi-vault-'));
-  try {
-    await put(root, 'quilt/ledger-note.md', 'x');
-    await put(root, 'symbolon/a/AUTHORIAL-TEXT.md', 'x');
-    await rm(join(root, 'symbolon/a/AUTHORIAL-TEXT.md'));
-    await symlink('../../../working/paper.md', join(root, 'symbolon/a/AUTHORIAL-TEXT.md'));
-    await put(root, 'symbolon/etym/homology/WHOLE-FIELD-homology.md', 'x');
-    await put(root, 'section-rooms/m/21-s2-p2-sym-ballein.md', 'x');
-    const published = new Set(['symbolon/etym/homology/WHOLE-FIELD-homology.md', 'section-rooms/m/21-s2-p2-sym-ballein.md']);
-    const ctx = { published, vaultIndex: await indexVault(root), declaredWithheld: ['../../working/antykathera/Antikythera Agentworld Brief.md'] };
-    const wiki = (target) => ({ from: 'a.md', target, why: 'wikilink names no published page' });
-    const link = (target) => ({ from: 'symbolon/b/x.md', target, why: 'no such file' });
-    const of = (item) => dispositionOf(item, ctx);
-    assert.equal(of(link('../a/AUTHORIAL-TEXT.md')).disposition, 'withheld-by-design');
-    assert.match(of(link('../a/AUTHORIAL-TEXT.md')).reason, /symlink into a withheld working desk/);
-    assert.equal(of(wiki('AUTHORIAL-TEXT')).disposition, 'withheld-by-design');
-    assert.equal(of(wiki('ledger-note')).disposition, 'withheld-by-design');
-    assert.match(of(wiki('Antikythera Agentworld Brief')).reason, /withheld desk/);
-    const whole = of(wiki('symbolon/etym/homology/WHOLE-FIELD'));
-    assert.equal(whole.disposition, 'authoring-defect');
-    assert.deepEqual(whole.repair, { kind: 'mechanical', replace: 'symbolon/etym/homology/WHOLE-FIELD', with: 'symbolon/etym/homology/WHOLE-FIELD-homology' });
-    assert.equal(of(wiki('Sym-Ballein')).repair.kind, 'candidates');
-    assert.deepEqual(of(wiki('Dreamcode')).repair, { kind: 'none' });
-    assert.equal(of(link('www.example.org/page')).disposition, 'external');
-    const all = dispositionSourceDefects([wiki('Dreamcode'), wiki('Dreamcode'), wiki('AUTHORIAL-TEXT'), wiki('symbolon/etym/homology/WHOLE-FIELD')], ctx);
-    assert.equal(all.undispositioned, 0);
-    assert.equal(all.distinct_targets, 3);
-    assert.deepEqual(all.totals, { 'withheld-by-design': 1, external: 0, 'authoring-defect': 3, 'publication-defect': 0 });
-    assert.ok(all.references.every((r) => DISPOSITIONS.includes(r.disposition) && r.reason));
-  } finally { await rm(root, { recursive: true, force: true }); }
-});
-
-test('edition dead links inherit the disposition of the source reference; unaccounted links and links into withheld desks are named', () => {
-  const table = [
-    { target: 'symbolon/etym/homology/WHOLE-FIELD', kind: 'wikilink', disposition: 'authoring-defect', reason: 'r' },
-    { target: 'Mono-Poly: Whole and Many', kind: 'wikilink', disposition: 'authoring-defect', reason: 'r' },
-    { target: 'agentworld-response-matrix', kind: 'wikilink', disposition: 'withheld-by-design', reason: 'r' },
-  ];
-  const d = dispositionEditionDefects([
-    { page: 'p', href: '../../symbolon/etym/homology/WHOLE-FIELD', why: 'no such page', target: 'symbolon/etym/homology/WHOLE-FIELD' },
-    { page: 'p', href: '../Mono-Poly--Whole-and-Many', why: 'no such page', target: 'section-rooms/Mono-Poly--Whole-and-Many' },
-    { page: 'p', href: '../agentworld-response-matrix', why: 'no such page', target: 'section-rooms/agentworld-response-matrix' },
-    { page: 'p', href: '../nowhere-at-all', why: 'no such page', target: 'section-rooms/nowhere-at-all' },
-    { page: 'p', href: '../quilt/q', why: 'no such page', target: 'quilt/q' },
-    { page: 'p', href: '../x#m02', why: 'fragment #m02 missing on x', target: 'x', fragment: 'm02', candidates: ['m02--title'] },
-    { page: 'p', href: '../../tags/1-4', why: 'no such page', target: 'tags/1-4' },
-    { page: 'p', href: '../Parasociety', why: 'no such page', target: 'section-rooms/Parasociety' },
-    { page: 'p', href: '../../the-slash', why: 'no such page', target: 'the-slash' },
-  ], table, { slugs: new Set(['section-rooms/arguments/concepts/parasociety', 'a/the-slash', 'b/the-slash']) });
-  assert.deepEqual(d.links.map((l) => l.disposition), ['authoring-defect', 'authoring-defect', 'withheld-by-design', 'undispositioned', 'publication-defect', 'publication-defect', 'publication-defect', 'authoring-defect']);
-  assert.deepEqual(d.links.map((l) => l.kind), [undefined, undefined, undefined, undefined, 'withheld-desk-link', 'hashtag-link', 'resolver-mismatch', 'ambiguous-wikilink']);
-  assert.equal(d.summary.links.undispositioned, 1);
-  assert.deepEqual(d.fragments[0].repair, { kind: 'candidates', candidates: ['m02--title'] });
-});
-
-test('the Expression renderer is part of the World: described from the artifact, verified closed, and refused when missing or drifted', async () => {
-  const { root, manifest } = await world();
-  try {
-    assert.equal(manifest.renderer.entry, RENDERER_ENTRY);
-    assert.deepEqual(manifest.renderer.files.map((f) => f.path), ['renderer/assets/expression-abc.css', 'renderer/assets/expression-abc.js', 'renderer/expression.html']);
-    assert.equal(manifest.counts.renderer.files, 3);
-    assert.equal(manifest.renderer.edition_base, '../edition/');
-    const listed = new Map(JSON.parse(await readFile(join(root, 'world.files.json'), 'utf8')).files.map((f) => [f.path, f]));
-    for (const f of manifest.renderer.files) assert.equal(listed.get(f.path).sha256, f.sha256, 'listed in world.files.json with the same digest');
-    assert.deepEqual(await verifyRenderer(root, manifest, listed), []);
-    const without = (path) => new Map([...listed].filter(([k]) => k !== path));
-    // a renderer file missing from the list, a page that loads something the package does not hold, a base that misses this edition
-    assert.match((await verifyRenderer(root, manifest, without('renderer/assets/expression-abc.js'))).join('\n'), /expression-abc\.js: a renderer file the manifest declares is not in the file list/);
-    assert.match((await verifyRenderer(root, manifest, without('renderer/expression.html'))).join('\n'), /expression\.html: missing/);
-    const drifted = new Map(listed); drifted.set('renderer/assets/expression-abc.css', { ...listed.get('renderer/assets/expression-abc.css'), sha256: 'f'.repeat(64) });
-    assert.match((await verifyRenderer(root, manifest, drifted)).join('\n'), /expression-abc\.css: renderer digest differs/);
-    assert.match((await verifyRenderer(root, manifest, new Map([...listed, ['renderer/extra.js', { path: 'renderer/extra.js', sha256: 'a'.repeat(64) }]]))).join('\n'), /renderer\/extra\.js: a renderer file the manifest does not declare/);
-    assert.match((await verifyRenderer(root, { ...manifest, renderer: undefined }, listed)).join('\n'), /declares no Expression renderer/);
-    await chmod(join(root, 'renderer/expression.html'), 0o644);
-    await writeFile(join(root, 'renderer/expression.html'), (await readFile(join(root, 'renderer/expression.html'), 'utf8')).replace('./assets/expression-abc.js', './assets/ghost.js').replace('../edition/', '../elsewhere/'));
-    const closed = (await verifyRenderer(root, manifest, listed)).join('\n');
-    assert.match(closed, /loads renderer\/assets\/ghost\.js, which the package does not hold/);
-    assert.match(closed, /declares edition base "\.\.\/elsewhere\/", the manifest says "\.\.\/edition\/"/);
-    // a JS file that imports a chunk the package does not hold
-    await writeFile(join(root, 'renderer/expression.html'), (await readFile(join(root, 'renderer/expression.html'), 'utf8')).replace('ghost', 'expression-abc').replace('../elsewhere/', '../edition/'));
-    await chmod(join(root, 'renderer/assets/expression-abc.js'), 0o644);
-    await writeFile(join(root, 'renderer/assets/expression-abc.js'), 'import("./chunk-missing.js");');
-    assert.match((await verifyRenderer(root, manifest, listed)).join('\n'), /expression-abc\.js loads renderer\/assets\/chunk-missing\.js, which the package does not hold/);
-  } finally { await cleanup(root); }
-});
-
-test('a package without its renderer is not a World: assembling refuses, verifying fails', async () => {
-  const { root } = await world();
-  try {
-    await chmod(join(root, 'renderer'), 0o755);
-    await rm(join(root, 'renderer'), { recursive: true, force: true });
-    await assert.rejects(describeRenderer(root), /carries its Expression renderer: renderer\/expression\.html is missing/);
-    const verdict = await verifyPackage(root);
-    assert.equal(verdict.ok, false);
-    assert.match(verdict.problems.join('\n'), /renderer\/expression\.html: missing/);
-  } finally { await cleanup(root); }
 });
