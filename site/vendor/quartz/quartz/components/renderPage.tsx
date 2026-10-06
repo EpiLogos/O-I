@@ -1,6 +1,5 @@
 import { render } from "preact-render-to-string"
 import { QuartzComponent, QuartzComponentProps } from "./types"
-import HeaderConstructor from "./Header"
 import BodyConstructor from "./Body"
 import { JSResourceToScriptElement, StaticResources } from "../util/resources"
 import { FullSlug, RelativeURL, joinSegments, normalizeHastElement } from "../util/path"
@@ -27,8 +26,22 @@ export function pageResources(
   baseDir: FullSlug | RelativeURL,
   staticResources: StaticResources,
 ): StaticResources {
+  // Absolute URLs, resolved when the page first runs: client-side navigation changes
+  // the document URL, and a relative path would then point at the wrong folder.
   const contentIndexPath = joinSegments(baseDir, "static/contentIndex.json")
-  const contentIndexScript = `const fetchData = fetch("${contentIndexPath}").then(data => data.json())`
+  const fieldIndexPath = joinSegments(baseDir, "static/fieldIndex.json")
+  // The structure index (graph, explorer, breadcrumbs) is small and needed at once. The full-text
+  // index is 12 MB: it is a thenable, so nothing is fetched until search first awaits it.
+  const contentIndexScript = `const __cx = (p) => new URL(p, location.href).href
+const __fieldUrl = __cx("${fieldIndexPath}"), __textUrl = __cx("${contentIndexPath}")
+const fieldData = fetch(__fieldUrl).then(data => data.json())
+let __fullText
+const fetchData = {
+  then(resolve, reject) {
+    __fullText ||= fetch(__textUrl).then(data => data.json()).catch((err) => { __fullText = undefined; throw err })
+    return __fullText.then(resolve, reject)
+  },
+}`
 
   const resources: StaticResources = {
     css: [
@@ -238,60 +251,94 @@ export function renderPage(
     right,
     footer: Footer,
   } = components
-  const Header = HeaderConstructor()
   const Body = BodyConstructor()
-
-  const LeftComponent = (
-    <dialog open id="essay-pages" class="left sidebar" aria-label="Pages">
-      <div class="essay-panel-heading"><span>Pages</span><button type="button" data-essay-close="pages" aria-label="Close pages">Close</button></div>
-      {left.map((BodyComponent) => (
-        <BodyComponent {...componentData} />
-      ))}
-    </dialog>
-  )
-
-  const RightComponent = (
-    <dialog open id="essay-connections" class="right sidebar" aria-label="Connections">
-      <div class="essay-panel-heading"><span>Connections</span><button type="button" data-essay-close="connections" aria-label="Close connections">Close</button></div>
-      {right.map((BodyComponent) => (
-        <BodyComponent {...componentData} />
-      ))}
-    </dialog>
-  )
 
   const lang = componentData.fileData.frontmatter?.lang ?? cfg.locale?.split("-")[0] ?? "en"
   const direction = i18n(cfg.locale).direction ?? "ltr"
+  const Icons = () => (
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <symbol id="i-essay" viewBox="0 0 20 20"><path d="M5 3.5h10v13H5z M7.5 7h5 M7.5 10h5 M7.5 13h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-split" viewBox="0 0 20 20"><path d="M3 4.5h14v11H3z M10 4.5v11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></symbol>
+      <symbol id="i-field" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="14" r="1.8" /><circle cx="10.5" cy="5.5" r="1.8" /><circle cx="15.5" cy="13" r="1.8" /><path d="M6.4 12.7 9.2 7M12 6.7l2.6 4.7M6.8 14.2h6.9" /></g></symbol>
+      <symbol id="i-search" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8.8" cy="8.8" r="5" /><path d="m12.6 12.6 4 4" /></g></symbol>
+      <symbol id="i-tree" viewBox="0 0 20 20"><path d="M4 4.5h5M7 9h9M7 13.5h9M4 4.5v9M4 9h3M4 13.5h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-sun" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="10" cy="10" r="3.2" /><path d="M10 2.5v1.8M10 15.7v1.8M2.5 10h1.8M15.7 10h1.8M4.7 4.7l1.3 1.3M14 14l1.3 1.3M4.7 15.3 6 14M14 6l1.3-1.3" /></g></symbol>
+      <symbol id="i-moon" viewBox="0 0 20 20"><path d="M15.5 12.4A6.2 6.2 0 0 1 7.6 4.5a6.2 6.2 0 1 0 7.9 7.9z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></symbol>
+      <symbol id="i-x" viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></symbol>
+      <symbol id="i-chev" viewBox="0 0 20 20"><path d="m7 4.5 5.5 5.5L7 15.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-sliders" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M3.5 6h6M13.5 6h3M3.5 14h2M9.5 14h7" /><circle cx="11.5" cy="6" r="1.8" /><circle cx="7.5" cy="14" r="1.8" /></g></symbol>
+      <symbol id="i-fit" viewBox="0 0 20 20"><path d="M3.5 7.5v-4h4M16.5 7.5v-4h-4M3.5 12.5v4h4M16.5 12.5v4h-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-expression" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M10 2.8 17 7v6L10 17.2 3 13V7z" /><path d="M3.3 7.2 10 11l6.7-3.8M10 11v6" stroke-linecap="round" /></g></symbol>
+      <symbol id="i-library" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="3" y="3.5" width="5.5" height="5.5" rx="1" /><rect x="11.5" y="3.5" width="5.5" height="5.5" rx="1" /><rect x="3" y="11" width="5.5" height="5.5" rx="1" /><rect x="11.5" y="11" width="5.5" height="5.5" rx="1" /></g></symbol>
+      <symbol id="i-external" viewBox="0 0 20 20"><path d="M8 4.5H4.5v11h11V12M11 4.5h4.5V9M15.5 4.5 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    </svg>
+  )
   const doc = (
     <html lang={lang} dir={direction}>
       <Head {...componentData} />
       <body data-slug={slug}>
-        <div id="quartz-root" class="page">
+        <Icons />
+        {/* The page is Quartz's own anatomy: left sidebar, centre, right sidebar. The right sidebar is the field. */}
+        <div id="quartz-root" class={`page${right.length === 0 ? " no-field" : ""}`} data-view="essay" data-left="open" data-drawer="closed">
+          <a class="skip" href="#essay-pane">Skip to the essay</a>
           <Body {...componentData}>
-            {LeftComponent}
-            <div class="center">
-              <div class="page-header">
-                <Header {...componentData}>
-                  {header.map((HeaderComponent) => (
-                    <HeaderComponent {...componentData} />
-                  ))}
-                </Header>
-                <div class="popover-hint">
-                  {beforeBody.map((BodyComponent) => (
-                    <BodyComponent {...componentData} />
-                  ))}
-                </div>
+            <aside class="left sidebar" id="left" aria-label="Browse">
+              <div class="rail-left">
+                <button class="ibtn" data-act="left-toggle" type="button" aria-label="Open the explorer"><svg width="18" height="18" aria-hidden="true"><use href="#i-tree" /></svg></button>
+                <button class="ibtn" data-act="search" type="button" aria-label="Search"><svg width="18" height="18" aria-hidden="true"><use href="#i-search" /></svg></button>
               </div>
-              <Content {...componentData} />
-              <hr />
-              <div class="page-footer">
-                {afterBody.map((BodyComponent) => (
+              <div class="left-inner">
+                {left.map((BodyComponent) => (
                   <BodyComponent {...componentData} />
                 ))}
               </div>
-            </div>
-            {RightComponent}
-            <Footer {...componentData} />
+            </aside>
+            <main class="center" id="center">
+              {header.map((HeaderComponent) => (
+                <HeaderComponent {...componentData} />
+              ))}
+              <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+              <div class="center-scroll" id="scroller">
+                <div class="article pane" id="essay-pane">
+                  <div class="popover-hint article-head">
+                    {beforeBody.map((BodyComponent) => (
+                      <BodyComponent {...componentData} />
+                    ))}
+                  </div>
+                  <Content {...componentData} />
+                  <div class="page-footer">
+                    {afterBody.map((BodyComponent) => (
+                      <BodyComponent {...componentData} />
+                    ))}
+                  </div>
+                </div>
+                <div class="article pane" id="tangent-pane" hidden></div>
+                <div class="library pane" id="library-pane" hidden></div>
+              </div>
+              <nav class="mrail" id="mrail" aria-label="The 48 movements" hidden></nav>
+              <Footer {...componentData} />
+            </main>
+            <aside class="right sidebar" id="right" aria-label="The field">
+              <div class="right-inner">
+                {right.map((BodyComponent) => (
+                  <BodyComponent {...componentData} />
+                ))}
+              </div>
+              <div class="rail-right">
+                <button class="ibtn" data-act="right-toggle" type="button" aria-label="Open the field"><svg width="18" height="18" aria-hidden="true"><use href="#i-field" /></svg></button>
+                <span class="rail-right__t">The field</span>
+              </div>
+            </aside>
           </Body>
+          <nav class="bottombar" aria-label="Panels">
+            <button type="button" data-view="essay" aria-pressed="true"><svg width="18" height="18" aria-hidden="true"><use href="#i-essay" /></svg><span>Essay</span></button>
+            <button type="button" data-view="split" aria-pressed="false"><svg width="18" height="18" aria-hidden="true"><use href="#i-split" /></svg><span>Split</span></button>
+            <button type="button" data-view="field" aria-pressed="false"><svg width="18" height="18" aria-hidden="true"><use href="#i-field" /></svg><span>Field</span></button>
+            <button type="button" data-view="library" aria-pressed="false"><svg width="18" height="18" aria-hidden="true"><use href="#i-library" /></svg><span>Library</span></button>
+            <button type="button" data-act="search"><svg width="18" height="18" aria-hidden="true"><use href="#i-search" /></svg><span>Search</span></button>
+          </nav>
+          <div class="scrim" id="scrim"></div>
+          <dialog class="lightbox" id="lightbox"></dialog>
         </div>
       </body>
       {pageResources.js

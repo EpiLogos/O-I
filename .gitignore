@@ -9,6 +9,7 @@ site/tsconfig.*.tsbuildinfo
 site/*.config.js
 site/*.config.d.ts
 site/evidence/
+site/vendor/quartz/.generated/
 
 # Raw local design material stays local. Named, encoded delivery assets must ship.
 site/redesign-materials/

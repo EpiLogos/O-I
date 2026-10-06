@@ -7,9 +7,15 @@
   "vendored": "2026-09-25",
   "by": "O:I production-deploy lane, per site/ESSAY-QUARTZ-HARD-BRIEF-2026-09-25.md",
   "local_modifications": [
-    "quartz.config.ts - night palette (Plate B tokens), baseUrl oi.epi-logos.org/essay, graph/explorer/backlinks on",
-    "quartz.layout.ts - explorer left; graph, backlinks, TOC right",
-    "quartz/styles/custom.scss - night-paper skin, serif stack"
+    "quartz.config.ts - O:I shell palette (paper #fbfaf6 / black #0b0b0c, gold), local font stacks (no font service), baseUrl oi.epi-logos.org/essay, FieldIndex emitter, lazy image loading, no git-derived dates",
+    "quartz.layout.ts - the essay/field layout: explorer, search and title left; graph, contents, connections right; head (tabs, view, theme) and breadcrumb footer in the centre",
+    "quartz/components/renderPage.tsx - page anatomy (rails, drawers, tangent pane, bottom bar, lightbox); the structure index is fetched at once, the 12 MB full-text index only when search first awaits it",
+    "quartz/components/Field.tsx, scripts/field.inline.ts, scripts/field/*.ts, scripts/field-theme.inline.ts - the reading UI: explorer, search, reader (reading position, contents, 48-movement rail), graph, tabs/tangents, breadcrumbs, views, theme",
+    "quartz/components/pages/Content.tsx - reading projection: drops the page-title h1 and corpus scaffolding (Write here / Where you are / Open beside it / reader-navigation), wraps authored image+caption pairs as figures",
+    "quartz/plugins/emitters/fieldIndex.ts, quartz/util/essayField.ts - static/fieldIndex.json: classification, rooms, movements, links, explorer tree (also feeds the server-rendered page head, pager and breadcrumbs)",
+    "quartz/plugins/transformers/links.ts - relative file links resolve against the linking page (they resolved from the vault root: ~26,000 of ~50,000 internal links were broken); images resolve as written and carry intrinsic width/height",
+    "quartz/plugins/transformers/ofm.ts - wikilink alias may contain '#' (the corpus writes '#4' in aliases)",
+    "quartz/styles/field.scss, quartz/styles/custom.scss - the reading skin, ported from the approved mockup (site/redesign-materials/essay-projection-mockup)"
   ],
   "upgrade_procedure": "diff against upstream v4 branch at the pinned commit; keep local_modifications"
 }

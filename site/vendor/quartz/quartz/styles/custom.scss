@@ -1,303 +1,157 @@
 @use "./base.scss";
+@use "./field.scss";
 
-// O:I night-paper skin — the essay belongs to the restored O:I publication.
-// Palette lives in quartz.config.ts;
-// this file carries the type and surface details those tokens imply.
+// O:I essay edition. The reading UI is styles/field.scss (ported from the approved mockup);
+// this file only reconciles it with Quartz's base stylesheet, which assumes a scrolling document
+// with a sticky sidebar grid. The essay is an app-shaped page: three regions, each scrolling inside itself.
 
-:root {
-  // Plate B reads in Iowan Old Style / Palatino; EB Garamond (the configured
-  // Google font) stands in where those system faces are absent.
-  --headerFont: "Iowan Old Style", Palatino, "Palatino Linotype", "EB Garamond", Georgia, serif;
-  --bodyFont: "Iowan Old Style", Palatino, "Palatino Linotype", "EB Garamond", Georgia, serif;
-  --codeFont: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-}
+html { width: 100%; overflow: hidden; scroll-behavior: auto; text-size-adjust: none; }
+body { margin: 0; overflow: hidden; }
 
-// Small-caps section labels, as the html entrance labels its offices.
-article h1,
-.page-title {
-  letter-spacing: 0.01em;
-}
-
-.sidebar h1,
-.sidebar > h2,
-.explorer-title,
-.toc-header,
-.backlinks-title {
-  font-family: var(--sansFont);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-// Hairline rules echo the entrance's single-pixel lines.
-hr,
-article > h1 {
-  border-color: var(--lightgray);
-}
-
-.footer {
-  border-top: 1px solid var(--lightgray);
-  font-family: var(--sansFont);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-}
-
-// Graph nodes in gold, matching the accent used across the entrance.
-.graph-outer circle.node {
-  fill: var(--tertiary);
+#quartz-root#quartz-root.page {
+  max-width: none;
+  margin: 0;
+  & > #quartz-body {
+    grid-template-areas: none;
+    grid-template-rows: minmax(0, 1fr);
+    column-gap: 0;
+    row-gap: 0;
+    padding: 0;
+    margin: 0;
+    max-width: none;
+  }
+  .sidebar { grid-area: auto; gap: 0; padding: 0; width: auto; height: auto; flex-direction: column; align-items: stretch; }
+  .sidebar > * { max-height: none; }
+  .center, .center-foot { grid-area: auto; margin: 0; max-width: none; min-width: 0; }
+  .center-foot { padding-block: 0; }
+  .page-footer { margin: 0; }
+  // Quartz sets a fixed 1.6rem on every p/li; the reading measure comes from .prose
+  .prose p, .prose li, .prose td, .prose th { line-height: inherit; }
+  .article > hr { display: none; }
+  header { margin: 0; gap: 0; }
+  header.ahead { display: block; }
+  h1, h2, h3, h4, h5, h6 { color: inherit; margin-bottom: 0; }
+  a { font-weight: inherit; }
 }
 
 // Tags are vault bookkeeping, not reading furniture: never rendered.
 ul.tags { display: none !important; }
 
-// Reading comfort — the essay breathes.
-article {
-  line-height: 1.75;
-  p, li { line-height: 1.75; }
-  p { margin-block: 1.1em; }
-  h1 { margin-top: 2.2rem; margin-bottom: 1rem; }
-  h2, h3 { margin-top: 2rem; margin-bottom: 0.8rem; }
-  hr { margin-block: 2.5rem; }
-  blockquote { margin-block: 1.5rem; padding-inline: 1.2rem; }
-  ul, ol { padding-left: 1.6rem; }
-}
-.article-title { margin-bottom: 1.4rem; line-height: 1.3; }
-.breadcrumbs { margin-bottom: 0.6rem; }
-// The native body is the grid. The previous fade rules targeted .page,
-// leaving the tablet graph after the entire article and double-padding the prose.
-.page { max-width: 1700px; }
-.page > #quartz-body {
-  --essay-left-width: 16rem;
-  --essay-right-width: 16rem;
-  grid-template-columns: var(--essay-left-width) minmax(0, 1fr) var(--essay-right-width);
-  grid-template-rows: auto auto;
-  grid-template-areas: "grid-sidebar-left grid-center grid-sidebar-right" "grid-sidebar-left grid-footer grid-sidebar-right";
-  padding: 0;
-  gap: 0;
-  .center {
-    grid-area: grid-center;
-    box-sizing: border-box;
-    min-width: 0;
-    width: 100%;
-    max-width: 54rem;
-    padding: 5rem clamp(1.25rem, 2.5vw, 2.5rem) 1rem;
-    margin: 0 auto;
-  }
-  .page-header { margin-top: 0; }
-  .page-header > header:has(> .essay-reader-toolbar) { margin: 0; }
-  footer { min-width: 0; box-sizing: border-box; padding: 1rem 2rem; }
-  dialog.sidebar:is(.left, .right) {
-    color: var(--darkgray);
-    background: var(--light);
-    border: 0;
-    border-radius: 0;
-    margin: 0;
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-    max-height: none;
-    height: calc(100dvh - 3.5rem);
-    top: 3.5rem;
-    padding: 1.25rem;
-    flex-direction: column;
-    align-items: stretch;
-    position: sticky;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    gap: 1.25rem;
-    &[open] { display: flex; }
-    &:not([open]) { display: none; }
-    &.left { border-right: 1px solid var(--lightgray); }
-    &.right { border-left: 1px solid var(--lightgray); }
-    & > * { flex: 0 0 auto; max-height: none; }
-    & > .toc { display: block; }
-    .spacer { display: none; }
-  }
-  dialog.sidebar.left:has(.explorer) { padding: 1.25rem; position: sticky; margin: 0; }
-}
-body.oi-explorer-hidden .page > #quartz-body { --essay-left-width: 0rem; }
-body.oi-rail-hidden .page > #quartz-body { --essay-right-width: 0rem; }
-
-.essay-reader-toolbar {
-  position: fixed;
-  inset: 0 0 auto;
-  z-index: 25;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 3.5rem;
-  padding: 0 .75rem;
-  box-sizing: border-box;
-  border-bottom: 1px solid var(--lightgray);
-  background: var(--light);
-  font-family: var(--codeFont);
-  font-size: .75rem;
-  .essay-site-home { font-weight: 500; padding: .75rem; }
-}
-.fade-toggle, .essay-panel-heading button, .global-graph-close {
-  min-height: 44px;
-  border: 1px solid var(--lightgray);
-  border-radius: 3px;
-  background: var(--light);
-  color: var(--darkgray);
-  font: inherit;
-  padding: .5rem .75rem;
-  cursor: pointer;
-  &:hover, &[aria-expanded="true"] { color: var(--secondary); border-color: var(--secondary); }
-  &:focus-visible { outline: 2px solid var(--tertiary); outline-offset: 3px; }
-}
-.essay-panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--lightgray);
-  padding-bottom: .75rem;
-  font-family: var(--codeFont);
-  font-size: .75rem;
-}
-.page > #quartz-body .sidebar .page-title { font-size: 1.2rem; text-transform: none; letter-spacing: 0; line-height: 1.3; }
-.page > #quartz-body .sidebar .graph-container { height: 248px; }
-.page > #quartz-body .sidebar .explorer {
-  order: 0;
-  min-height: 0;
-  height: auto;
-  overflow: visible;
-  flex: 0 0 auto;
-  align-self: stretch;
-  margin: 0;
-  button.mobile-explorer, button.desktop-explorer { display: none; }
-  .explorer-content {
-    display: block;
-    position: static;
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-    transform: none;
-    visibility: visible;
-  }
-}
-.explorer-content a.active { color: var(--tertiary); opacity: 1; }
-.explorer-content .folder-container { padding-block: .35rem; }
-.explorer-content li > a { display: block; padding-block: .3rem; overflow-wrap: anywhere; }
-article { padding-inline: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
-article > :first-child { margin-top: .75rem; }
-.page article > h1, .article-title { font-size: clamp(1.85rem, 2.8vw, 2.55rem); line-height: 1.18; }
-article table { display: block; max-width: 100%; overflow-x: auto; }
-article pre { max-width: 100%; overflow-x: auto; }
-article img, article svg { max-width: 100%; height: auto; }
-.essay-anchor { padding-block: .7rem; border-bottom: 1px solid var(--lightgray); }
-body[data-slug="index"] article > h1 { margin: .8rem 0 1.5rem; }
-body[data-slug="index"] article > p:first-of-type { font-size: 1.22rem; line-height: 1.65; }
-body[data-slug="index"] article > ul:first-of-type {
-  list-style: none;
-  padding: 0;
-  margin: 1.5rem 0 2rem;
-  border-top: 1px solid var(--lightgray);
-  > li { padding: 1rem 0; border-bottom: 1px solid var(--lightgray); }
-  > li > p { margin: 0; }
-}
-.global-graph-close { position: fixed; z-index: 2; top: .5rem; right: .75rem; font-family: var(--codeFont); font-size: .75rem; }
-.graph > .global-graph-outer { background: color-mix(in srgb, var(--light) 94%, transparent); }
-.graph > .global-graph-outer > .global-graph-container { top: 58%; height: 72dvh; }
-.graph > .global-graph-outer .tag-filter { position: relative; z-index: 1; padding-right: 8rem; max-height: 18dvh; overflow: auto; }
-
-@media (max-width: 1279px) {
-  .page > #quartz-body {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "grid-center" "grid-footer";
-    .center { padding-top: 4.5rem; }
-    dialog.sidebar:is(.left, .right), dialog.sidebar.left:has(.explorer) {
-      position: fixed;
-      inset: 0 auto 0 0;
-      margin: 0;
-      height: 100dvh;
-      max-height: 100dvh;
-      width: min(25rem, calc(100vw - 2.5rem));
-      max-width: none;
-      padding: 1rem 1.25rem 2rem;
-      z-index: 30;
-      box-sizing: border-box;
-      &.right { inset: 0 0 0 auto; }
-      &[open]:not(:modal) { display: none; }
-      &::backdrop { background: rgb(0 0 0 / .55); }
-    }
-  }
-  body.essay-drawer-open { overflow: hidden; }
-}
-@media (max-width: 600px) {
-  .page > #quartz-body .center { padding-inline: 1.15rem; }
-  article { font-size: 1.05rem; }
-  body[data-slug="index"] article > p:first-of-type { font-size: 1.13rem; }
-  .breadcrumbs { flex-wrap: wrap; }
-  .essay-reader-toolbar { font-size: .7rem; }
+// A page without a field (the not-found page): the explorer and the reading column only.
+#quartz-root#quartz-root.page.no-field {
+  & > #quartz-body { grid-template-columns: var(--cl) minmax(0, 1fr); }
+  .right, .viewseg { display: none; }
 }
 
-// Explorer hierarchy — folders read as containers, files as leaves, the
-// open page carries a gold rule; guides show where one room ends.
-.explorer-content {
-  ul {
-    border-left: 1px solid var(--lightgray);
-  }
-  ul, li {
-    margin-block: 0.1rem;
-  }
-  .folder-container {
-    color: var(--secondary);
-    font-weight: 600;
-  }
-  a {
-    color: var(--darkgray);
-    opacity: 0.88;
-    font-size: 0.92rem;
-    &:hover { color: var(--tertiary); opacity: 1; }
-  }
-  a.on, li > a[aria-current="page"] {
-    color: var(--tertiary);
-    opacity: 1;
-    border-left: 2px solid var(--tertiary);
-    padding-left: 0.35rem;
-  }
+// Folder listings (Quartz's own list pages), in the reading skin.
+#quartz-root#quartz-root.page .page-listing {
+  .folder-count, p { margin: 0 0 1.2rem; color: var(--muted); font: 500 0.78rem var(--ui); }
+  ul.section-ul { list-style: none; margin: 0; padding: 0; }
+  li.section-li { margin: 0; padding: 0; border-bottom: 1px solid var(--rule-soft); }
+  li.section-li .section { display: block; padding: 10px 0; }
+  li.section-li .desc h3 { margin: 0; font: 550 0.98rem/1.35 var(--ui); letter-spacing: -0.01em; }
+  li.section-li .desc h3 a { color: var(--ink); background: none; padding: 0; }
+  li.section-li .desc h3 a:hover { color: var(--gold); }
+  li.section-li .meta, li.section-li .tags { display: none; }
 }
 
-// Fullscreen graph tag filter — a quiet chip row above the graph; tags stay
-// hidden until a namespace is invited back.
-.tag-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--lightgray);
-  font-family: var(--sansFont);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+// Breadcrumb folders (no page of their own) open what is in them.
+#quartz-root#quartz-root.page button.cr__l { font: inherit; cursor: pointer; color: inherit; border-radius: 4px; }
+#quartz-root#quartz-root.page button.cr__l:hover { color: var(--ink); background: var(--rule-soft); }
 
-  .tag-filter-label { color: var(--gray); }
+// Phone: the bottom bar overlays the drawer, so the explorer needs room beneath its last row.
+@media (max-width: 759px) {
+  #quartz-root#quartz-root.page .left .left-inner { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+}
 
-  .tag-chip {
-    border: 1px solid var(--lightgray);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--gray);
-    padding: 0.15rem 0.6rem;
-    cursor: pointer;
-    font: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    transition: color 0.2s ease, border-color 0.2s ease;
+/* ───────── the Expression layer ───────── */
+#quartz-root#quartz-root.page {
+  // a page that has an Expression says so, under its title
+  .ahead__x { display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0 0; }
+  .xchip { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 5px 11px 5px 9px; border: 1px solid var(--gold); border-radius: 99px; font: 600 0.72rem/1.2 var(--ui); letter-spacing: -0.005em; color: var(--gold); transition: background 160ms, color 160ms; }
+  .xchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 24ch; }
+  .xchip b { font: 500 0.62rem var(--mono); color: var(--faint); }
+  .xchip:hover { background: var(--gold); color: var(--bg); }
+  .xchip:hover b { color: inherit; }
+  .xchip--more { border-style: dashed; color: var(--muted); border-color: var(--rule); }
+  // …and so do the explorer rows, the graph and the connections
+  .tn__x { flex: none; display: inline-grid; place-items: center; color: var(--gold); opacity: 0.8; margin-left: 2px; }
+  .tn__row:hover .tn__x { opacity: 1; }
+  .conn__x { flex: none; color: var(--gold); display: inline-grid; place-items: center; margin-left: 4px; }
+  .gn circle.xr { fill: none; stroke: var(--gold-hi); stroke-width: 1.3; stroke-opacity: 0.85; }
+  .gn.is-dim circle.xr { stroke-opacity: 0.4; }
+  .gcard__x { display: inline-flex; align-items: center; gap: 6px; font: 600 0.66rem var(--ui); color: var(--gold); }
+  .gcard__act button.is-x { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+  // an Expression is a tab: a frame filling the pane
+  .tab__xi { flex: none; color: var(--gold); }
+  .center-scroll.has-x { overflow: hidden; }
+  #tangent-pane.is-expression { max-width: none; width: 100%; height: 100%; padding: 0; margin: 0; display: block; }
+  #tangent-pane.is-expression[hidden] { display: none; }
+  .xframe { display: block; width: 100%; height: 100%; min-height: 360px; border: 0; background: var(--bg); }
+  .center-scroll.has-x ~ .mrail, .center-scroll.has-x + .mrail { display: none; }
+  &[data-view='library'] .mrail { display: none; }
+}
 
-    &:hover { color: var(--tertiary); border-color: var(--tertiary); }
-    &[aria-pressed="true"] {
-      color: var(--tertiary);
-      border-color: var(--tertiary);
-    }
+/* the Library view: the gallery in the centre, the field beside it */
+#quartz-root#quartz-root.page .library.pane {
+  max-width: 1180px; margin: 0 auto; padding: clamp(24px, 4vh, 48px) clamp(20px, 3vw, 40px) 96px;
+  .eyebrow { margin: 0 0 1rem; color: var(--gold); font: 650 0.66rem var(--ui); letter-spacing: var(--track); text-transform: uppercase; display: flex; align-items: center; gap: 14px; }
+  .eyebrow::before { content: ''; flex: 0 0 1.5rem; height: 1px; background: currentColor; }
+  .xhead h1 { margin: 0.2rem 0 1rem; font: 500 clamp(2.6rem, 6vw, 5rem)/1 var(--ui); letter-spacing: -0.06em; color: var(--ink); }
+  .xhead h1 span { color: var(--gold); }
+  .xhead p:not(.eyebrow) { margin: 0; max-width: 30rem; font: 400 1rem/1.65 var(--ui); color: var(--muted); }
+  .xtools { display: flex; align-items: center; gap: 14px; margin: 2rem 0 1rem; }
+  .xsearch { flex: 1; display: flex; align-items: center; gap: 9px; height: 40px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--bg); color: var(--muted); }
+  .xsearch:focus-within { border-color: var(--gold-hi); color: var(--ink); }
+  .xsearch input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--ink); font: 500 0.9rem var(--ui); }
+  .xcolls { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 1.4rem; }
+  .xcolls button { height: 28px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--rule); font: 600 0.7rem var(--ui); color: var(--muted); transition: all 140ms; }
+  .xcolls button:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
+  .xcolls button[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .xcolls button:disabled { opacity: 0.35; cursor: default; }
+  .xcount { margin: 0 0 1.4rem; font: 500 0.72rem var(--mono); color: var(--muted); }
+  .xsection { margin: 0 0 3rem; }
+  .xsection > header { display: flex; align-items: baseline; gap: 16px; margin: 0 0 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--rule); }
+  .xsection > header h2 { margin: 0; font: 600 0.72rem var(--ui); letter-spacing: var(--track); text-transform: uppercase; color: var(--gold); }
+  .xsection > header span { font: 400 0.78rem var(--ui); color: var(--faint); }
+  .xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 30px 24px; }
+  .xrows { display: grid; gap: 0; }
+  .xcard { min-width: 0; }
+  .xcard__open { display: block; width: 100%; text-align: left; }
+  .xcard__cover { position: relative; display: block; aspect-ratio: 8 / 5; overflow: hidden; border-radius: 4px; background: var(--plate-mat); box-shadow: 0 0 0 1px var(--rule); transition: box-shadow 160ms, transform 200ms var(--ease); }
+  .xcard__cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  :root[saved-theme='dark'] & .xcard__cover img { filter: brightness(0.92); }
+  .xcard__open:hover .xcard__cover { box-shadow: 0 0 0 1px var(--gold-hi), var(--shadow); transform: translateY(-2px); }
+  .xcard__n { position: absolute; left: 10px; bottom: 9px; padding: 3px 8px; border-radius: 99px; background: color-mix(in srgb, var(--bg) 88%, transparent); font: 600 0.6rem var(--mono); letter-spacing: 0.04em; color: var(--ink); }
+  .xcard__here { position: absolute; right: 10px; top: 9px; padding: 3px 9px; border-radius: 99px; background: var(--gold-hi); color: #111; font: 700 0.6rem var(--ui); letter-spacing: 0.08em; text-transform: uppercase; }
+  .xcard.is-here .xcard__cover { box-shadow: 0 0 0 2px var(--gold-hi); }
+  .xcard__copy { display: block; padding: 14px 1px 0; }
+  .xcard__copy strong { display: block; margin-bottom: 6px; font: 500 1.12rem/1.25 var(--ui); letter-spacing: -0.025em; color: var(--ink); }
+  .xcard__sub { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font: 400 0.8rem/1.55 var(--ui); color: var(--muted); }
+  .xcard__where { display: block; margin-top: 6px; font: 500 0.64rem var(--mono); color: var(--faint); }
+  .xcard__scenes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+  .xchip-s { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; height: 22px; padding: 0 9px; border-radius: 99px; border: 1px solid var(--rule); font: 500 0.64rem var(--ui); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xchip-s span { font: 600 0.58rem var(--mono); color: var(--gold); }
+  .xchip-s:hover { color: var(--ink); border-color: var(--gold); }
+  .xcard__pages { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 10px; font: 400 0.68rem var(--ui); color: var(--faint); }
+  .xcard__pages span { font: 650 0.56rem var(--ui); letter-spacing: var(--track); text-transform: uppercase; }
+  .xcard__pages a { color: var(--muted); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--gold) 55%, transparent); text-underline-offset: 0.25em; }
+  .xcard__pages a:hover { color: var(--gold); }
+  .xcard__pages em { font-style: normal; color: var(--faint); }
+  .xrows .xcard { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 4px 20px; padding: 16px 0; border-bottom: 1px solid var(--rule-soft); align-items: start; }
+  .xrows .xcard__open { grid-row: 1 / span 3; }
+  .xrows .xcard__copy { display: none; }
+  .xrows .xcard__where, .xrows .xcard__scenes, .xrows .xcard__pages { grid-column: 2; margin-top: 0; }
+  .xempty { padding: 2rem 0; }
+  .xempty h2 { margin: 0 0 0.5rem; font: 500 1.4rem var(--ui); letter-spacing: -0.03em; }
+  .xempty p { color: var(--muted); font: 400 0.9rem/1.6 var(--ui); }
+  .xempty button { margin-top: 0.6rem; height: 30px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--rule); font: 600 0.72rem var(--ui); }
+}
+@media (max-width: 759px) {
+  #quartz-root#quartz-root.page .library.pane {
+    padding: 22px 16px 90px;
+    .xtools { flex-wrap: wrap; }
+    .xgrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px 14px; }
+    .xrows .xcard { grid-template-columns: 110px minmax(0, 1fr); }
   }
 }
