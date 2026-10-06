@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { symlink, mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { resolveEssaySource, readEssayInputs, stageEssayInputs, dedupeFrontmatter } from './essay-source.mjs';
+import { resolveEssaySource, readEssayInputs, stageEssayInputs, dedupeFrontmatter, unlinkWithheldWikilinks } from './essay-source.mjs';
 
 test('a real cached Git source refreshes main and stages figures while withholding notes', async()=>{
   const dir=await mkdtemp(join(tmpdir(),'essay-source-'));
@@ -72,4 +72,55 @@ test('raster images publish from an images/ folder beside the record that cites 
     const assets = inputs.entries.filter((e) => e.kind === 'asset').map((e) => e.rel);
     assert.deepEqual(assets, ['symbolon/mytheme/worlds/hellenic/ares/images/ares.jpg']);
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('wikilinks into withheld desks become labels at staging, like markdown links; everything else is left alone',()=>{
+  const names={ withheldNames:new Set(['agentworld-response-matrix','secret note','both']),publishedNames:new Set(['both','public note']) };
+  const out=unlinkWithheldWikilinks([
+    'quilt: [[quilt/27-07-26-QUILTING]] and [[symbolon/matheme/quilt/README|the ledger]] and ![[quilt/figure]]',
+    'working: [[working/sources/Paper-One#intro|Paper One]] [[../../working/x.md]]',
+    'other desks: [[reference-notes/antikythera-mechanism]] [[private/a]] [[templates/t]]',
+    'table escape: [[quilt/q\\|shown]]',
+    'bare: [[agentworld-response-matrix|the matrix]] [[Secret Note]] [[Public Note]] [[Both]]',
+    'fragment with code: [[quilt/27-07-26-Q#17. The `25 -> 36` gnomon|the cross-reading]] and `[[quilt/x]]` inline',
+    'kept: [[section-rooms/03-two-logics/ROOM]] [[A bare title]] [[quilt]] [[symbolon/episteme/etymologies/x/WHOLE-FIELD]] [[Sym-Ballein#frag|alias]]',
+    'code is untouched: `[[quilt/in-code]]`',
+    '```\n[[working/in-fence]]\n```',
+  ].join('\n'),names);
+  assert.match(out,/^bare: the matrix Secret Note \[\[Public Note\]\] \[\[Both\]\]$/m);
+  assert.match(out,/^quilt: 27-07-26-QUILTING and the ledger and figure$/m);
+  assert.match(out,/^working: Paper One x$/m);
+  assert.match(out,/^other desks: antikythera-mechanism a t$/m);
+  assert.match(out,/^table escape: shown$/m);
+  assert.match(out,/^fragment with code: the cross-reading and `\[\[quilt\/x\]\]` inline$/m);
+  assert.match(out,/^kept: \[\[section-rooms\/03-two-logics\/ROOM\]\] \[\[A bare title\]\] \[\[quilt\]\] \[\[symbolon\/episteme\/etymologies\/x\/WHOLE-FIELD\]\] \[\[Sym-Ballein#frag\|alias\]\]$/m);
+  assert.match(out,/`\[\[quilt\/in-code\]\]`/);
+  assert.match(out,/\[\[working\/in-fence\]\]/);
+});
+
+test('staging unlinks withheld wikilinks in the written page and leaves the source bytes alone',async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'essay-wikilink-'));
+  try {
+    const essay=join(dir,'submission-package/essay');await mkdir(join(essay,'section-rooms/00-integral-threshold'),{recursive:true});
+    await writeFile(join(essay,'README.md'),'# Foundation\n');
+    await writeFile(join(essay,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'# §0/1\nSee [[quilt/ledger|a ledger]] and [[README]], [[ledger-bare]], [[AUTHORIAL-TEXT]], [[a-private-NOTES]], [[no-such-note]].\n');
+    await mkdir(join(essay,'quilt'),{recursive:true});await writeFile(join(essay,'quilt/ledger-bare.md'),'private\n');
+    await writeFile(join(essay,'a-private-NOTES.md'),'private\n');
+    await symlink('../../../working/paper.md',join(essay,'AUTHORIAL-TEXT.md'));
+    const inputs=await readEssayInputs(essay),staged=join(dir,'staged');
+    await stageEssayInputs(inputs,staged);
+    assert.equal(await readFile(join(staged,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'utf8'),'# §0/1\nSee a ledger and [[README]], ledger-bare, AUTHORIAL-TEXT, a-private-NOTES, [[no-such-note]].\n');
+    assert.equal((await readFile(join(essay,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'utf8')).includes('[[quilt/ledger|a ledger]]'),true);
+  } finally { await rm(dir,{recursive:true,force:true}); }
+});
+
+test('markdown links into withheld desks are unlinked in the angle-bracket and %-escaped forms too',async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'essay-angle-'));
+  try {
+    const essay=join(dir,'submission-package/essay');await mkdir(join(essay,'section-rooms/00-integral-threshold'),{recursive:true});
+    await writeFile(join(essay,'README.md'),'# Foundation\n');
+    await writeFile(join(essay,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'# §0/1\n[Advent manuscript](<../../../working/papers/The Advent — Subject.md>) [Brief](../../../working/a%20b/Brief.md) [Root](../../README.md) [Quilt](<../../quilt/led ger.md#x>)\n');
+    const inputs=await readEssayInputs(essay),staged=join(dir,'staged');await stageEssayInputs(inputs,staged);
+    assert.equal(await readFile(join(staged,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'utf8'),'# §0/1\nAdvent manuscript Brief [Root](../../README.md) Quilt\n');
+  } finally { await rm(dir,{recursive:true,force:true}); }
 });

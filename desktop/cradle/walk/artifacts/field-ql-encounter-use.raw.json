@@ -1,0 +1,72 @@
+{
+  "absences": [
+    "owner faculty receipts are read by schema and session; their content-addressed file names are not re-verified here",
+    "no prepared context was delivered to this turn, so there is no decision behind it",
+    "addressed deliveries are not segmented as turns; only user messages open a turn"
+  ],
+  "agent_session": "agent-session/field-walk-chat-1791318189-1538",
+  "decision": {
+    "from_delivery_receipt": null,
+    "note": "the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt",
+    "selection_readback": {
+      "read": false,
+      "reason": "no delivery receipt in this turn to compare against"
+    }
+  },
+  "prepared_context": {
+    "degraded": [
+      {
+        "cursor": 5,
+        "detail": {
+          "code": "central.file_map_not_found",
+          "reason": "Source is outside participating maps",
+          "required": false,
+          "selected": true
+        },
+        "kind": "now-context-degraded",
+        "observed_at_ms": 1791318195637,
+        "standing": "selected enhancement unavailable; base encounter remained operative"
+      }
+    ],
+    "delivered": [],
+    "source": "encounter journal: now-context-* events",
+    "state": "degraded-none-delivered",
+    "uncertain": []
+  },
+  "ql_operations": {
+    "faculty_receipts": [],
+    "python_faculty_calls": [
+      {
+        "cursor": 91,
+        "function": "mef_lenses",
+        "tool_call_id": "call_f575834cfc044ef9960aee3b"
+      },
+      {
+        "cursor": 91,
+        "function": "capabilities",
+        "tool_call_id": "call_f575834cfc044ef9960aee3b"
+      }
+    ],
+    "reconciliation": {
+      "faculty_receipts_in_turn": 0,
+      "python_calls_recorded": 2,
+      "statement": "the number of recorded Python faculty calls and owner receipts in the turn window differ; read both lists"
+    },
+    "tool_calls": []
+  },
+  "schema": "aikit.encounter-use-reading/v1",
+  "sources": [
+    "encounter journal (encounters.sqlite3)",
+    "Actuation faculty evidence (actuation.prime-ql-operation/v1)",
+    "Redis prepared view"
+  ],
+  "turn": {
+    "end_cursor_exclusive": null,
+    "index": 1,
+    "last_event_at_ms": 1791318755370,
+    "of": 1,
+    "outcome": "turn-ended",
+    "start_cursor": 4,
+    "started_at_ms": 1791318195636
+  }
+}

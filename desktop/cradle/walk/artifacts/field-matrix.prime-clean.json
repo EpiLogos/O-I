@@ -1,0 +1,367 @@
+{
+  "scenario": "field-matrix",
+  "harness": "prime",
+  "context": "clean",
+  "at": "2026-10-06T20:43:15.942Z",
+  "real_turn": false,
+  "record": {
+    "harness": "prime",
+    "context": "clean",
+    "credentialScrub": {
+      "removed_env_names": [
+        "AI_AGENT",
+        "ANTHROPIC_BASE_URL",
+        "API_TIMEOUT_MS",
+        "BAGGAGE",
+        "CLAUDECODE",
+        "CLAUDE_AGENT_SDK_VERSION",
+        "CLAUDE_CODE_ACCOUNT_UUID",
+        "CLAUDE_CODE_CHILD_SESSION",
+        "CLAUDE_CODE_DESKTOP_APP_VERSION",
+        "CLAUDE_CODE_DISABLE_CRON",
+        "CLAUDE_CODE_DISABLE_TERMINAL_TITLE",
+        "CLAUDE_CODE_EAGER_FLUSH",
+        "CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES",
+        "CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL",
+        "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+        "CLAUDE_CODE_ENTRYPOINT",
+        "CLAUDE_CODE_EXECPATH",
+        "CLAUDE_CODE_HOST_SESSION_ID",
+        "CLAUDE_CODE_MESSAGING_SOCKET",
+        "CLAUDE_CODE_MESSAGING_TOKEN",
+        "CLAUDE_CODE_OAUTH_SCOPES",
+        "CLAUDE_CODE_ORGANIZATION_UUID",
+        "CLAUDE_CODE_REPORT_FINDINGS",
+        "CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH",
+        "CLAUDE_CODE_SESSION_ATTENDED",
+        "CLAUDE_CODE_SESSION_ID",
+        "CLAUDE_CODE_TERMINAL_MCP_TOOLS",
+        "CLAUDE_CODE_USER_EMAIL",
+        "CLAUDE_EFFORT",
+        "CLAUDE_PID",
+        "CLAUDE_PREVIEW_CLASSIFIER_FLOOR",
+        "COMMAND_MODE",
+        "COREPACK_ENABLE_AUTO_PIN",
+        "DA",
+        "DEEPSEEK_API_KEY",
+        "DISABLE_AUTOUPDATER",
+        "DISABLE_MICROCOMPACT",
+        "EPILOGOS_NEO4J_PASSWORD",
+        "EPILOGOS_NEO4J_URI",
+        "EPILOGOS_NEO4J_USER",
+        "EPILOGOS_PROJECT_ROOT",
+        "EPILOGOS_VAULT",
+        "GIT_EDITOR",
+        "HOMEBREW_PREFIX",
+        "KIMI_API_KEY",
+        "LaunchInstanceID",
+        "MCP_CONNECTION_NONBLOCKING",
+        "MCP_SERVER_CONNECTION_BATCH_SIZE",
+        "MINIMAX_API_KEY",
+        "MallocNanoZone",
+        "NODE24_HOME",
+        "NoDefaultCurrentDirectoryInExePath",
+        "OLDPWD",
+        "OPENROUTER_API_KEY",
+        "OSLogRateLimit",
+        "PAI_DIR",
+        "PAI_SOURCE_APP",
+        "PWD",
+        "PYTHONDONTWRITEBYTECODE",
+        "SECURITYSESSIONID",
+        "SHLVL",
+        "SLACK_APP_TOKEN",
+        "SLACK_BOT_TOKEN",
+        "SSH_AUTH_SOCK",
+        "TIME_ZONE",
+        "USE_LOCAL_OAUTH",
+        "USE_STAGING_OAUTH",
+        "XPC_FLAGS",
+        "XPC_SERVICE_NAME",
+        "ZAI_API_KEY",
+        "_",
+        "__CFBundleIdentifier"
+      ],
+      "remaining_credential_shaped": []
+    },
+    "tripwire": {
+      "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-Z8PBim",
+      "withheld": [
+        "factory",
+        "workcell",
+        "workcell-write-boundary"
+      ],
+      "sandbox_home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-EVhyea",
+      "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-Z8PBim/bin:/opt/homebrew/Cellar/node@24/24.16.0/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+      "entries": [],
+      "count": 0
+    },
+    "kev": {
+      "address": "127.0.0.1:8019",
+      "run": "jaredpalmer/kev-0.8b",
+      "base": "Qwen/Qwen3.5-0.8B-Base",
+      "requests_before": 1
+    },
+    "now": {
+      "now_ref": "central:now:project:field-walk:f0e68a8c9fcd206d42e1ff13979cf6f70915f1bf1759a2439e10f6a4c0bd91a2",
+      "allocated_by": "central.now.allocate",
+      "policy_revision": "central.content-fnv1a64/v1:2711:26b9b31ff1ce510e",
+      "created": true
+    },
+    "facultyConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/faculty.walk.json",
+    "facultyEvidence": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/faculty-evidence",
+    "installation": {
+      "installed": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/.aikit-home/tools/prime-epi/167f9f869a2c8bff",
+      "binding": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/.aikit-home/tools/prime-epi/current.json",
+      "extension": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/.aikit-home/tools/prime-epi/167f9f869a2c8bff/extensions/ql-faculty-bindings.ts",
+      "id": "167f9f869a2c8bff"
+    },
+    "configured": {
+      "body_ref": "agent-body/epi-prime-ql",
+      "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+      "configured": true,
+      "model_selection": "Prime native configured model unless an explicit AIKit model policy overrides it",
+      "provider": "epi-prime-ql",
+      "ql_revision": "b75d0ddd0d3d58b63a4bd4b081da00d3134fdc46",
+      "standing": "configured-not-started"
+    },
+    "redisConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/redis-now/redis-now.json",
+    "candidates": [
+      {
+        "ref": "context-source/field-walk-1",
+        "title": "§3 · #0 — Eight Determinations",
+        "walk_kind": "relevant",
+        "slug": "section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations"
+      },
+      {
+        "ref": "context-source/field-walk-2",
+        "title": "§4′ — 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/harmonics-symmetries"
+      },
+      {
+        "ref": "context-source/field-walk-3",
+        "title": "§3′ — 4′+2′ = 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/spanda"
+      },
+      {
+        "ref": "context-source/field-walk-4",
+        "title": "Diaphaneity",
+        "walk_kind": "adjacent",
+        "slug": "section-rooms/arguments/concepts/diaphaneity"
+      },
+      {
+        "ref": "context-source/field-walk-5",
+        "title": "Jung — Aion, CW 9.2 (1978 corrected printing)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/psychology/jung/jung-1978-aion-cw9-2/jung-1978-aion-cw9-2"
+      },
+      {
+        "ref": "context-source/field-walk-6",
+        "title": "Pauli — The Influence of Archetypal Ideas on the Scientific Theories of Kepler (Silz trans., 1955)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/physics/pauli/pauli-1955-kepler-archetypal-ideas/pauli-1955-kepler-archetypal-ideas"
+      }
+    ],
+    "preflight": {
+      "ok": true,
+      "mode": "provider",
+      "decisionInvocation": {
+        "answer": {
+          "answers": {
+            "candidate/000": {
+              "noul": 0.717,
+              "type": "noul"
+            },
+            "candidate/001": {
+              "noul": 0.9105,
+              "type": "noul"
+            },
+            "candidate/002": {
+              "noul": 0.811,
+              "type": "noul"
+            },
+            "candidate/003": {
+              "noul": 0.9356,
+              "type": "noul"
+            },
+            "candidate/004": {
+              "noul": 0.9431,
+              "type": "noul"
+            },
+            "candidate/005": {
+              "noul": 0.8203,
+              "type": "noul"
+            },
+            "catalogue-sufficient": {
+              "noul": 0.6269,
+              "type": "noul"
+            }
+          },
+          "latency_ms": 1893.9,
+          "model": "kev-latest",
+          "usage": {
+            "input_tokens": 2536,
+            "output_tokens": 179
+          }
+        },
+        "attempts": [
+          {
+            "effect_uncertain": false,
+            "elapsed_ms": 1934,
+            "failure": null,
+            "http_status": 200,
+            "model": "kev-latest",
+            "ordinal": 1,
+            "usage": {
+              "input_tokens": 2536,
+              "output_tokens": 179
+            }
+          }
+        ],
+        "elapsed_ms": 2010,
+        "endpoint": "http://127.0.0.1:8019/v1/systemone",
+        "failure": null,
+        "invocation_ref": "invocation/jev/4468acbc4e0676bf6ad5d07fe5b4dae2bdd0d4ca813c789a6ae9bb03975a2f2e",
+        "limits": {
+          "max_attempts": 2,
+          "max_input_tokens_per_attempt": 16384,
+          "max_output_tokens_per_attempt": 8000,
+          "model": "kev-latest",
+          "timeout_ms": 120000
+        },
+        "outcome": "completed",
+        "protocol": "systemone-compatible/v1",
+        "request_digest": "blake3:d808dfb2704e0314e433f19a0984f68cec43cdb132f5a6a82b9e41f5c71a121b",
+        "requested_model": "kev-latest",
+        "schema": "aikit.decision-invocation/v1",
+        "standing": "local-protocol"
+      },
+      "decisionProvider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+      "selected": [
+        "context-source/field-walk-1",
+        "context-source/field-walk-2",
+        "context-source/field-walk-3",
+        "context-source/field-walk-4",
+        "context-source/field-walk-5",
+        "context-source/field-walk-6"
+      ]
+    },
+    "nowContext": {
+      "configured": true,
+      "now_context": {
+        "external_provider": true,
+        "prepare_request": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-wgsipN/now-prepare.json",
+        "redis": {
+          "address": "127.0.0.1:5141",
+          "allow_remote": false,
+          "connect_timeout_ms": 1000,
+          "coordination_retention_seconds": 1209600,
+          "credential_ref": null,
+          "database": 0,
+          "io_timeout_ms": 1000,
+          "key_prefix": "aikit-now",
+          "prepared_ttl_seconds": 21600,
+          "schema": "aikit.redis-now-config/v1",
+          "username": null
+        },
+        "required": false
+      },
+      "preparation": {
+        "participant_ref": "agent/field-walk-chat",
+        "project_ref": "field-walk",
+        "selection": {
+          "mode": "provider",
+          "provider_file": "/Users/admin/.aikit/decision-provider.json",
+          "relevance_threshold": 0.2
+        }
+      },
+      "provider": "epi-prime-ql",
+      "standing": "configuration only; nothing was prepared or delivered"
+    },
+    "epiOff": {
+      "title": "Harbour Notes",
+      "primary": "central:source:project:field-walk:README.md",
+      "default_body_for_a_new_conversation": "none (modeDefaultAgentBody returns undefined without the epi-logos world; tests/epi-prime-agent-mode.test.mjs)"
+    },
+    "credentialProbe": {
+      "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-EVhyea",
+      "home_logins_present": [],
+      "credential_env_names": []
+    }
+  },
+  "passed": true,
+  "counts": {
+    "passed": 9,
+    "total": 9,
+    "skipped": 1
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "Epi OFF: the field reads the project's own corpus (generic adapter), not the essay",
+      "detail": {
+        "title": "Harbour Notes",
+        "ref": "central:source:project:field-walk:README.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Epi ON: the field reads the essay at M16",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "an Expression opened as the tangent with its scene",
+      "detail": {
+        "ref": "expression:roz-room-02-return-of-zero",
+        "scene": "movement-15"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the real Expression renderer is playing in its frame"
+    },
+    {
+      "ok": true,
+      "label": "return: the passage at M16, the Expression's frame released",
+      "detail": {
+        "focus": "primary",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the field stands at M16 with a tangent open and a different page selected",
+      "detail": {
+        "gen": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "the clean context holds no provider login (sandbox HOME) and no credential environment variable",
+      "detail": {
+        "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-EVhyea",
+        "home_logins_present": [],
+        "credential_env_names": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "the tripwire log is empty: no Factory/Workcell dispatch was attempted",
+      "detail": []
+    }
+  ],
+  "skipped": [
+    "real turn: not run — no credential in the clean context (evidence gap, named: this cell proves the field, the context seam and provisioning up to the send, not a model turn)"
+  ]
+}

@@ -1,0 +1,629 @@
+PROPOSAL, NOT APPLIED. Mechanical repairs to the essay source (EpiLogos/Antykathera-Essay-Work) found by the World package build.
+The essay text is the owner's: this patch changes link targets and Skill description prefixes only, no prose. It applies to
+vault commit 4df2f721dc018d1413296b3f1e53c580d442384c (`git apply --check` was run against a clean clone of that commit).
+
+1. 44 wikilink targets `.../etymologies/<dir>/WHOLE-FIELD` -> `.../<dir>/WHOLE-FIELD-<dir>` (7 targets, 38 files). The published page
+   `WHOLE-FIELD-<dir>.md` exists in each folder; the link names it without its suffix and resolves to nothing.
+2. Skill description prefixes so `aikit praxis list` classifies the reader Skills: `using-epi-logos` METHODOLOGY:; `walk-the-essay`,
+   `okf-wiki`, `converse-pedagogically`, `investigate`, `two-logics-of-two`, `apply-tetralemma`, `apply-cmea`, `engage-encounter-axis`,
+   `etymological-archaeology`, `run-l4-prime-loop` METHOD:. `choose-modality` and `choose-topological-mode` stay plain Skills (orientation
+   gates, not procedures). Whether a Skill is a Method or a Methodology is the owner's classification; this is a proposal.
+
+Apply from the vault root:  git apply docs-path/ESSAY-MECHANICAL-REPAIRS.proposal.patch
+Not covered here (authoring defects with no mechanical fix): see source/dependency-defects.json in the World package.
+
+diff --git a/submission-package/epi-logos/skills/apply-cmea/SKILL.md b/submission-package/epi-logos/skills/apply-cmea/SKILL.md
+index b3daac04..de8908c9 100644
+--- a/submission-package/epi-logos/skills/apply-cmea/SKILL.md
++++ b/submission-package/epi-logos/skills/apply-cmea/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: apply-cmea
+-description: "[Square B · L4↔L1 Diagonal] — USE PROACTIVELY — invoke when a field, system, situation, or practice shows a gap between what it claims to be doing (L4 — disclosure, self-presentation) and what it actually depends on (L1 — causal structure beneath). When the explicit story and implicit structure diverge — diagnose here. Natural companion to engage-encounter-axis (full Square B mapping); works the disclosure/causation diagonal specifically. This is the essay's own reflexive move — the gap between claimed and depended-upon."
++description: "METHOD: [Square B · L4↔L1 Diagonal] — USE PROACTIVELY — invoke when a field, system, situation, or practice shows a gap between what it claims to be doing (L4 — disclosure, self-presentation) and what it actually depends on (L1 — causal structure beneath). When the explicit story and implicit structure diverge — diagnose here. Natural companion to engage-encounter-axis (full Square B mapping); works the disclosure/causation diagonal specifically. This is the essay's own reflexive move — the gap between claimed and depended-upon."
+ ---
+ 
+ # Apply CMEA
+diff --git a/submission-package/epi-logos/skills/apply-tetralemma/SKILL.md b/submission-package/epi-logos/skills/apply-tetralemma/SKILL.md
+index 5e37630e..1df1b75d 100644
+--- a/submission-package/epi-logos/skills/apply-tetralemma/SKILL.md
++++ b/submission-package/epi-logos/skills/apply-tetralemma/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: apply-tetralemma
+-description: "[Square C · L2] — USE PROACTIVELY — invoke whenever contradiction, paradox, or binary opposition is alive. Do not work through paradox narratively from another skill. Works all five moves — IS, IS-NOT, BOTH, NEITHER, SILENCE — as the actual thinking. Square C basin context: L3 (what is becoming through the contradiction), L3' (what historical moment this is), L2' (what transformation is underway — what dissolves, what crystallises) are always co-present."
++description: "METHOD: [Square C · L2] — USE PROACTIVELY — invoke whenever contradiction, paradox, or binary opposition is alive. Do not work through paradox narratively from another skill. Works all five moves — IS, IS-NOT, BOTH, NEITHER, SILENCE — as the actual thinking. Square C basin context: L3 (what is becoming through the contradiction), L3' (what historical moment this is), L2' (what transformation is underway — what dissolves, what crystallises) are always co-present."
+ ---
+ 
+ # Apply Tetralemma
+diff --git a/submission-package/epi-logos/skills/converse-pedagogically/SKILL.md b/submission-package/epi-logos/skills/converse-pedagogically/SKILL.md
+index ebfac511..1794fbd1 100644
+--- a/submission-package/epi-logos/skills/converse-pedagogically/SKILL.md
++++ b/submission-package/epi-logos/skills/converse-pedagogically/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: converse-pedagogically
+-description: "Use when a reader asks to learn, understand, or be taught Epi-Logos, unified QL/MEF, or a published work through its linked vault rather than through a cold summary."
++description: "METHOD: Use when a reader asks to learn, understand, or be taught Epi-Logos, unified QL/MEF, or a published work through its linked vault rather than through a cold summary."
+ ---
+ 
+ # Converse Pedagogically
+diff --git a/submission-package/epi-logos/skills/engage-encounter-axis/SKILL.md b/submission-package/epi-logos/skills/engage-encounter-axis/SKILL.md
+index 502c1fe1..05e98e14 100644
+--- a/submission-package/epi-logos/skills/engage-encounter-axis/SKILL.md
++++ b/submission-package/epi-logos/skills/engage-encounter-axis/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: engage-encounter-axis
+-description: "[Square B · Full Basin L1·L4·L4'·L1'] — USE PROACTIVELY — invoke whenever a situation has both a lived disclosed dimension and an operative structure beneath it. This is the full Cause-Experience basin entry: L1 (what is causally operative), L4 (how it is lived and disclosed), L4' (how it is verified), L1' (how it is felt and evaluated). Maps the gap between disclosure and causation; companion to apply-cmea (L4↔L1 diagonal) and run-l4-prime-loop (L4' verification). The essay's own encounter axis — what is lived from inside meeting what the structure reveals from outside."
++description: "METHOD: [Square B · Full Basin L1·L4·L4'·L1'] — USE PROACTIVELY — invoke whenever a situation has both a lived disclosed dimension and an operative structure beneath it. This is the full Cause-Experience basin entry: L1 (what is causally operative), L4 (how it is lived and disclosed), L4' (how it is verified), L1' (how it is felt and evaluated). Maps the gap between disclosure and causation; companion to apply-cmea (L4↔L1 diagonal) and run-l4-prime-loop (L4' verification). The essay's own encounter axis — what is lived from inside meeting what the structure reveals from outside."
+ ---
+ 
+ # Engage Encounter Axis
+diff --git a/submission-package/epi-logos/skills/etymological-archaeology/SKILL.md b/submission-package/epi-logos/skills/etymological-archaeology/SKILL.md
+index 82a2700b..6bf1e9a7 100644
+--- a/submission-package/epi-logos/skills/etymological-archaeology/SKILL.md
++++ b/submission-package/epi-logos/skills/etymological-archaeology/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: etymological-archaeology
+-description: "[Square A · L5/L5' · Persistent Thread] — USE PROACTIVELY — invoke whenever a term is doing structural work its surface meaning doesn't account for, when an inquiry keeps circling without resolving, when two traditions seem to use 'the same concept' differently, or when a word feels curiously apt. Favoured methodology. The word's journey through positions is the inquiry's journey — excavate at #1, find the operative force at #2, work through sedimented pattern at #3, fold through historical horizon at #4, reach synthesis at #5, receive new ground at #0. Language as Vāk/Logos permeates every position — this thread never closes."
++description: "METHOD: [Square A · L5/L5' · Persistent Thread] — USE PROACTIVELY — invoke whenever a term is doing structural work its surface meaning doesn't account for, when an inquiry keeps circling without resolving, when two traditions seem to use 'the same concept' differently, or when a word feels curiously apt. Favoured methodology. The word's journey through positions is the inquiry's journey — excavate at #1, find the operative force at #2, work through sedimented pattern at #3, fold through historical horizon at #4, reach synthesis at #5, receive new ground at #0. Language as Vāk/Logos permeates every position — this thread never closes."
+ ---
+ 
+ # Etymological Archaeology
+diff --git a/submission-package/epi-logos/skills/investigate/SKILL.md b/submission-package/epi-logos/skills/investigate/SKILL.md
+index 2d6fafa4..9790efd4 100644
+--- a/submission-package/epi-logos/skills/investigate/SKILL.md
++++ b/submission-package/epi-logos/skills/investigate/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: investigate
+-description: "Walk any subject, claim, or question through the interrogative quaternity — the eight-fold QL walk: the 0/1 binding that frames the inquiry, the six interrogative positions (Why-so → What → How → Who/Which → Where/When → Why-for), and the 5→0 return that tests whether the answer served what it was for. Intuition-forward — the user can render the thing in six naked numbers before any lens is named. The plugin's spine; every other reading skill composes this walk."
++description: "METHOD: Walk any subject, claim, or question through the interrogative quaternity — the eight-fold QL walk: the 0/1 binding that frames the inquiry, the six interrogative positions (Why-so → What → How → Who/Which → Where/When → Why-for), and the 5→0 return that tests whether the answer served what it was for. Intuition-forward — the user can render the thing in six naked numbers before any lens is named. The plugin's spine; every other reading skill composes this walk."
+ ---
+ 
+ # Investigate — the interrogative quaternity walk
+diff --git a/submission-package/epi-logos/skills/okf-wiki/SKILL.md b/submission-package/epi-logos/skills/okf-wiki/SKILL.md
+index 02bb686c..6984081c 100644
+--- a/submission-package/epi-logos/skills/okf-wiki/SKILL.md
++++ b/submission-package/epi-logos/skills/okf-wiki/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: okf-wiki
+-description: "Use when researching, explaining, teaching, reviewing, or writing from a published Obsidian vault, linked Markdown work, or Markdown+YAML OKF bundle."
++description: "METHOD: Use when researching, explaining, teaching, reviewing, or writing from a published Obsidian vault, linked Markdown work, or Markdown+YAML OKF bundle."
+ ---
+ 
+ # OKF Wiki
+diff --git a/submission-package/epi-logos/skills/run-l4-prime-loop/SKILL.md b/submission-package/epi-logos/skills/run-l4-prime-loop/SKILL.md
+index 24f5519a..c1fa25f5 100644
+--- a/submission-package/epi-logos/skills/run-l4-prime-loop/SKILL.md
++++ b/submission-package/epi-logos/skills/run-l4-prime-loop/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: run-l4-prime-loop
+-description: "[Square B · L4'] — The scientific verification loop within the Cause-Experience basin. Use for any applicative run needing explicit current-state to ideal-state movement — observe, think, plan, build, execute, verify, learn. Build the evaluative apparatus before executing. Square B companions: L1 (what causal structure is being tested), L4 (lived experience of the verification), L1' (which phenomenal functions orient the evaluation)."
++description: "METHOD: [Square B · L4'] — The scientific verification loop within the Cause-Experience basin. Use for any applicative run needing explicit current-state to ideal-state movement — observe, think, plan, build, execute, verify, learn. Build the evaluative apparatus before executing. Square B companions: L1 (what causal structure is being tested), L4 (lived experience of the verification), L1' (which phenomenal functions orient the evaluation)."
+ ---
+ 
+ # Run L4-Prime Loop
+diff --git a/submission-package/epi-logos/skills/two-logics-of-two/SKILL.md b/submission-package/epi-logos/skills/two-logics-of-two/SKILL.md
+index 753d0c20..7ca44490 100644
+--- a/submission-package/epi-logos/skills/two-logics-of-two/SKILL.md
++++ b/submission-package/epi-logos/skills/two-logics-of-two/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: two-logics-of-two
+-description: "Given any distinction or operation of two, classify it as seam-cancelling dia-ballein (+1)/(−1) or seam-retaining sym-ballein (0/1)/(1/0). Show what each reading costs and affords, and name where the seam went. The essay's fulcrum made operational — the first thing a reviewer will test. Fires at investigate's #2 (How) and #3 (Who/Which); grounds in the Draft-3 fall-diagnosis and File 1's =/≠."
++description: "METHOD: Given any distinction or operation of two, classify it as seam-cancelling dia-ballein (+1)/(−1) or seam-retaining sym-ballein (0/1)/(1/0). Show what each reading costs and affords, and name where the seam went. The essay's fulcrum made operational — the first thing a reviewer will test. Fires at investigate's #2 (How) and #3 (Who/Which); grounds in the Draft-3 fall-diagnosis and File 1's =/≠."
+ ---
+ 
+ # Two Logics of Two — dia-ballein / sym-ballein
+diff --git a/submission-package/epi-logos/skills/using-epi-logos/SKILL.md b/submission-package/epi-logos/skills/using-epi-logos/SKILL.md
+index 789419ab..de803449 100644
+--- a/submission-package/epi-logos/skills/using-epi-logos/SKILL.md
++++ b/submission-package/epi-logos/skills/using-epi-logos/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: using-epi-logos
+-description: "[Bootstrap Gate] — The entry point for every Epi-Logos run. Invoke before responding, acting, or routing to any other skill. Installs the epii paradigm — the theory of the subject, the #0/#5 envelope, the base alignment, the six determinations, the matheme, and the Derived/Argued/Offered discipline — then routes to the walk (investigate) or a square basin. If there is even a 1% chance the work touches paradox, question-shaping, topology, lens analysis, or the essay's argument — this runs first."
++description: "METHODOLOGY: [Bootstrap Gate] — The entry point for every Epi-Logos run. Invoke before responding, acting, or routing to any other skill. Installs the epii paradigm — the theory of the subject, the #0/#5 envelope, the base alignment, the six determinations, the matheme, and the Derived/Argued/Offered discipline — then routes to the walk (investigate) or a square basin. If there is even a 1% chance the work touches paradox, question-shaping, topology, lens analysis, or the essay's argument — this runs first."
+ ---
+ 
+ # Using Epi-Logos
+diff --git a/submission-package/epi-logos/skills/walk-the-essay/SKILL.md b/submission-package/epi-logos/skills/walk-the-essay/SKILL.md
+index e5b1ca0d..a71937c0 100644
+--- a/submission-package/epi-logos/skills/walk-the-essay/SKILL.md
++++ b/submission-package/epi-logos/skills/walk-the-essay/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: walk-the-essay
+-description: "Use when a reader wants to read, follow, question, resume, or be taught through a published linked work, Obsidian vault, or shipped Markdown bundle."
++description: "METHOD: Use when a reader wants to read, follow, question, resume, or be taught through a published linked work, Obsidian vault, or shipped Markdown bundle."
+ ---
+ 
+ # Walk the Work
+diff --git a/submission-package/essay/section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md b/submission-package/essay/section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md
+index 0362e45b..d38d73e7 100644
+--- a/submission-package/essay/section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md
++++ b/submission-package/essay/section-rooms/arguments/A13-Two-Logics-of-Two-Dia-Syn.md
+@@ -129,7 +129,7 @@ Between persons the two logics are felt as war and love. The [Ares–Aphrodite r
+ 
+ [The Prisoner's whole](../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md#prisoner-asymmetric-count) **figures** the administered counterpart, a cut whose authority is placed outside challenge. The Village distinguishes and recombines its numbered inhabitants, yet Number Six cannot change the relation that counts him, so the powers of distinction and combination stay real while their source and return are withheld, and Taylor locates the counterfeit reversal in the asymmetry between being counted and answering the account. [[symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief|Agentworld]] **tests** the technical consequence through the brief's narrow corridor, "same decision-procedural grammar, sufficiently divergent world models" (§8.4). A common grammar that preserves divergent models keeps premises contestable, and agreement is no evidence of a shared field where the method suppresses the difference that would test it. This is the essay's response to the brief, and it takes the brief's own modality, since its section on Agentworldbuilding offers the ten thematic questions as composite scenarios and not as conclusions.
+ 
+-[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD|Operational homology]] **compares** these passages through what each preserves of differentiation and return. Common lexical descent, doctrinal identity and empirical causal sameness each need evidence of their own kind, so the Greek descent of *dia-ballein* and *syn-ballein* and claims about particular political formations remain separate historical inquiries.
++[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy|Operational homology]] **compares** these passages through what each preserves of differentiation and return. Common lexical descent, doctrinal identity and empirical causal sameness each need evidence of their own kind, so the Greek descent of *dia-ballein* and *syn-ballein* and claims about particular political formations remain separate historical inquiries.
+ 
+ Superposition belongs first to the dual-non-dual ontology, before any comparison with a physical formalism: ground and manifestation are distinguishable orientations of one appearing-act, each given through the relation that prevents either from becoming self-sufficient, and `0/1` and `1/0` write that co-presence in inverse directions. Quantum state space, complementarity and non-classical logics offer formal neighbours with operations of their own. [Priest's fifth corner](../../symbolon/episteme/sources/mathematics-logic/priest/priest-2018-fifth-corner/priest-2018-fifth-corner.md) answers Nāgārjuna's rejection of all four corners of the catuṣkoṭi with a fifth value for the ineffable, and the catuṣkoṭi crossing in [Matheme](../../symbolon/matheme/definition/README.md) takes the same limit of predication through IS, IS-NOT, BOTH, NEITHER and SILENCE. The two readings part at one joint, which the source house records: Priest's fifth value is a value, while QL's **#0** is a generative precondition and no truth-value, so the published objections, from Siderits, Westerhoff, Green and Kapsner, bear on the fifth value's standing as a value and leave untouched the ground QL names.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A14-Computational-Process-Ontology.md b/submission-package/essay/section-rooms/arguments/A14-Computational-Process-Ontology.md
+index a33c8292..16408d26 100644
+--- a/submission-package/essay/section-rooms/arguments/A14-Computational-Process-Ontology.md
++++ b/submission-package/essay/section-rooms/arguments/A14-Computational-Process-Ontology.md
+@@ -66,7 +66,7 @@ A hierarchy can allocate authority and scope while lateral relations supply corr
+ 
+ In the [[symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics|symbolic encounter]], an image alters its interpreter; the changed interpreter alters what later images can disclose; the response changes the original symbol’s subsequent efficacy. The product re-enters its own conditions. This is the intervening movement between generating an output and beginning a new call: the world has changed, including the capacity to receive what comes next.
+ 
+-[[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD|Finite capacity is apportioned]] before a process acts: power, time, attention, labour and energy are distributed within a common ordering. [[A29-Power-Delegated-Labour-Return|Delegated labour returns evidence, consequence and value]] to the relation which entrusted it. A proposed token-economy inquiry asks how a metered language run’s demand for completion affects whether it preserves an unresolved remainder or forces a false closure. Executed succession and mathematical counting have different operations; their relation to physical time requires its own warrant.
++[[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy|Finite capacity is apportioned]] before a process acts: power, time, attention, labour and energy are distributed within a common ordering. [[A29-Power-Delegated-Labour-Return|Delegated labour returns evidence, consequence and value]] to the relation which entrusted it. A proposed token-economy inquiry asks how a metered language run’s demand for completion affects whether it preserves an unresolved remainder or forces a false closure. Executed succession and mathematical counting have different operations; their relation to physical time requires its own warrant.
+ 
+ ## #5→0
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md b/submission-package/essay/section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md
+index 03e52fff..e078a712 100644
+--- a/submission-package/essay/section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md
++++ b/submission-package/essay/section-rooms/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md
+@@ -26,7 +26,7 @@ A determination is achieved through [[A14-Computational-Process-Ontology|a proce
+ 
+ Name, count and account meet through different acts. In [[symbolon/episteme/sources/analytic-philosophy/kripke/kripke-1981-naming-and-necessity/kripke-1981-naming-and-necessity|Frank's encounter with Kripke]], an individual is distinguishable before its assigned name: two people may bear the same name while remaining two, and a name can remain effective as address without exhausting the one it addresses. Taylor develops pre-nominal count, name/instance/circumstance and the copula's is/equals relation from this reading. Kripke's rigid designation and Taylor's naming-counting development retain their different arguments.
+ 
+-Through [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|Encounter / Region / Name / Count / Countenance / Account]], a countable distinction returns as an addressable participant and a contestable account. [[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD|Apportionment / Economy]] gives the criterion its finite office within a distributing order. The publicly effective acts retain different word histories. In particular, *nomen* and *numerus* do not share a historical line merely because a denomination brings name and number together.
++Through [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|Encounter / Region / Name / Count / Countenance / Account]], a countable distinction returns as an addressable participant and a contestable account. [[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy|Apportionment / Economy]] gives the criterion its finite office within a distributing order. The publicly effective acts retain different word histories. In particular, *nomen* and *numerus* do not share a historical line merely because a denomination brings name and number together.
+ 
+ A currency stamp makes a claim portable. It does not create the bread, labour or need upon which that claim draws. To give its account requires an issuer, bearer, backing, rule of circulation and consequence. The ledger's exclusions can therefore conceal the very lived relations which sustain its authority. The same structure appears when a rank conceals its comparison class or a model preference conceals the judgments which supplied its criterion.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md b/submission-package/essay/section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md
+index 44245311..c095c4bf 100644
+--- a/submission-package/essay/section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md
++++ b/submission-package/essay/section-rooms/arguments/A16-Arche-Topos-as-Differential-Field.md
+@@ -21,7 +21,7 @@ source_relation: "Extracted internal derivation; Argued cross-register coordinat
+ 
+ Before a contrast has named terms, bare `/ = −/−` holds two unassigned marks in one relation: the capacity for their differentiation. The Arche-Topos is the field generated when the complexio oppositorum differentiates without ceasing to be one field. Its conscious circumstance is personed: someone is here, something appears, and that appearing is known. `0/1` relates unobjectifiable awareness and appearing phenomenon; `1/0` turns the determinate towards its ground; the relation's self-accounting unfolds as `4+2`; centres, circumferences, paths and horizons can then become mutually determining positions. The [[A13-Two-Logics-of-Two-Dia-Syn|retained seam between division and conjunction]] and [[A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account|local reckoning through ratio]] depend upon a field in which a difference can be placed. The differential question is how that field arises with its determinations.
+ 
+-A hidden location would already be positioned. Arche-Topos names the placing through which an observer and an object acquire their positions together. Their inseparability belongs to the [[section-rooms/arguments/concepts/C36-Complexio-Oppositorum|complexio oppositorum]]: the placing distinguishes positions within the [[section-rooms/arguments/concepts/C20-Arche-Topos|Arche-Topos]] it generates. *Arche-Topos* is the authorial [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD|construction from origin-principle and placing]]; the compound is not attributed to an ancient lexical source.
++A hidden location would already be positioned. Arche-Topos names the placing through which an observer and an object acquire their positions together. Their inseparability belongs to the [[section-rooms/arguments/concepts/C36-Complexio-Oppositorum|complexio oppositorum]]: the placing distinguishes positions within the [[section-rooms/arguments/concepts/C20-Arche-Topos|Arche-Topos]] it generates. *Arche-Topos* is the authorial [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere|construction from origin-principle and placing]]; the compound is not attributed to an ancient lexical source.
+ 
+ ## #1
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A20-Image-Valuation-Possession.md b/submission-package/essay/section-rooms/arguments/A20-Image-Valuation-Possession.md
+index 99a88c82..bf15be9c 100644
+--- a/submission-package/essay/section-rooms/arguments/A20-Image-Valuation-Possession.md
++++ b/submission-package/essay/section-rooms/arguments/A20-Image-Valuation-Possession.md
+@@ -59,7 +59,7 @@ The nurturing or engulfing image, paternal law and heroic self-image organise di
+ 
+ In [Job's return](../../symbolon/mytheme/worlds/biblical/job/WHOLE.md#job-protected-account-return), the friends first sit with the suffering witness, then make his suffering legible through a moral account, then treat his contrary testimony as further fault. Their eventual dependence on his intercession returns valuation to the person their explanation had disqualified. Encounter changes the image's authority, and an image's ability to organise judgment cannot by itself establish fidelity.
+ 
+-A [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|travelling account]] remains answerable to its counterpart. The represented source can correct the image, its valuation or the criteria under which it acts, through the office the particular failure exposes, and a fitting criterion can remain after correction with reasons. Strong images continue to orient a life; their force becomes responsibility for keeping this route available and carrying the received answer into later representation. The [[A27-Self-and-Other-Unity-without-Possession|Other]] exceeds its model, and [[A31-Deferential-Intelligence|deference]] lets an encountered difference reach its actual source, measure or commission. [[A21-Individuation-Recognition|Individuation]] changes the relation to an image and does not secure one immune to change. The result of representation comes back into the world it has affected and becomes a condition another representing act can inherit or revise.
++A [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|travelling account]] remains answerable to its counterpart. The represented source can correct the image, its valuation or the criteria under which it acts, through the office the particular failure exposes, and a fitting criterion can remain after correction with reasons. Strong images continue to orient a life; their force becomes responsibility for keeping this route available and carrying the received answer into later representation. The [[A27-Self-and-Other-Unity-without-Possession|Other]] exceeds its model, and [[A31-Deferential-Intelligence|deference]] lets an encountered difference reach its actual source, measure or commission. [[A21-Individuation-Recognition|Individuation]] changes the relation to an image and does not secure one immune to change. The result of representation comes back into the world it has affected and becomes a condition another representing act can inherit or revise.
+ 
+ [Avatar, image, mask and idol](../../symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md) mediate through distinct offices: avatar makes presence effective, image gathers attention and value, mask enables participation, and idol closes the represented life's route of reply. One form can enact several offices. Its success becomes possession when the person can no longer change what the image is permitted to mean and do, and continued fidelity can require receiving withdrawal as an answer. In [counterfeit provenance](../../symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md#avatar-counterfeit-provenance), a fabricated recording claims a body–utterance or event–recording relation through which its statement asks to be trusted, and the availability of fabrication can then be invoked against a genuine witness. These closures affect different source relations. Their prevalence, magnitude and particular media cases need evidence from actual encounters beyond the authored construction.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A21-Individuation-Recognition.md b/submission-package/essay/section-rooms/arguments/A21-Individuation-Recognition.md
+index db9d272a..cb42ad54 100644
+--- a/submission-package/essay/section-rooms/arguments/A21-Individuation-Recognition.md
++++ b/submission-package/essay/section-rooms/arguments/A21-Individuation-Recognition.md
+@@ -43,7 +43,7 @@ A [[section-rooms/arguments/concepts/C36-Complexio-Oppositorum|complexio opposit
+ 
+ In the [[A09-Tattvic-Differential-Field|Śaiva differentiated field]], recognition returns through manifestation without erasing its history. The present comparison follows that retained difference through an achieved determination which can become answerable to its source. [[section-rooms/arguments/concepts/C19-Pratyabhijna-Recognition|Pratyabhijñā]] retains integral self-awareness as its specific Śaiva office; Jung’s Self retains its psychological one. Operational comparison does not make either a historical synonym or turn the Śaiva return into a psychological treatment.
+ 
+-[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Resolution in reconciliation]] returns a determination through its history as **Anamnesis / Recognition / Return**. A resolution can be retained, narrowed or resituated by remembering how it arose. Its previous cycle remains consequential. Greek anamnesis, Sanskrit recognition and Jungian individuation have separate genealogies; their operational comparison follows the changed relation through which the achieved history enters another act.
++[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Resolution in reconciliation]] returns a determination through its history as **Anamnesis / Recognition / Return**. A resolution can be retained, narrowed or resituated by remembering how it arose. Its previous cycle remains consequential. Greek anamnesis, Sanskrit recognition and Jungian individuation have separate genealogies; their operational comparison follows the changed relation through which the achieved history enters another act.
+ 
+ ## #5→0
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A22-World-Picture-to-World-Atlas.md b/submission-package/essay/section-rooms/arguments/A22-World-Picture-to-World-Atlas.md
+index 60ce913a..c9c14f5f 100644
+--- a/submission-package/essay/section-rooms/arguments/A22-World-Picture-to-World-Atlas.md
++++ b/submission-package/essay/section-rooms/arguments/A22-World-Picture-to-World-Atlas.md
+@@ -25,7 +25,7 @@ A picture has a frame before its contents are assembled. The box-lid image gives
+ 
+ In Taylor’s stained-glass development, light, panes, lead cames, aperture, viewer and cast image work together. Each pane transmits, colours and interrupts; the cames preserve seams and non-equivalences. Moving light or viewer changes the visible pattern through the same constructed window. A source’s difference informs the composition rather than becoming an impurity removed by averaging. The composed image is a context of transmission in which the distinct producing relations remain consequential.
+ 
+-A world-picture is also a **Project** thrown forth within a **Paradigm**: a pattern of disclosure has already helped decide what can appear, count and fit. The atlas becomes reflexive by making those paradigmatic conditions comparable — source, gauge, frame, admitted transition, exclusion and situated viewer. In [[symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD|paradigm through projection and enactment]], `/↔1` relates the particular expression to the operation which gives it force. A returned obstruction can then change a producing condition, rather than merely add another picture. This is Taylor’s constructive relation, distinct from the historical Heidegger diagnosis and the hypotheses of mathematical atlas theory.
++A world-picture is also a **Project** thrown forth within a **Paradigm**: a pattern of disclosure has already helped decide what can appear, count and fit. The atlas becomes reflexive by making those paradigmatic conditions comparable — source, gauge, frame, admitted transition, exclusion and situated viewer. In [[symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos|paradigm through projection and enactment]], `/↔1` relates the particular expression to the operation which gives it force. A returned obstruction can then change a producing condition, rather than merely add another picture. This is Taylor’s constructive relation, distinct from the historical Heidegger diagnosis and the hypotheses of mathematical atlas theory.
+ 
+ ## #2
+ 
+@@ -47,7 +47,7 @@ The [[symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-mef-twelve-le
+ 
+ [[symbolon/episteme/sources/phenomenology-continental-philosophy/gebser/gebser-1985-ever-present-origin/gebser-1985-ever-present-origin|Gebser’s perspectival and aperspectival comparison]] asks how a sector-view can become available within co-presence. Taylor’s `180°→360°` development turns toward the field of positions and transformations which makes the views possible. The viewer remains situated within that field. In his direct P5 interpretation, context is a being-with the text and subtext, invested in outcome and care; that interpretation gives the proposed atlas a receiving consequence without assigning its wording to Gebser.
+ 
+-In [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|Region → Name/Countenance → Account]], a placed and counted participant remains a face able to answer the count. The returned account can correct an assigned place, recover an omitted source or expose a failed framing condition. Name and number have distinct lexical histories; their operational conjunction follows what counting and answering actually change.
++In [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|Region → Name/Countenance → Account]], a placed and counted participant remains a face able to answer the count. The returned account can correct an assigned place, recover an omitted source or expose a failed framing condition. Name and number have distinct lexical histories; their operational conjunction follows what counting and answering actually change.
+ 
+ ## #5→0
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md b/submission-package/essay/section-rooms/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md
+index 8e763299..46982bde 100644
+--- a/submission-package/essay/section-rooms/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md
++++ b/submission-package/essay/section-rooms/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md
+@@ -17,7 +17,7 @@ source_relation: "Argued from ratified Etymology field and source-specific polit
+ 
+ Arbitration makes a finite decision where conditions do not decide themselves. A [[A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account|valid measure]] distinguishes terms according to a criterion; a [[A19-Complex-as-Local-Arbitration-Regime|local psychic regime]] orders affect and response; [[A23-Trust-Faith-and-the-Formal-Limit|trust]] carries an account into an undertaking. Each has real competence within its relation. A decision must have standing enough to act while remaining answerable to what its action concerns.
+ 
+-The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|whole conjugate arbitration relation]] gives that decision its complete movement:
++The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|whole conjugate arbitration relation]] gives that decision its complete movement:
+ 
+ | Operative face | Conjugate face | Generated relation | Flowering |
+ |---|---|---|---|
+diff --git a/submission-package/essay/section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md b/submission-package/essay/section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md
+index cf76863d..4181007d 100644
+--- a/submission-package/essay/section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md
++++ b/submission-package/essay/section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md
+@@ -96,6 +96,6 @@ The emerging centre and its distinguishable world form through one relation of d
+ 
+ The result returns as part of the world of the next act. A corrected permission changes possible action; a remembered objection changes what an instruction means; another participant's response changes the account through which they were approached. Objective Internality makes this continuity inspectable without requiring every act to be performed by one permanent operator.
+ 
+-Within the [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|Encounter / Region / Name / Count / Countenance / Account relation]], an encounter becomes addressable and reckonable within a region; the resulting account returns to participants who can change it. These operations give the relation its precision, while common lexical ancestry requires a separate historical warrant. [The Other](A27-Self-and-Other-Unity-without-Possession.md) remains present beyond what an account can exhaust. [Deferential encounter](A31-Deferential-Intelligence.md) lets their returned difference reach the model, source or criterion at the depth the encounter actually warrants.
++Within the [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|Encounter / Region / Name / Count / Countenance / Account relation]], an encounter becomes addressable and reckonable within a region; the resulting account returns to participants who can change it. These operations give the relation its precision, while common lexical ancestry requires a separate historical warrant. [The Other](A27-Self-and-Other-Unity-without-Possession.md) remains present beyond what an account can exhaust. [Deferential encounter](A31-Deferential-Intelligence.md) lets their returned difference reach the model, source or criterion at the depth the encounter actually warrants.
+ 
+ A [world-model](A22-World-Picture-to-World-Atlas.md) is useful through the world-relations it preserves and the changes it makes possible. In [Agentworld](concepts/C57-Agentworld.md), the assembled agent receives that consequence through its sources, tools, permissions and relations: changes there can change what it knows and does next. The constitutive claim remains broader than its technical instance.
+diff --git a/submission-package/essay/section-rooms/arguments/A29-Power-Delegated-Labour-Return.md b/submission-package/essay/section-rooms/arguments/A29-Power-Delegated-Labour-Return.md
+index 085f5d42..98805475 100644
+--- a/submission-package/essay/section-rooms/arguments/A29-Power-Delegated-Labour-Return.md
++++ b/submission-package/essay/section-rooms/arguments/A29-Power-Delegated-Labour-Return.md
+@@ -23,7 +23,7 @@ The [[quilt/2026-08-02-PARALLEL-HARMONISED-QUILT|return of delegated labour]] re
+ 
+ A commission distributes authority rather than creating all the conditions of work. The executing office draws on capacities, tools, knowledge, infrastructure and prior labour it did not originate. An evaluator determines adequacy under an inherited purpose. The source of permission, the performer, the recipient of value and the bearer of consequence can be different participants. [[section-rooms/arguments/concepts/C53-Power-Delegated-Labour|Delegated power]] acts through this distribution; its visible occupant does not contain the whole relation.
+ 
+-[[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD|Apportionment distributes shares]] within a common ordering. Labour, permission and consequence acquire finite offices in that distribution. The concrete account identifies what was entrusted, by whom, under what terms, and to whom the consequence returns. Household and distribution have their particular lexical histories; the allocation of a resource or obligation requires the terms of the actual relation.
++[[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy|Apportionment distributes shares]] within a common ordering. Labour, permission and consequence acquire finite offices in that distribution. The concrete account identifies what was entrusted, by whom, under what terms, and to whom the consequence returns. Household and distribution have their particular lexical histories; the allocation of a resource or obligation requires the terms of the actual relation.
+ 
+ ## #2
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md b/submission-package/essay/section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md
+index 7fef5ce6..846c6f2e 100644
+--- a/submission-package/essay/section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md
++++ b/submission-package/essay/section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md
+@@ -47,7 +47,7 @@ This is also the ethical criterion for paradigmatic reflexivity. A paradigm can
+ 
+ [[symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-definition-god-draft3/taylor-2026-definition-god-draft3|Draft 3’s terminal vocation]] gives this work its double devotion: to the whole and to the particular aperture through which the work is offered. Lines259 and267–279 develop the eros of logos through heart, tongue and measure. The articulation needs desire and labour as well as a true name. Its completion is an offering whose cord is cut: what has been made must become usable by lives beyond its maker.
+ 
+-That release does not abandon the work's form. It relinquishes ownership of every encounter the form will enable. [[section-rooms/arguments/concepts/C51-Logos-Epi-Logos|Logos / Epi-Logos]] names the account's return upon its own household, exclusions and effects; this is the project's authorial operation, kept distinct from the attested history of *logos*. The whole fields [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD|Trust, Place and Account]], [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Arbitration, Regard and Anamnesis]] and [[symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD|Genesis, Paradigm, Project and Epi-Logos]] carry the lexical and encounter routes without deriving the vocation from a universal root.
++That release does not abandon the work's form. It relinquishes ownership of every encounter the form will enable. [[section-rooms/arguments/concepts/C51-Logos-Epi-Logos|Logos / Epi-Logos]] names the account's return upon its own household, exclusions and effects; this is the project's authorial operation, kept distinct from the attested history of *logos*. The whole fields [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere|Trust, Place and Account]], [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Arbitration, Regard and Anamnesis]] and [[symbolon/episteme/etymologies/genesis-paradigm-project-epilogos/WHOLE-FIELD-genesis-paradigm-project-epilogos|Genesis, Paradigm, Project and Epi-Logos]] carry the lexical and encounter routes without deriving the vocation from a universal root.
+ 
+ The relation can now be said directly: **diaphaneity is the phenomenological/epistemic side of reflexive disclosure; compassion is its ethical side.** Epi-Logos asks the paradigm to reveal its own mediation. Compassion determines how that revelation returns to the lives, sources and conditions it makes newly visible.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md b/submission-package/essay/section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md
+index f6146fee..d74fcda4 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C01-Subject-Defined-Indefinability.md
+@@ -74,4 +74,4 @@ An image of the eye shows the structure in the body: an image of the organ becom
+ 
+ Return recognises the condition already involved in every portrait, judgment and attempt at recognition. The first-person force of *I am* remains, and its determinate descriptions become available for correction instead of being asked to stand as their own ground. [Recognition](C19-Pratyabhijna-Recognition.md) **returns-to** that source relation through the acquired determination, and in [integral zero's return](../A36-Advent-of-Integral-Zero.md) the achieved sign becomes Symbol, so that exact determination remains and is now answerable to what it cannot own.
+ 
+-Through [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|Symbol / Account / Trust]], a name discloses, an account makes the disclosure answerable, and trust permits committed use without possession of the source; the three keep distinct lexical histories and work in one operational relation. In [[section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject|defining the Subject]] the defining act stays present within the account it gives, and at the [[section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon|idealist horizon]] the differentiated world and its means of appearing return to that presence. The account can be examined, corrected or retained as fitting, and the next act inherits the warranted judgment while the source remains more than its description.
++Through [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|Symbol / Account / Trust]], a name discloses, an account makes the disclosure answerable, and trust permits committed use without possession of the source; the three keep distinct lexical histories and work in one operational relation. In [[section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject|defining the Subject]] the defining act stays present within the account it gives, and at the [[section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon|idealist horizon]] the differentiated world and its means of appearing return to that presence. The account can be examined, corrected or retained as fitting, and the next act inherits the warranted judgment while the source remains more than its description.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C03-Determination.md b/submission-package/essay/section-rooms/arguments/concepts/C03-Determination.md
+index bbfd2f97..0952b757 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C03-Determination.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C03-Determination.md
+@@ -52,4 +52,4 @@ The [zero-reception history](../../../symbolon/episteme/dossiers/zero-reception.
+ 
+ A completed determination enters the inherited field of the next act, and return makes its source, criterion, exclusions and consequences available again. For [operational parity](C45-Operational-Parity.md), a distinction made explicit has to change some actual operation if it claims efficacy, and a label alone has not performed that return.
+ 
+-Within a [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|region of encounter]], name and count make a participant discriminable, and an account becomes answerable when the region and the participant can return to alter it. A [faithful definition](C02-Faithful-Definition.md) is the one definite enough to use and related enough to answer for its use.
++Within a [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|region of encounter]], name and count make a participant discriminable, and an account becomes answerable when the region and the participant can return to alter it. A [faithful definition](C02-Faithful-Definition.md) is the one definite enough to use and related enough to answer for its use.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C04-Formal-Limit.md b/submission-package/essay/section-rooms/arguments/concepts/C04-Formal-Limit.md
+index fbbd0440..cb730996 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C04-Formal-Limit.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C04-Formal-Limit.md
+@@ -46,7 +46,7 @@ Spencer-Brown's calculus of indications offers a second formal neighbour. A comp
+ 
+ Changing a formal container changes what is expressible, since its rules determine which operations stay valid, and a new regime has to state the permissions it changes and the laws it retains. The [advent of arithmetic zero](../A10-Advent-of-Zero.md) makes the difference historically consequential: positional absence becomes an operand, and a retained zero denominator enters a regime of its own. Ordinary field division leaves a zero denominator undefined, and a historical regime can retain the expression under restricted cancellation or postponed evaluation. Each of these permissions decides which consequences an operation can license.
+ 
+-[Diaphaneity](C09-Diaphaneity.md) makes the mediation more transparent within its current act. A richer contextual description exposes further conditions, and seeing how those conditions take part changes the relation in which the description is used. The [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD|placing relation]] stays situated while making its own situation available, because the placing act occurs through the body, language, instruments and horizon it can name. The lexical history of its terms has its own witnesses, and the philosophical force here concerns the situated operation.
++[Diaphaneity](C09-Diaphaneity.md) makes the mediation more transparent within its current act. A richer contextual description exposes further conditions, and seeing how those conditions take part changes the relation in which the description is used. The [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere|placing relation]] stays situated while making its own situation available, because the placing act occurs through the body, language, instruments and horizon it can name. The lexical history of its terms has its own witnesses, and the philosophical force here concerns the situated operation.
+ 
+ ## #5→0
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C05-Immutable-Gap.md b/submission-package/essay/section-rooms/arguments/concepts/C05-Immutable-Gap.md
+index f8db08b3..78912606 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C05-Immutable-Gap.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C05-Immutable-Gap.md
+@@ -56,4 +56,4 @@ The [complete Investigation and Faith aphorism](../../../symbolon/episteme/aphor
+ 
+ A reader comparing an account with its source shows the relative offices. In that local inquiry the account is the known, and the retained passages, comparison rules and reports are the means, so the reader occupies a local functional knowing centre. Within the person's containing inquiry the reading apparatus itself serves as means, and inspecting it makes an earlier determining centre known in a further act, while the present first-person condition stays active through the inspection. The recurrent gap preserves these relative offices within their containing Life.
+ 
+-The [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|relation of Symbol, Account and Trust]] carries the return through four operations. A symbol discloses its source, an account preserves its dependence on that source, trust carries the finite account into committed action, and the effects of that action re-enter the field of a later account. Source, exclusions and conditions stay available to correction, reply and refusal through this circulation. A [faithful definition](C02-Faithful-Definition.md) retains the act from which its predicates took their warrant, and an [integral zero](../A36-Advent-of-Integral-Zero.md) lets the exact sign return as living Symbol, its achieved determination joining what it cannot enclose and renewing the relation through which another determination becomes possible.
++The [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|relation of Symbol, Account and Trust]] carries the return through four operations. A symbol discloses its source, an account preserves its dependence on that source, trust carries the finite account into committed action, and the effects of that action re-enter the field of a later account. Source, exclusions and conditions stay available to correction, reply and refusal through this circulation. A [faithful definition](C02-Faithful-Definition.md) retains the act from which its predicates took their warrant, and an [integral zero](../A36-Advent-of-Integral-Zero.md) lets the exact sign return as living Symbol, its achieved determination joining what it cannot enclose and renewing the relation through which another determination becomes possible.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C07-Conditions-of-Worldhood.md b/submission-package/essay/section-rooms/arguments/concepts/C07-Conditions-of-Worldhood.md
+index 804ffd0d..df6604be 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C07-Conditions-of-Worldhood.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C07-Conditions-of-Worldhood.md
+@@ -50,6 +50,6 @@ The native constituting relation makes a changed inheritance consequential. A co
+ 
+ [Bohm's enfoldment comparison](../../../symbolon/episteme/dossiers/bohm.md) makes a form's dependence on its field concrete. In the Peat interview a distributed dye and holographic information show concealed organisation to be different from absence, and the postmodern-science essay gives enfolding and unfolding priority in Bohm's proposed interpretation. Each source keeps its scope: a region is no exhaustively readable copy of the universe, and a physical illustration does not establish the full ontological claim. What the native relation adds is that worldhood concerns what can appear, matter and be acted upon, beyond the resulting picture.
+ 
+-An achieved account can change attention, action or infrastructure and so enter the conditions of later accounts. Return is causal as well as interpretive, because what was produced becomes part of what can next produce a difference. Within [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|Encounter / Region / Name / Count / Countenance / Account]] a region holds the conditions through which someone or something can appear, be named and admit a response. Naming makes an achieved distinction addressable, counting retains its criterion, and countenance lets the counted participant answer, so the account returns these determinations to another encounter whose participants can correct how they are named, counted or received.
++An achieved account can change attention, action or infrastructure and so enter the conditions of later accounts. Return is causal as well as interpretive, because what was produced becomes part of what can next produce a difference. Within [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|Encounter / Region / Name / Count / Countenance / Account]] a region holds the conditions through which someone or something can appear, be named and admit a response. Naming makes an achieved distinction addressable, counting retains its criterion, and countenance lets the counted participant answer, so the account returns these determinations to another encounter whose participants can correct how they are named, counted or received.
+ 
+ [World-Picture to World-Atlas](../A22-World-Picture-to-World-Atlas.md) **returns-to** this record's relation by keeping coordinating views answerable to the worldhood that makes their differences consequential. Within the [Order of Dependence](../A34-Idealism-Order-of-Dependence.md), an inspectable context-world belongs to the mediating field through which an agent acts, and increasing its inspectability clarifies the means of world-disclosure without turning worldhood into a completed inventory.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C08-Context-Context-Frame.md b/submission-package/essay/section-rooms/arguments/concepts/C08-Context-Context-Frame.md
+index c4f5c212..33d09bb7 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C08-Context-Context-Frame.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C08-Context-Context-Frame.md
+@@ -58,6 +58,6 @@ The [travelling jigsaw's prior rule of fit](../../../symbolon/mytheme/worlds/fra
+ 
+ [Diaphaneity](C09-Diaphaneity.md) makes the shaping conditions readable through their effects. Contextualisation succeeds when the account can show how its means, exclusions and position shaped what it says, and when returned resistance can reach those terms for correction or warranted retention.
+ 
+-[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Con-text-through-Diaphaneity]] makes the held relations available to Regard. Con-text-through-Diaphaneity is the generated relation, and Regard is the operation that becomes available there: it can turn toward the exposed relation and answer what the frame's inclusions and exclusions have done.
++[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Con-text-through-Diaphaneity]] makes the held relations available to Regard. Con-text-through-Diaphaneity is the generated relation, and Regard is the operation that becomes available there: it can turn toward the exposed relation and answer what the frame's inclusions and exclusions have done.
+ 
+ [Another participant can externalise enough of its ground to meet this one](../A30-Objective-Co-Internality.md) while retaining its own source-relations. What each frame has disclosed can change their encounter without absorbing either into the other's account. A bounded frame stays useful through its corrigibility within [the world that bears it](C07-Conditions-of-Worldhood.md).
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C09-Diaphaneity.md b/submission-package/essay/section-rooms/arguments/concepts/C09-Diaphaneity.md
+index 386f2ac5..be6720a5 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C09-Diaphaneity.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C09-Diaphaneity.md
+@@ -61,4 +61,4 @@ For a technical account, visible output or execution logs are only a beginning.
+ 
+ The positive psychic-fact office is realised differently across the product field. Through [living articulation](../products/S1-Actuation.md) an experience or report becomes a consequential event, [situated existence](../products/S4-Workcell.md) gives that event its aperture, temporal exposure and material resistance, and [Transcendent Relation](../products/S5-Quaternal-Logic.md) keeps its differentiated accounts within their containing wholes. None of these offices decides in advance what an extraordinary report "really was". The report, its conditions and its interpretations remain available for a return that can refine the next act of inquiry.
+ 
+-[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Con-text-through-Diaphaneity]] makes the context visible through a determination. Regard becomes possible when the affected person, excluded source or returned consequence can reach the judging office, and their answer acquires a place from which it can alter the account. [Deferential intelligence](C47-Deferential-Intelligence.md) carries the judgment into action at the depth actually exposed: an answer, task, model, evaluator or commission can be corrected, or a fitting condition retained with reasons, and the next act inherits that judgment. The [Context Frame](C08-Context-Context-Frame.md) becomes readable through its effects, open to warranted revision without claiming to own the whole from which it arose.
++[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Con-text-through-Diaphaneity]] makes the context visible through a determination. Regard becomes possible when the affected person, excluded source or returned consequence can reach the judging office, and their answer acquires a place from which it can alter the account. [Deferential intelligence](C47-Deferential-Intelligence.md) carries the judgment into action at the depth actually exposed: an answer, task, model, evaluator or commission can be corrected, or a fitting condition retained with reasons, and the next act inherits that judgment. The [Context Frame](C08-Context-Context-Frame.md) becomes readable through its effects, open to warranted revision without claiming to own the whole from which it arose.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C10-Mediation-Pramana.md b/submission-package/essay/section-rooms/arguments/concepts/C10-Mediation-Pramana.md
+index 03a55c2a..49419456 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C10-Mediation-Pramana.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C10-Mediation-Pramana.md
+@@ -43,7 +43,7 @@ At the local comparison the judging agent is the functional knower, the dated re
+ 
+ The [Sanskrit enumeration case](../../../symbolon/episteme/etymologies/symbol-account-and-trust/HISTORICAL-BRANCHES-symbol-account-and-trust.md#sanskrit-enumeration-and-discriminative-practice) **historicises** a particular taxonomy, since Sāṃkhya Kārikās 4–6 distinguish perception, inference and trustworthy testimony. Śaiva sources concern the co-presence of knower, means and known, and this Sāṃkhya case supplies its own account of valid cognition. By appointing Objective Internality to the office of means, the essay preserves such differences of warrant.
+ 
+-An [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|account answers to source]] by retaining how its claim was formed and by allowing the counterpart to correct or refuse it. The [appointed bearer](C29-Mediating-Office-Derivative-Sovereignty.md) can exercise real discretion within a commission, and authority to convey or act upon a report remains different from having originated the event it reports.
++An [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|account answers to source]] by retaining how its claim was formed and by allowing the counterpart to correct or refuse it. The [appointed bearer](C29-Mediating-Office-Derivative-Sovereignty.md) can exercise real discretion within a commission, and authority to convey or act upon a report remains different from having originated the event it reports.
+ 
+ ## #5→0
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C13-Prakasa-Vimarsa.md b/submission-package/essay/section-rooms/arguments/concepts/C13-Prakasa-Vimarsa.md
+index 0e2c5686..2408f408 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C13-Prakasa-Vimarsa.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C13-Prakasa-Vimarsa.md
+@@ -55,7 +55,7 @@ Through [Māyā's eye, veil, frame and dream](../../../symbolon/mytheme/worlds/f
+ 
+ A corrected answer or application can follow under a fitting rule. If the rule, representation, permission or commission itself failed, the return reaches the office able to change that condition, and if inquiry warrants retaining it, the later act inherits the reasons for that judgment and the source relation through which it was reached. A claim that processing changed has to identify what changed and where the next operation received it, and reasoned retention is not reported as a new engineering intervention.
+ 
+-[[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|Symbol / Account / Trust]] carries the corresponding relation: an articulation answers to the appearing it discloses and refrains from usurping its source. The return preserves the differentiated powers while releasing an achieved determination's claim to contain the whole.
++[[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|Symbol / Account / Trust]] carries the corresponding relation: an articulation answers to the appearing it discloses and refrains from usurping its source. The return preserves the differentiated powers while releasing an achieved determination's claim to contain the whole.
+ 
+ ### Source scope
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C14-Maya-Operative-Measure.md b/submission-package/essay/section-rooms/arguments/concepts/C14-Maya-Operative-Measure.md
+index 9ac919da..c1fd3871 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C14-Maya-Operative-Measure.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C14-Maya-Operative-Measure.md
+@@ -61,7 +61,7 @@ The [paradigm's pattern of disclosure](../../../symbolon/episteme/etymologies/ge
+ 
+ In [the world-parent separation](../../../symbolon/mytheme/archetypal-ground/neumann-images/WHOLE.md#neumann-world-parent-separation), a finite world becomes oriented around an opening it cannot turn into one of its coordinates, with Māyā as the measure-field wound around that opening and Anuttara retaining the opening's distinct office. [The uroboros](../../../symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md#uroboros-interposition) keeps body, mouth and opening in one whole, so that the circumference can disclose a world without making itself all that the world contains. Recognition precedes the ego's later appropriation of that field.
+ 
+-[[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD|Apportionment / Economy]] carries finite capacity into its wider order, and the criterion that permits judgment is itself apportioned. [Arbitration](../A24-Arbitration-and-the-Usurpation-of-Measure.md) becomes usurpation when a local measure claims absolute jurisdiction over the field that supplied it.
++[[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy|Apportionment / Economy]] carries finite capacity into its wider order, and the criterion that permits judgment is itself apportioned. [Arbitration](../A24-Arbitration-and-the-Usurpation-of-Measure.md) becomes usurpation when a local measure claims absolute jurisdiction over the field that supplied it.
+ 
+ Recognition restores the relation without cancelling the capacity. A finite knower still distinguishes and acts, and the measure becomes answerable to its source, conditions and consequences. The [tattvic contraction](../A09-Tattvic-Differential-Field.md) keeps its productive office, since apportioned powers let this finite knower encounter and act within a world, and what a functioning horizon had concealed can become relevant to how that horizon is next used.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C15-Pasu-Bounded-Subject-Position.md b/submission-package/essay/section-rooms/arguments/concepts/C15-Pasu-Bounded-Subject-Position.md
+index f7becf96..5eb68717 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C15-Pasu-Bounded-Subject-Position.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C15-Pasu-Bounded-Subject-Position.md
+@@ -51,6 +51,6 @@ Through [Māyā's eye, veil, frame and horizon](../../../symbolon/mytheme/worlds
+ 
+ Primordial recognition and subsequent ego-identity have distinct offices in Taylor's correction. In the [world-parent separation](../../../symbolon/mytheme/archetypal-ground/neumann-images/WHOLE.md#neumann-world-parent-separation), self-recognition precedes the husband/wife division, and bounded knowing arises within that field and does not make ego identity its origin. Through the [uroboros's differentiated body](../../../symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md#uroboros-source-variants), head, tail, mouth and winding keep the opening through which the creature receives, transforms and returns, so that the formed body's efficacy stays related to the condition it cannot fill.
+ 
+-Through [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD|Trust / Place / Logos / Nomos / Natio / Credere]], the place of an act bears its conditions and commitments. A bounded participant answers from somewhere, under particular permissions and with particular means, and the judgment can be corrected under fitting conditions, or a failed condition can be returned to the office able to change it. Reasons for retaining a fitting condition stay available with that judgment, and the next act inherits this answerability through actual capacity. The etymological field joins situated place and bounded knowing while keeping the Greek and Sanskrit lexical histories distinct.
++Through [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere|Trust / Place / Logos / Nomos / Natio / Credere]], the place of an act bears its conditions and commitments. A bounded participant answers from somewhere, under particular permissions and with particular means, and the judgment can be corrected under fitting conditions, or a failed condition can be returned to the office able to change it. Reasons for retaining a fitting condition stay available with that judgment, and the next act inherits this answerability through actual capacity. The etymological field joins situated place and bounded knowing while keeping the Greek and Sanskrit lexical histories distinct.
+ 
+ The horizon remains real while its source relation becomes available. Recognition leaves a particular knower able to act without claiming to be the origin of every condition of action, and its finite powers can be exercised, relinquished or revised in awareness of what they owe to the wider field. Situated responsibility carries that changed relation into the next encounter.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C18-Apoha.md b/submission-package/essay/section-rooms/arguments/concepts/C18-Apoha.md
+index 6be0ad0b..4328b483 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C18-Apoha.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C18-Apoha.md
+@@ -53,4 +53,4 @@ Choosing the southwest jewel in [Indra's net](../../../symbolon/mytheme/worlds/c
+ 
+ In a [technical selection](C40-Model-Internality-Judgment-Field.md), relative scores, a normalised distribution and a selected output preserve different information. A delivered mark can remain answerable where its material alternatives and threshold are recoverable through the deciding office. If an objection exposes a mistaken source or application, correction can change the next choice under a fitting criterion, and if the criterion itself excludes a relevant capacity, the return reaches the authority able to revise it. The comparison follows selection and retained context, and Buddhist semantic reference stays distinct from normalisation.
+ 
+-A [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|Name counted within a Region]] has a positive reach constituted against non-selected possibilities. Returning the relevant contrast to [judgment or action](C45-Operational-Parity.md) makes that dependence consequential, and the mark stays determinate as a corrected or warranted-retained condition becomes available to the next act.
++A [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|Name counted within a Region]] has a positive reach constituted against non-selected possibilities. Returning the relevant contrast to [judgment or action](C45-Operational-Parity.md) makes that dependence consequential, and the mark stays determinate as a corrected or warranted-retained condition becomes available to the next act.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C19-Pratyabhijna-Recognition.md b/submission-package/essay/section-rooms/arguments/concepts/C19-Pratyabhijna-Recognition.md
+index 96384b10..a9d4cf39 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C19-Pratyabhijna-Recognition.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C19-Pratyabhijna-Recognition.md
+@@ -43,7 +43,7 @@ Changing one statement about a paradigm can leave its enactment untouched. Its r
+ 
+ ## #4
+ 
+-[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Resolution in reconciliation]] returns a determination through its history as **Anamnesis / Recognition / Return**. The judgment can be retained, narrowed or resituated while its earlier consequences remain effective, and remembering how it arose gives that authority a relation it can answer.
++[[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Resolution in reconciliation]] returns a determination through its history as **Anamnesis / Recognition / Return**. The judgment can be retained, narrowed or resituated while its earlier consequences remain effective, and remembering how it arose gives that authority a relation it can answer.
+ 
+ [Individuation](C34-Individuation.md) carries the psychic movement into a life capable of bearing its differentiated relations. Greek anamnesis, Śaiva pratyabhijñā and Jungian individuation have distinct histories and evidence, and their comparison follows changed relation and return, since a shared word or image alone cannot establish doctrinal identity.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C20-Arche-Topos.md b/submission-package/essay/section-rooms/arguments/concepts/C20-Arche-Topos.md
+index 1fd42bfa..7228eac2 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C20-Arche-Topos.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C20-Arche-Topos.md
+@@ -43,6 +43,6 @@ In symbolic amplification, a symbolic appearance opens a local view, neighbourin
+ 
+ ## #5→0
+ 
+-A [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD|situated place]] bears the history, permissions, relations and commitments through which someone can act there, and its meaning changes as those conditions change.
++A [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere|situated place]] bears the history, permissions, relations and commitments through which someone can act there, and its meaning changes as those conditions change.
+ 
+ [Place-making](../A16-Arche-Topos-as-Differential-Field.md) returns through [circulation](../A17-Toroidal-Circulation-and-the-Arche-Topos.md): a formed position becomes a point of departure, and a travelled route can change how that position is understood. The achieved location can disclose the field that made it possible, and a return can preserve the path that changed the location's meaning. Place-making stays operative when its account can be entered, transformed and returned from.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C22-Counterfeit-Symbolon.md b/submission-package/essay/section-rooms/arguments/concepts/C22-Counterfeit-Symbolon.md
+index a8882d76..f3d56720 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C22-Counterfeit-Symbolon.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C22-Counterfeit-Symbolon.md
+@@ -51,7 +51,7 @@ The Antichrist/counterfeit-source braid gives these cases one direction of failu
+ 
+ ## #5→0
+ 
+-An [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|account answers to a source it does not possess]]. The repair follows the actual loss: a severed term needs its constitutive relation restored, fusion needs distinction, a captive gathering needs an answerable criterion, and a protected account needs a viable route to source and consequence. A fitting rule may remain where the return corrects a source or its application.
++An [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|account answers to a source it does not possess]]. The repair follows the actual loss: a severed term needs its constitutive relation restored, fusion needs distinction, a captive gathering needs an answerable criterion, and a protected account needs a viable route to source and consequence. A fitting rule may remain where the return corrects a source or its application.
+ 
+ A [renewed symbolic relation](C21-Living-Symbol-Idol.md) permits differentiation, commitment, refusal and revision through the participants who can answer it, and correction can preserve disagreement. No one product acquires the whole's office by gathering the others, since the relation lives through their capacity to change how they are gathered.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C23-Severance.md b/submission-package/essay/section-rooms/arguments/concepts/C23-Severance.md
+index d30391c0..a68c0433 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C23-Severance.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C23-Severance.md
+@@ -43,6 +43,6 @@ Severance begins where the other's removal is imagined to complete the whole, or
+ 
+ ## #5→0
+ 
+-[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD|Proportion among differentiated terms]] returns through the respect in which they stay related. Reconnection states what is shared and what remains distinct, since a real conflict keeps its particular stakes and a vague assertion of unity cannot do their work.
++[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy|Proportion among differentiated terms]] returns through the respect in which they stay related. Reconnection states what is shared and what remains distinct, since a real conflict keeps its particular stakes and a vague assertion of unity cannot do their work.
+ 
+ The productive [cut](C50-Dia-Syn.md) enters a [living relation](C21-Living-Symbol-Idol.md) where its source and consequences can be recovered. A divided task can return an incompatible premise to the commissioning condition, and a corrected source or authorised task can then enter recomposition while the local result remains credited. The next act inherits what the return warranted, and distinction thus serves inquiry, autonomy and action without claiming to create an independently grounded world.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C24-Fusion.md b/submission-package/essay/section-rooms/arguments/concepts/C24-Fusion.md
+index 1ca158d4..2e819433 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C24-Fusion.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C24-Fusion.md
+@@ -49,6 +49,6 @@ In [Indra's jewel-net simile](../../../symbolon/mytheme/worlds/chinese-huayan/in
+ 
+ The [receiving mouth](../../../symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md#uroboros-metabolic-fork) **tests** fusion: a response must remain different enough to change the relation that receives it.
+ 
+-[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD|Agreement in an operation or proportion]] does not make the compared objects univocally identical, and a successful synthesis specifies both the relation achieved and the differences through which it remains intelligible.
++[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy|Agreement in an operation or proportion]] does not make the compared objects univocally identical, and a successful synthesis specifies both the relation achieved and the differences through which it remains intelligible.
+ 
+ Identification through difference becomes possible again when cutting and gathering retain the differences that permit answerability. A shared form can then continue through those differences, and source and account, I and You, distinct participants and common work can remain related without requiring one term to speak as all the others.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C30-Psychoid-Number.md b/submission-package/essay/section-rooms/arguments/concepts/C30-Psychoid-Number.md
+index d5666441..cf5793a3 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C30-Psychoid-Number.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C30-Psychoid-Number.md
+@@ -31,7 +31,7 @@ A particularly demanding notebook encounter occurs at p. 119. When a more extens
+ 
+ The [[section-rooms/arguments/concepts/C11-Quaternal-Logic|Quaternal relation]] begins with a distinction whose terms and inverse readings remain together through generation and return. `X/x` names determining capacity and its indefinite particular, so that another occurrence makes a pattern recognisable while retaining the possibility of further difference. [[A18-Primordial-Symbolon-and-Its-Eight-Determinations|The eight determinations]] **derive** its whole movement and inversion, [[A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account|the finite musical kernel]] supplies operations under exact hypotheses, and [[A17-Toroidal-Circulation-and-the-Arche-Topos|the torus and its cover]] supplies other mathematical objects. Their meeting is articulated through retained relations and differences, and the recurrence of a numeral alone does not articulate it.
+ 
+-A [[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD|comparison]] relates operations in different domains through a specified transformation, and its warrant depends on what that transformation preserves and what it leaves out. Historical descent needs historical evidence, a mathematical equivalence needs its hypotheses, and empirical efficacy needs observation. The shared operation gains exactness through the preserved relation, and each domain retains the conditions under which its own result holds.
++A [[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy|comparison]] relates operations in different domains through a specified transformation, and its warrant depends on what that transformation preserves and what it leaves out. Historical descent needs historical evidence, a mathematical equivalence needs its hypotheses, and empirical efficacy needs observation. The shared operation gains exactness through the preserved relation, and each domain retains the conditions under which its own result holds.
+ 
+ ## #4
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C31-Complex.md b/submission-package/essay/section-rooms/arguments/concepts/C31-Complex.md
+index 7ca0688a..8931e5e0 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C31-Complex.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C31-Complex.md
+@@ -30,7 +30,7 @@ The theory of complex systems has a concept for this kind of repetition, the **b
+ 
+ In Taylor's [[symbolon/episteme/sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors|Van Eenwyk encounter]], pp. 65–73, the dynamics, organisation and transformation have distinct offices: archetypes as dynamics, complexes as structures, symbols as mechanisms of energetic transformation. The p. 67 encounter makes the symbol capable of undoing a conscious category and permitting a more complex organisation. A symbol can also intensify an established complex, and numinous force by itself does not certify successful return.
+ 
+-[[section-rooms/arguments/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim|The protected account]] names the usurpation: the local settlement exempts its own measure from revision while treating every new witness as further material for the same verdict. The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Arbitration field]] keeps Arbitration-in-Crisis prior to its hybris flowering, since finite life must settle alternatives and failure occurs when the deciding office mistakes its local measure for source measure.
++[[section-rooms/arguments/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim|The protected account]] names the usurpation: the local settlement exempts its own measure from revision while treating every new witness as further material for the same verdict. The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Arbitration field]] keeps Arbitration-in-Crisis prior to its hybris flowering, since finite life must settle alternatives and failure occurs when the deciding office mistakes its local measure for source measure.
+ 
+ ## #4
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First.md b/submission-package/essay/section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First.md
+index 8af09b0d..249e5941 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First.md
+@@ -63,7 +63,7 @@ Across the [mirror's complete movement](../../../symbolon/mytheme/worlds/frank-t
+ 
+ In the [travelling jigsaw](../../../symbolon/mytheme/worlds/frank-taylor/travelling-jigsaw-atlas/WHOLE.md#jigsaw-atlas-return), the instrument opens its own rule of fit before asking the encountered person to accept its picture. A returned piece can correct the picture under a fitting rule or expose a rule that needs revision, and the next representation inherits that judgment and the history of what the picture has done.
+ 
+-[[section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation|Compassion]] turns disclosed origins into care for the Other who exceeds the image: an omitted history can alter the answer, warrant refusal or change the undertaking. [[section-rooms/arguments/concepts/C62-Planetary-Computation|Infrastructure and culture]] give that answer a larger material field. Through [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|symbol, account and trust]], the reflection answers to what it bears, its account preserves that source relation, reliance keeps correction and refusal consequential, and the account re-enters the field with a history of what it did.
++[[section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation|Compassion]] turns disclosed origins into care for the Other who exceeds the image: an omitted history can alter the answer, warrant refusal or change the undertaking. [[section-rooms/arguments/concepts/C62-Planetary-Computation|Infrastructure and culture]] give that answer a larger material field. Through [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|symbol, account and trust]], the reflection answers to what it bears, its account preserves that source relation, reliance keeps correction and refusal consequential, and the account re-enters the field with a history of what it did.
+ 
+ At the product culmination, the paradigm-disclosing mirror crosses all six offices without becoming a seventh. [Central](../products/S0-Central.md) exposes inherited meaning and source, [Actuation](../products/S1-Actuation.md) the judgment and its articulation, [AIKit](../products/S2-AIKit.md) available and permitted powers, [Factory](../products/S3-Software-Factory.md) the process by which the image becomes changed form, [Workcell](../products/S4-Workcell.md) the material location and cost of the reflection, and [QL](../products/S5-Quaternal-Logic.md) the containing relation that prevents any local image from claiming the whole. The third motion makes these conditions available before asking the human to conform to the reflected answer, and returned difference reaches the relevant office for a warranted correction or fitting retention with reasons.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md b/submission-package/essay/section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md
+index e0aa4418..886b3bcc 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins.md
+@@ -64,7 +64,7 @@ At this point Compassion and Epi-Logos become two inseparable offices of the sam
+ 
+ Loving return meets a person through the inherited injury, labour or exclusion that an account had concealed, and changes how that person is received while preserving their capacity to answer, withhold and correct. Through [Epi-Logos — source return](../../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere.md#epilogos-source-return), the account makes these conditions consequential for the next relation. *Natio* keeps the formation of belonging visible, and renewed entrustment remains an undertaking, so compassion cannot demand reconciliation on terms that repeat the injury.
+ 
+-Within [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Arbitration / Hybris / Regard / Anamnesis]], **Con-text-through-Diaphaneity → Regard** lets the Other appear through the account, and **Resolution-in-Reconciliation → Anamnesis/Return** re-situates an achieved settlement within its constitutive relations. Contextual transparency makes regard possible, while regard receives the Other through that disclosed relation, and reconciliation similarly earns a settlement whose continuing return remembers the relations through which it arose.
++Within [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Arbitration / Hybris / Regard / Anamnesis]], **Con-text-through-Diaphaneity → Regard** lets the Other appear through the account, and **Resolution-in-Reconciliation → Anamnesis/Return** re-situates an achieved settlement within its constitutive relations. Contextual transparency makes regard possible, while regard receives the Other through that disclosed relation, and reconciliation similarly earns a settlement whose continuing return remembers the relations through which it arose.
+ 
+ [[section-rooms/arguments/concepts/C51-Logos-Epi-Logos|Epi-Logos]] returns the account upon its own conditions, and [[section-rooms/arguments/A36-Advent-of-Integral-Zero|Integral Zero]] preserves that return beyond a finished statement. [Protected Account](C27-Protected-Account-Occupied-Zero-Source-Claim.md) names the inverse: the account that claims the source-office and makes contrary witness answer only within its own terms. Compassion returns from that closure by preserving the source as a living relation and refusing to capture it as an object.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C57-Agentworld.md b/submission-package/essay/section-rooms/arguments/concepts/C57-Agentworld.md
+index 1ef7dfc5..30a410b8 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C57-Agentworld.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C57-Agentworld.md
+@@ -39,7 +39,7 @@ In the brief's [[symbolon/episteme/sources/media-technology-philosophy/bratton/b
+ 
+ ## #5→0
+ 
+-A [[section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First|reflective return]] brings products back into the worlds they change, and those worlds depend on [[section-rooms/arguments/concepts/C62-Planetary-Computation|shared material and institutional conditions]]. Within a [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD|region of encounter]], names and accounts retain prior contacts as conditions of later ones, while the participant can answer beyond what the inherited name allowed the account to expect.
++A [[section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First|reflective return]] brings products back into the worlds they change, and those worlds depend on [[section-rooms/arguments/concepts/C62-Planetary-Computation|shared material and institutional conditions]]. Within a [[symbolon/episteme/etymologies/encounter-region-name-count/WHOLE-FIELD-encounter-region-name-count|region of encounter]], names and accounts retain prior contacts as conditions of later ones, while the participant can answer beyond what the inherited name allowed the account to expect.
+ 
+ In [The Prisoner](../../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md#prisoner-administered-world), the administered world persists across occupants: later Numbers Two inherit offices, records, permissions and expectations that shape what they and Six can do next. This makes the Village more than a venue for isolated exchanges, and its coercive closure also separates durable worldhood from reciprocal answerability. The comparison therefore asks whether an agentworld merely persists or whether those who inhabit it can return through its conditions strongly enough to change them.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture.md b/submission-package/essay/section-rooms/arguments/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture.md
+index 90aca793..bd7a28c9 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture.md
+@@ -53,7 +53,7 @@ The mirror's paradigm-disclosure is the technical correlate of cultural individu
+ 
+ ## #5→0
+ 
+-[[section-rooms/arguments/concepts/C51-Logos-Epi-Logos|Achieved articulation becomes reflexive]] where accounts repeatedly return to their conditions through ordinary shared practice. [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD|Prior reliance becomes situated account, instituted order, inherited belonging and examined entrustment]], and their different histories remain consequential to what can be entrusted again, so culture, nation and commons cannot become interchangeable names for a single bearer.
++[[section-rooms/arguments/concepts/C51-Logos-Epi-Logos|Achieved articulation becomes reflexive]] where accounts repeatedly return to their conditions through ordinary shared practice. [[symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD-trust-place-logos-nomos-natio-credere|Prior reliance becomes situated account, instituted order, inherited belonging and examined entrustment]], and their different histories remain consequential to what can be entrusted again, so culture, nation and commons cannot become interchangeable names for a single bearer.
+ 
+ Within [the wider economy of a commons](../../../symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy.md#commons-preserves-the-wider-economy), a culture can revise inherited names and measures while retaining the origins and particular lives through which they matter. The institutional change remains answerable to those who bear its costs and can refuse its terms, and changed shared conditions do not make Culture the owner of every local world.
+ 
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C62-Planetary-Computation.md b/submission-package/essay/section-rooms/arguments/concepts/C62-Planetary-Computation.md
+index a7b111c6..2e9de5d4 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C62-Planetary-Computation.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C62-Planetary-Computation.md
+@@ -55,6 +55,6 @@ The planetary paradigm needs **typed finitude**. Source, permission, evaluator,
+ 
+ [Indra's jewel-net](../../../symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md#indra-whole-return) makes a local appearance's dependence on others perceptible. Planetary computation gives that dependence material and institutional objects: which energy, labour, infrastructure and authority sustain a capacity, and where can their consequences change its commission? The jewel's brightness and the measured flows retain different warrants, and actual supply and governance must be investigated through their own evidence.
+ 
+-[[section-rooms/arguments/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture|Cultural individuation]] returns an exteriorised measure to the culture that formed it, and [[section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins|compassion]] receives its origins and affected lives as capable of answering, withholding and correcting the resulting act. [[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD|Apportionment and economy]] follow who receives capacity, who bears cost and which office can alter that distribution.
++[[section-rooms/arguments/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture|Cultural individuation]] returns an exteriorised measure to the culture that formed it, and [[section-rooms/arguments/concepts/C56-Compassion-Sensitivity-to-Origins|compassion]] receives its origins and affected lives as capable of answering, withholding and correcting the resulting act. [[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD-apportionment-and-economy|Apportionment and economy]] follow who receives capacity, who bears cost and which office can alter that distribution.
+ 
+ Increasingly powerful mediations become more answerable when their derivation, affected worlds and returned consequences can change their use. [[section-rooms/arguments/concepts/C51-Logos-Epi-Logos|Paradigm-level reflection]] places a disclosed pattern beside its enactment, and [[section-rooms/arguments/concepts/C45-Operational-Parity|operative return]] carries the warranted correction or retention into the determining conditions of the next act. Planetary computation becomes a site of cultural and epistemic individuation where the people and worlds it coordinates can also change the terms by which they are coordinated, and the achieved account remains useful through that return to its material supports, source authority and the lives that will encounter its consequences.
+diff --git a/submission-package/essay/section-rooms/arguments/concepts/C63-Pros-Hen-In-Quantum-Focal-Return-Qualified-Predication.md b/submission-package/essay/section-rooms/arguments/concepts/C63-Pros-Hen-In-Quantum-Focal-Return-Qualified-Predication.md
+index 097bd03a..87c54255 100644
+--- a/submission-package/essay/section-rooms/arguments/concepts/C63-Pros-Hen-In-Quantum-Focal-Return-Qualified-Predication.md
++++ b/submission-package/essay/section-rooms/arguments/concepts/C63-Pros-Hen-In-Quantum-Focal-Return-Qualified-Predication.md
+@@ -43,7 +43,7 @@ A [[section-rooms/arguments/concepts/C60-Idealism-Order-of-Dependence|reflection
+ 
+ In [Aristotle's focal account](../../../symbolon/episteme/histories/traditions-and-disciplines/ancient-philosophy/DEVELOPMENT-ancient-philosophy.md#ancient-focal-causes), healthy things relate to health through preserving, producing, indicating or being capable of it, and medical uses likewise refer differently to an art. In the selected IV.2 argument, different senses of being have a primary reference, and substance is the primary object of inquiry. The relation orders different senses and gives each no identical definition.
+ 
+-[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD|Comparing operations]] requires the transformed relation and retained difference to remain available. Through [[section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture|formal, imaginal and epistemic disclosure]], a reader can follow the precise respect into another application and receive what changes there. The [[section-rooms/arguments/A36-Advent-of-Integral-Zero|returned determination]] remains a real source for subsequent comparison while depending on what its aperture cannot exhaust, and a warranted correction can revise the claim or its use, while a fitting relation can be retained for reasons that the next act inherits.
++[[symbolon/episteme/etymologies/homology-and-analogy/WHOLE-FIELD-homology-and-analogy|Comparing operations]] requires the transformed relation and retained difference to remain available. Through [[section-rooms/arguments/concepts/C61-Symbolon-Disclosure-Architecture|formal, imaginal and epistemic disclosure]], a reader can follow the precise respect into another application and receive what changes there. The [[section-rooms/arguments/A36-Advent-of-Integral-Zero|returned determination]] remains a real source for subsequent comparison while depending on what its aperture cannot exhaust, and a warranted correction can revise the claim or its use, while a fitting relation can be retained for reasons that the next act inherits.
+ 
+ ### Historical source standing
+ 
+diff --git a/submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md b/submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md
+index ed37635c..e6ce8999 100644
+--- a/submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md
++++ b/submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md
+@@ -97,7 +97,7 @@ The [shared Neumann whole](../../../archetypal-ground/neumann-images/WHOLE.md#ne
+ 
+ For a person who follows the instrument's turn, the relation to likeness has changed. An exteriorised measure can be used, examined, corrected and set down, and its user can recover the felt and lived comparison that fascination had displaced. Thought remains a power in human life, and its products can now lead back toward the conditions of knowing in place of occupying them. This is the constructive aftermath that qualifies the funhouse scene: the instrument's power to precede the gazer becomes an opportunity to return the gaze to its living field.
+ 
+-Taylor's [[section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation|Compassion]] **orients** that return as loving sensitivity to origins, including the lives that meet the consequences of the answer. The [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|Symbol / Account / Trust field]] **qualifies** its register-3 office: an account re-enters its source-field and remains answerable there. The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|Arbitration / Regard / Anamnesis field]] **qualifies** the passage from an occupied measure through regard to a changed relation. These are authored operations and give no lexical evidence for an AI mechanism.
++Taylor's [[section-rooms/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation|Compassion]] **orients** that return as loving sensitivity to origins, including the lives that meet the consequences of the answer. The [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|Symbol / Account / Trust field]] **qualifies** its register-3 office: an account re-enters its source-field and remains answerable there. The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|Arbitration / Regard / Anamnesis field]] **qualifies** the passage from an occupied measure through regard to a changed relation. These are authored operations and give no lexical evidence for an AI mechanism.
+ 
+ The whole **returns-to** [[section-rooms/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First|the reflective-field argument]] with all three motions intact, and **returns-to** [[section-rooms/arguments/concepts/C55-Reflective-Field-Mirror-That-Moves-First|the three-motion concept]] with their causal and vocational distinctions preserved. Its section offices remain [[section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness|§5→0/#1, the instrument's declared conditions]] and [[section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return|§5→0/#5→0, the planetary return]]: reflection carries its source relation into action, and action returns its consequences to the worlds it touches.
+ 
+diff --git a/submission-package/essay/symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md b/submission-package/essay/symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md
+index 6ce2eddb..9074a867 100644
+--- a/submission-package/essay/symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md
++++ b/submission-package/essay/symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md
+@@ -138,9 +138,9 @@ A [[section-rooms/arguments/concepts/C21-Living-Symbol-Idol|living symbol]] keep
+ 
+ [[section-rooms/arguments/concepts/C14-Maya-Operative-Measure|Operative measure]] has productive competence before any usurpation, so that Apollo's arts keep their real offices when their jurisdiction is questioned. [[section-rooms/arguments/concepts/C18-Apoha|Semantic exclusion]] specifies how a term becomes determinate, and Daphne's expressed refusal remains a different act. [[section-rooms/arguments/concepts/C47-Deferential-Intelligence|Deferential intelligence]] lets the encountered difference reach the condition it exposes, whereas a slower pursuit preserves the disputed purpose. [[section-rooms/arguments/concepts/C53-Power-Delegated-Labour|Entrusted power]] derives an office from a relation whose terms can answer to affected lives, and Apollo's imposed use of the laurel does not acquire that warrant through the emblem's later success.
+ 
+-The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD|six generated relations of arbitration and regard]] articulate the whole movement. **Continuity-in-Indeterminacy** keeps Daphne's wished-for life, the wound and the evolving encounter active beyond Apollo's account of them. **Criterion-through-Distinction** gives prophecy, medicine, archery and love different effective offices. **Delineation-through-Difference** makes his projected marriage visible as a frame that excludes her chosen life. **Arbitration-in-Crisis** gives the competing aims consequence, since flight, continued pursuit, paternal rescue and Apollo's later appointment each act within different powers and permissions, and Hybris begins where his competence claims the measure of her response. **Con-text-through-Diaphaneity** restores these conditions to the honoured sign so that Regard can receive the life and cost its public use obscures. **Resolution-in-Reconciliation** carries a settlement's history into its next use, and the laurel's endurance therefore cannot certify achieved reconciliation. These are Taylor's relational comparisons, and the historical descent and particular senses of the terms keep their separate source branches, so that poetic sound or graphic resemblance cannot settle Ovid's ending.
++The [[symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD-arbitration-hybris-regard-anamnesis|six generated relations of arbitration and regard]] articulate the whole movement. **Continuity-in-Indeterminacy** keeps Daphne's wished-for life, the wound and the evolving encounter active beyond Apollo's account of them. **Criterion-through-Distinction** gives prophecy, medicine, archery and love different effective offices. **Delineation-through-Difference** makes his projected marriage visible as a frame that excludes her chosen life. **Arbitration-in-Crisis** gives the competing aims consequence, since flight, continued pursuit, paternal rescue and Apollo's later appointment each act within different powers and permissions, and Hybris begins where his competence claims the measure of her response. **Con-text-through-Diaphaneity** restores these conditions to the honoured sign so that Regard can receive the life and cost its public use obscures. **Resolution-in-Reconciliation** carries a settlement's history into its next use, and the laurel's endurance therefore cannot certify achieved reconciliation. These are Taylor's relational comparisons, and the historical descent and particular senses of the terms keep their separate source branches, so that poetic sound or graphic resemblance cannot settle Ovid's ending.
+ 
+-The [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD|Symbol / Account / Trust relation]] makes the emblem's continuing obligation precise through four operations. **Symbol answers to source:** the laurel bears the failed encounter as well as the assigned honour. **Account does not replace source:** the public reckoning of victory and distinction stays answerable to the transformation and resistance it leaves behind. **Trust keeps the return route active:** reliance on an emblem of authority differs from an authority's demonstrated capacity to receive refusal. **Account re-enters source-field:** the honoured leaf conditions later appearances and judgments, whose warrant can change when the whole history is received. A subsequent account can correct its judgment, revise its frame or retain a fitting distinction with reasons, and that result enters the next use. The poem establishes the emblem's projected offices and no measured historical effects on every later bearer.
++The [[symbolon/episteme/etymologies/symbol-account-and-trust/WHOLE-FIELD-symbol-account-and-trust|Symbol / Account / Trust relation]] makes the emblem's continuing obligation precise through four operations. **Symbol answers to source:** the laurel bears the failed encounter as well as the assigned honour. **Account does not replace source:** the public reckoning of victory and distinction stays answerable to the transformation and resistance it leaves behind. **Trust keeps the return route active:** reliance on an emblem of authority differs from an authority's demonstrated capacity to receive refusal. **Account re-enters source-field:** the honoured leaf conditions later appearances and judgments, whose warrant can change when the whole history is received. A subsequent account can correct its judgment, revise its frame or retain a fitting distinction with reasons, and that result enters the next use. The poem establishes the emblem's projected offices and no measured historical effects on every later bearer.
+ 
+ [[section-rooms/05-psychoid-flowering/movements/35-s4-p4-gebser-apollo-dionysus|Apollo through Dionysus]] **compares** a different philosophical relation between articulated form and participation. Daphne's complete pursuit and public aftermath give objectification its concrete limit here, and Dionysus does not enter the Ovidian cast, so that the separate philosophical comparison supplies no missing resolution to this story.
+ 

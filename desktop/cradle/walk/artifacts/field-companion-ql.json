@@ -1,0 +1,446 @@
+{
+  "scenario": "field-companion-ql",
+  "at": "2026-10-06T20:38:15.299Z",
+  "real_turn": true,
+  "record": {
+    "kev": {
+      "address": "127.0.0.1:8019",
+      "models": [
+        {
+          "name": "kev-latest",
+          "run": "jaredpalmer/kev-0.8b",
+          "base": "Qwen/Qwen3.5-0.8B-Base"
+        },
+        {
+          "name": "jev-latest",
+          "run": "jaredpalmer/kev-0.8b",
+          "base": "Qwen/Qwen3.5-0.8B-Base"
+        }
+      ]
+    },
+    "facultyConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/faculty.walk.json",
+    "facultyEvidence": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/faculty-evidence",
+    "installation": {
+      "installed": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/.aikit-home/tools/prime-epi/167f9f869a2c8bff",
+      "binding": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/.aikit-home/tools/prime-epi/current.json",
+      "extension": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/.aikit-home/tools/prime-epi/167f9f869a2c8bff/extensions/ql-faculty-bindings.ts",
+      "id": "167f9f869a2c8bff"
+    },
+    "configured": {
+      "body_ref": "agent-body/epi-prime-ql",
+      "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+      "configured": true,
+      "model_selection": "Prime native configured model unless an explicit AIKit model policy overrides it",
+      "provider": "epi-prime-ql",
+      "ql_revision": "b75d0ddd0d3d58b63a4bd4b081da00d3134fdc46",
+      "standing": "configured-not-started"
+    },
+    "candidates": [
+      {
+        "ref": "context-source/field-walk-1",
+        "title": "§3 · #0 — Eight Determinations",
+        "walk_kind": "relevant",
+        "slug": "section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations"
+      },
+      {
+        "ref": "context-source/field-walk-2",
+        "title": "§4′ — 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/harmonics-symmetries"
+      },
+      {
+        "ref": "context-source/field-walk-3",
+        "title": "§3′ — 4′+2′ = 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/spanda"
+      },
+      {
+        "ref": "context-source/field-walk-4",
+        "title": "Diaphaneity",
+        "walk_kind": "adjacent",
+        "slug": "section-rooms/arguments/concepts/diaphaneity"
+      },
+      {
+        "ref": "context-source/field-walk-5",
+        "title": "Jung — Aion, CW 9.2 (1978 corrected printing)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/psychology/jung/jung-1978-aion-cw9-2/jung-1978-aion-cw9-2"
+      },
+      {
+        "ref": "context-source/field-walk-6",
+        "title": "Pauli — The Influence of Archetypal Ideas on the Scientific Theories of Kepler (Silz trans., 1955)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/physics/pauli/pauli-1955-kepler-archetypal-ideas/pauli-1955-kepler-archetypal-ideas"
+      }
+    ],
+    "nowContext": {
+      "configured": true,
+      "now_context": {
+        "external_provider": true,
+        "prepare_request": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/now-prepare.json",
+        "redis": {
+          "address": "127.0.0.1:5136",
+          "allow_remote": false,
+          "connect_timeout_ms": 1000,
+          "coordination_retention_seconds": 1209600,
+          "credential_ref": null,
+          "database": 0,
+          "io_timeout_ms": 1000,
+          "key_prefix": "aikit-now",
+          "prepared_ttl_seconds": 21600,
+          "schema": "aikit.redis-now-config/v1",
+          "username": null
+        },
+        "required": false
+      },
+      "preparation": {
+        "participant_ref": "agent/field-walk-chat",
+        "project_ref": "field-walk",
+        "selection": {
+          "mode": "provider",
+          "provider_file": "/Users/admin/.aikit/decision-provider.json",
+          "relevance_threshold": 0.2
+        }
+      },
+      "provider": "epi-prime-ql",
+      "standing": "configuration only; nothing was prepared or delivered"
+    },
+    "redisConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-59GgE1/redis-now/redis-now.json",
+    "provisionRequest": {
+      "op": "encounter_provision",
+      "project": "Field",
+      "preferred_body_ref": "agent-body/epi-prime-ql"
+    },
+    "agentSession": "agent-session/field-walk-chat-1791318189-1538",
+    "status": {
+      "provider": {
+        "body_ref": "agent-body/epi-prime-ql",
+        "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+        "command": "actuation-epi-prime",
+        "entry": "cli.js",
+        "id": "epi-prime-ql",
+        "label": "Epi-Logos Prime-QL",
+        "protocol": "prime-rpc",
+        "sandboxed": false
+      },
+      "native_session_id": "01a112e2-6d42-74aa-a187-c474742622c3",
+      "model_observation": {
+        "available_models": [
+          {
+            "description": "Prime Agent 0.9.4 native configured model",
+            "modelId": "glm-5.3-flash",
+            "name": "GLM-5.3-Flash",
+            "rosterIdentity": {
+              "provider_native_id": "glm-5.3-flash",
+              "provider_ref": "provider:zai"
+            }
+          }
+        ],
+        "current_model_id": "glm-5.3-flash",
+        "native_provider": "zai",
+        "standing": "Prime native get_state observes provider=zai; native configured default, not an AIKit selection or inference proof"
+      }
+    },
+    "chatTail": "Wo\nEarlier messages\nWORLD\n\nBoth QL calls are complete and the remaining QL tools would only repeat the same deterministic state (the harmonic and frame embeds already came back empty of further positions), so I'm stopping at two of the three allowed calls.\n\n## QL reading — §1 · #3 \"The Crossed Zero\" (movement 16, in view beside the Dimensional Reframing page)\n\nWHAT THE QL OWNER RETURNED (POSITIONS ONLY):\n\nLOCAL-POSITION: #3 (P3)\n— the single position the kernel holds for this span. It was admitted as an observed fact, based on the manuscript's own coordinate (position: \"#3\", tag position/p3) at the exact in-view revision (sha256:6172aee9…, recovered from the snapshot revision of Antykathera-Essay-Work). The event was admitted with no refusals and no missing inputs.\n\nWHAT WAS NOT RETURNED (AND WHY):\n\nThe lens-relative structure (lens-position, absolute-position) and the context-frame structure (context-local-position, context-grain — the inner-four/outer-two quaternary) were\nNOT\nreturned. Both semantic heads (semantic-lens, semantic-context-frame) stayed\nUNRESOLVED\n: ql_decide reported status unavailable — \"no decision provider elected; ordinary QL remains available\". The owner preserved the candidate sets (12 lenses L0–L5′, 7 context frames CF1–CF7) as candidates only — these are not positions of the passage and I am not stating them as such.\nThe harmonic rendering was empty for the same reason (no resolved lens/basis).\n\nReceipt: event …/field-ql:16-s1-p3-crossed-zero:0, kernel basis ql:owner:ql-mef:agent-event @ ql.agent-projection/v1;structural:2.0.0;mef:1.0.0-q2;music:1.0.0.\n\nIn short: the QL tools returned exactly one position for this passage — \nP3, THE FOURTH MOVEMENT-POSITION (#3) OF STATION ROOM §1 IN THE ESSAY'S SIX-POSITION (P0–P5) PER-ROOM GRID\n — and left the lens/context-frame placement formally unresolved.\n\nDONE_FIELD_QL\n\nGLM-5.3-Flash\nSend",
+    "journalKinds": [
+      "native-open-reserved",
+      "native-open-attempted",
+      "binding",
+      "user-message",
+      "now-context-degraded",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider",
+      "provider"
+    ],
+    "encounterUse": {
+      "status": 0,
+      "stdout": "{\n  \"absences\": [\n    \"owner faculty receipts are read by schema and session; their content-addressed file names are not re-verified here\",\n    \"no prepared context was delivered to this turn, so there is no decision behind it\",\n    \"addressed deliveries are not segmented as turns; only user messages open a turn\"\n  ],\n  \"agent_session\": \"agent-session/field-walk-chat-1791318189-1538\",\n  \"decision\": {\n    \"from_delivery_receipt\": null,\n    \"note\": \"the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt\",\n    \"selection_readback\": {\n      \"read\": false,\n      \"reason\": \"no delivery receipt in this turn to compare against\"\n    }\n  },\n  \"prepared_context\": {\n    \"degraded\": [\n      {\n        \"cursor\": 5,\n        \"detail\": {\n          \"code\": \"central.file_map_not_found\",\n          \"reason\": \"Source is outside participating maps\",\n          \"required\": false,\n          \"selected\": true\n        },\n        \"kind\": \"now-context-degraded\",\n        \"observed_at_ms\": 1791318195637,\n        \"standing\": \"selected enhancement unavailable; base encounter remained operative\"\n      }\n    ],\n    \"delivered\": [],\n    \"source\": \"encounter journal: now-context-* events\",\n    \"state\": \"degraded-none-delivered\",\n    \"uncertain\": []\n  },\n  \"ql_operations\": {\n    \"faculty_receipts\": [],\n    \"python_faculty_calls\": [\n      {\n        \"cursor\": 91,\n        \"function\": \"mef_lenses\",\n        \"tool_call_id\": \"call_f575834cfc044ef9960aee3b\"\n      },\n      {\n        \"cursor\": 91,\n        \"function\": \"capabilities\",\n        \"tool_call_id\": \"call_f575834cfc044ef9960aee3b\"\n      }\n    ],\n    \"reconciliation\": {\n      \"faculty_receipts_in_turn\": 0,\n      \"python_calls_recorded\": 2,\n      \"statement\": \"the number of recorded Python faculty calls and owner receipts in the turn window differ; read both lists\"\n    },\n    \"tool_calls\": []\n  },\n  \"schema\": \"aikit.encounter-use-reading/v1\",\n  \"sources\": [\n    \"encounter journal (encounters.sqlite3)\",\n    \"Actuation faculty evidence (actuation.prime-ql-operation/v1)\",\n    \"Redis prepared view\"\n  ],\n  \"turn\": {\n    \"end_cursor_exclusive\": null,\n    \"index\": 1,\n    \"last_event_at_ms\": 1791318755370,\n    \"of\": 1,\n    \"outcome\": \"turn-ended\",\n    \"start_cursor\": 4,\n    \"started_at_ms\": 1791318195636\n  }\n}\n",
+      "stderr": ""
+    }
+  },
+  "passed": false,
+  "counts": {
+    "passed": 9,
+    "total": 10,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the field stands at M16 with a tangent open and a different page selected",
+      "detail": {
+        "gen": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "the panel's provision asked for the Epi body because the lens is on (existing selection mechanism)",
+      "detail": {
+        "op": "encounter_provision",
+        "preferred_body_ref": "agent-body/epi-prime-ql"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the provisioned conversation is the Prime-QL body, not a generic agent",
+      "detail": {
+        "body_ref": "agent-body/epi-prime-ql",
+        "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+        "command": "actuation-epi-prime",
+        "entry": "cli.js",
+        "id": "epi-prime-ql",
+        "label": "Epi-Logos Prime-QL",
+        "protocol": "prime-rpc",
+        "sandboxed": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "the body revision is the delivered Actuation revision",
+      "detail": "38ee6379e9772c2570cfa226bcc7c21cce472bcf"
+    },
+    {
+      "ok": true,
+      "label": "the owner's journal recorded the user turn",
+      "detail": [
+        "native-open-reserved",
+        "native-open-attempted",
+        "binding",
+        "user-message",
+        "now-context-degraded",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider",
+        "provider"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the turn carried the field item (reviewed context)",
+      "detail": {
+        "len": 3014
+      }
+    },
+    {
+      "ok": false,
+      "label": "AIKit delivered Redis-prepared NOW context to the turn",
+      "detail": [
+        "now-context-degraded"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the recorder read the turn",
+      "detail": {
+        "status": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "the body made QL operations (ql_* / ql_relational.*)",
+      "detail": [
+        "ql_operations"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ],
+  "skipped": []
+}
