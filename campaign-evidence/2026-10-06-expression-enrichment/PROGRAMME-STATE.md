@@ -22,7 +22,7 @@
 
 1. Covers re-captured from each member's strongest scene (capture.mjs).
 2. Curated envelope regenerated: `desktop/cradle/expressions-app/scripts/export-return-of-zero-publication.mjs` (+ candidate) so PUBLICATION-CURATED.json carries new SHA-256 digests.
-3. Site pin: move `.github/workflows/site.yml` `OI_PCD_S_PRODUCTS_ROOT` checkout ref to the merged PCD commit.
+3. Site pin: move `.github/workflows/site.yml` `OI_PCD_S_PRODUCTS_ROOT` checkout `ref` (line ~42, `EpiLogos/Point-Cloud-Demo` @ e875344…) to the merged PCD commit. The essay-vault pin (line ~49, @ dbf3b17…) **stays**: the enrichment does not re-bind sources, and every preserved binding records actual-bytes hashes at dbf3b17 — moving that pin is an owner decision about the source revision, not part of this pass.
 4. Gates green: `python3 site/tests/expression-render.py` (needs `npm run build:public` in site/), `npm run test:essay`, `site/essay-expressions.test.mjs`.
 5. Linter after-report (00/01 files gain -after companions); critic rejection log; review set ~10 members; PRs (O-I branch + PCD branch); evidence; NOW day close.
 
