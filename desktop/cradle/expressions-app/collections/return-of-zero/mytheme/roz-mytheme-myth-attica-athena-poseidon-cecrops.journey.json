@@ -10,11 +10,11 @@
       "id": "m-att-0-contest",
       "name": "Claim, witness, verdict",
       "character": "Poseidon strikes the middle of the Acropolis; Athena calls Cecrops to witness and plants the olive; Zeus separates; the twelve arbiters award the country on Cecrops's testimony; the city is named Athens.",
-      "duration": 12,
+      "duration": 13,
       "transition": 1.5,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.04,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,13 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.5,
+          "circulation": 0.15,
+          "dispersion": 0.08,
+          "turbulence": 0.15
+        }
       },
       "entities": [
         {
@@ -100,9 +110,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.25,
+            "radius": 0.35,
             "spin": 0
           },
           "station": null,
@@ -149,16 +159,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st455",
+                "id": "e412-sq1",
                 "text": "",
                 "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e412-sq2",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -233,16 +283,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st457",
+                "id": "e414-sq1",
+                "text": "Cecropia",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e414-sq2",
                 "text": "Athens",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -263,29 +353,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Cecrops, first king of Attica, a son of the soil compounded of man and serpent, has already given the country formerly called Acte his name. The gods seek cities for peculiar worship. Poseidon arrives first and strikes the middle of the Acropolis with his trident, producing the sea called Erechtheis. Athena arrives after him, calls Cecrops to witness her act of taking",
+          "body": "Cecrops, son of the soil compounded of man and serpent, has already named the country Cecropia. Poseidon arrives first and strikes the middle of the Acropolis with his trident, producing the sea called Erechtheis. Athena arrives, calls Cecrops to witness her taking possession, and plants an olive. Zeus separates them and appoints the twelve gods; the country is awarded to Athena on Cecrops's testimony, and she names the city Athens.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "possession, and plants an olive tree. The two strive; Zeus separates them and appoints arbiters — the twelve gods in this version. The country is awarded to Athena because Cecrops bears witness that she planted the olive; she names the city Athens after herself. The selected text keeps the arbiters distinct from the witnessing: this is not the king choosing a favourite gift.\n\nOccurrences: Cecrops's naming and double nature (#0–#1); the trident-strike and Erechtheis (#1); the witnessed planting (#1, #4); the twelve arbiters and testimony (#1); the naming of Athens (#1).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: Cecrops's naming and double nature (#0–#1); the trident-strike and Erechtheis (#1); the witnessed planting (#1, #4); the twelve arbiters and testimony (#1); the naming of Athens (#1).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -315,10 +405,10 @@
       "name": "The flood and its variant aftermaths",
       "character": "Poseidon floods the Thriasian plain; Hyginus has Mercury prevent the inundation; Augustine's Varro-derived telling takes the women's votes and the maternal names away.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -327,7 +417,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#0f2230",
@@ -338,7 +432,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.6,
+          "circulation": -0.3,
+          "dispersion": 0.1
+        }
       },
       "entities": [
         {
@@ -369,16 +468,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st458",
+                "id": "e415-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e415-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.58,
+                    "y": 0.58
+                  },
+                  "rotation": 0,
+                  "tint": "#2b4b6b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e415-sq3",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -525,35 +687,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The verdict does not dissolve Poseidon's force: in anger he floods the Thriasian plain and lays Attica under the sea. Hyginus qualifies the aftermath: Neptune intends to inundate the land but Mercury prevents him on Jupiter's orders, and Minerva founds Athens in her own name — the first city established in the land. Augustine sources a different sequence through Varro: an olive and water appear; Cecrops consults Delphi; the naming goes to the citizens; the women, outnumbering the",
+          "body": "The verdict does not dissolve Poseidon's force: he floods the Thriasian plain and lays Attica under the sea. Hyginus: Mercury prevents the inundation on Jupiter's orders, and Minerva founds Athens. Augustine: the women's vote chooses Minerva; the appeasement takes back votes, maternal names, the name Athenian. The west pediment gives the contest its monumental image, its trident-action readable as withdrawal or as striking to flood.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "men by one, choose Minerva; Neptune devastates the land; to appease him the women lose their votes, the right to give children maternal names, and the designation Athenian — and Augustine presses the reversal: the goddess whose voters won cannot protect them. The Parthenon's west pediment gives the contest its monumental civic image, its trident-action readable as withdrawal or as striking to flood; monument, reconstructed scene and literary narrative remain different witnesses.\n\nOccurrences: the Thriasian flood (#1, #2); the prevented inundation (#2); the women's vote and its removal (#2); the pediment's double reading (#2).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the Thriasian flood (#1, #2); the prevented inundation (#2); the women's vote and its removal (#2); the pediment's double reading (#2).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -576,12 +738,12 @@
       "id": "m-att-2-sanctuary",
       "name": "The sanctuary remembers both claims",
       "character": "The Erechtheion houses Athena's eastern room and Poseidon-Erechtheus below; the olive, the trident marks and the salt spring stand in the sacred centre; the burnt shoot regrows.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.8,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.14,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -589,7 +751,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3,
+        "volumeEnabled": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0e0c08"
       },
       "field": {
         "background": "#f6f1e6",
@@ -600,7 +769,13 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.35,
+          "circulation": 0.2,
+          "zConfinement": 0.7,
+          "dispersion": 0.05
+        }
       },
       "entities": [
         {
@@ -610,7 +785,7 @@
           "position": {
             "x": 0,
             "y": -0.17,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.859,
@@ -652,7 +827,7 @@
           "position": {
             "x": -0.5,
             "y": -0.3,
-            "z": 0
+            "z": 0.4
           },
           "size": {
             "x": 0.36,
@@ -673,16 +848,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st463",
+                "id": "e420-sq1",
                 "text": "",
                 "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e420-sq2",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#3a2c18",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e420-sq3",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#8a9a52",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -694,7 +932,7 @@
           "position": {
             "x": 0.5,
             "y": -0.3,
-            "z": 0
+            "z": -0.45
           },
           "size": {
             "x": 0.3,
@@ -745,29 +983,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The Erechtheion's eastern room was dedicated to Athena, while its lower western room accommodated shrines including Poseidon-Erechtheus; the complex incorporated the contest's sacred signs — Athena's olive, Poseidon's trident marks in the bedrock, the spring of salty water. Herodotus reports the Athenians describing olive and sea as the gods' witnesses in Erechtheus's sanctuary, and the olive's regrowth after burning — a shoot about a cubit long on the",
+          "body": "The Erechtheion's eastern room was Athena's; its lower western room housed shrines including Poseidon-Erechtheus. Herodotus reports olive and sea as the gods' witnesses, and the burnt olive's regrowth — a shoot about a cubit by the next day. Pausanias gives the altars, the cistern whose wave sounds in a south wind, the trident mark, and a two-cubit regrowth — a distinct report. The oil-fed lamp stays a separate cultic object.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "very day. Pausanias gives altars for Poseidon with Erechtheus, Butes and Hephaestus, the sea-water cistern whose wave sounds in a south wind, the trident mark, and a two-cubit regrowth on the day of burning — a distinct report from Herodotus's. The oil-fed lamp he describes is a separate cultic object, not evidence for a root-to-light chain in the source. The sacred place retains the rival signs; their coexistence is the material relation Taylor receives.\n\nOccurrences: the double shrine (#2); the olive's burning and regrowth in two reports (#2); the trident mark and salt spring (#2); the lamp kept distinct (#2).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the double shrine (#2); the olive's burning and regrowth in two reports (#2); the trident mark and salt spring (#2); the lamp kept distinct (#2).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -790,17 +1028,33 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-wave",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.12,
+          "max": 0.12,
+          "rate": 0.13,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-att-3-torus",
       "name": "The ratified reading: the well at the centre; the olive chain",
       "character": "The civic-rational order organised around an opening it cannot convert into itself; root → tree → fruit → pressing → oil → anointing → flame; a valid verdict is not an exhaustive ontology.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -809,7 +1063,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#f6f1e6",
@@ -820,7 +1078,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.5,
+          "circulation": 0.45,
+          "dispersion": 0.06
+        }
       },
       "entities": [
         {
@@ -828,8 +1091,8 @@
           "name": "the toroidal civic image — Athena's order wound around Poseidon's unfilled depth",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.6,
+            "x": 0.0,
+            "y": -0.35,
             "z": 0
           },
           "size": {
@@ -851,16 +1114,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st465",
+                "id": "e422-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.95,
+                    "y": 0.8
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e422-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.6,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.85,
+                    "y": 0.95
+                  },
+                  "rotation": 90,
+                  "tint": "#5a4d78",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -870,8 +1173,8 @@
           "name": "the well/sea at the centre — archaic, mobile, retained, not abolished",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.32,
+            "x": 0.0,
+            "y": -0.35,
             "z": 0
           },
           "size": {
@@ -893,16 +1196,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st466",
+                "id": "e423-sq1",
                 "text": "",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#2b4b6b",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e423-sq2",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#2b4b6b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -935,16 +1278,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st467",
-                "text": "→→→",
+                "id": "e424-sq1",
+                "text": "root→tree",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.11
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a2b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e424-sq2",
+                "text": "fruit→pressing→oil",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.52,
+                    "y": 0.11
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e424-sq3",
+                "text": "anointing→flame/light",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.52,
+                    "y": 0.11
+                  },
+                  "rotation": 0,
+                  "tint": "#e0a020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1007,29 +1413,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The ratified relations carry the amplification. Poseidon's well/sea is read as the archaic-magical depth enshrined within the heart of Athena's rational-civic form — the strongest image toroidal rather than linear: the formed city organised around an opening it cannot convert into itself. Athena carries rational, strategic, civic and technical differentiation, healthy insofar as it can contain relation to what it did not become; the danger lies in a reading declaring the whole field identical with the winning determination. The torus with Poseidon's well at its centre is a project-composed",
+          "body": "Poseidon's well/sea is the archaic-magical depth enshrined within the heart of Athena's rational-civic form — toroidal, not linear: the formed city organised around an opening it cannot convert into itself. The olive chain runs root, tree, fruit, pressing, oil, anointing, flame — the gift through which Athena's claim is witnessed and made civic. Hybris begins when the achieved determination claims what it did not choose never belonged to the field.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "image beside the mature torus/Ouroboros field — the condition of the whole may remain present without becoming one more positive content of the governing form. The olive chain runs root, tree, fruit, pressing, oil, anointing, flame and light — materially grounded, and inside this story the gift through which Athena's claim is witnessed, preferred and made civic; its later Epi-Logos technical appointment remains open. And: a judgment can bind, a city can receive a name, yet hybris begins when the achieved determination retroactively claims that what it did not choose never belonged to the field.\n\nOccurrences: the well at the centre (#1, #3); the olive under witness and its chain (#1, #3); the flood as retained force (#2, #3); the verdict's bounded authority (#1, #3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the well at the centre (#1, #3); the olive under witness and its chain (#1, #3); the flood as retained force (#2, #3); the verdict's bounded authority (#1, #3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -1058,11 +1464,11 @@
       "id": "m-att-5-return",
       "name": "The verdict returns to the place",
       "character": "Five candidates held as candidates; the whole-story method; the Topos→Logos→Nomos→Natio fourfold as operational analogy.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1071,7 +1477,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.25,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -1082,7 +1492,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.25,
+          "speed": 0.4,
+          "circulation": 0.25,
+          "dispersion": 0.07
+        }
       },
       "entities": [
         {
@@ -1113,16 +1528,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st469",
+                "id": "e426-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#2b4b6b",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e426-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1197,16 +1652,102 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st471",
+                "id": "e428-sq1",
                 "text": "T·L·N·N",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e428-sq2",
+                "text": "Topos→Logos",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.46,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e428-sq3",
+                "text": "Nomos→Natio",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e428-sq4",
+                "text": "T·L·N·N",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1269,35 +1810,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The whole returns-to A24 through the real competence of a verdict whose consequence remains within a larger field: retaining Poseidon's sign does not revoke Athena's award. The Arbitration field qualifies the return at operational register 3: Continuity-in-Indeterminacy keeps the place's prior relations available; Criterion-through-Distinction and Delineation-through-Difference expose what counts; Arbitration-in-Crisis binds; Con-text-through-Diaphaneity lets the determination be seen with its contrary; Resolution-in-Reconciliation returns the civic orientation with its history. The whole is close to the",
+          "body": "The whole returns-to A24: a verdict with real competence whose consequence remains within a larger field — retaining Poseidon's sign does not revoke Athena's award. The Arbitration field qualifies the return: Continuity-in-Indeterminacy, Criterion-through-Distinction, Arbitration-in-Crisis, Con-text-through-Diaphaneity, Resolution-in-Reconciliation. Athena's name becomes the civic noun; Poseidon's continued force shows the noun does not exhaust the place. The five candidate readings remain deliberately human-amplified: no, presented for encounter rather than installed.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Topos→Logos→Nomos→Natio fourfold as operational analogy, not a claim that the myth encoded the later sixfold. Athena's name becomes the civic noun while Poseidon's continued force shows the noun does not exhaust the living character of the place. The five candidate readings — Cecrops as psychoid mediator, two modes of power, the flood as return of excluded force, the two namings, the Erechtheion as complexio oppositorum — remain deliberately human-amplified: no, presented for encounter rather than installed as canon. Seven source houses carry the eight passage cards; print collation remains separate work.\n\nOccurrences: the retained contrary in the sanctuary (#2, #5→0); the verdict and its bounded authority (#1, #5→0); the candidates held unratified (#5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the retained contrary in the sanctuary (#2, #5→0); the verdict and its bounded authority (#1, #5→0); the candidates held unratified (#5→0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1317,5 +1858,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T00:00:00.000Z"
 }

@@ -1,0 +1,333 @@
+{
+ "artifact": "matheme/roz-matheme-topology-harmonics.journey.json",
+ "family": "matheme",
+ "worker": "E4",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-matheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "matheme-projective-completion",
+    "path": "submission-package/essay/symbolon/matheme/topology/projective-completion.md",
+    "sha256": "a568aba0008093bfc796bfc47600a5dd1ed22ccb7b2b795b4dd50994315a997f"
+   },
+   {
+    "record_id": "matheme-projective-line",
+    "path": "submission-package/essay/symbolon/matheme/topology/projective-line.md",
+    "sha256": "f7bfe18a3e899398ce4d3f9e68c7ce0a23d27899d208ff485cfd1b35e13df072"
+   },
+   {
+    "record_id": "matheme-riemann-sphere",
+    "path": "submission-package/essay/symbolon/matheme/topology/riemann-sphere.md",
+    "sha256": "c20fdc470303a0e2749b28c701b201a9d4f846373b7db419e2e3384350c30070"
+   },
+   {
+    "record_id": "matheme-torus-cover-winding",
+    "path": "submission-package/essay/symbolon/matheme/topology/torus-cover-winding.md",
+    "sha256": "53beea3698569c79e6c65683199f703bace8454c7464c1bc90c8b82f3d090658"
+   },
+   {
+    "record_id": "matheme-mobius-klein-surfaces",
+    "path": "submission-package/essay/symbolon/matheme/topology/mobius-klein-surfaces.md",
+    "sha256": "94c800528c38963522c423e3a2215b42a3cd93ca73ce07785c807a7ba09fdda2"
+   },
+   {
+    "record_id": "matheme-toroidal-poloidal-confinement",
+    "path": "submission-package/essay/symbolon/matheme/topology/toroidal-poloidal-confinement.md",
+    "sha256": "a27a7176142e0bb115ee944735d0d7b039f9368795294e4a32d8ad5998d929ea"
+   },
+   {
+    "record_id": "matheme-manifold-atlas",
+    "path": "submission-package/essay/symbolon/matheme/topology/manifold-atlas.md",
+    "sha256": "9cb4c3a295fb43c044392188a55b3217ef6cb5e1bbd3d1efbce84c9743356119"
+   },
+   {
+    "record_id": "matheme-whole-tone-return",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/whole-tone-return.md",
+    "sha256": "5490bd2a2644d3d58109e149db18211ec6a6b8dcc403aa4e9820a09273dc2b6c"
+   },
+   {
+    "record_id": "matheme-pythagorean-comma",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/pythagorean-comma.md",
+    "sha256": "85b771ca4c20fc56dd72dd4851dae39137757cd1b6005b51754aec3a0a66d668"
+   },
+   {
+    "record_id": "matheme-cycle-interval-octave",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/cycle-interval-octave.md",
+    "sha256": "e753292d9ede4e64b90c67c95b926e7ae811eab6c9937fda94b3de149a8b036e"
+   },
+   {
+    "record_id": "matheme-arche-topos-musical-resolution",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/arche-topos-musical-resolution.md",
+    "sha256": "7fed0b46d19a2babd0bce566f3042094af91b7eb18be653fb59e73d2581039fc"
+   },
+   {
+    "record_id": "matheme-metonic-antikythera-cycle",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/metonic-antikythera-cycle.md",
+    "sha256": "0d844379502a1ea08034a7adebe48909f77b1e14d083a60a3c6914e890ce871b"
+   },
+   {
+    "record_id": "matheme-cymatics-standing-waves",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/cymatics-standing-waves.md",
+    "sha256": "18844ff980c111bc0cf8f589e8c343edb944b2012b4ca6f10a22ecd36acda8da"
+   },
+   {
+    "record_id": "matheme-perfect-six",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/perfect-six.md",
+    "sha256": "27a6d07a07deb05d9b4a6869b7e2fa262accc542167c46adccb3a72dc66f9ebb"
+   },
+   {
+    "record_id": "matheme-tetraktys-triangle",
+    "path": "submission-package/essay/symbolon/matheme/harmonics/tetraktys-triangle.md",
+    "sha256": "32a0d3a26386446a4bc2a06f2a67e0247f3c8e71bf9c81ad81c376f133373362"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "top-projective-completion",
+   "source_ref": "matheme-projective-completion",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "top-projective-line",
+   "source_ref": "matheme-projective-line",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "top-riemann-sphere",
+   "source_ref": "matheme-riemann-sphere",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "top-torus-cover-winding",
+   "source_ref": "matheme-torus-cover-winding",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "top-mobius-klein",
+   "source_ref": "matheme-mobius-klein-surfaces",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "top-toroidal-poloidal",
+   "source_ref": "matheme-toroidal-poloidal-confinement",
+   "claim_status": "argued",
+   "relations": ""
+  },
+  {
+   "scene_id": "top-manifold-atlas",
+   "source_ref": "matheme-manifold-atlas",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-whole-tone-return",
+   "source_ref": "matheme-whole-tone-return",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-pythagorean-comma",
+   "source_ref": "matheme-pythagorean-comma",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-cycle-interval-octave",
+   "source_ref": "matheme-cycle-interval-octave",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-arche-topos-musical-resolution",
+   "source_ref": "matheme-arche-topos-musical-resolution",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-metonic-antikythera",
+   "source_ref": "matheme-metonic-antikythera-cycle",
+   "claim_status": "argued",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-cymatics-standing-waves",
+   "source_ref": "matheme-cymatics-standing-waves",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-perfect-six",
+   "source_ref": "matheme-perfect-six",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "har-tetraktys-triangle",
+   "source_ref": "matheme-tetraktys-triangle",
+   "claim_status": "derived",
+   "relations": ""
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "authored token glyphs throughout (QL notation: 0/1, 1/0, −/−, ?/!, −/+, X/x, AM/IS, ∞/dx, Ø, 4+2, 5→0, 9/8, 16/9, (0/1)/(1/0), T² = ℝ²/ℤ², π₁ ≅ ℤ×ℤ, 531441/524288 …)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "concentric mandala plate (ql-eight-determinations) per ql-expression-grammar.md §III",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "crossed-zero recognition sequence as entity step sequence (ql-crossed-zero)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "tetraktys dot diagram (har-tetraktys-triangle, four rows 1·2·3·4)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "fundamental square + torus ring plates (quilt-topology, top-torus-cover-winding)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "matheme/roz-matheme-topology-harmonics.cover.png",
+ "status": "authored",
+ "notes": [
+  "top-torus-cover-winding is the flagship topology plate: fundamental square + torus ring + winding sequence γ(t)=[2t,−t] → lift (2,−1) + π₁ ≅ ℤ×ℤ, χ=0. Cymatic material is native where records are about resonance (ratio threshold, whole-tone return, foundational ratios, musical resolution, cymatics): cymatic entities carry template frequencies matched to the worked Hz scales (240/320/360/480; 288/384/432/576; n=1,2,3 modes at 110/220/330), with field resonator frequency/excitation raised only there. har-tetraktys-triangle carries an authored ASCII tetraktys. Metonic keeps the approximation sign load-bearing; cymatics keeps the 8+4 anchor mapping Offered with its discriminating test.  Cover note: tools/capture.mjs captures the active (first) scene, so the cover shows the opening projective-completion scene rather than the torus plate; the torus plate is captured per-scene in the draft review set (/tmp/roz-e4-drafts2, E4 session evidence).",
+  "Per-scene moves (2026-10-06 enrichment): every scene re-expresses its record's derivation as operations. top-projective-completion: parallel equations held apart by repel forces; the ideal point's sequence steps from the bare class to its w=0 condition, tint warming at the intersection — completion changes the representative, not the affine fact. top-projective-line: the swap runs as a two-step sequence whose position flips above/below the ring — 0 and ∞ exchange places; attract pointer is the chart gathering coordinates. top-riemann-sphere: 3D with laminated z placement (∞ north, 0 south, 1 equator), dome volume + perspective; the map sequence climbs from formula to south pole to north pole — the third dimension is the completed object itself, and yaw shows the pole exchange as rotation. top-torus-cover-winding: the flagship 3D torus (toroidalHopf, thetaRate 0.22 / phiRate 0.42, volume round, perspective); the winding sequence's steps displace position across the stage — the lift ends displaced from its start, which IS the cover/winding claim (local return retains global displacement); vortex pointer whirls with the circulation. top-mobius-klein: pass-1/pass-2 sequence moves the glyph left and mirrors it, then right restored — orientation reversal as a position-and-tint fact; shove click is the det −1 rupture. top-toroidal-poloidal: 3D helix; morph rates authored 2:1 (thetaRate 0.36 toroidal : phiRate 0.18 poloidal) after θ=φ/2; the sequence walks the helix to the opposite side and back closed at 2+1. top-manifold-atlas: chart sequence runs the transition (formula → u=3 ↦ v=1/3 → cocycle), tints marking the overlap. har-whole-tone-return: resonance on at 288 Hz with dominance 0.55/excitation 0.85 driving the three cymatic plates (16/9, 9/8, 2/1); the derivation sequence swells the remainder step and gilds the octave arrival; an LFO breathes the frequency ±12 Hz around 288 — the 9/8 live tick that never settles. har-pythagorean-comma: morph law 'beat' with near-equal rates (0.10/0.11) — the comma is a beat phenomenon; resonanceDrive sweeps upward as the twelve-fifth ascent; shove click marks the overshoot past the octave frame. har-cycle-interval-octave: the +2/+7 sequence lifts position while its text keeps the class — register rises, class retained; vortex pointer turns the cycle. har-arche-topos: resonanceDrive pingpong sweep traverses the four plates 288/384/432/576; implode click is the recognition gathering the perspectives. har-metonic: quiet (resonance off, pointer strength 0.6, speed LFO 0.3–0.55) — a gear train's patience; the count sequence assembles 228+7 before the residual is named. har-cymatics-standing-waves: resonanceDrive ascends the mode ladder n=1,2,3; triangle-wave excitation LFO is the driven plate's forcing; repel pointer pushes marks toward nodal rest. har-perfect-six: the sequence enacts the operators — sum steps gather position, the product step scales the glyph multiplicatively, the zero faces split tint; implode click gathers divisors. har-tetraktys: the placeholder dot rows became rows of unit glyphs (1 / 1 1 / 1 1 1 / 1 1 1 1) — the tetraktys is rows of units, and each row now carries its rationale; the ratio sequence shows the numerator-only flip.",
+  "Craft decisions: pointer profiles chosen for meaning — repel where the format excludes (affine separation, nodal rest, the comma's overshoot via shove), attract where a chart or recognition gathers (projective line, manifold atlas, whole-tone return, perfect six, metonic stillness at 0.6 strength), vortex where the record circulates (Riemann axis, torus winding, tokamak helix, cycle traversal); click effects: pulse for quiet pulses, implode at the octave-return gatherings, shove at the two ruptures (Klein det −1, comma overshoot), vortex on the torus. Automation lanes carry meaning: frequency LFO at ±12 Hz on the whole-tone plate is the never-settling 9/8 beat; the metonic speed LFO 0.3–0.55 is the slow crank; the excitation triangle wave on cymatics is forced driving; circulation LFOs ride the three circulation records. Durations/transitions differ across the journey (12/14/16 s; 1.5/2.0/2.2/2.8 s) so the beats differ — the metonic scene is the slowest, its cycle nineteen years.",
+  "What the third dimension means: in top-riemann-sphere the z axis is the completed object — ∞ and 0 sit at the poles and a second yaw shows the reciprocal exchange as rotation about the axis; in top-torus-cover-winding the z spread separates the covering square (behind, z −0.3) from the torus body, and the winding sequence's end position is displaced from its start in x, y AND z — the displaced return is the §III.8 claim rendered as geometry; in top-toroidal-poloidal the z depth carries the helix's two turns (toroidal:poloidal = 2:1 in the authored morph rates), and perspective+volume make the long and short directions legible as different scales."
+ ],
+ "description": "Topology (projective completion/line, Riemann sphere, torus-cover-winding, Möbius-Klein, toroidal-poloidal, manifold atlas) and harmonics (whole-tone return, comma, cycle, musical resolution, Metonic, cymatics, perfect six, tetraktys).",
+ "scene_count": 15,
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-matheme-l1",
+  "lane": "wave1/matheme",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "(1,2/3) closes · (1,√2) dense": "the linear flows of #4: rational slope closes with winding, irrational slope is dense — recurrence without return through a point.",
+  "(16/9)(9/8) = 2": "the completion relation: the doubled fourth requires the whole-tone remainder to reach the octave.",
+  "(16/9)r = 2": "the equation whose solution r = 9/8 is the missing interval — the remainder solved for, not subtracted.",
+  "(3/2)/(4/3)=9/8 · (16/9)(9/8)=2": "the two independent constructions that recover the same 9/8 — quotient of fifth by fourth, completion of the doubled fourth.",
+  "(3/2)¹²": "twelve ascending pure fifths — the first traversal whose endpoint overshoots seven octaves.",
+  "(3/5,4/5): u=3 · v=1/3": "one circle point under both charts — unequal numbers, one declared transition.",
+  "(4/3)² = 16/9": "the doubled fourth: two fourth-spans composed multiplicatively.",
+  "+(−1,3) → (1,2)": "concatenation adds displacements — following one winding by another sums the integer pairs.",
+  "+2 → 2 orbits": "whole-tone stepping in 12-TET: two disjoint six-element orbits, even and odd residues.",
+  "+7 → 12 steps": "fifth stepping, coprime to 12, visits every residue before returning.",
+  "0": "the additive zero of the sphere — the south pole, the point the complex plane never loses.",
+  "0 ↕ ∞ exchanged": "the swap trades the two special classes — 0 and ∞ exchange places under one defined map.",
+  "0+…=6 · 0×…=0": "the two faces of contextual zero: additive identity permits the sum, multiplicative absorber dissolves the product.",
+  "0/1 + 1/0 = 1/1 ≡ 100%": "the standing-unity reading: both orientations of the relation summed as one accounting.",
+  "0/1 = 4+2 = 5→0": "the earned chain in its first stretch — ground/mark, the sixfold count, the return-switch.",
+  "1": "the unit point of the tetraktys rows — whatever has become determinate enough to count.",
+  "1 1": "second row of the tetraktys — two units, the first relation.",
+  "1 1 1": "third row — three units, the triad the triangle bounds.",
+  "1 1 1 1": "fourth row — four units completing triangular ten.",
+  "1+2+3 = 6": "the divisor sum that makes 6 perfect — proper parts reassembled equal the whole.",
+  "1+2+3+4 = 10": "triangular ten — the finite sum the point rows diagram.",
+  "1/z exchanges 0 and ∞": "reciprocal extends to the sphere by trading the poles — the well-defined transformation, not unrestricted division.",
+  "12×12 + 7×13 = 235": "the exact Metonic count: twelve ordinary years and seven thirteen-month years.",
+  "16/9": "the doubled fourth — the achieved totality-ratio that falls short of the octave.",
+  "16/9 = 2⁴/3²": "the ratio read through prime factors — four twos over two threes, the 4+2 body explicit.",
+  "16/9 = 2⁴/3² · 3²=9 ≠ 2³=8": "the prime reading beside the asymmetry: the base/exponent flip holds only in the numerator.",
+  "1×2×3 = 6": "the same triple under multiplication — addition and multiplication converge on 6 for this input only.",
+  "2+2²=6 · 1+2+3=6": "the native count and the divisor count — cardinal results coinciding under distinct constructions.",
+  "2/1": "the octave — the return the ratio field achieves through, not without, its remainder.",
+  "228 months + 7 intercalary": "the count unfolded: 228 ordinary months plus the seven intercalations that reach 235.",
+  "235 : 19": "the Metonic relation — a calendrical fit, its approximation sign load-bearing.",
+  "240 · 480 · 960: one class": "octave equivalence: one pitch class, three registers — class kept, height forgotten.",
+  "240 → 320 → 360 → 480 Hz": "the sounding chain at the 240 Hz reference — fourth, whole-tone, fourth reaching the octave.",
+  "288": "the constructed base frequency of the arche-topos chain.",
+  "2⁷ — octaves": "seven octaves — the second traversal, the frame the fifths overshoot.",
+  "384": "the fourth above 288 Hz — (4/3)·288.",
+  "3² = 9 ≠ 2³ = 8": "the denominator refuses the flip: the anchor holds while the representation changes.",
+  "4 nodes · 3 antinodes": "the n=3 mode count — read off the boundary conditions, not asserted by any architecture.",
+  "432": "the whole-tone step between the fourths — (9/8)·384 = 432 Hz.",
+  "4w = 0 → w = 0": "the two homogenised parallels imply vanishing w — the affine plane exhausted, the ideal line entered.",
+  "4² = 2⁴ = 16": "the numerator alone flips base and exponent — the asymmetric hinge of the two readings.",
+  "576": "the octave of the base — (16/9)(9/8)·288 = 2·288; the return that retains the traversal.",
+  "6≡0 (mod 6)": "modular return: six congruent to zero under a quotient operation, the integer unchanged.",
+  "9/8": "the whole-tone remainder — the live tick by which the totality-ratio falls short of the octave.",
+  "= 1/0 = 4′+2′": "the chain crosses the inverse phase — the process-file primes carrying the same count through passage.",
+  "= 5′→0′ = 0/1": "the chain closes through the return-switch back to the ground/mark relation.",
+  "A♯→C: +2, register lift": "the directed closing step stated with its basis and chosen octave — two semitones, not a minor third.",
+  "C = 531441/524288": "the Pythagorean comma — small and exact, the excess of twelve pure fifths over seven octaves.",
+  "D♯/E♭ give the same C": "the comma found again between enharmonic spellings — a label and a ratio keep different offices.",
+  "Saros 223: eclipse recurrence": "the distinct lunar operation — nodal geometry for eclipses, not the seasonal fit; naming prevents borrowed predictive burden.",
+  "T² = ℝ²/ℤ²": "the torus as quotient — identification gives one address while distinct representatives remain.",
+  "U = S¹∖{N}": "the first chart — the circle minus its north pole, the domain where u is finite.",
+  "V = S¹∖{S}": "the second chart — missing exactly the south pole; together the two cover the circle.",
+  "[0:1]=0": "the affine zero of the projective line — a class, not a bare field value.",
+  "[1:0]=∞": "the one added point — representable infinity, never 1 divided by 0.",
+  "[1:2:0]": "the ideal point where the parallels meet — exact in ℝP², no finite coordinate claimed.",
+  "[1:2:0] · w = 0": "the same intersection with its condition shown — the point lives on the line at infinity.",
+  "[2:4]=[1:2], z=1/2": "the affine chart at work — one class, one unique coordinate where y≠0.",
+  "[x:y] ↦ [y:x]": "the chart swap — defined everywhere, exchanging 0 and ∞, extending reciprocal.",
+  "aba⁻¹ = b⁻¹": "the Klein relation — the noncommutative word that separates the bottle from the torus.",
+  "area 6 · perim 12": "the 3–4–5 triangle measures — area and perimeter as distinct quantities from the squared count.",
+  "class kept": "what returns: the pitch class — while the register records what moved.",
+  "coils: TF · PF · solenoid": "the apparatus distinguished — toroidal field, poloidal field, central solenoid; not two arrows on a drawing.",
+  "det −1 reverses, +1 keeps": "orientation follows the parity of the a-exponent — the precise condition of reversal.",
+  "divisors 1, 2, 3": "the enumeration — testing 1..5 leaves exactly the triple whose sum and product earn the property.",
+  "k = nπ/L · f_n = nc/(2L)": "the boundary conditions and the natural frequencies — the mode ladder derived, not listed.",
+  "legs 4·3 · hyp 5": "the perpendicular pair and its hypotenuse — the construction before any ratio is read from it.",
+  "lift ends (2,−1)": "the unique lift of the closed loop ends displaced — the integer the surface address loses.",
+  "multiplicative, not 2−16/9": "the remainder is a quotient of ratios — subtracting scalars gives a different quantity.",
+  "m·dv = Q·v×B: ½m|v|² const": "the particle law — a perpendicular force turns speed without changing it; not the field line.",
+  "n(n+1)/2 at n=4": "the general finite sum instantiated — the diagram is of the sum, not a new object.",
+  "n=1": "the fundamental mode — one antinode between fixed ends.",
+  "n=2": "the second mode — the first interior node appears.",
+  "n=3": "the third mode — the count the record works exactly.",
+  "n=3: nodes 0, L/3, 2L/3, L": "the mode instantiated: four nodes including endpoints, read from sin(kx)=0.",
+  "nine outputs — Moon to Date": "the proposed front display of the 2021 reconstruction — model scope retained, not a replica claim.",
+  "pass 1: reversed": "the orientation-reversing class — one traversal returns the transverse arrow flipped.",
+  "pass 2: restored": "two passes restore — the inversion has an exact order; the strip keeps its boundary.",
+  "q = 2^(7/12), q¹² = 2⁷": "the tempered fifth — the comma distributed logarithmically, not subtracted in hertz.",
+  "r = 0: south pole": "zero under the map — the complex origin lands at the south pole, never lost.",
+  "r = 2·9/16 = 9/8": "the solved remainder — division gives the interval that completes the octave.",
+  "scale factors r, R+r·cosθ": "the metric factors — equal angular steps traverse unequal physical distances; slope needs them.",
+  "sums below: 0,1,1,3,1": "the finite check of minimality — no smaller number satisfies the divisor definition.",
+  "u = 2A·sin(kx)·cos(ωt)": "the standing wave — position and time separated by the identity; nodes fixed in space.",
+  "u = log₂(f/f₀) · ℝ/ℤ": "the logarithmic coordinate — frequency multiplication becomes integer addition; the class is a quotient.",
+  "u=3 ↦ v=1/3": "the transition operated — one point re-coordinated through the declared reciprocal.",
+  "v = 2u+w · v = 2u−3w": "the parallels homogenised — the affine equations lifted into the projective plane.",
+  "y = 2x+1": "the first affine parallel — a line that will not meet the second in its own plane.",
+  "y = 2x−3": "the second parallel — same slope, different intercept; their separation is the affine fact the completion preserves.",
+  "z = x/y · w = 1/z": "the two charts and their reciprocal transition — the overlap where both coordinates are valid.",
+  "z ↦ (2x/(r²+1), 2y/(r²+1), (r²−1)/(r²+1))": "the stereographic map written out — the construction that closes the plane into the sphere.",
+  "|z|→∞: north pole": "infinity under the map — the point added, approached, representable.",
+  "γ=[2t,−t] closed": "the loop closes downstairs — twice forward, once backward, one address returned.",
+  "δ = 235M − 19Y accumulates": "the residual grows kδ — exact gearing beside approximate sky, kept visibly distinct.",
+  "θ = φ/2": "the helical slope — one poloidal turn per two toroidal; the ratio the field direction fixes.",
+  "π₁ ≅ ℤ×ℤ · χ = 0": "the algebraic summary — two independent commuting generators, zero Euler characteristic.",
+  "τ(u) = 1/u · −1/u²": "the transition function and its derivative — smooth, never zero; compatibility made checkable.",
+  "τ_ki = τ_kj ∘ τ_ji": "the cocycle condition — changing through an intermediate chart reaches the same coordinates.",
+  "φ=2π: opposite side": "after one toroidal turn the line stands across the tube — the helix mid-passage.",
+  "φ=4π: closed 2+1": "the closure — two toroidal and one poloidal turn; the winding stated exactly.",
+  "∞": "the added point itself — the north pole, finite in the second chart only.",
+  "≈ 23.46 cents": "the comma in logarithmic measure — small, exact, audible in no tempered keyboard."
+ }
+}

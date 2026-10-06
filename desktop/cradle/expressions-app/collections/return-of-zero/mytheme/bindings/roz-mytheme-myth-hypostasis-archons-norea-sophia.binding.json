@@ -1,0 +1,143 @@
+{
+ "artifact": "mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-myth-hypostasis-archons-norea-sophia",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/late-antique-gnostic/hypostasis-archons-norea-sophia/WHOLE.md",
+    "sha256": "fdc80d9c458449347bb8aa6c15f6415d94a080dcdeaa016c577d80a6359e3557"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-hyp-0-ruler",
+   "phase": "#1 the arrogant ruler's claim",
+   "relations": "the field-error chain; Samael named in the rebuke"
+  },
+  {
+   "scene_id": "m-hyp-1-adam",
+   "phase": "#1 Adam, Eve and the rulers' pursuit",
+   "relations": "the formation and the violated shadow, retained in narrative"
+  },
+  {
+   "scene_id": "m-hyp-2-norea",
+   "phase": "#2 Norea's refusal",
+   "relations": "anchor 26-norea--flood--refusal-of-the-rulers"
+  },
+  {
+   "scene_id": "m-hyp-3-eleleth",
+   "phase": "#3 Eleleth's rescue and retrospective cosmology",
+   "relations": "anchors 22, 23, 24 (Pistis Sophia, layered heavens, Zoe/Sabaoth)"
+  },
+  {
+   "scene_id": "m-hyp-5-return",
+   "phase": "#4–#5→0 the root and the promised ending",
+   "relations": "anchor hypostasis-norea-root-return; the human-amplified ledger (all four candidates no); Native 020 seam; A20 retrieval route (no)"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the blind chief ruler (Samael/Yaldabaoth/Sakla)",
+   "occurrence": "#1 the sole-god claim; #3 the repeated totalising claim over matter"
+  },
+  {
+   "figure": "the veil",
+   "occurrence": "#3 between the worlds; shadow and matter beneath it — Māyā comparison kept candidate-only"
+  },
+  {
+   "figure": "the spiritual woman / the shadow",
+   "occurrence": "#1 the distinction materially necessary to Norea's denial"
+  },
+  {
+   "figure": "Norea",
+   "occurrence": "#2 the burnt ark, the refused genealogy, the cry"
+  },
+  {
+   "figure": "Eleleth",
+   "occurrence": "#2–#3 rescue plus disclosure; golden appearance, snowy clothing"
+  },
+  {
+   "figure": "Zoe and Sabaoth",
+   "occurrence": "#3 the rebuke, Tartaros binding, and repentance inside the hierarchy"
+  },
+  {
+   "figure": "the seven offspring / layered heavens",
+   "occurrence": "#3 the cosmological-political hierarchy"
+  },
+  {
+   "motif": "false sovereignty corrected by provenance",
+   "occurrence": "#4 the whole's deepest source-side movement (system synthesis, human-amplified: no)"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "all four system candidates (layered-frame/Hybris figuration; veil/Māyā; archon/evaluator; Norea/Six/Daphne refusals) plus the Neumann one-to-one and the QL appointment and the final synthesis sentence",
+   "flag": "no — relation-local candidates and Offered standing only"
+  }
+ ],
+ "cross_story_relations": [
+  "Distinct from the Valentinian whole — Horos and Achamoth are not inserted here; no transmission across the shared Sophia name."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: five scenes follow the tractate's own disclosure order (rulers first, cosmology retrospective inside Eleleth's speech) rather than cosmological order. Layton translation limits and the Barnstone–Meyer seam are preserved as named leads. E0 acceptance repair: title/field collision fixed on m-hyp-0-ruler (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#1 ruler — THE 3D SCENE. z is the veil's two sides: the blind ruler inside his field (z −0.3), the field's edge around him (z −0.1), the voice from incorruptibility answering from beyond (z +0.45) — absence from the field contradicted by a presence above it, literally in depth. The ruler's sequence stages the declaration: blind disc → the claim 'sole god' appearing gold → the disc dimmed by the rebuke. Vortex + shove pointer (the contradiction). Depth occlusion with veil-dark tint. Duration 13.\n#2 adam — pursuit staged: repel + shove pointer, turbulence 0.15; the woman's sequence walks her escape ☾ → Tree → ☾ (she eludes pursuit by becoming what they would pluck, then returns beyond them); Adam's sequence brightens from earthen decoy to living. The shadow disc stays dim and present — the violated figure is not made to disappear. Duration 12.\n#3 norea — the hardest shove in the journey (0.55): coercion attempted and refused; auto-cry, a sine LFO on pointerStrength — the cry rising; the claim sequence walks ☸☸ → 'from the world above' → ☸☸ dimmed: her origin-answer diminishing their claim. Duration 11 — the refusal is the sharpest beat.\n#4 eleleth — grid layout: the retrospective cosmology laid out in its layers; attract pointer (the luminary's descent — rescue draws near); the genesis chain walked veil → shadow → matter → lion-faced ruler (the record's own sequence beneath the veil, pale to dark, then the deficient gold); Zoe's rebuke walks Z → fire → Z (the breath become the fiery angel). Duration 14 — the teaching takes time.\n#5→0 return — the promise sequence 3 → 'disclosure to come' → 3: the ending kept prospective, as the record keeps it; attract at 0.25, the gentlest hold — the promised liberation is not forced. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens inside the ruler's claim — a blind disc mistaking its field for reality, answered from above by one voice — and closes along the same vertical with the root-above arrow standing: the voice that contradicted Samael has become, by the end, Norea's ground and the hymn's collective address. The claim 'sole god' that opened in gold ends dimmed in #1's own sequence; the coercion that drove #2–#3 is answered not by a stronger ruler but by provenance disclosed — false sovereignty corrected, not overthrown. The ☮ that rebuked at #1, carried Norea's cry at #3, and returns in the closing hymn's collective voice at #5→0: the beyond is not empty, and the ending is still to come.\nHuman-amplified staging: the four system candidates stay human-amplified: no, verbatim in the #5→0 body; the Veil/Māyā and archon/evaluator comparisons remain proposals with their different metaphysical valences stated. Mythemic verbs only: the story discloses authority through the acts staged; no dictionary key, no ancient derivation of QL.\nAutomation: auto-cry (#3, field.params.pointerStrength sine — the cry rising), tied to the record's move. Durations 11–15 and transitions 1.2–2.2: the refusal sharpest, the teaching and the promise held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "☮": "the voice from incorruptibility — at #1 the rebuke answering the sole-god claim from beyond the field; at #2 Norea's cry to the same higher reality.",
+  "sole god": "the chief ruler's declaration — a limit of sight turned into a claim over reality (the record's own office: blind, arrogant, mistaking his field for the entirety).",
+  "Adam": "the formed human — made after a perceived image, living through a power the rulers do not finally own.",
+  "☾": "the spiritual woman — awakening Adam; at #1 escaping pursuit as a tree; at #3 Pistis Sophia desiring to create without her consort.",
+  "Tree": "the woman's escape — she eludes the rulers' pursuit by becoming what they would pluck; the pursuit's failure staged as her form.",
+  "⛔": "the garden's prohibition — sleep becoming ignorance; expulsion and imposed toil following.",
+  "Norea": "daughter of Eve — refusing the imposed descent; her breath burns the ark that excluded her.",
+  "☸☸": "the rulers' claim of authority through Eve — coercion attempted at the level of origin.",
+  "from the world above": "Norea's counter — she is not their descendant; her root exceeds their universe.",
+  "Eleleth": "one of the great luminaries — golden appearance, snowy clothing; he rescues Norea and reveals the root.",
+  "veil": "the boundary between the incorruptible above and the shadowed realms below — the condition of every mistake beneath it.",
+  "shadow": "what comes into being beneath the veil — the lower condition before matter.",
+  "matter": "the shadow become the material field in which the lower ruler acts.",
+  "lion-faced ruler": "the deficient ruler born in the lower realm — opening his eyes on limitless matter, repeating the totalising claim.",
+  "7": "the seven offspring and the layered heavens — a hierarchy modelled on what lies above it.",
+  "Z": "Zoe, daughter of Pistis Sophia — her rebuke of the arrogant ruler.",
+  "fire": "Zoe's breath become a fiery angel — force inside the hierarchy turned against false sovereignty, binding Yaldabaoth in Tartaros.",
+  "↑": "the root above — Norea's origin exceeding the rulers' universe; the vertical along which the story's answer lives.",
+  "3": "the promised disclosure after three generations — the immediate rescue not narrated as the completion.",
+  "disclosure to come": "the true Man's saving disclosure — spiritual beings freed, the authorities' world losing dominion.",
+  "♪": "the closing hymn — the ending given a collective voice before Father, Son and Holy Spirit.",
+  "A20": "the retrieval route — an image valued through a claim to possess what it discloses."
+ }
+}

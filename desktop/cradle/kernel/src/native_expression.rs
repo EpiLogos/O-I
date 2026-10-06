@@ -951,15 +951,17 @@ impl Manager {
     }
 }
 
-/// Host operations a webview may relay: the K² determinant operations and
+/// Host operations a webview may relay: the K² determinant operations,
 /// the Ta-Onta procedural stage's five scoped operations (stage-state {},
 /// stage-evaluate {procedure}, stage-retire {procedure_ref}, stage-bind
 /// {procedure, max_evaluations?}, stage-unbind {procedure_ref} on the QL
-/// side). The K² determinant operations are the host's own; a supplied
-/// (non-K²) owner refuses them natively. The stage operations are
+/// side), and the Tarot score's two read-only scene operations
+/// (score-state {}, score-resolve {basis} on the QL side). The K²
+/// determinant operations are the host's own; a supplied (non-K²) owner
+/// refuses them natively. The stage and score operations are
 /// scene-scoped on the QL side; admission here is by exact name only —
 /// each payload is validated again by the owner host.
-const EXCHANGE_OPERATIONS: [&str; 14] = [
+const EXCHANGE_OPERATIONS: [&str; 16] = [
     "read",
     "inspect",
     "advance",
@@ -974,6 +976,8 @@ const EXCHANGE_OPERATIONS: [&str; 14] = [
     "stage-retire",
     "stage-bind",
     "stage-unbind",
+    "score-state",
+    "score-resolve",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -2660,6 +2664,12 @@ for line in sys.stdin: time.sleep(60)
                 "{op}"
             );
         }
+        for op in ["score-state", "score-resolve"] {
+            assert!(
+                exchange_admits(&json!({"command":{"operation":op}})),
+                "{op}"
+            );
+        }
         for op in [
             "shutdown",
             "restart",
@@ -2669,6 +2679,8 @@ for line in sys.stdin: time.sleep(60)
             "M1-advance",
             "Stage-state",
             "stage-eval",
+            "Score-state",
+            "score-resolv",
         ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),

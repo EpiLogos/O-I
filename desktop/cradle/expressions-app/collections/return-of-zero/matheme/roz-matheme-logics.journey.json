@@ -16,7 +16,7 @@
     "mode": "2d",
     "yaw": 0,
     "pitch": 0,
-    "zoom": 1,
+    "zoom": 1.0,
     "panX": 0,
     "panY": 0
    },
@@ -32,18 +32,28 @@
      "size": 2.8,
      "opacity": 0.92,
      "contrast": 0.93,
-     "speed": 0.6,
+     "speed": 0.55,
      "turbulence": 0.14,
      "dispersion": 0.07,
      "jitter": 0.5,
      "frequency": 220,
      "dominance": 0,
-     "excitation": 0.6
+     "excitation": 0.6,
+     "depth": 0.14,
+     "zConfinement": 1
     }
    },
    "engine": {
     "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid"
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 2.6,
+    "pointerClickRadius": 0.42,
+    "resonanceEnabled": false,
+    "relationalEnabled": true,
+    "relationalMode": "orbital",
+    "morphEnabled": false
    },
    "entities": [
     {
@@ -67,9 +77,9 @@
      "tintWeight": 0,
      "locked": false,
      "force": {
-      "kind": "attract",
-      "strength": 0,
-      "radius": 0.45,
+      "kind": "repel",
+      "strength": 0.3,
+      "radius": 0.35,
       "spin": 0
      },
      "station": null,
@@ -120,39 +130,111 @@
       "clock": "seconds",
       "order": "loop",
       "easing": "smoothstep",
-      "hold": 2.4,
       "steps": [
        {
-        "id": "dia-main-st0-40",
+        "id": "dia-main-st0",
         "text": "(-1)/(+1) — polarity retained",
         "shape": "text",
-        "hold": 2.6,
-        "transition": 1.1,
-        "position": null
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#e8e4d8",
+         "tintWeight": 0.2,
+         "force": {
+          "kind": "repel",
+          "strength": 0.5,
+          "radius": 0.4,
+          "spin": 0
+         }
+        }
        },
        {
-        "id": "dia-main-st1-41",
+        "id": "dia-main-st1",
         "text": "(-1)+(+1) = 0 — cancels",
         "shape": "text",
-        "hold": 2.4,
-        "transition": 1.1,
-        "position": null
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": {
+         "x": 0.32,
+         "y": -0.12,
+         "z": 0
+        },
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.55,
+         "force": {
+          "kind": "attract",
+          "strength": 0.8,
+          "radius": 0.35,
+          "spin": 0
+         },
+         "scale": 0.8
+        }
        },
        {
-        "id": "dia-main-st2-42",
+        "id": "dia-main-st2",
         "text": "(-1)−(+1) = −2 — appropriates",
         "shape": "text",
-        "hold": 2.4,
-        "transition": 1.1,
-        "position": null
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": {
+         "x": -0.05,
+         "y": -0.12,
+         "z": 0
+        },
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.7,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
-        "id": "dia-main-st3-43",
+        "id": "dia-main-st3",
         "text": "(+1)−(−1) = +2 — from the other pole",
         "shape": "text",
-        "hold": 2.4,
-        "transition": 1.1,
-        "position": null
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": {
+         "x": 0.55,
+         "y": -0.12,
+         "z": 0
+        },
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#d8b878",
+         "tintWeight": 0.6,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -174,7 +256,7 @@
     }
    ],
    "composition": {
-    "layout": "free",
+    "layout": "line",
     "plane": "XY",
     "focus": "parallel",
     "focusDuration": 4,
@@ -191,19 +273,36 @@
     "depth": 1,
     "dwell": 0.3
    },
-   "automation": []
+   "automation": [
+    {
+     "id": "lfo-turbulence",
+     "enabled": true,
+     "target": "field.params.turbulence",
+     "type": "lfo",
+     "wave": "sine",
+     "min": 0.08,
+     "max": 0.22,
+     "rate": 0.12,
+     "phase": 0.0,
+     "blend": "replace",
+     "duration": 12,
+     "delay": 0.0,
+     "loop": "loop",
+     "firedAt": null
+    }
+   ]
   },
   {
    "id": "syn",
    "name": "syn — the gathering",
    "character": "syn — the gathering",
    "duration": 12,
-   "transition": 1.5,
+   "transition": 2.0,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.5,
+    "pitch": 0.18,
+    "zoom": 1.0,
     "panX": 0,
     "panY": 0
    },
@@ -219,18 +318,34 @@
      "size": 2.8,
      "opacity": 0.92,
      "contrast": 0.93,
-     "speed": 0.6,
-     "turbulence": 0.14,
-     "dispersion": 0.07,
+     "speed": 0.48,
+     "turbulence": 0.09,
+     "dispersion": 0.04,
      "jitter": 0.5,
      "frequency": 220,
      "dominance": 0,
-     "excitation": 0.6
+     "excitation": 0.6,
+     "depth": 0.26,
+     "zConfinement": 0.85,
+     "snapRigidity": 1.4,
+     "densityTether": 1.2
     }
    },
    "engine": {
     "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid"
+    "backgroundMode": "solid",
+    "pointerMode": "attract",
+    "pointerClick": "implode",
+    "pointerClickStrength": 1.6,
+    "pointerClickRadius": 0.5,
+    "resonanceEnabled": false,
+    "relationalEnabled": true,
+    "relationalMode": "orbital",
+    "morphEnabled": false,
+    "volumeEnabled": true,
+    "volumeProfile": "round",
+    "depthPerspective": true,
+    "depthOcclusion": false
    },
    "entities": [
     {
@@ -240,7 +355,7 @@
      "position": {
       "x": 0.5,
       "y": 0.3,
-      "z": 0
+      "z": 0.0
      },
      "size": {
       "x": 1.35,
@@ -282,7 +397,7 @@
      "position": {
       "x": 0.5,
       "y": -0.35,
-      "z": 0
+      "z": 0.3
      },
      "size": {
       "x": 1.35,
@@ -303,16 +418,64 @@
      },
      "station": null,
      "sequence": {
-      "enabled": false,
+      "enabled": true,
       "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
       "steps": [
        {
-        "id": "syn-pairs-s0",
+        "id": "syn-pairs-st0",
         "text": "00 · 01 · 10 · 11",
         "shape": "text",
-        "hold": 3,
-        "transition": 1,
+        "hold": 2.8,
+        "transition": 1.3,
         "position": null
+       },
+       {
+        "id": "syn-pairs-st1",
+        "text": "the four ordered relations",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.3,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.5,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "syn-pairs-st2",
+        "text": "composed, not summed",
+        "shape": "text",
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#d8b878",
+         "tintWeight": 0.55,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -324,7 +487,7 @@
      "position": {
       "x": 0.5,
       "y": -0.72,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 1.1,
@@ -371,12 +534,12 @@
      "x": 0.03,
      "y": 0.585,
      "width": 560,
-     "size": 20,
+     "size": 19,
      "align": "left"
     }
    ],
    "composition": {
-    "layout": "free",
+    "layout": "laminate",
     "plane": "XY",
     "focus": "parallel",
     "focusDuration": 4,
@@ -399,13 +562,13 @@
    "id": "chronic",
    "name": "chronic — configuration and passage",
    "character": "chronic — configuration and passage",
-   "duration": 12,
+   "duration": 14,
    "transition": 1.5,
    "view": {
     "mode": "2d",
     "yaw": 0,
     "pitch": 0,
-    "zoom": 1,
+    "zoom": 1.05,
     "panX": 0,
     "panY": 0
    },
@@ -421,18 +584,26 @@
      "size": 2.8,
      "opacity": 0.92,
      "contrast": 0.93,
-     "speed": 0.6,
-     "turbulence": 0.14,
-     "dispersion": 0.07,
+     "speed": 0.45,
+     "turbulence": 0.08,
+     "dispersion": 0.04,
      "jitter": 0.5,
      "frequency": 220,
      "dominance": 0,
-     "excitation": 0.6
+     "excitation": 0.6,
+     "depth": 0.1,
+     "zConfinement": 1
     }
    },
    "engine": {
     "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid"
+    "backgroundMode": "solid",
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 0.9,
+    "pointerClickRadius": 0.4,
+    "resonanceEnabled": false,
+    "morphEnabled": false
    },
    "entities": [
     {
@@ -475,7 +646,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.14,
+          "y": 0.3
+         },
+         "rotation": 0,
+         "tint": "#e8e4d8",
+         "tintWeight": 0.0,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-main-st1-45",
@@ -483,7 +669,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.95,
+          "y": 0.26
+         },
+         "rotation": 0,
+         "tint": "#e8e4d8",
+         "tintWeight": 0.0,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-main-st2-46",
@@ -491,7 +692,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.78,
+          "y": 0.22
+         },
+         "rotation": 0,
+         "tint": "#e8e4d8",
+         "tintWeight": 0.0,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-main-st3-47",
@@ -499,7 +715,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.62,
+          "y": 0.19
+         },
+         "rotation": 0,
+         "tint": "#e8e4d8",
+         "tintWeight": 0.0,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-main-st4-48",
@@ -507,7 +738,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.5,
+          "y": 0.17
+         },
+         "rotation": 0,
+         "tint": "#e8e4d8",
+         "tintWeight": 0.0,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-main-st5-49",
@@ -515,7 +761,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.4,
+          "y": 0.15
+         },
+         "rotation": 0,
+         "tint": "#d8b878",
+         "tintWeight": 0.6,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -560,7 +821,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.52,
+          "y": 0.3
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.45,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-neg-st1-51",
@@ -568,7 +844,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.25,
+          "y": 0.26
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.45,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-neg-st2-52",
@@ -576,7 +867,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 0.22
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.45,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-neg-st3-53",
@@ -584,7 +890,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.8,
+          "y": 0.19
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.45,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        },
        {
         "id": "ch-neg-st4-54",
@@ -592,7 +913,22 @@
         "shape": "text",
         "hold": 2.4,
         "transition": 1.1,
-        "position": null
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.62,
+          "y": 0.17
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.45,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -693,12 +1029,12 @@
      "x": 0.03,
      "y": 0.585,
      "width": 560,
-     "size": 20,
+     "size": 19,
      "align": "left"
     }
    ],
    "composition": {
-    "layout": "free",
+    "layout": "line",
     "plane": "XY",
     "focus": "parallel",
     "focusDuration": 4,
@@ -715,19 +1051,36 @@
     "depth": 1,
     "dwell": 0.3
    },
-   "automation": []
+   "automation": [
+    {
+     "id": "lfo-dispersion",
+     "enabled": true,
+     "target": "field.params.dispersion",
+     "type": "lfo",
+     "wave": "sine",
+     "min": 0.03,
+     "max": 0.1,
+     "rate": 0.08,
+     "phase": 0.0,
+     "blend": "replace",
+     "duration": 14,
+     "delay": 0.0,
+     "loop": "loop",
+     "firedAt": null
+    }
+   ]
   },
   {
    "id": "mono",
    "name": "mono — one field through its notations",
    "character": "mono — one field through its notations",
    "duration": 12,
-   "transition": 1.5,
+   "transition": 2.2,
    "view": {
     "mode": "2d",
     "yaw": 0,
     "pitch": 0,
-    "zoom": 1,
+    "zoom": 1.0,
     "panX": 0,
     "panY": 0
    },
@@ -743,18 +1096,26 @@
      "size": 2.8,
      "opacity": 0.92,
      "contrast": 0.93,
-     "speed": 0.6,
-     "turbulence": 0.14,
-     "dispersion": 0.07,
+     "speed": 0.48,
+     "turbulence": 0.09,
+     "dispersion": 0.05,
      "jitter": 0.5,
      "frequency": 220,
      "dominance": 0,
-     "excitation": 0.6
+     "excitation": 0.6,
+     "depth": 0.1,
+     "zConfinement": 1
     }
    },
    "engine": {
     "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid"
+    "backgroundMode": "solid",
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 1.1,
+    "pointerClickRadius": 0.45,
+    "resonanceEnabled": false,
+    "morphEnabled": false
    },
    "entities": [
     {
@@ -827,16 +1188,87 @@
      },
      "station": null,
      "sequence": {
-      "enabled": false,
+      "enabled": true,
       "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
       "steps": [
        {
-        "id": "mo-full-s0",
+        "id": "mo-full-st0",
         "text": "0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1",
         "shape": "text",
-        "hold": 3,
-        "transition": 1,
+        "hold": 3.0,
+        "transition": 1.4,
         "position": null
+       },
+       {
+        "id": "mo-full-st1",
+        "text": "the full circuit keeps the inverse phase",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.5,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "mo-full-st2",
+        "text": "normalising to the short chain loses the operation",
+        "shape": "text",
+        "hold": 2.8,
+        "transition": 1.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#c87878",
+         "tintWeight": 0.5,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "mo-full-st3",
+        "text": "0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1",
+        "shape": "text",
+        "hold": 3.0,
+        "transition": 1.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#d8b878",
+         "tintWeight": 0.55,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -891,16 +1323,16 @@
      "kicker": "MATHENE · matheme-mono-poly-mono · ARGUED",
      "title": "Mono — One Field through Its Notations",
      "italic": "The difference between the short chain and the full circuit is an operation of the four-file body.",
-     "body": "One subject, two earned chains: the short 0/1 = 4+2 = 5→0 = 0/1 of definition and quilt; the full 0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1 of process and music. The difference is an operation of the four-file circuit, lost if every file is normalised to whichever chain is read first. Monoisation: a local representation claiming the source-office. The test: can it return through its derivation, conditions and exclusions?",
+     "body": "Two earned chains: the short 0/1 = 4+2 = 5→0 = 0/1 of definition and quilt; the full 0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1 of process and music. The difference is an operation of the four-file circuit, lost if every file is normalised to one chain. Monoisation: a local representation claiming the source-office. Test: can it return through derivation and exclusions?",
      "x": 0.03,
      "y": 0.585,
      "width": 560,
-     "size": 20,
+     "size": 18,
      "align": "left"
     }
    ],
    "composition": {
-    "layout": "free",
+    "layout": "line",
     "plane": "XY",
     "focus": "parallel",
     "focusDuration": 4,
@@ -929,7 +1361,7 @@
     "mode": "2d",
     "yaw": 0,
     "pitch": 0,
-    "zoom": 1,
+    "zoom": 1.0,
     "panX": 0,
     "panY": 0
    },
@@ -945,18 +1377,26 @@
      "size": 2.8,
      "opacity": 0.92,
      "contrast": 0.93,
-     "speed": 0.6,
-     "turbulence": 0.14,
-     "dispersion": 0.07,
+     "speed": 0.5,
+     "turbulence": 0.1,
+     "dispersion": 0.05,
      "jitter": 0.5,
      "frequency": 220,
      "dominance": 0,
-     "excitation": 0.6
+     "excitation": 0.6,
+     "depth": 0.1,
+     "zConfinement": 1
     }
    },
    "engine": {
     "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid"
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 1.3,
+    "pointerClickRadius": 0.42,
+    "resonanceEnabled": false,
+    "morphEnabled": false
    },
    "entities": [
     {
@@ -980,9 +1420,9 @@
      "tintWeight": 0,
      "locked": false,
      "force": {
-      "kind": "attract",
-      "strength": 0,
-      "radius": 0.45,
+      "kind": "repel",
+      "strength": 0.35,
+      "radius": 0.4,
       "spin": 0
      },
      "station": null,
@@ -1022,9 +1462,9 @@
      "tintWeight": 1,
      "locked": false,
      "force": {
-      "kind": "attract",
-      "strength": 0,
-      "radius": 0.45,
+      "kind": "repel",
+      "strength": 0.35,
+      "radius": 0.4,
       "spin": 0
      },
      "station": null,
@@ -1064,9 +1504,9 @@
      "tintWeight": 0,
      "locked": false,
      "force": {
-      "kind": "attract",
-      "strength": 0,
-      "radius": 0.45,
+      "kind": "repel",
+      "strength": 0.3,
+      "radius": 0.4,
       "spin": 0
      },
      "station": null,
@@ -1106,9 +1546,9 @@
      "tintWeight": 1,
      "locked": false,
      "force": {
-      "kind": "attract",
-      "strength": 0,
-      "radius": 0.45,
+      "kind": "repel",
+      "strength": 0.3,
+      "radius": 0.4,
       "spin": 0
      },
      "station": null,
@@ -1155,16 +1595,41 @@
      },
      "station": null,
      "sequence": {
-      "enabled": false,
+      "enabled": true,
       "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
       "steps": [
        {
-        "id": "po-six-s0",
+        "id": "po-six-st0",
         "text": "2+2² · 1+2+3 · 6 classes",
         "shape": "text",
-        "hold": 3,
-        "transition": 1,
+        "hold": 2.8,
+        "transition": 1.3,
         "position": null
+       },
+       {
+        "id": "po-six-st1",
+        "text": "one count, three constructions",
+        "shape": "text",
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#d8b878",
+         "tintWeight": 0.55,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -1181,12 +1646,12 @@
      "x": 0.03,
      "y": 0.585,
      "width": 560,
-     "size": 20,
+     "size": 18,
      "align": "left"
     }
    ],
    "composition": {
-    "layout": "free",
+    "layout": "grid",
     "plane": "XY",
     "focus": "parallel",
     "focusDuration": 4,
@@ -1210,12 +1675,12 @@
    "name": "translations — correspondence with its proof boundary",
    "character": "translations — correspondence with its proof boundary",
    "duration": 12,
-   "transition": 1.5,
+   "transition": 2.2,
    "view": {
     "mode": "2d",
     "yaw": 0,
     "pitch": 0,
-    "zoom": 1,
+    "zoom": 1.0,
     "panX": 0,
     "panY": 0
    },
@@ -1231,18 +1696,27 @@
      "size": 2.8,
      "opacity": 0.92,
      "contrast": 0.93,
-     "speed": 0.6,
-     "turbulence": 0.14,
-     "dispersion": 0.07,
+     "speed": 0.5,
+     "turbulence": 0.1,
+     "dispersion": 0.05,
      "jitter": 0.5,
-     "frequency": 220,
-     "dominance": 0,
-     "excitation": 0.6
+     "frequency": 288,
+     "dominance": 0.2,
+     "excitation": 0.5,
+     "depth": 0.12,
+     "zConfinement": 1
     }
    },
    "engine": {
     "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid"
+    "backgroundMode": "solid",
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 1.4,
+    "pointerClickRadius": 0.48,
+    "resonanceEnabled": true,
+    "resonatorMode": "resonator",
+    "morphEnabled": false
    },
    "entities": [
     {
@@ -1315,16 +1789,64 @@
      },
      "station": null,
      "sequence": {
-      "enabled": false,
+      "enabled": true,
       "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
       "steps": [
        {
-        "id": "tr-coord-s0",
+        "id": "tr-coord-st0",
         "text": "(4:2)/(3:3) ↦ (4/3, 2/3)",
         "shape": "text",
-        "hold": 3,
-        "transition": 1,
+        "hold": 2.8,
+        "transition": 1.4,
         "position": null
+       },
+       {
+        "id": "tr-coord-st1",
+        "text": "componentwise — each component carried",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#9fb4c8",
+         "tintWeight": 0.5,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "tr-coord-st2",
+        "text": "(4/2)/(3/3) = 2 is another operation",
+        "shape": "text",
+        "hold": 2.8,
+        "transition": 1.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 1.0,
+          "y": 1.0
+         },
+         "rotation": 0,
+         "tint": "#d8b878",
+         "tintWeight": 0.55,
+         "force": {
+          "kind": "attract",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
        }
       ]
      }
@@ -1425,12 +1947,12 @@
      "x": 0.03,
      "y": 0.585,
      "width": 560,
-     "size": 20,
+     "size": 18,
      "align": "left"
     }
    ],
    "composition": {
-    "layout": "free",
+    "layout": "line",
     "plane": "XY",
     "focus": "parallel",
     "focusDuration": 4,
@@ -1447,8 +1969,25 @@
     "depth": 1,
     "dwell": 0.3
    },
-   "automation": []
+   "automation": [
+    {
+     "id": "lfo-dispersion",
+     "enabled": true,
+     "target": "field.params.dispersion",
+     "type": "lfo",
+     "wave": "sine",
+     "min": 0.03,
+     "max": 0.11,
+     "rate": 0.1,
+     "phase": 0.0,
+     "blend": "replace",
+     "duration": 12,
+     "delay": 0.0,
+     "loop": "loop",
+     "firedAt": null
+    }
+   ]
   }
  ],
- "updatedAt": "2026-09-17T01:30:04.398Z"
+ "updatedAt": "2026-10-06T12:00:00.000Z"
 }

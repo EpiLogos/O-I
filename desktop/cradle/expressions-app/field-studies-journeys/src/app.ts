@@ -1136,7 +1136,10 @@ const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nati
   await nativeWorkspace?.refreshReference(native.expression_ref);
   const applied=nativeWorkspace?.nativeView()?.document;
   if(applied?.expression_ref!==native.expression_ref||applied.revision!==native.revision)throw Error('The coordinate was adopted natively; resolve the retained local draft before displaying the new revision.');
- }});
+ },
+ fieldBasis:()=>nativeField?.controller.scoreBasis??null,
+ fieldScore:async command=>{const controller=nativeField?.controller;if(!controller)throw Error('The live field is not open in this session.');return controller.score(command);},
+ });
 if(qs.get('nara')==='1')naraInstrument.open();
 const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
 window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();disposeFieldStudies();};

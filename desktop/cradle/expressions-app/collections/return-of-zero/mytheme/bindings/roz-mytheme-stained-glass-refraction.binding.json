@@ -1,0 +1,142 @@
+{
+ "artifact": "mytheme/roz-mytheme-stained-glass-refraction.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme",
+  "family-frank-taylor"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-stained-glass-refraction",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/stained-glass-refraction/WHOLE.md",
+    "sha256": "f93496b2e626890f0fd9d84cf7a90156bc532a07d748d5da65841702a3cb509e"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-gla-0-aperture",
+   "phase": "#0 light entering a made aperture",
+   "relations": "Q27's two contributions (yes); Bimba/pratibimba asymmetry"
+  },
+  {
+   "scene_id": "m-gla-1-spectrum",
+   "phase": "#1 the spectrum implicated in the light",
+   "relations": "QL as ordered spectrum (corrected Q27); the theorem spine"
+  },
+  {
+   "scene_id": "m-gla-2-seams",
+   "phase": "#2 panes and seams",
+   "relations": "MEF as refractive apparatus (Q27:2937–2950); C39; the mosaic distinction"
+  },
+  {
+   "scene_id": "m-gla-3-projection",
+   "phase": "#3–#4 the projection and changing light",
+   "relations": "P5; Gebser pp.1–3, 11–21, 255–58; A04; A16/A22; Symbolon Dynamics; the atlas complement"
+  },
+  {
+   "scene_id": "m-gla-5-return",
+   "phase": "#5→0 recognition returns to the aperture",
+   "relations": "C09, C37, C39; M05, M30, M36; Dyczkowski/Bohm/Gebser source boundaries; C38 local-Bimba office"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the originating light",
+   "occurrence": "#0 priority in being, later in recognition"
+  },
+  {
+   "figure": "the panes and lead cames",
+   "occurrence": "#2 transmission, obstruction, held joins; provenance seams"
+  },
+  {
+   "figure": "the cast image (pratibimba)",
+   "occurrence": "#0, #3 encountered first; possessed never"
+  },
+  {
+   "figure": "the changing sun / revealed region",
+   "occurrence": "#4 the aberration a first view concealed"
+  },
+  {
+   "figure": "the lattice window / knowing mirror (Dyczkowski)",
+   "occurrence": "#5→0 the neighbouring Śaiva limits: no external object lost, vimarśa's office"
+  },
+  {
+   "motif": "the seam",
+   "occurrence": "#2 and #5→0 where warrants change and what survives crossing"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "the authored whole, corrected Original/display relation, QL-as-spectrum, pane/seam relations, situated projection and invested seeing, recognition-through-variation, contextual turn, atlas complement, native optical assignments",
+   "flag": "yes"
+  },
+  {
+   "relation": "additional psychological, religious or scientific symbolism assigned to particular colours or panes; any extraction of QL from Bohm",
+   "flag": "no"
+  }
+ ],
+ "cross_story_relations": [
+  "Maya whole reuses the corrected assignments at its regard scene; atlas discipline shared with the travelling-jigsaw whole (chart-transition ≠ light-through-glass)."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-stained-glass-refraction.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: five scenes on a near-black field with the glass as the only saturated body — the spectrum scene uses a six-colour palette strictly as presentation. No historical window reconstructed; no NASA/analogous asset question arises. E0 acceptance repair: title/field collision fixed on m-gla-0-aperture, m-gla-2-seams, m-gla-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
+  "#0 aperture — the light ☀ approaches and enters the made square (position + size); B/p → p→B stages the record's own asymmetry (order of being vs order of recognition); attract/pulse — the light drawn through; no automation (the entry is single).",
+  "#1 spectrum — ring layout: the white disc cycles its tint through red, teal, slate — plenitude carrying differentiated colour (QL), never losing one field; ∅# → QL names the harmonic order; attract/implode — the gathering into spectrum; auto-spectrum LFO on circulation (the light's breathing).",
+  "#2 seams — grid layout (the lead lattice); ≠ → / at the window's foot: the mere-placement refused becomes the seam — the join that divides-and-holds; the lead ring breathes (holding while marking); repel/shove — obstruction retained; the apparatus/light correction (lead→apparatus, QL→light, MEF within the order, never a certifying superior) carried by e544's name and the binding guard.",
+  "#3 projection — the changing cast: e545's tint cycles warm→dark→teal with size shifts (sun, pane, room, viewer changing); 180°→360° the contextual turn; vortex/pulse — the viewer moving among positions; auto-projection LFO on dispersion (the shifting cast).",
+  "#5→0 return — THE 3D SCENE. z is the return's direction: the window approached again deepest (z −0.4, brightening), ¶ Dyczkowski's limits at z 0, ◉◉ Bohm at z +0.2, and the declared returns nearest (M05 → C38 at z +0.35 — the declared movements focusing into the local-Bimba office); pointer attract/pulse firmer — recognition returning to the aperture; auto-return LFO on pointerStrength.",
+  "ENDING QUALIFIES BEGINNING: #0 began with ☀ outside the aperture and the order-stamp B/p (being first); #5→0 returns the viewer to that window — now deepest in the scene, approached, its determinacy brightening — with the recognition-order (p→B) vindicated: the declared returns (M05→C38) sit nearest because the return is where the construction lives; the seams of #2 remain (¶ at z 0 holds Dyczkowski's limits; ◉◉ holds Bohm as resonance, not extraction), so the ending re-reads the aperture without possessing it. The Original remains prior throughout.",
+  "Human-amplified guards carried (relation-local): no historical window or sacred programme reconstructed; the sun supplies no warrant for a metaphysical source outside Consciousness; no additional symbolism assigned to particular colours or panes; the attractor/atlas distinction kept (an attractor organising trajectories is not an atlas of charts); Gebser used through page-specific paraphrase; notebook passages not promoted to edition-verified quotations. Mythemic verbs only: the window demonstrates transmission-with-obstruction; the seams retain provenance.",
+  "Automation: auto-spectrum (the light's breathing), auto-projection (the shifting cast), auto-return (recognition answerable) — tied to the record's moves; #0 and #2 held without automation (the entry and the seam are still). Durations 12–15, transitions 1.3–2.0; the return held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l4",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "☀": "the originating light — priority over the projected image, approaching and entering the made aperture (#0).",
+  "B/p": "the order of being: Bimba the Original order, pratibimba its determinate display (#0).",
+  "p→B": "the order of recognition — the viewer encountering the image first and following its differences back (#0): what is prior in being can be later in recognition.",
+  "∅#": "the refusal of decree — no pane numbered, traditioned or coloured by assignment (#1).",
+  "QL": "the full ordered spectrum immanent to the originating light — its harmonic articulation (#1).",
+  "MEF": "the refractive operation of declared media, angles, transformations and exclusions — a lens changing a question while keeping its conditions inspectable (#2).",
+  "≠": "the mere-placement refused — a source's name set beside another does not perform its operation; the correction assigning lead to apparatus and QL to the light (#2).",
+  "/": "the seam — the lead's join that holds in relation while marking where one passage ends and another begins (#2).",
+  "◉": "the invested viewer — body, position, attention and concern entering what is seen (#3).",
+  "180°": "the perspective enclosing its world — the first claim of isolated completeness (#3).",
+  "360°": "the contextual turn — positions and their transitions held in a co-present field (#3).",
+  "Atlas": "the atlas complement — charts and transitions retaining what light through glass cannot perform, and vice versa (#3).",
+  "¶": "Dyczkowski's limits — the lattice window; the mirror analogy losing the external object; display without knowing against Vimarśa (#5→0).",
+  "◉◉": "Bohm resonant-with — the implicate order as resonance, not extraction; no optical proof claimed (#5→0).",
+  "M05": "the declared movements' return — M05/M30/M36 receiving the construction (#5→0).",
+  "C38": "the local-Bimba office — the achieved map serving as reference within a declared frame, correctable by returned evidence (#5→0)."
+ }
+}

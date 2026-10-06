@@ -10,8 +10,8 @@
       "id": "m-val-0-ogdoad",
       "name": "The fullness in conjunction",
       "character": "Bythus and Sige; Nous and Aletheia; Logos and Zoe; Anthropos and Ecclesia — thirty Aeons in fifteen syzygies, with a shared longing none of them fully knows.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -23,10 +23,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.35,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#191631",
+        "background": "#161126",
         "palette": [
           "#efe9d6",
           "#232135",
@@ -34,7 +38,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.32,
+          "circulation": 0.12,
+          "dispersion": 0.05,
+          "pointerStrength": 0.35
+        }
       },
       "entities": [
         {
@@ -107,18 +116,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st625",
+                "id": "st-e579-1",
                 "text": "10·12",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e579-2",
+                "text": "30/15",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -191,18 +240,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st627",
+                "id": "st-e581-1",
                 "text": "⊙",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e581-2",
+                "text": "⊙",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#8b80a8",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -226,7 +315,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "At the beginning stands Bythus, the Depth, with Ennoea/Charis/Sige. After immeasurable stillness he deposits the intended emanation in Sige; she conceives Nous — the Mind capable of comprehending the Father — together with Aletheia. These four constitute the first Tetrad; Nous and Aletheia produce Logos and Zoe; Logos and Zoe produce Anthropos and Ecclesia — the primary Ogdoad. Further generation proceeds through two branches, a Decad from Logos and Zoe and a Duodecad from Anthropos and Ecclesia:",
+          "body": "At the beginning stands Bythus, the Depth, with Ennoea/Charis/Sige. After stillness he deposits the intended emanation in Sige; she conceives Nous together with Aletheia. These four constitute the first Tetrad; Nous and Aletheia produce Logos and Zoe; Logos and Zoe produce Anthropos and Ecclesia — the primary Ogdoad. Two branches follow: a Decad from Logos and Zoe, a Duodecad from Anthropos and Ecclesia:",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -240,10 +329,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "thirty Aeons in fifteen conjunctions, their names attached to their positions, some repeated across levels without identity. Nous alone comprehends the Father; he wishes to communicate the greatness, but Sige restrains him by the Father's will. The desire to behold the producer of its seed precedes Sophia's crisis: the youngest of the Duodecad presses that desire beyond the measure sustained by her conjunction. Irenaeus's accusations and rebuttals remain identifiable voices within the transmission.\n\nOccurrences: the fifteen syzygies (#0); the repeated names kept distinct (#0, #2); the shared longing (#0, breaking out at #1).",
+          "body": "thirty Aeons in fifteen conjunctions, their names attached to their positions, some repeated across levels without identity. Nous alone comprehends the Father; he wishes to communicate the greatness, but Sige restrains him by the Father's will. The desire to behold the producer of its seed precedes Sophia's crisis: the youngest of the Duodecad presses that desire beyond the measure sustained by her conjunction. Irenaeus's accusations and rebuttals remain distinct voices.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the fifteen syzygies (#0); the repeated names kept distinct (#0, #2); the shared longing (#0, breaking out at #1).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -272,8 +374,8 @@
       "id": "m-val-1-horos",
       "name": "Sophia reaches; Horos restores",
       "character": "She strains into the Father's depth and nears dissolution; Horos supports and restrains; purified, she returns to conjunction — while her enthymesis, carrying its passion, is excluded.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -285,10 +387,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.85,
+        "pointerClickRadius": 0.45
       },
       "field": {
-        "background": "#191631",
+        "background": "#120e1c",
         "palette": [
           "#efe9d6",
           "#232135",
@@ -296,7 +402,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": 0.08,
+          "dispersion": 0.04,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -327,18 +438,93 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st628",
+                "id": "st-e582-1",
                 "text": "Sophia",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.5,
+                  "y": -0.17,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e582-2",
+                "text": "Sophia",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.1,
+                  "y": -0.22,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#9a8fb8",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e582-3",
+                "text": "Sophia",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.5,
+                  "y": -0.17,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -369,18 +555,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st629",
+                "id": "st-e583-1",
                 "text": "",
                 "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e583-2",
+                "text": "Horos",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -488,7 +714,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Sophia seeks to comprehend the Father apart from Theletos. The passion is a reaching towards what exceeds her capacity: she strains into his depth and comes close to dissolution in his sweetness. Horos supports and restrains; through that encounter she returns to herself, recognises the Father's incomprehensibility and relinquishes the intention — her survival depends on a limit that can sustain what it bounds. Irenaeus immediately reports a variant: Sophia attempts the impossible without her consort and brings forth an amorphous substance, grieving and fearing — the two",
+          "body": "Sophia seeks the Father apart from Theletos. Passion is a reaching towards what exceeds her capacity: she strains into his depth, near dissolution in his sweetness. Horos supports and restrains; she returns to herself, recognises the Father incomprehensible and relinquishes the intention — survival depends on a limit sustaining what it bounds. A reported variant: an amorphous substance brought forth without her consort, grieving and fearing — two articulations, distinguishable.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -502,10 +728,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "articulations remain distinguishable. The Father produces Horos through Monogenes, without a consort and in his own image; named also Stauros, Lytrotes, Carpistes, Horothetes, Metagoges, he separates Sophia's enthymesis from Sophia herself. Purified, she remains within the Pleroma and returns to her conjunction; her enthymesis, carrying its passion, is excluded — later called Achamoth, and the naming must not send the restored upper Sophia into exile a second time. At I.3.5 Stauros names the sustaining function and Horos the separating: the same power establishes and divides.\n\nOccurrences: the solitary reach and near-dissolution (#1, #5→0's founding comparison); Horos's two functions (#1); the excluded enthymesis (#1, becoming #3's Achamoth); the variant kept distinct (#1).",
+          "body": "The Father produces Horos through Monogenes, in the Father's image; named also Stauros and Metagoges, he separates Sophia's enthymesis from Sophia herself. She, purified, remains and returns to her conjunction; her enthymesis is excluded — later called Achamoth, and the naming must not send the restored upper Sophia into exile a second time. At I.3.5 Stauros names the sustaining function and Horos the separating: the same power establishes and divides.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the solitary reach and near-dissolution (#1, #5→0's founding comparison); Horos's two functions (#1); the excluded enthymesis (#1, becoming #3's Achamoth); the variant kept distinct (#1).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -535,7 +774,7 @@
       "name": "Teaching, thanksgiving, and the common fruit",
       "character": "Christ teaches the conjunctions and the Father's incomprehensibility; the Aeons rest, give thanks, and each contributes what is most beautiful — together producing the Soter.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -547,10 +786,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#191631",
+        "background": "#191430",
         "palette": [
           "#efe9d6",
           "#232135",
@@ -558,7 +801,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.38,
+          "circulation": 0.18,
+          "dispersion": 0.04,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -673,18 +921,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st634",
+                "id": "st-e588-1",
                 "text": "⁂",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e588-2",
+                "text": "Soter",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.5,
+                  "y": -0.4,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -750,7 +1042,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The Pleroma responds to Sophia's crisis with a new conjunction: by the Father's providence Monogenes produces Christ and the Holy Spirit so the Aeons will not suffer a similar passion. Christ teaches the nature of their conjunctions and the Father's incomprehensibility: what Sophia tried to overcome through solitary extension becomes something the fullness learns together. The Holy Spirit brings the Aeons to thanksgiving and rest; their forms become equal in the account's language; they cease private",
+          "body": "The Pleroma responds to Sophia's crisis with a new conjunction: by providence Monogenes produces Christ and the Holy Spirit so the Aeons will not suffer a similar passion. Christ teaches the nature of their conjunctions and the Father's incomprehensibility: what Sophia tried to overcome through solitary extension becomes something the fullness learns together. The Holy Spirit brings the Aeons to thanksgiving and rest; their forms become equal; they cease private",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -764,16 +1056,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "striving and share joy. From that common state each contributes what is most beautiful and excellent in itself; the Father approves, Christ and the Spirit concur, and the contributions compose Jesus, the Saviour — also called Christ, Logos and Everything because he comes from all — with angels produced alongside. The earlier Christ and the collective Soter stay distinct even where the name is shared: the first teaches and will give Achamoth initial form; the Soter, the common fruit, will complete another formation.\n\nOccurrences: the teaching and rest (#2); the contributed beauty composing the Soter (#2, #5→0's bridal return); the two named Christs distinguished (#2, #3–#4).",
+          "body": "striving and share joy. From that common state each contributes what is most beautiful and excellent in itself; Christ and the Spirit concur, and the contributions compose Jesus, the Saviour — also called Christ, Logos and Everything because he comes from all. The earlier Christ and the collective Soter stay distinct: the first teaches and will give Achamoth initial form; the Soter, the common fruit, will complete another formation.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the teaching and rest (#2); the contributed beauty composing the Soter (#2, #5→0's bridal return); the two named Christs distinguished (#2, #3–#4).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -790,14 +1095,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-rest",
+          "target": "field.params.dispersion",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.03,
+          "max": 0.03,
+          "rate": 0.18,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-val-3-achamoth",
       "name": "Achamoth receives form twice",
       "character": "Formed according to substance, then according to intelligence; tears, smile and grief become substrates; conversion generates the psychic; the angels' likeness the spiritual seed.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 1.7,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -809,10 +1130,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#191631",
+        "background": "#0f0c18",
         "palette": [
           "#efe9d6",
           "#232135",
@@ -820,7 +1145,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.42,
+          "circulation": 0.22,
+          "dispersion": 0.07,
+          "pointerStrength": 0.45
+        }
       },
       "entities": [
         {
@@ -851,18 +1181,81 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st636",
+                "id": "st-e590-1",
                 "text": "",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4a8a",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e590-2",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6ab8",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e590-3",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.36
+                  },
+                  "rotation": 0,
+                  "tint": "#a89cd8",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1019,18 +1412,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st640",
+                "id": "st-e594-1",
                 "text": "",
                 "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e594-2",
+                "text": "IAO",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1054,9 +1487,9 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Outside the Pleroma the expelled enthymesis exists in darkness and vacuity, without form, like an untimely birth: this is Achamoth, the lower Sophia. The earlier Christ extends beyond Stauros and gives her form according to substance, then withdraws his power, leaving an odour of immortality. Achamoth seeks the departing light; Horos stops her attempt to cross back; her cry of Iao enters as that name's explanation. Desire persists; grief follows her failure; fear the prospect that life will leave her; perplexity accompanies both — and she turns towards the one who gave her life. The selected translation contains a tension between substantial formation and later intelligence; both wordings are retained. Her affects acquire cosmic consequence: in the",
+          "body": "Outside the Pleroma the expelled enthymesis exists in darkness and vacuity, without form: this is Achamoth, the lower Sophia. The earlier Christ gives her form according to substance, then withdraws, leaving an odour of immortality. Horos stops her crossing back; her cry of Iao enters as that name's explanation. Desire, grief, fear and perplexity follow; she turns to the one who gave her life. A translation tension is retained.",
           "x": 0.04,
-          "y": 0.42,
+          "y": 0.47,
           "width": 620,
           "size": 14,
           "align": "left",
@@ -1068,10 +1501,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "first account tears give liquid substance, the remembered light's smile gives the lucid, grief and perplexity yield corporeal existence; her conversion generates the psychic order including the Demiurge. Irenaeus's sweat proposal for the non-salty waters is his own satire, kept as a change of speaker. Achamoth petitions the withdrawn Christ; he sends the Paraclete — the collective Soter — with his angels. She veils herself before their splendour, receives strength, and meets his coming: he forms her according to intelligence and heals her passions, separating and consolidating them into substrates — passion supplying material substance, conversion psychic. Freed, she looks upon the Soter's angels and conceives spiritual offspring in their likeness.\n\nOccurrences: the two formations (#3); the two affect-to-cosmos accounts (#3, #4's second table); the spiritual seed (#3, returning at #5→0); the retained translation tension (#3).",
-          "x": 0.545,
-          "y": 0.42,
-          "width": 570,
+          "body": "first account tears give liquid substance, the remembered light's smile gives the lucid, grief and perplexity yield corporeal existence; her conversion generates the psychic order including the Demiurge. Achamoth petitions the withdrawn Christ; he sends the Paraclete with angels. She receives strength before his splendour and meets his coming: he forms her by intelligence and heals her passions into substrates — passion→material, conversion→psychic.",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the two formations (#3); the two affect-to-cosmos accounts (#3, #4's second table); the spiritual seed (#3, returning at #5→0); the retained translation tension (#3).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -1100,8 +1546,8 @@
       "id": "m-val-4-demiurge",
       "name": "A maker who does not know his mother",
       "character": "Achamoth forms the psychic Demiurge; through her, hidden, he makes the images of higher realities, seven heavens and the elements; his declaration \"no other God\" expresses his ignorance of what exceeds him.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1113,10 +1559,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.55,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#191631",
+        "background": "#131020",
         "palette": [
           "#efe9d6",
           "#232135",
@@ -1124,7 +1574,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.16,
+          "dispersion": 0.05,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -1239,18 +1694,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st643",
+                "id": "st-e597-1",
                 "text": "7·8",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4a8a",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e597-2",
+                "text": "7",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.18,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#8b80a8",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1358,7 +1853,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Achamoth now stands related to three kinds: material from passion, psychic from conversion, spiritual offspring in the angels' likeness. Under the Soter's instruction she forms the psychic Demiurge; through him she begins to make the images of higher realities — she bears an image of the invisible Father, he of Nous, the angelic order of the Aeons — her agency hidden from the maker she produces. The Demiurge separates and orders the substances, making corporeal things from incorporeal and fashioning seven heavens; he becomes their ruler, the Hebdomas. Achamoth's dwelling lies above him, below the Pleroma — an intermediate Ogdoad distinct from the primary eight. He imagines he has made everything",
+          "body": "Three kinds now stand: material from passion, psychic from conversion, spiritual offspring. Under the Soter's instruction she forms the psychic Demiurge; through him she images higher realities — her agency hidden from the maker she produces. He orders the substances, fashions seven heavens and becomes their ruler, the Hebdomas. Achamoth's dwelling lies above him, below the Pleroma — an intermediate Ogdoad. He imagines he has made everything",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1372,16 +1867,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "through his own agency; his declaration that there is no other God expresses his ignorance of what exceeds him. A second account differentiates the passions: fear into psychic beings, grief into wicked spirits and the Cosmocrator; earth from stupor, water from fear's movement, air from grief, fire inherent in the three as ignorance in the passions. The Demiurge forms an earthly human, breathes the psychic principle, clothes it with skins; Achamoth secretly places spiritual seed within him, to pass into the human soul and grow. The three kinds receive different destinies; Irenaeus's licentiousness allegations remain his polemic; the \"some\" of I.7.2 keep their fourfold Christology as a marked variant.\n\nOccurrences: the hidden maternal agency (#4, returned at #5→0's education); the seven heavens and intermediate Ogdoad (#4); the two affect accounts (#3, #4); the seed placed unknowingly (#4, maturing at #5→0).",
+          "body": "through his own agency; his \"no other God\" declares his ignorance of what exceeds him. The second affect table: fear→psychic beings, grief→wicked spirits and the Cosmocrator; earth from stupor, water from fear's movement, air from grief. The Demiurge forms a human, breathes the psychic principle, clothes it with skins; Achamoth places spiritual seed within him. The \"some\" of I.7.2 keep a fourfold Christology (marked variant).",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the hidden maternal agency (#4, returned at #5→0's education); the seven heavens and intermediate Ogdoad (#4); the two affect accounts (#3, #4); the seed placed unknowingly (#4, maturing at #5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1398,29 +1906,52 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-order",
+          "target": "field.params.speed",
+          "type": "lfo",
+          "wave": "triangle",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.26,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-val-5-return",
       "name": "Bridal return and what remains outside",
       "character": "Achamoth enters the Pleroma as bride; the spiritual become brides of the angels; the Demiurge restored to the intermediate place; fire consumes matter and itself. The founding comparison stays Offered.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.0,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.35,
+        "zoom": 0.95,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.35,
+        "depthOcclusion": true,
+        "depthTintColor": "#0d0818",
+        "volumeEnabled": true
       },
       "field": {
-        "background": "#191631",
+        "background": "#1a1230",
         "palette": [
           "#efe9d6",
           "#232135",
@@ -1428,7 +1959,13 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.2,
+          "dispersion": 0.06,
+          "zConfinement": 0.85,
+          "pointerStrength": 0.55
+        }
       },
       "entities": [
         {
@@ -1438,7 +1975,7 @@
           "position": {
             "x": 0,
             "y": -0.45,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.576,
@@ -1459,18 +1996,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st646",
+                "id": "st-e600-1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e600-2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1480,7 +2057,7 @@
           "position": {
             "x": 0.55,
             "y": -0.35,
-            "z": 0
+            "z": -0.2
           },
           "size": {
             "x": 0.4,
@@ -1522,7 +2099,7 @@
           "position": {
             "x": -0.55,
             "y": -0.35,
-            "z": 0
+            "z": -0.35
           },
           "size": {
             "x": 0.24,
@@ -1564,7 +2141,7 @@
           "position": {
             "x": 0,
             "y": -0.45,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.4,
@@ -1585,18 +2162,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st649",
+                "id": "st-e603-1",
                 "text": "0/1",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e603-2",
+                "text": "A13·A19",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1620,9 +2237,9 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Consummation waits upon the formation of the spiritual seed. When it has reached perfection, Achamoth leaves her intermediate dwelling and enters the Pleroma, joining the Soter as bride to bridegroom; the spiritual people become brides of the angels accompanying the Soter — the generation occasioned by her sight of those angels reaching its union. Other beings receive other destinations: the Demiurge into the intermediate dwelling; righteous psychic souls resting there, not entering; fire, hidden until its moment, consuming matter and finally itself. The reported school reads the movements back through Scripture — lost sheep, lost coin, bridal language — while Irenaeus",
+          "body": "Consummation waits on the seed's formation. At perfection Achamoth enters the Pleroma, joining the Soter as bride to bridegroom; the spiritual people become brides of the accompanying angels — the angel-sighted generation reaching union. Others receive other destinations: the Demiurge into the intermediate dwelling; righteous psychic souls resting there, not entering; fire consuming matter and finally itself. The reported school reads the movements back through Scripture while Irenaeus",
           "x": 0.04,
-          "y": 0.42,
+          "y": 0.47,
           "width": 620,
           "size": 14,
           "align": "left",
@@ -1634,16 +2251,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "contests the handling (the royal-mosaic image is his own refutation). Variants keep the telling situated — two Horoi, Secundus's tetrads, the Marcosian arithmetic — none added as episodes of the main story. The founding comparison remains Offered: Sophia's solitary reach as a claim acting without its partner; Horos's separation as recovered distinction; the Aeons' contribution as a throwing-together enabling another formation; the native 0/1→4+2 comparison asks whether the formed four can disclose the two implicated conditions. A13 keeps separation from being made every act a fall; A19 receives the Demiurge's education from hidden dependence through disclosure to a resituated office.\n\nDeclared cross-story: distinct from the Hypostasis of the Archons whole — no historical identity across the shared Sophia name. ↳ Occurrences: the bridal union and the differentiated destinations (#5→0); the Demiurge's learning (#4, #5→0); the retained variants (#5→0).",
-          "x": 0.545,
-          "y": 0.42,
-          "width": 570,
+          "body": "contests the handling. Variants (two Horoi, tetrads, Marcosian arithmetic) stay marked, not episodes. The founding comparison remains Offered: solitary reach as claim without partner; separation as recovered distinction; contribution as throwing-together; the 0/1→4+2 comparison: can the formed four disclose the two implicated conditions. A13 keeps separation from being made every act a fall; A19 receives the Demiurge's education through disclosure to a resituated office.",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Declared cross-story: distinct from the Hypostasis of the Archons whole — no historical identity across the shared Sophia name. ↳ Occurrences: the bridal union and the differentiated destinations (#5→0); the Demiurge's learning (#4, #5→0); the retained variants (#5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1660,8 +2290,24 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-bridal",
+          "target": "field.params.pointerStrength",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": 0.4,
+          "max": 0.7,
+          "rate": 0.22,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

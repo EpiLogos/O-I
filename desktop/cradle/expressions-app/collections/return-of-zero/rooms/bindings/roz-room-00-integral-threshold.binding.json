@@ -1,0 +1,141 @@
+{
+ "artifact": "rooms/roz-room-00-integral-threshold.journey.json",
+ "family": "rooms",
+ "room_slug": "00-integral-threshold",
+ "worker": "E1",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-essay",
+  "family-section-room"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+  "records": [
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+    "sha256": "cb5f1aa43ee69f127de09561768ee3ec02e7b4fce624b376486fbb6bf8fddb2c"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "c24377951a2c55086f1ea1c245e5a5349ce528f06fee56c583a511ebdff8a791"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md",
+    "sha256": "69c17d483608c81fec425e2b0442c9afa7ce317ce2f200fab4f246f3a1cb3441"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject.md",
+    "sha256": "82ed67b30117b6acb25be32e2e0fd3d5fbf2ed63c8b6d85f0351b5cdb8e135ef"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/03-s01-p2-definition-cut-gift-danger.md",
+    "sha256": "c5da497e3b6015c71a641de7e1a1b826cf7e44923291d460a8ef48d054a7d63a"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md",
+    "sha256": "6b481e61c1cecc9ea02b3ccdcf280fdb92531ec146c95f83c412fdced7d900bd"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/05-s01-p4-gebser-diaphaneity.md",
+    "sha256": "8abe57833cd935f9520787a970a0621c992f12ca5c5eea6a3306f7981e1ea249"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/06-s01-p5-return-zero.md",
+    "sha256": "3921264e9cc444b7e5670018b633821106700b09b2df55375acf1f88b7523fa1"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "movement-01",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md",
+   "relations": "movement identity: §0/1 · #0 — The Question Before the Mechanism · canonical route: P1-M01 → A01 · A03 · A04 · A26 / C01 · C04 · C05 · C07 · C09 · C57 — Encounter + Symbol/Account/Trust · reading path: The opening movement of the reading path.   ·   next → M02 Define the Subject Without Making It an Object"
+  },
+  {
+   "scene_id": "movement-02",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject.md",
+   "relations": "movement identity: §0/1 · #1 — Define the Subject Without Making It an Object · canonical route: P1-M02 → A01 · A02 · A03 / C01 · C02 · C03 · C04 · C05 · C06 — Symbol/Account/Trust; 0/1 Matheme · reading path: ← previous · M01 The Question Before the Mechanism   ·   next → M03 Definition as Cut, Gift, and Danger"
+  },
+  {
+   "scene_id": "movement-03",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/movements/03-s01-p2-definition-cut-gift-danger.md",
+   "relations": "movement identity: §0/1 · #2 — Definition as Cut, Gift, and Danger · canonical route: P1-M03 → A01 · A03 · A08 · A24 / C02 · C03 · C04 · C18 · C27 — Arbitration Criterion-through-Distinction → Measure/Limit · reading path: ← previous · M02 Define the Subject Without Making It an Object   ·   next → M04 The Formal-Limit Genealogy"
+  },
+  {
+   "scene_id": "movement-04",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md",
+   "relations": "movement identity: §0/1 · #3 — The Formal-Limit Genealogy · canonical route: P1-M04 → A03 · A23 · A34 / C04 · C05 · C48 · C60 — Fides + formal-limit Episteme · reading path: ← previous · M03 Definition as Cut, Gift, and Danger   ·   next → M05 Gebserian Diaphaneity"
+  },
+  {
+   "scene_id": "movement-05",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/movements/05-s01-p4-gebser-diaphaneity.md",
+   "relations": "movement identity: §0/1 · #4 — Gebserian Diaphaneity · canonical route: P1-M05 → A04 · A22 · A26 / C07 · C08 · C09 · C37 · C41 — Con-text-through-Diaphaneity → Regard · reading path: ← previous · M04 The Formal-Limit Genealogy   ·   next → M06 The Return to Zero"
+  },
+  {
+   "scene_id": "movement-06",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/movements/06-s01-p5-return-zero.md",
+   "relations": "movement identity: §0/1 · #5→0 — The Return to Zero · canonical route: P1-M06 → A10 · A11 · A23 / C48 · C49 · C52 — zero history + Symbol/Account/Trust; A36 remains forward-only · reading path: ← previous · M05 Gebserian Diaphaneity   ·   next → M07 Awareness Bends Toward Display"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "rooms/roz-room-00-integral-threshold.cover.png",
+ "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+ "status": "captured",
+ "notes": [
+  "E0 acceptance repair: text/field collision class fixed on all six scenes — formations shifted right-of-centre (GX 0.2), route layer moved to top-left, text column 400→360; cover re-captured at authored count.",
+  "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+  "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+  "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+  "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719 under submission-package/essay/section-rooms/00-integral-threshold/movements/).",
+  "m01 the panel: one formation walks the record's own triple — readings, observer, situation — and ends on the unshown horizon (grid layout: the panel is rows in register); pointer repel 0.5 (the panel does not yield its horizon); dispersion LFO = the panel hums. Editorial body trimmed to the 70-word floor, claims preserved verbatim.",
+  "m02 3D (z = the given-ness of the world): the pole walks deeper (z +0.1 → −0.55) as 'the opening' → 'never an object' while three given marks hold nearer depths — depth is the world given through the opening, and the deepest term is never reached as an object; depth LFO = the given field breathes. Pointer attract 0.8.",
+  "m03 the cut: the walker steps cut → knowable gift → field forgotten (darkens red: the danger the record marks) while the broken token's two pieces hold apart at attract 0.5 — they signify by relation, not fusion; saw LFO on turbulence = the cut's edge.",
+  "m04 the formal limit: the system's attempt 'every condition made internal' still ends in 'a remainder' held outside by a repel force — the movement's exact claim; vortex pointer = the internal swirl that never closes on its own condition.",
+  "m05 diaphaneity as demand and method only: light → refracted → the prism visible, with two colour bands the prism makes possible. The mathematical disclosure (180°→360°) is deliberately NOT staged here — it waits for room-04 movement-25 (withholding kept).",
+  "m06 the return to zero: an open place → the bare promissory 0 → 'enfolded, before explication' — zero enters exactly as the record introduces it (promissory meta-sign; Bohm bridge); no 0/1 anywhere in this room (earned only at room-02 m18). Slowest transition 2.0 — the promise opens rather than resolves.",
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-essay-l2",
+  "lane": "ESSAY+ROOMS wave 2",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "0": "M06: zero as the promissory meta-sign for the condition a system cannot count as one more object — introduced by this movement itself (0/1 stays unearned until §1 · #5→0)",
+  "readings": "M01: the panel's readings — they depend on an observer, a situation, and a horizon the panel does not display (the movement's own image)",
+  "an observer": "M01: the observer the readings presuppose — the one for whom distinctions matter, whom planetary systems displace",
+  "a situation": "M01: the situation of the reading — the contextual conditions (prompt, memory, permissions) that are operatively constitutive",
+  "an unshown horizon": "M01: the horizon the panel does not display — the uncounted context of a formal operation; the opening refuses to begin from mechanism",
+  "#1": "M02: the station chassis position — the subject as the non-objectifiable pole of a differentiating event (the raw #0…#5→0 movement addressing)",
+  "the opening": "M02: the subject as the opening through which a determinate world is given",
+  "never an object": "M02: treating the condition as a hidden substance inside the world would turn it into another object and repeat the error under examination",
+  "the cut": "M03: determination as negational and productive — the mark exists by distinguishing it from what it is not",
+  "a knowable gift": "M03: the cut's gift — a knowable object given by the distinction (the later 0/1 notation is deliberately withheld in this station)",
+  "the field forgotten": "M03: the cut's danger — the achieved term forgets the field and activity from which it was cut (red = the marked danger)",
+  "an articulate system": "M04: a sufficiently articulate system — Principia's attempt to make the grounds of mathematical knowledge explicit",
+  "every condition made internal": "M04: the attempt to convert every condition of articulation into an ordinary internal term",
+  "a remainder": "M04: what cannot be converted — the system cannot make its own conditions internal without remainder (blue = what stays outside the term)",
+  "light": "M05: the appearing itself before refraction — the demand and method of diaphaneity as the record gives it here",
+  "refracted": "M05: light refracted without losing the prism — the positioned seeing retained while its conditions come into view",
+  "the prism visible": "M05: the prism becomes visible in the colour it makes possible — the method's demand: which sign can position the unobjectifiable?",
+  "an open place": "M06: the open place in the score — the promissory meta-sign before any notation is earned",
+  "enfolded, before explication": "M06: the enfolded order before local explication — the process bridge (Bohm) by which the station releases to §0"
+ }
+}

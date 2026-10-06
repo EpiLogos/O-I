@@ -1,0 +1,130 @@
+{
+ "artifact": "mytheme/roz-mytheme-narrative-fanon-language-gaze-mask-recognition.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-narrative-fanon-language-gaze-mask-recognition",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/francophone-anticolonial/fanon-language-gaze-mask-recognition/WHOLE.md",
+    "sha256": "a7609c652d7e6eba7edcbd43f5f74291d28f0ae0fe345d4f6ed646bb55eead82"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-fan-0-language",
+   "phase": "#1 speaking opens access and installs a measure",
+   "relations": "chapter I, PDF pp.36–56 (q002); anchor fanon-language"
+  },
+  {
+   "scene_id": "m-fan-1-gaze",
+   "phase": "#2 the body returns from a gaze that precedes it",
+   "relations": "chapter V, PDF pp.118–148, hail at pp.120–122 (q003, q004); anchor fanon-racial-hail"
+  },
+  {
+   "scene_id": "m-fan-2-mask",
+   "phase": "#3 the mask becomes an inward criterion",
+   "relations": "anchor fanon-mask; persona and chameleon kept distinct"
+  },
+  {
+   "scene_id": "m-fan-4-recognition",
+   "phase": "#4 recognition must change the relation",
+   "relations": "chapter VII pp.207–220 (q005); conclusion pp.221–229 (q006); anchor fanon-recognition"
+  },
+  {
+   "scene_id": "m-fan-5-return",
+   "phase": "#5→0 the historical person remains available to answer",
+   "relations": "anchor fanon-amplification-ledger, fanon-cross-whole, fanon-return-statement, fanon-source-control"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the Antillean speaker / metropolitan French",
+   "occurrence": "#1 real acquisition and inherited judgement in one field"
+  },
+  {
+   "figure": "the train and the child's fear",
+   "occurrence": "#2 the hail's movement from smile to fear"
+  },
+  {
+   "figure": "the historico-racial and epidermal racial schemata",
+   "occurrence": "#2 distinguishable; not history become biology"
+  },
+  {
+   "figure": "the white mask",
+   "occurrence": "#3 participation's interface becoming self-administration"
+  },
+  {
+   "figure": "the concluding demand",
+   "occurrence": "#4 recognition's terms made answerable; de-alienation across material situations"
+  },
+  {
+   "motif": "the four unratified flags",
+   "occurrence": "#5→0 carried verbatim: adaptive interface, category before encounter, co-internality, idol/image"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "all four inherited comparisons (A20 interface, category-before-encounter, A30 co-internality, C21 idol/image), the Number Six / Apollo–Daphne / moving-mirror / Attica cross-whole comparisons, and the A27 return synthesis",
+   "flag": "no — inherited standing preserved; permission to develop upgraded none"
+  }
+ ],
+ "cross_story_relations": [
+  "The Prisoner, the Ovidian Daphne, the mirror and Attica wholes named as comparisons whose differences travel with them."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-narrative-fanon-language-gaze-mask-recognition.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: the palette keeps the earth/red-black key; the gaze scene is the hinge scene and its caption refuses the completed-reconciliation reading. Source standing: French electronic text admitted; English translation selection and quotation collation remain separate; no French sentence passed as verified English. E0 acceptance repair: title/field collision fixed on m-fan-1-gaze, m-fan-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#1 language — the double gift walked: attract + pulse pointer (access draws the speaker in); the language sequence runs access → measure → ℘ (the same acquisition, first opening then installing); the speaker's ◉ sequence brightens with acquired capacity then dims under the standard. Duration 12.\n#2 gaze — THE 3D SCENE. z is the carriage's depth: the schemata at the visible body nearest (z +0.4), the carriage around him (z 0), the hail from the far end (z −0.5) — the space left around him part of the event, literally. The hail's sequence grows ! from smile-small grey to fear-large red; the schema sequence walks body-schema → epidermal schema (pale to wounded red). Repel + shove pointer (the interruption). Duration 13.\n#3 mask — the inward turn staged as a morph: the legible square shrinks and pales, then becomes ≡ — the outer form become the inward measure; vortex + pulse pointer (the turning inward); near-still field (dispersion 0.05) — the administration is quiet. Duration 12.\n#4 recognition — line layout: the participants faced; auto-demand, a sine LFO on circulation (reciprocity breathing); the ◉◉ pair brightens as the terms question 'who determines the terms?' appears beside the scales; attract + implode pointer (the demand gathers). Duration 14.\n#5→0 return — the mask ring re-lights gold and settles (returned to the scene that made it meaningful, its force visible, its finality refused); attract at 0.25, the gentlest hold — the person remains available to answer. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens with a speaker drawn into a language that grants access while installing a measure — his ◉ dimming through its own sequence — and closes at the gentlest hold with the mask returned to its scene: the capacity acquired at #1 is retained (the record's indispensable difference between capacity and valuation), but the hold is no longer the measure's. The ◉ dimmed at #1 stands at #4 as ◉◉ — recognition needing two — with ≠ naming what made it unequal and the scales' question transferring the weight from self-administration to the terms themselves. The journey's pointer arc runs from the language's invitation (0.4) through the hail's shove (0.5) and the demand's implode (0.45) to the answer's open 0.25.\nHuman-amplified staging: the four proposed comparisons keep their unratified standing and A27 stays human-amplified: no, verbatim in the #5→0 body; the cross-whole neighbours are named with their differences in the occ block. Mythemic verbs only: the scenes demonstrate the relation between image, bearer and the conditions of its power; no general formula substitutes for the historically produced sequence.\nAutomation: auto-demand (#4, field.params.circulation sine — the reciprocal demand breathing), tied to the record's move. Durations 12–15 and transitions 1.3–2.2: recognition and return held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "℘": "the acquired language — its double curve carrying both the opening of access and the inherited measure that rides it (chapter I).",
+  "access": "the language's first gift — real capacities of participation opened; treating the skill as disguise would erase them.",
+  "measure": "what the language installs — the standard by which the dominant world hears him, become a rule for self-evaluation.",
+  "◉": "the speaker — real capacity acquired, dimmed where he hears himself through the inherited standard; at #4 one of the two recognition requires.",
+  "!": "the racial hail — 'Look, a Negro!'; the smile becoming the child's fear; responsibility for body, race and ancestors imposed (chapter V, pp.120–122).",
+  "body-schema": "the practical bodily orientation — movement possible before the body is made an object of racial classification.",
+  "epidermal schema": "the field's force arriving at the visible body — not history become biology, but the racialised appearance reorganising lived possibility.",
+  "≡→◦": "the two schemata compressed — the historico-racial field giving the epidermal occasion its force.",
+  "≡": "the inward measure — anticipation, editing, the unapproved response felt as one's own defect.",
+  "⚖": "the scales — at #3 the double edge (access reinforcing the measure admission depended on); at #4 the question of the revised terms.",
+  "who determines the terms?": "the recognition question — the demand that the conditions of recognition become answerable to the person they concern (chapter VII).",
+  "◉◉": "recognition — reciprocal as a demand; more than one participant's changed self-description.",
+  "≠": "the unequal history — one participant inheriting an authority to classify that the other does not possess in the same way.",
+  "4×": "the four proposed comparisons held unratified — mask as adaptive interface, category before encounter, Objective Co-Internality, idol/image.",
+  "◌": "the empty ring of the cross-whole neighbours — Number Six, Apollo–Daphne, the moving mirror, Attica: comparisons whose differences must be carried, not filled.",
+  "A27": "self and other without possession — the other's reality not exhausted by a prior image (project synthesis, human-amplified: no).",
+  "white mask": "the title's form — legible, opening participation, becoming an inward criterion; not intentional pretending, not a peelable surface over a private essence."
+ }
+}

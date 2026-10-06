@@ -1,0 +1,157 @@
+{
+ "artifact": "mytheme/roz-mytheme-maya-eye-veil-frame-horizon.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme",
+  "family-frank-taylor"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-maya-eye-veil-frame-horizon",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/maya-eye-veil-frame-horizon/WHOLE.md",
+    "sha256": "93c86977170638169a0c6265d7637086a18b88242d1462f9cdcfecef041aeb9c",
+    "sha256_receipt_stale": "f50f92ae34794ebdaa0313d5b1e92ffd69a1b665acfdcff9e82b21b199fc1352"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-maya-0-eye",
+   "phase": "#0 the eye's condition; frame vs horizon",
+   "relations": "Draft 3's positive finitude appointment"
+  },
+  {
+   "scene_id": "m-maya-1-veil",
+   "phase": "#1 the Śaiva genealogy; dream and crystal",
+   "relations": "Dyczkowski pp.65–81; the quilt's sleeper correction; C14/C15/C16"
+  },
+  {
+   "scene_id": "m-maya-2-usurpation",
+   "phase": "#2 the frame calls its boundary the horizon",
+   "relations": "the complex; the nested simulation relay; Bratton p.25 §§5.1–5.3; Simulation concept"
+  },
+  {
+   "scene_id": "m-maya-3-regard",
+   "phase": "#3 regard, context, refraction",
+   "relations": "Watson/Gans/Levinas; Gebser; the corrected optical assignments; C38; the holographic unit"
+  },
+  {
+   "scene_id": "m-maya-5-return",
+   "phase": "#4–#5→0 recognition through the veil",
+   "relations": "the eightfold; the Neumann appointments (yes); the paśu and toroidal corrections; A24 and the Arbitration field; A01–A09, A19–A22, A26–A27, A31–A36, C01–C42 as declared receivers"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the eye / blindside",
+   "occurrence": "#0 the condition at work in appearing; #5→0 the eye opening again"
+  },
+  {
+   "figure": "the frame and the horizon",
+   "occurrence": "#0 distinct; #2 the usurpation"
+  },
+  {
+   "figure": "the kañcukas and paśu",
+   "occurrence": "#1 the bounded knower's effective terms; #4 the correction's ontological order"
+  },
+  {
+   "figure": "the dream",
+   "occurrence": "#1 the sleeper correction (same event as dissociation/tattvic contraction/slash, ontological register)"
+  },
+  {
+   "figure": "the crystal / living mirror",
+   "occurrence": "#1 display without knowing; no machine phenomenality"
+  },
+  {
+   "figure": "the nested simulation relay",
+   "occurrence": "#2 capture when results erase result-status"
+  },
+  {
+   "figure": "the stained window (assignments)",
+   "occurrence": "#3 Bimba/QL/MEF/pratibimba — shared with the stained-glass whole"
+  },
+  {
+   "motif": "\"Līlā veils; hybris absolutises the veil; recognition sees the veil as Śakti\"",
+   "occurrence": "#5→0 the governing compression, quoted"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "the declared whole and its six turns; the sleeper correction; the full-field Neumann appointments; the toroidal appointment with Anuttara owning the opening and Māyā the measure",
+   "flag": "yes (record front-matter: human-amplified: yes)"
+  },
+  {
+   "relation": "new symbolic appointments beyond the declared amplification",
+   "flag": "no"
+  }
+ ],
+ "cross_story_relations": [
+  "Uroboros and Neumann wholes share the paśu correction and the Māyā-not-the-hole distinction; the stained-glass whole owns the window's full development."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-maya-eye-veil-frame-horizon.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: five scenes; the usurpation scene renders x=X literally in particle text. Dreamcode/Dream-machine naming proposals noted as undeveloped and not used. Singh notebook vs Abhinavagupta commentary distinction preserved. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-maya-0-eye, m-maya-3-regard, m-maya-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
+  "#0 eye — receptive register: paper-light (blackOnWhite — prakāśa as daylight seeing); the blindside, marked ◉ dark, appears only when the eye turns toward its condition; walking widens the horizon ring (size + position drift); pointer repel 0.15/pulse — the aperture's boundary, attention near stillness; auto-walk LFO on circulation (the gait that changes what the horizon affords).",
+  "#1 veil — the genealogy in grid layout (the kañcukas' apportioned field); Śakti's sequence ☀→☀(deepened)→≡ is the record's own move — measure emerges within manifestation's power, not across it; vortex pointer — the two crossing movements (manifestation/withdrawal, approach/return); auto-veil LFO on dispersion (the veil breathes).",
+  "#2 usurpation — ring layout: the frame now encircles everything; x=X inflates toward centre and hardens red (investment confirming image), then the true distinction X/x is shown exiled, dim, at the rim — usurpation as the demotion of a real distinction, not its absence; attract + shove — capture draws in and throws out; auto-relay triangle LFO on speed (the relay's iteration); morph thetaRate 0.14 (the produced world turning).",
+  "#3 regard — line layout: the passage among views; the record's own notation 180°→360° as the sign's turn (one view enclosing → context holding differences); vortex/pulse at 0.35 — turning that answers; auto-context LFO on circulation (the passage itself).",
+  "#5→0 return — THE 3D SCENE. z is the toroidal depth: Anuttara's opening deepest (disc at z −0.45), Māyā's veil wound around it at z 0 (breathing ring — manifestation/withdrawal), the paśu correction nearest (प at z +0.35), A24 at z +0.2; the eight-determination walker (−/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0) circles the ring in z and its last station closes toward the opening — the native field walked as the story's own completion; pointer attract/implode — recognition gathers the veiled back to the opening; auto-return LFO on pointerStrength (attention answerable, breathing).",
+  "ENDING QUALIFIES BEGINNING: #0 opened with ◉ dark inside the eye — the seeing whose own condition was unseen, pointer repel (reception, boundary held); #5→0 returns ◉ bright within the veil-ring with the eightfold walk arriving at 1/0 by gathering (attract/implode) into the opening disc — the same bounded seeing now owned as situated within recognition's field; the frame that claimed the horizon at #2 stands re-read as veil (≡ wound around the opening, never the hole); the horizon widened by walking at #0 is the field the 360° context holds at #3. Līlā's compression governs: the veil was never the enemy — hybris absolutised it; recognition sees it as Śakti.",
+  "Human-amplified (frontmatter: yes): the Neumann appointments and the paśu/toroidal corrections are Taylor's authored full-field amplification — scene bodies carry the guard (no proof the cosmos sleeps; no machine phenomenality; the six turns renumber nothing; Māyā-not-the-hole). Mythemic verbs only: the veil embodies manifestation's power; the window demonstrates refraction with assigned offices; the relay shows capture beginning.",
+  "Automation: auto-walk (the gait), auto-veil (manifestation's breath), auto-relay (iteration), auto-context (the passage), auto-return (answerable attention) — all tied to the record's moves. Durations 11–15, transitions 1.2–2.0; the return held longest — recognition takes the whole field."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l4",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "◉": "the bounded seeing itself — dark at #0 where its own condition is unseen (the blindside marked when the eye turns toward it), the paśu at #1, bright at #5→0 as the eye opens again (A35/A36).",
+  "☀": "Śakti's prakāśa — luminous manifestation (#1); its deepening at step 2 is vimarśa, the same light's reflexive self-knowing.",
+  "≡": "Māyā's measure — this appears, that is withheld; born inside Śakti's self-articulation (#1), not an alien veil thrown across a finished spectator.",
+  "☾": "the dream — the experienced world whose condition of sleep disappears from within it (#1).",
+  "0": "Anuttara/Paramaśiva — the unobjectifiable ground no mark can enclose (#1); kept dark as the opening at #5→0.",
+  "x=X": "the usurpation: the local determination claiming determining capacity — the frame calling its boundary the horizon (#2).",
+  "X/x": "the native distinction the usurpation suppresses — determining capacity held distinct from its local determination (#2 exiled to the rim; restored in the eightfold walk at #5→0).",
+  "⊢": "the prepared role — the assertion supplied before the other can answer, words becoming evidence of what the frame already knew (#2).",
+  "B": "Bratton's Agentworld brief (p.25 §§5.1–5.3) — the nested relay's distinct temporal tasks: description, anticipation, exploration (#2).",
+  "☮": "the Other's refusal — the reply that will not take the prepared role, the excess that can alter the measure of the encounter (#3).",
+  "⊣": "the face-to-face (Watson through Gans's Levinas) — exceeding the image held of the Other (#3).",
+  "180°": "one perspective enclosing its world — the view before context (#3, the record's own notation).",
+  "360°": "perspectives and their transitions held in context — never an omniscient panorama; another angle carries an occlusion of its own (#3).",
+  "A24": "Arbitration and the usurpation of measure: necessary measuring preserved, absolute jurisdiction made answerable (#5→0).",
+  "प": "the paśu correction — the bounded position arising within recognition's field (p.105): recognition precedes separation, so the paśu cannot originate it (#5→0; human-amplified: yes as the author's full-field reading).",
+  "−/−": "the parent relation — preceding any determinate view (native articulation, #4).",
+  "0/1": "conscious circumstance and the inseparable identity/difference through which it appears (#4).",
+  "?/!": "the question and its assertion arriving in the circumstance (#4).",
+  "−/+": "reserve and issue effective — something withheld as something is put forward (#4).",
+  "AM/IS": "the personed situation — where I and what can be said of me meet an addressing You (#4).",
+  "∞/dx": "the local act's exactness within an inexhaustible horizon — the great round's fullness (#4).",
+  "1/0": "the return of achieved determination toward the condition that never became its possession — the walk's last station, closing on the opening (#4, #5→0)."
+ }
+}

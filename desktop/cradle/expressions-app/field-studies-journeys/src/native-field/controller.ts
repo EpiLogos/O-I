@@ -5,6 +5,7 @@ import type {NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
+import type {FieldScoreBasis} from '../tarotScoreClient.js';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -397,6 +398,35 @@ export class NativeFieldController {
   this.hold('native influence reading');const held=await this.idle();
   try{await held.recover('native influence reading');return await this.readInfluence(held);}
   finally{if(this.current(held))this.hold('influence reading complete; resume explicitly');}
+ });}
+ /** The scene's own Tarot score basis facts — the honest basis the score reads
+  * stand on: the field's own subject and event, the M3 clock position of the
+  * last complete source read, and the admitted `ql.sky-snapshot/v1` the event
+  * carries (null when the scene carries none; `score-resolve` then refuses by
+  * name, and that refusal is the reading's honest first-class state). */
+ get scoreBasis():FieldScoreBasis|null{
+  const session=this.session,event=this.event;
+  if(!session||!this.scene||!event)return null;
+  const reading=session.reading;
+  const steps=this.sources?.current?.m3?.clock?.steps;
+  const stepsValue=typeof steps==='string'&&/^(0|[1-9][0-9]{0,19})$/.test(steps)?Number(steps):steps;
+  if(typeof stepsValue!=='number'||!Number.isSafeInteger(stepsValue)||stepsValue<0)return null;
+  const sky=(Array.isArray(event.source_receipts)?event.source_receipts:[]).find((r:any)=>r?.schema==='ql.sky-snapshot/v1')??null;
+  return {schema:'oi.field-score-basis/v1',subject_ref:reading.subject_ref,event_ref:reading.event_ref,
+   clock_steps:stepsValue,occasion_sky:sky?structuredClone(sky):null};
+ }
+ /** The selected subject's deterministic Tarot score through the one serial
+  * owner's own exchange path (read-only: the field never advances). A refusal
+  * is returned as named data — it never holds the owner or un-acks a cursor. */
+ score(command:unknown){return this.serial(async()=>{
+  const session=this.session;if(!session||!this.scene)throw new Error('the Tarot score belongs to an open scene owner');
+  if(this.status==='following'){
+   if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the score reading was not sent');
+   return session.score(command);
+  }
+  this.hold('Tarot score reading');const held=await this.idle();
+  try{await held.recover('Tarot score reading admission');return await held.score(command);}
+  finally{if(this.current(held))this.hold('Tarot score reading complete; resume explicitly');}
  });}
  /** Human-cadence source refresh after determinant events; never while an event
   * is in flight, never while held. */

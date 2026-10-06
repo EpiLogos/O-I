@@ -10,8 +10,8 @@
       "id": "movement-43",
       "name": "§5→0 · #0 — From Theory to Vocation",
       "character": "§5→0 · #0 — From Theory to Vocation (Argued).",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -42,12 +42,12 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1,
-          "turbulence": 0.22,
+          "speed": 0.5,
+          "circulation": 0.5,
+          "turbulence": 0.12,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.09,
+          "dispersion": 0.05,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -76,7 +76,7 @@
       "entities": [
         {
           "id": "ent-050",
-          "name": "#0 — From Theory to Vocation",
+          "name": "#0 — From Theory to Vocation — quiet field form",
           "kind": "formation",
           "position": {
             "x": 0.2,
@@ -106,12 +106,176 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-051",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "id": "ent-050-s1",
+                "hold": 2.8,
+                "transition": 1.2,
+                "position": null,
+                "text": "the work complete",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.72,
+                    "y": 0.72
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.4,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-050-s2",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": null,
+                "text": "the relations continue",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.8,
+                    "y": 0.8
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.65,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-050-s3",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "text": "answerable",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.7,
+                    "y": 0.7
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-050-walk",
+          "name": "#0 — From Theory to Vocation — quiet field form — the walking sign",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.72,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "the work complete",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.4,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-050-s1",
+                "hold": 2.8,
+                "transition": 1.2,
+                "position": null,
+                "text": "the work complete",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.72,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.4,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-050-s2",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": null,
+                "text": "the relations continue",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.8,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.65,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-050-s3",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "text": "answerable",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.7,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -163,17 +327,38 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "vocation-hold",
+          "enabled": true,
+          "target": "field.params.speed",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.35,
+          "max": 0.7,
+          "rate": 0.08,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 13,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.45
       }
     },
     {
       "id": "movement-44",
       "name": "§5→0 · #1 — QL, MEF, Bimba, and Harness",
       "character": "§5→0 · #1 — QL, MEF, Bimba, and Harness (Argued).",
-      "duration": 12,
+      "duration": 14,
       "transition": 1.5,
       "view": {
         "mode": "2d",
@@ -205,12 +390,12 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1,
-          "turbulence": 0.22,
+          "speed": 0.6,
+          "circulation": 0.9,
+          "turbulence": 0.12,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.09,
+          "dispersion": 0.05,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -247,8 +432,8 @@
             "z": 0
           },
           "size": {
-            "x": 1.25,
-            "y": 1.6
+            "x": 0.5,
+            "y": 0.6100000000000001
           },
           "rotation": 0,
           "shape": "text",
@@ -265,18 +450,155 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-053",
+                "id": "ent-052-s1",
+                "hold": 3,
+                "transition": 1.2,
+                "position": null,
                 "text": "0/1",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.55
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-052-s2",
+                "hold": 2.6,
+                "transition": 1.2,
+                "position": null,
+                "text": "grammar",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
+          }
+        },
+        {
+          "id": "ent-r07-mef",
+          "name": "MEF — the lens-conditioned epistemology",
+          "kind": "formation",
+          "position": {
+            "x": 0.46,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "MEF",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "ent-r07-bimba",
+          "name": "the Bimba Map — the reference field first-class",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "bimba",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "ent-r07-harness",
+          "name": "the harness — conditions and possible Return kept available",
+          "kind": "formation",
+          "position": {
+            "x": 0.74,
+            "y": 0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "harness",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
@@ -309,7 +631,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -326,23 +648,44 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "offices-pulse",
+          "enabled": true,
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.6,
+          "max": 1.2,
+          "rate": 0.1,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 14,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.8,
+        "pointerClickRadius": 0.4
       }
     },
     {
       "id": "movement-45",
       "name": "§5→0 · #2 — Antikythera as Attunement Instrument",
       "character": "§5→0 · #2 — Antikythera as Attunement Instrument (Offered).",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 17,
+      "transition": 2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.5,
+        "pitch": 0.3,
+        "zoom": 0.88,
         "panX": 0,
         "panY": 0
       },
@@ -368,16 +711,16 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1,
-          "turbulence": 0.22,
+          "speed": 0.5,
+          "circulation": 0.5,
+          "turbulence": 0.08,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.09,
+          "dispersion": 0.04,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
+          "depth": 0.6,
           "grain": 0.035,
           "snapRigidity": 1,
           "densityTether": 1,
@@ -405,20 +748,20 @@
           "name": "the instrument — outer gear ring",
           "kind": "formation",
           "position": {
-            "x": 0.25,
+            "x": 0.32,
             "y": 0,
-            "z": 0
+            "z": 0.5
           },
           "size": {
-            "x": 1.75,
-            "y": 1.75
+            "x": 1.8,
+            "y": 1.8
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
           "tint": "#eee9d9",
-          "tintWeight": 0,
+          "tintWeight": 0.25,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -444,23 +787,23 @@
         },
         {
           "id": "ent-056",
-          "name": "middle train",
+          "name": "middle train — quiet field form",
           "kind": "formation",
           "position": {
-            "x": 0.25,
+            "x": 0.32,
             "y": 0,
             "z": 0
           },
           "size": {
-            "x": 1.3,
-            "y": 1.3
+            "x": 1.25,
+            "y": 1.25
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
           "tint": "#b08d4f",
-          "tintWeight": 1,
+          "tintWeight": 0.25,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -474,35 +817,73 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-057",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-056-s1",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.4,
+                "position": null,
+                "text": "cycles",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.6
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-056-s2",
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "text": "legible together",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.68,
+                    "y": 0.68
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
           "id": "ent-058",
-          "name": "inner train",
+          "name": "inner train — quiet field form",
           "kind": "formation",
           "position": {
-            "x": 0.25,
+            "x": 0.32,
             "y": 0,
-            "z": 0
+            "z": -0.5
           },
           "size": {
-            "x": 0.8,
-            "y": 0.8
+            "x": 0.75,
+            "y": 0.75
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
           "tint": "#b08d4f",
-          "tintWeight": 1,
+          "tintWeight": 0.25,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -516,12 +897,27 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-059",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "id": "ent-058-s1",
+                "hold": 3.6,
+                "transition": 1.6,
+                "position": null,
+                "text": "the observer",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -531,9 +927,9 @@
           "name": "the observer the instrument does not replace",
           "kind": "pin",
           "position": {
-            "x": 0.25,
-            "y": 0,
-            "z": 0
+            "x": 0.32,
+            "y": -0.28,
+            "z": -0.5
           },
           "size": {
             "x": 0.1,
@@ -564,6 +960,143 @@
                 "hold": 3,
                 "transition": 1,
                 "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-056-walk",
+          "name": "middle train — quiet field form — the walking sign",
+          "kind": "formation",
+          "position": {
+            "x": 0.32,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.56
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "cycles",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-056-s1",
+                "hold": 3,
+                "transition": 1.4,
+                "position": null,
+                "text": "cycles",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-056-s2",
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "text": "legible together",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.68,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-058-walk",
+          "name": "inner train — quiet field form — the walking sign",
+          "kind": "formation",
+          "position": {
+            "x": 0.32,
+            "y": 0,
+            "z": -0.5
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.48
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "the observer",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.75,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-058-s1",
+                "hold": 3.6,
+                "transition": 1.6,
+                "position": null,
+                "text": "the observer",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -607,26 +1140,52 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.1,
+        "phiRate": -0.07,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "cycles-counter",
+          "enabled": true,
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.4,
+          "max": 0.6,
+          "rate": 0.06,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 17,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.35,
+        "pointerClickRadius": 0.5,
+        "volumeEnabled": true,
+        "volumeProfile": "round",
+        "depthPerspective": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0c0e0c"
       }
     },
     {
       "id": "movement-46",
       "name": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons",
       "character": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons (Argued (mono–poly / epistemic sovereignty); Offered (specific federated Bimba / sovereign-commons architecture)).",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 1.7,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -657,12 +1216,12 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1,
-          "turbulence": 0.22,
+          "speed": 0.55,
+          "circulation": 0.5,
+          "turbulence": 0.12,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.09,
+          "dispersion": 0.05,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -691,7 +1250,7 @@
       "entities": [
         {
           "id": "ent-05c",
-          "name": "shared commons — protocol · memory · provenance · consequence",
+          "name": "shared commons — protocol · memory · provenance · consequence — quiet field form",
           "kind": "formation",
           "position": {
             "x": 0.2,
@@ -699,8 +1258,8 @@
             "z": 0
           },
           "size": {
-            "x": 1.8,
-            "y": 1
+            "x": 1.7,
+            "y": 1.7
           },
           "rotation": 0,
           "shape": "ring",
@@ -721,12 +1280,50 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-05d",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "id": "ent-05c-s1",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": null,
+                "text": "4:2",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.7,
+                    "y": 0.7
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05c-s2",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "text": "mono–poly",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.8,
+                    "y": 0.8
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -736,25 +1333,25 @@
           "name": "Bimba A — local ground",
           "kind": "formation",
           "position": {
-            "x": -0.75,
-            "y": -0.6,
+            "x": 0.9199999999999999,
+            "y": 0,
             "z": 0
           },
           "size": {
-            "x": 0.55,
-            "y": 0.55
+            "x": 0.3,
+            "y": 0.3
           },
           "rotation": 0,
-          "shape": "disc",
-          "text": "",
+          "shape": "text",
+          "text": "sovereign",
           "share": 1,
           "tint": "#b08d4f",
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.7,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -778,25 +1375,25 @@
           "name": "Bimba B — local ground",
           "kind": "formation",
           "position": {
-            "x": 0.2,
-            "y": -0.72,
+            "x": 0.02000000000000013,
+            "y": 0.5196152422706632,
             "z": 0
           },
           "size": {
-            "x": 0.55,
-            "y": 0.55
+            "x": 0.3,
+            "y": 0.3
           },
           "rotation": 0,
-          "shape": "disc",
-          "text": "",
+          "shape": "text",
+          "text": "sovereign",
           "share": 1,
           "tint": "#b08d4f",
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.7,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -820,25 +1417,25 @@
           "name": "Bimba C — local ground",
           "kind": "formation",
           "position": {
-            "x": 1.05,
-            "y": -0.6,
+            "x": 0.01999999999999974,
+            "y": -0.519615242270663,
             "z": 0
           },
           "size": {
-            "x": 0.55,
-            "y": 0.55
+            "x": 0.3,
+            "y": 0.3
           },
           "rotation": 0,
-          "shape": "disc",
-          "text": "",
+          "shape": "text",
+          "text": "sovereign",
           "share": 1,
           "tint": "#b08d4f",
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.7,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -853,6 +1450,86 @@
                 "hold": 3,
                 "transition": 1,
                 "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05c-walk",
+          "name": "shared commons — protocol · memory · provenance · consequence — quiet field form — the walking sign",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.56,
+            "y": 0.6100000000000001
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4:2",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-05c-s1",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": null,
+                "text": "4:2",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.55
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05c-s2",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "text": "mono–poly",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.8,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -904,18 +1581,39 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "commons-hold",
+          "enabled": true,
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.4,
+          "max": 0.6,
+          "rate": 0.08,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 15,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 1,
+        "pointerClickRadius": 0.42
       }
     },
     {
       "id": "movement-47",
       "name": "§5→0 · #4 — Idealism as Horizon",
       "character": "§5→0 · #4 — Idealism as Horizon (Argued (order of dependence); Offered (technical comparisons); Open (artificial phenomenal localisation)).",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -946,12 +1644,12 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1,
-          "turbulence": 0.22,
+          "speed": 0.5,
+          "circulation": 0.5,
+          "turbulence": 0.1,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.09,
+          "dispersion": 0.05,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -980,7 +1678,7 @@
       "entities": [
         {
           "id": "ent-05k",
-          "name": "the field it cannot finally map from outside",
+          "name": "the field it cannot finally map from outside — quiet field form",
           "kind": "formation",
           "position": {
             "x": 0.3,
@@ -1010,12 +1708,85 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-05l",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-05k-s1",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.06,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "Subject",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.62
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05k-s2",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.4,
+                "position": {
+                  "x": 0.34,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "Objective Internality",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.72,
+                    "y": 0.72
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05k-s3",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.64,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "Object",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.56
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1025,20 +1796,20 @@
           "name": "a locally authoritative map",
           "kind": "formation",
           "position": {
-            "x": 0.3,
-            "y": 0,
+            "x": 0.34,
+            "y": -0.22,
             "z": 0
           },
           "size": {
-            "x": 1.1,
-            "y": 1.1
+            "x": 1.4,
+            "y": 1.4
           },
           "rotation": 0,
           "shape": "square",
           "text": "",
           "share": 1,
           "tint": "#b08d4f",
-          "tintWeight": 1,
+          "tintWeight": 0.2,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -1058,6 +1829,121 @@
                 "hold": 3,
                 "transition": 1,
                 "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05k-walk",
+          "name": "the field it cannot finally map from outside — quiet field form — the walking sign",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.62,
+            "y": 0.56
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Subject",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-05k-s1",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.06,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "Subject",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05k-s2",
+                "hold": 3,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.34,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "Objective Internality",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.72,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05k-s3",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.64,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "Object",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1109,18 +1995,39 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "order-passes",
+          "enabled": true,
+          "target": "field.params.speed",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.35,
+          "max": 0.7,
+          "rate": 0.09,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 15,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.45
       }
     },
     {
       "id": "movement-48",
       "name": "§5→0 · #5→0 — AHI and Planetary Return",
       "character": "§5→0 · #5→0 — AHI and Planetary Return (Argued (Return of Zero / Epi-Logos); Offered (AHI federation / planetary architecture); Open (artificial phenomenality)).",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 17,
+      "transition": 2.2,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1151,12 +2058,12 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1,
-          "turbulence": 0.22,
+          "speed": 0.4,
+          "circulation": 0.5,
+          "turbulence": 0.08,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.09,
+          "dispersion": 0.07,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -1185,7 +2092,7 @@
       "entities": [
         {
           "id": "ent-05o",
-          "name": "#5→0 — AHI and Planetary Return",
+          "name": "#5→0 — AHI and Planetary Return — quiet field form",
           "kind": "formation",
           "position": {
             "x": 0.2,
@@ -1215,12 +2122,176 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-05p",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-05o-s1",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.5,
+                "position": null,
+                "text": "AHI",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.66,
+                    "y": 0.66
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05o-s2",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "text": "return of zero",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.78,
+                    "y": 0.78
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05o-s3",
+                "hold": 3.6,
+                "transition": 1.7,
+                "position": null,
+                "text": "0/1",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.9,
+                    "y": 0.9
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05o-walk",
+          "name": "#5→0 — AHI and Planetary Return — quiet field form — the walking sign",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.56,
+            "y": 0.6100000000000001
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "AHI",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-05o-s1",
+                "hold": 3,
+                "transition": 1.5,
+                "position": null,
+                "text": "AHI",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.55
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05o-s2",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "text": "return of zero",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.78,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#b08d4f",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-05o-s3",
+                "hold": 3.6,
+                "transition": 1.7,
+                "position": null,
+                "text": "0/1",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.55
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1264,18 +2335,39 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.05,
+        "phiRate": 0.06,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "return-breathes",
+          "enabled": true,
+          "target": "field.params.dispersion",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.05,
+          "max": 0.13,
+          "rate": 0.07,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 17,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.5
       }
     }
   ],

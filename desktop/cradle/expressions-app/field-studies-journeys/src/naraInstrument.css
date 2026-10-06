@@ -22,6 +22,35 @@
 body.nara-depth-open .entry-gate{visibility:hidden;pointer-events:none}
 .nara-constituent-editor .nara-id-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nara-constituent-editor label.nara-id-check{display:flex;align-items:center;gap:8px}.nara-constituent-editor fieldset{padding:14px 0;border-top:1px solid var(--line)}.nara-history-actions{display:flex;gap:20px;font-size:12px;margin-top:18px}
 
+/* The Tarot score reading: cards and inspector beside each other — the card
+   text never overlays the moving form. Same naming law as the instrument. */
+.nara-tarot-layout{display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.1fr);gap:clamp(28px,4vw,64px);align-items:start}
+.nara-tarot-cards{list-style:none;margin:18px 0;padding:0;display:grid;gap:8px}
+.nara-tarot-card{display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:baseline;text-align:left;width:100%;padding:12px;border-radius:5px}
+.nara-tarot-card[aria-pressed=true]{background:var(--wash);box-shadow:inset 0 -2px var(--accent)}
+.nara-tarot-card-name{grid-column:1;font-size:17px}
+.nara-tarot-card-role{grid-column:2;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.nara-tarot-card .nara-tarot-origin{grid-column:3;justify-self:end}
+.nara-tarot-card .nara-tarot-badge{grid-column:1/-1;justify-self:start;font-size:10px;letter-spacing:.05em;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 6px;margin-top:2px}
+.nara-tarot-origin{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--accent)}
+.nara-tarot-origin-drawn,.nara-tarot-origin-authored-assignment,.nara-tarot-origin-interpretation{color:var(--ink);background:var(--wash)}
+.nara-tarot-clock{margin:12px 0;border-top:1px solid var(--line);padding-top:12px}
+.nara-tarot-clock dt{font-size:12px;color:var(--muted)}.nara-tarot-clock dd{margin:4px 0 0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.nara-tarot-stale{color:var(--accent)}
+.nara-tarot-refusal{border-left:2px solid var(--accent);background:var(--wash);padding:12px 16px;margin:16px 0}
+.nara-tarot-refusal p{margin:8px 0 0;max-width:70ch}
+.nara-tarot-inspector{border-left:1px solid var(--line);padding-left:clamp(20px,2.5vw,40px);position:sticky;top:24px;max-width:520px}
+.nara-tarot-facts{display:grid;grid-template-columns:max-content 1fr;gap:8px 20px;margin:18px 0;font-size:13px}
+.nara-tarot-facts dt{color:var(--muted)}.nara-tarot-facts dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.nara-tarot-ref{font-family:monospace;font-size:11px}
+.nara-tarot-traversal{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.nara-tarot-traversal legend{font-size:12px;color:var(--muted);padding:0}
+.nara-tarot-modes{display:flex;gap:14px;margin-top:30px;border-top:1px solid var(--line);padding-top:18px}
+.nara-tarot-modes button[aria-pressed=true]{box-shadow:inset 0 -2px var(--accent)}
+.nara-tarot-note{color:var(--muted);font-size:12px;margin-top:12px;overflow-wrap:anywhere}
+.nara-tarot-author{margin-top:18px;max-width:560px}
+@media(max-width:900px){.nara-tarot-layout{grid-template-columns:1fr}.nara-tarot-inspector{border-left:0;padding-left:0;position:static;max-width:none;border-top:1px solid var(--line);padding-top:18px}}
+
 /* The personal instrument remains reachable when the older narrow masthead
    hides its first text action. This is the real app entry, not overflow. */
 #app .header-actions > .nara-instrument-trigger{display:inline-flex;align-items:center;white-space:nowrap}

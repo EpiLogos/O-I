@@ -1,0 +1,375 @@
+{
+ "artifact": "matheme/roz-matheme-formal-neighbours.journey.json",
+ "family": "matheme",
+ "worker": "E4",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-matheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "matheme-von-neumann-ordinals",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/von-neumann-ordinals.md",
+    "sha256": "c64f53a4dec926e0e03402bf3e8dbcb758334e27917a25fcd62ed0c1dcda9b8a"
+   },
+   {
+    "record_id": "matheme-division-pluralisms",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/division-pluralisms.md",
+    "sha256": "170caf9d475247854eade69e2c3f99050c9e2a49cda235d8080dc801f8e40dd2"
+   },
+   {
+    "record_id": "matheme-sheffer-stroke",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/sheffer-stroke.md",
+    "sha256": "8d4cd6f0c2bd8d689d0af6d79de6865d31b3deaa7bcfc7c276613b724ead03e0"
+   },
+   {
+    "record_id": "matheme-laws-of-form-varela",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/laws-of-form-varela.md",
+    "sha256": "17bb8a1679b9f500d9460f1654144cf26b9bfb6268ad4251451fad2d88697038"
+   },
+   {
+    "record_id": "matheme-russell-types",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/russell-types.md",
+    "sha256": "84fefdf4b3893ee347550d653d81320c0b873b97310a529b57f5987465abafc2"
+   },
+   {
+    "record_id": "matheme-godel-incompleteness",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/godel-incompleteness.md",
+    "sha256": "ead69a17ddda2235033652070ffb53759a6b3237f3af9335f708171b8adc266e"
+   },
+   {
+    "record_id": "matheme-fde-catuskoti",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/fde-catuskoti.md",
+    "sha256": "7f9de27a51ae2b00a8b62bc855d2062888220b4c73c8d1a89336b5761bb32d46"
+   },
+   {
+    "record_id": "matheme-crt-z6",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/crt-z6.md",
+    "sha256": "f67e21e17286a077a64c4ce8d69d671c5727cf26e0966db0b79088c3c0ff4929"
+   },
+   {
+    "record_id": "matheme-trivial-ring",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/trivial-ring.md",
+    "sha256": "c305239e2daadce852e9d589c3cc97aeca81f28cb44d4677976f0a0a0e468e96"
+   },
+   {
+    "record_id": "matheme-grothendieck-group-loss",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/grothendieck-group-loss.md",
+    "sha256": "2919163a8bc9c96b69b70343f99685ccd6a6d26b886b0fda960b7bbc1fd83c23"
+   },
+   {
+    "record_id": "matheme-kauffman-iterants",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/kauffman-iterants.md",
+    "sha256": "a5b6d9bfdc902a79c682e2c971493058394e79b028d7f8e55ed2367a44390b90"
+   },
+   {
+    "record_id": "matheme-cross-ratio",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/cross-ratio.md",
+    "sha256": "1c5123237f479f5fec3ddf7dd397ed02f3176b727aa787b190f4ffb6c6309272"
+   },
+   {
+    "record_id": "matheme-qubit-bloch-sphere",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/qubit-bloch-sphere.md",
+    "sha256": "190f48437afc8a87b864293093a3f23bb91458ad9c60695b549c70c882073104"
+   },
+   {
+    "record_id": "matheme-noether-symmetry-conservation",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/noether-symmetry-conservation.md",
+    "sha256": "b04b6fb015cd1795c8446e5fe7888d729429e99f2e647bc8aec5a8e5d55142d6"
+   },
+   {
+    "record_id": "matheme-quaternion-q8",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/quaternion-q8.md",
+    "sha256": "4d5b99654e90cdeeb13d8094a9d7c5d315b31aafed7408970d8a60912a3f3a77"
+   },
+   {
+    "record_id": "matheme-calculus-infinity-dx",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/calculus-infinity-dx.md",
+    "sha256": "7065c58175076854296aae758cd7a39e348bf241f0b91d0361172ed9dd614bbf"
+   },
+   {
+    "record_id": "matheme-chaos-attractors",
+    "path": "submission-package/essay/symbolon/matheme/formal-neighbours/chaos-attractors.md",
+    "sha256": "a233295a47894c3c9274a72cd88e52ede7b2e46d4e7343c3ee6728d8c541e2d9"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "fn-von-neumann-ordinals",
+   "source_ref": "matheme-von-neumann-ordinals",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-division-pluralisms",
+   "source_ref": "matheme-division-pluralisms",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-sheffer-stroke",
+   "source_ref": "matheme-sheffer-stroke",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-laws-of-form-varela",
+   "source_ref": "matheme-laws-of-form-varela",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-russell-types",
+   "source_ref": "matheme-russell-types",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-godel-incompleteness",
+   "source_ref": "matheme-godel-incompleteness",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-fde-catuskoti",
+   "source_ref": "matheme-fde-catuskoti",
+   "claim_status": "argued",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-crt-z6",
+   "source_ref": "matheme-crt-z6",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-trivial-ring",
+   "source_ref": "matheme-trivial-ring",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-grothendieck-group-loss",
+   "source_ref": "matheme-grothendieck-group-loss",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-kauffman-iterants",
+   "source_ref": "matheme-kauffman-iterants",
+   "claim_status": "argued",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-cross-ratio",
+   "source_ref": "matheme-cross-ratio",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-qubit-bloch-sphere",
+   "source_ref": "matheme-qubit-bloch-sphere",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-noether-symmetry-conservation",
+   "source_ref": "matheme-noether-symmetry-conservation",
+   "claim_status": "argued",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-quaternion-q8",
+   "source_ref": "matheme-quaternion-q8",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-calculus-infinity-dx",
+   "source_ref": "matheme-calculus-infinity-dx",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "fn-chaos-attractors",
+   "source_ref": "matheme-chaos-attractors",
+   "claim_status": "derived",
+   "relations": ""
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "authored token glyphs throughout (QL notation: 0/1, 1/0, −/−, ?/!, −/+, X/x, AM/IS, ∞/dx, Ø, 4+2, 5→0, 9/8, 16/9, (0/1)/(1/0), T² = ℝ²/ℤ², π₁ ≅ ℤ×ℤ, 531441/524288 …)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "concentric mandala plate (ql-eight-determinations) per ql-expression-grammar.md §III",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "crossed-zero recognition sequence as entity step sequence (ql-crossed-zero)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "tetraktys dot diagram (har-tetraktys-triangle, four rows 1·2·3·4)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "fundamental square + torus ring plates (quilt-topology, top-torus-cover-winding)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "matheme/roz-matheme-formal-neighbours.cover.png",
+ "status": "authored",
+ "notes": [
+  "Each neighbour is worked as its own operation: ordinals as a successor sequence; Laws of Form as the literal U/M oscillation step sequence plus Varela third value; Gödel as the fixed-point ladder; group completion as the two contrasts ℕ→ℤ (injective) vs {0,e}→trivial (collapse). No neighbour is allowed to lend its theorem to the native relation; the body of each scene states the boundary. SOURCE DELTA: census receipt hashes for matheme-fde-catuskoti, matheme-kauffman-iterants and matheme-noether-symmetry-conservation are stale — those three files changed at source commit 5c22906 (before the census snapshot was taken from an earlier state); bindings record the current sha256 at dbf3b17 (working tree clean, verified). E0 should reconcile the census receipt. ",
+  "Per-scene moves (2026-10-06 enrichment): every sequence walks its proof order with objectState marking exactly three moments — blue at contrasts/intermediate steps, red where a fallacy or collapse is named, gold at the derived arrival (slightly swelled). fn-von-neumann-ordinals: the ladder grows by enclosure (tint deepening to gold at |n| = n). fn-division-pluralisms: the shared-zero equation tempts cancellation (red ?), then each pluralism named (blue), gold at the total declaration. fn-sheffer-stroke: AND and OR rebuilt from strokes, gold at functional completeness; vortex pointer — one generator turning the whole table. fn-laws-of-form-varela: U/M alternation tinted at every flip under a 'beat' morph — the delay is the oscillation; dispersion LFO breathes it. fn-russell-types: red at the biconditional (shove click — the rupture), blue at the typed repair, gold at 'no issue'. fn-godel-incompleteness: the proof order only — arithmetisation, fixed point (blue), two unprovabilities, second theorem gold; low pointer strength and no metaphysical movement anywhere in the scene. fn-fde-catuskoti: the four values hold repel forces in a grid; the tables sequence tints at paraconsistency and at e ≠ n. fn-crt-z6: the isomorphism and its inverse under implode (two moduli, one ring). fn-trivial-ring: 'sum'-law morph — everything sums to one; red at the assumption, blue at the collapse step, gold at one element. fn-grothendieck-group-loss: two sequences side by side — ℕ→ℤ arrives gold (nothing lost), {0,e}→trivial arrives red (the loss). fn-kauffman-iterants: [a,b]→[b,a] physically swaps position, i² = −1 gold; vortex/vortex is the iterant alternation. fn-cross-ratio: the invariance step deliberately keeps its objectState identical (invariance shown, not said), then swap (blue) and squares (gold). fn-qubit-bloch-sphere: THE 3D SCENE — |0⟩ north, |1⟩ south, |+⟩/|−⟩ equator, the mixtures note inside the sphere (dome volume, perspective, laminate layout): the state space itself is the third dimension, and the two-opposites seam is written on the board. fn-noether-symmetry-conservation: the driven-balance sequence keeps its rotational charge gold. fn-quaternion-q8: the lattice walk marks noncommutativity blue (ij=k · ji=−k). fn-calculus-infinity-dx: the family widens (scale up), C pinned blue, the integral gold. fn-chaos-attractors: basins attract to ±1 while the boundary repels; bifurcation sequence to gold.",
+  "Craft: pointer profiles by meaning — attract/pulse for constructive derivations (ordinals, Sheffer, calculus, cross-ratio), attract/implode for gatherings (CRT, trivial ring), vortex for generators and alternations (stroke, iterants, Bloch axis, Noether symmetry, Q8), repel for held-apart values and fallacy guards (division pluralisms, FDE corners, Russell shove, chaos boundary). Automation: dispersion LFOs on von Neumann, Laws of Form, CRT. Durations 12/14 s and transitions 1.5/2.0/2.2 s differ. Discipline kept per orienting principle III.6: Gödel does one exact formal job — the scene's decoration is proof order, not metaphysics; softmax discipline's sibling here is that no neighbour is absorbed into the native relation (each scene's own guard text survives in its record body and glyphs).",
+  "What the third dimension means (fn-qubit-bloch-sphere): the qubit's state space IS a sphere — rays at the poles, equatorial superpositions, mixtures in the interior — so the scene is genuinely 3D: |0⟩ and |1⟩ at z ±0.45, |+⟩/|−⟩ on the equator, the purity note inside the dome volume under perspective. Rotation about the axis (vortex pointer) shows the relative-phase freedom; the board states the seam — antipodal r are orthogonal rays while ±ψ is one ray — the exact neighbour's agreements and differences both kept."
+ ],
+ "description": "Seventeen formal neighbours exactly worked on their own terms, each with its defined/undefined seam kept visible.",
+ "scene_count": 17,
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-matheme-l1",
+  "lane": "wave1/matheme",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "(0,1,2,3): 4/3": "the cross-ratio worked once — four points, one invariant number.",
+  "(1,2) → 11 ≡ 5 · (0,1) → 4": "the inverse map operated — pairs carried back to residues mod 6.",
+  "(a,b)~(c,d): stabiliser t": "the Grothendieck equivalence — the stabiliser that decides what completion keeps.",
+  "(p∣p)∣(q∣q)=p∨q": "disjunction from strokes alone — composition restoring OR.",
+  "(p∣q)∣(p∣q)=p∧q": "conjunction from strokes alone — composition restoring AND.",
+  "+1": "the positive attractor of the cubic — one basin of the divided line.",
+  "+ε→+1 · −ε→−1 · 0 divides": "the basin boundary — an arbitrarily small sign decides the destination.",
+  "0 := ∅": "the von Neumann zero — the empty set floored as the first ordinal.",
+  "0 = 1?": "the collapse question — the assumption whose consequence the sequence walks out.",
+  "0 → Ø → X → Ø/X → 1 ↷ 0/1": "the locked crossed-zero sequence — quoted here only to mark where Ø differs from the unmarked value.",
+  "0=1 collapses the ring": "the boundary named — the one consequence that reduces arithmetic to a point.",
+  "0x=0 ∀q · 0x=1 ∅q": "the two zero-regimes — universal annihilation against the empty solution set.",
+  "1 := {∅}": "the von Neumann one — the singleton of the empty set.",
+  "2 := {0,1}": "the two — both predecessors retained by enclosure.",
+  "2·3 ≡ 0 (mod 6)": "the zero-divisor fact — six as two by three; the CRT ring carries it.",
+  "3 := {0,1,2}": "the three — the ladder building by inclusion.",
+  "4 := {0,1,2,3}": "the four — each successor holding all its predecessors.",
+  "6·0=17·0": "the shared-zero equation — the example whose cancellation tempts the fallacy.",
+  "A¹={a⁰} · B²={A¹}": "the typed hierarchy — sets of sets, ranks replacing self-membership.",
+  "Bloch vector r, |r|=1": "the pure-state geometry — length one on the sphere; mixtures live inside.",
+  "C = 3": "the constant pinned — new data selecting within the family.",
+  "C(A) = A — Varela": "the autonomous value — a self-crossing that names itself; a changed arithmetic.",
+  "Con(T) := ¬□⊥": "consistency as an arithmetical sentence — what the second theorem declines to prove.",
+  "F(1) = 4": "the level datum — a value no derivative contains.",
+  "F′ = 2x": "the derived rate — the slope every member of the family shares.",
+  "G(ℕ)=ℤ": "the successful completion — naturals to integers, injectively.",
+  "G_T ↔ ¬□G_T": "the diagonal fixed point — the sentence that says its own unprovability.",
+  "H if L_t = 0": "the time-translation charge — energy conserved exactly when the lagrangian is timeless.",
+  "H′=0 ⇒ H constant": "the mean value theorem — vanishing rate forces a level.",
+  "J = [[0,−1],[1,0]] · J² = −I": "the matrix complex structure — the same i in another dress.",
+  "J:[a:b]↦[b:a]": "the khahara involution — a/0 kept written, its coordinates exchangeable.",
+  "M": "the marked state — one side of the primary distinction.",
+  "MM = M · C(M) = U": "the two laws of form — calling and crossing as literal operations.",
+  "NAND: inputs unrecoverable": "the information guard — functional completeness without invertibility.",
+  "Q8": "the quaternion group — eight elements, the units closed by ±1.",
+  "R := {x: x∉x}": "the Russell set — comprehension unbounded; the paradox stated before repair.",
+  "R(x)=−1/x: 1,−1,1,…": "the fixed-point-free orbit — the map that iterates without settling.",
+  "R_S ∉ S: no issue": "the typed resolution — stratified membership leaves nothing to ask.",
+  "R∈R ↔ R∉R": "the paradox biconditional — the rupture the shove pointer enacts.",
+  "SILENCE @ #5: not a fifth value": "the envelope guard — the return enclosing the four, never a fifth answer.",
+  "SU(2)→SO(3), 2:1": "the continuous double cover — q and −q one rotation; a distinct cover from Klein and torus.",
+  "T ⊬ Con(T)": "the second incompleteness theorem — consistency unprovable from within; the derived end, nothing more read into it.",
+  "T ⊬ G_T": "the first unprovability — if proved, its proof code would contradict the fixed point.",
+  "T ⊬ ¬G_T (Rosser)": "two-sided unprovability — from consistency alone.",
+  "T+R and T+¬R consistent": "the undecidability — both enlargements stand; each gains its own fixed point.",
+  "U": "the unmarked state — the other side of the primary distinction.",
+  "XOR: r=u∣v": "exclusive-or from four strokes — parity built from one generator.",
+  "[a,b]": "the iterant — an alternation read as one value with hidden order.",
+  "[b,a]": "the shifted read — the same alternation, phase moved.",
+  "[k]₆ ↦ ([k]₂, [k]₃)": "the CRT isomorphism — one ring, two coordinates.",
+  "a = a·1 = a·0 = 0": "the collapse step — every element falling to zero once 0=1.",
+  "antipodal-r ≠ ±ψ": "the seam kept — antipodal vectors are orthogonal rays; ±ψ is one ray. Two opposites, not to be fused.",
+  "a·0 = a·0 + a·0": "the distributivity step — the annihilation derived, not assumed.",
+  "b": "the FDE status both — true and false; support from both sides.",
+  "b∧n=f · b∨n=t": "the FDE tables — the gluts and gaps behaving under connectives.",
+  "cancel ⇒ 6=17?": "the invited fallacy — cancelling a shared zero factor; the question mark is the guard.",
+  "disconnected: two constants": "the domain caution — one freedom per component.",
+  "e ≠ n": "the Priest guard — the infectious value is not the neither; the difference kept exact.",
+  "encode proofs": "the arithmetisation — proofs coded as numbers; the exact formal job begins.",
+  "every finite table": "functional completeness — the row construction reaching every Boolean function.",
+  "every pair occurs exactly once": "the bijectivity — residues recombining without collision.",
+  "f": "the FDE status false — false only; one support withdrawn.",
+  "f(z)=(az+b)/(cz+d)": "the Möbius family — the transformations under which the cross-ratio is invariant.",
+  "family x² + C": "the antiderivative family — one rate, many levels.",
+  "gcd(2,3)=1": "the coprimality — the condition that makes the product ring a product.",
+  "i = εη": "the iterant imaginary — neither factor alone; the ordered composite.",
+  "i injective": "the success case — completion losing nothing.",
+  "i injective ⟺ M cancellative": "the criterion — exactly when the completion is faithful.",
+  "i(e)=0 forced": "the loss case — the idempotent crushed to the identity.",
+  "ij=k · ji=−k": "the noncommutativity — order matters; the marking the sequence makes visible.",
+  "i² = j² = k² = −1": "the quaternion relations — the three imaginary squares.",
+  "i² = −1": "the earned imaginary — the shift-composite whose square is minus one.",
+  "j = πΔ − B; ∂j = 0 on-shell": "the Noether current — the charge conserved on solutions.",
+  "k(t): ℓ̇ = 0 · Ḣ ≠ 0": "the driven balance — one charge survives, the other paid; symmetry broken exactly.",
+  "khahara: a/0 kept written": "the Indian division pluralism — the numerator-over-zero form retained, not erased.",
+  "m < n ⟺ m ∈ n": "the order as membership — the ladder total.",
+  "map ≠ unique recovery": "the representation guard — enlarging the algebra does not invert the process.",
+  "n": "the FDE status neither — a gap; no support either way.",
+  "n ⊆ S(n) · n ∈ S(n)": "the twin inclusion — retention AND enclosure; the exact floor of the linking-one.",
+  "not chaos: simple destinations": "the guard — the dividing line has simple basins; no chaos is claimed here.",
+  "one element": "the trivial ring — tables collapse to a point; the implode lands.",
+  "p, ¬p ⊬ q": "contradiction without explosion — paraconsistent seam; the marking the sequence tints.",
+  "p,¬p ⊬ q": "the same paraconsistent fact on the board — explosion fails in FDE.",
+  "pure |r|=1 · mixed |r|<1": "the purity boundary — the sphere surface against the interior.",
+  "p↓q — the dual basis": "NOR — the dual generator, equally complete.",
+  "p∣p = ¬p": "negation from repetition — the stroke earning NOT.",
+  "six units: no subgroup": "the lattice fact — the signed imaginaries alone do not close.",
+  "squares: 32/27": "the value under squares — a different map, a different number; invariance has an owner.",
+  "swap: 3/4": "the reciprocal under swap — the invariant responding to an allowed transformation.",
+  "t": "the FDE status true — true only.",
+  "trivial group": "the collapse — two elements completed into one; the accounting suppressed a distinction.",
+  "two repairs": "the typists fork — Russell and stratification; neither erases the other.",
+  "typed: n=n+1 blocked": "the type discipline — self-ranking refused by formation rules.",
+  "t²/t = t, extended at 0": "the extension pluralism — the removable case filled by explicit declaration.",
+  "v ↦ qvq⁻¹ — rotation": "the conjugation action — quaternion rotation as sandwich.",
+  "x = C(x): no solution": "the re-entry equation — no two-valued value; the delay is the honest answer.",
+  "z+5: still 4/3": "invariance under translation — the value unmoved; the objectState holds identical.",
+  "{0,e}, e+e=e": "the idempotent monoid — the field whose completion collapses.",
+  "{±1}": "the centre — the subgroup the units must admit.",
+  "|+⟩": "the equatorial superposition — equal probabilities, relative phase.",
+  "|0⟩": "the north pole — the first computational basis ray.",
+  "|1⟩": "the south pole — the second basis ray.",
+  "|n| = n": "the cardinality arrival — the set of its predecessors numbering n.",
+  "|−⟩": "the opposite equatorial state — same probabilities, opposite phase.",
+  "±i,±j,±k: no subgrp": "the six alone — each square falling outside the set.",
+  "δℒ = E·δφ + ∂(π·δφ)": "the Noether identity split — equations of motion beside a boundary term.",
+  "η — the shift": "the iterant operator — phase carried through products.",
+  "ηε = −εη · ε=[−1,1] · ε²=[1,1]": "the iterant algebra — the commutation that builds i.",
+  "ι(0):=0 total": "the bhāsa declaration — division by zero given a total value by explicit convention.",
+  "λ((z₁,z₂;z₃,z₄))": "the cross-ratio map — four points to one number.",
+  "μ<0: → 0": "the stable origin — the cubic before bifurcation.",
+  "μ=0: −x³": "the degenerate case — the bifurcation instant.",
+  "μ>0: ±√μ attract": "the birth of two attractors — the parameter crossing its threshold.",
+  "φ([k]₆) = ([k]₂,[k]₃)": "the isomorphism stated — six as two by three.",
+  "ψ(a,b) = 3a+4b mod 6": "the inverse map — recombination without loss.",
+  "…": "the alternation continues — the delay oscillation without a two-valued rest.",
+  "ℓ = m(xẏ − yẋ)": "angular momentum — the charge of rotational symmetry.",
+  "ℓ̇ = 0 still — the charge survives the drive": "the exact neighbour claim — driving time-dependence does not touch the rotational charge.",
+  "ℕ": "the naturals — the monoid before completion.",
+  "⇒ a·0 = 0": "the derived annihilation — the only value a zero product can take.",
+  "−1": "the negative attractor — the other basin of the divided line.",
+  "∫ cancels C": "the definite integral — a different question, the constant dropping out."
+ }
+}

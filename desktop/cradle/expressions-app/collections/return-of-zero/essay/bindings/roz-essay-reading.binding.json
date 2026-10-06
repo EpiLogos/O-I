@@ -1,0 +1,220 @@
+{
+ "artifact": "essay/roz-essay-reading.journey.json",
+ "family": "essay",
+ "worker": "E1",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-essay"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17)",
+  "records": [
+   {
+    "path": "submission-package/essay/THE-RETURN-OF-ZERO.md",
+    "sha256": "6268ebb478e701a3a23b2e3f15521ee92245f132ca94c0c1449465aabca0bfdd"
+   },
+   {
+    "path": "submission-package/essay/README.md",
+    "sha256": "f15eb4f7ea7591b0acb59fcac860de55aba60e37a3d6095f1749a7a8e8a00793"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/README.md",
+    "sha256": "e8423f198abf79026fda8de68ace60dc70d6a9c7f14ebb9566e79a6a9672df2d"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+    "sha256": "cb5f1aa43ee69f127de09561768ee3ec02e7b4fce624b376486fbb6bf8fddb2c"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "c24377951a2c55086f1ea1c245e5a5349ce528f06fee56c583a511ebdff8a791"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+    "sha256": "9e75af9563613dbb61293c01b669d9a9512c076e8bf52562f0385b9a73413438"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "869159e26694407749d88e0adafe77b4f21fc143a9347fbe221be6ce088afc09"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+    "sha256": "a844e41ad2fb8cb15a8d8e82dd9cf1e27135408af1bf9a8267327934638e71cc"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "5019fd721937429c9bd1c177f7f10292a6affc99ccb8aeefa1550c9246c004a5"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+    "sha256": "9a8d46c3c5a674d652dbca8ea0e05218b47201d1e23bbe47772545553de05ca0"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "8f017c8815d166a2817f34c169bebcc1707c94e3f7c010efafda52a7d8400c5f"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+    "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+    "sha256": "615f25e7946cf5fa74b9f7f304b11351f71c860c6846ad0003930320a958a614"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "0cbbc0ce02feefd0cfcb3cb40117de67e1b788bfe46207be4a3054dddadec14d"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+    "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+    "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "00-integral-threshold",
+   "source_ref": "submission-package/essay/section-rooms/00-integral-threshold/",
+   "relations": "station door: section-rooms/00-integral-threshold/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 01–06) · reading path: next station 01-differentiating-mind · withholding announced as promise (M01 claim): the mechanism enters only at §5→0"
+  },
+  {
+   "scene_id": "01-differentiating-mind",
+   "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/",
+   "relations": "station door: section-rooms/01-differentiating-mind/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 07–12) · reading path: next station 02-return-of-zero"
+  },
+  {
+   "scene_id": "02-return-of-zero",
+   "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/",
+   "relations": "station door: section-rooms/02-return-of-zero/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 13–18) · reading path: next station 03-two-logics"
+  },
+  {
+   "scene_id": "03-two-logics",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/",
+   "relations": "station door: section-rooms/03-two-logics/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 19–24) · reading path: next station 04-mathematical-substrate"
+  },
+  {
+   "scene_id": "04-mathematical-substrate",
+   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/",
+   "relations": "station door: section-rooms/04-mathematical-substrate/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 25–30) · reading path: next station 05-psychoid-flowering"
+  },
+  {
+   "scene_id": "05-psychoid-flowering",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/",
+   "relations": "station door: section-rooms/05-psychoid-flowering/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 31–36) · reading path: next station 06-objective-internality"
+  },
+  {
+   "scene_id": "06-objective-internality",
+   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/",
+   "relations": "station door: section-rooms/06-objective-internality/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 37–42) · reading path: next station 07-instrument-returns"
+  },
+  {
+   "scene_id": "07-instrument-returns",
+   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/",
+   "relations": "station door: section-rooms/07-instrument-returns/ROOM.md (+P1-CANONICAL-ALIGNMENT.md, movements 43–48) · reading path: final station; next is the closing return"
+  },
+  {
+   "scene_id": "08-the-return",
+   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
+   "relations": "closing return: M48 (section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md) returns to M01 (section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md); the journey loops back to the threshold scene"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "engine-native formations and text glyphs only (station forms: open disc+repelled observer, yantra, zero ring, 0/1↔1/0 pair, wound rings, twin discs, six-product hexagon, nested instrument rings, root symbolon 0/1); no external imagery",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "essay/roz-essay-reading.cover.png",
+ "capture_note": "cover = the threshold station scene at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+ "status": "captured",
+ "notes": [
+  "E0 acceptance repair: text/field collision fixed on 00-integral-threshold (flagged cover: italic subtitle and reading-root line overprinting the field) and the same class on all nine scenes — station formations shifted right-of-centre (group centre +0.3) and trimmed (disc/yantra/ring to 1.5, return ring 2.6→1.9, instrument rings 2.25→1.75), editorial column 350 (320 station 3), metadata (ROOM DOOR / THE LOOP) moved to a stacked top-left block; all nine covers re-captured at authored count.",
+  "scene order IS the reading path: §0/1 → §0 → §1 → §2 → §3 → §4 → §5 → §5→0 → the closing return; one continuous path, not cards",
+  "station titles, burdens, release lines, first movements and station chain are verbatim from the reading root and room surfaces",
+  "withholdings hold in the imagery: the mechanism appears only at station 07 (earned, M45); no 0/1 glyphs before station 03 (earned at §1·#5→0 = M18); the crossed zero is not restaged at station level (its one job lives in rooms/roz-room-02-return-of-zero movement-16)",
+  "closing return scene on deep ground with the earned root symbolon 0/1; loop:true returns the night to the lit threshold",
+  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+  "Enrichment moves 2026-10-06 (actor zcode:enrich-essay-l2, records re-read at fc59a719) — per scene:",
+  "00-integral-threshold — the opening that withholds: one horizon disc walks the count beneath naming (M01/M02/M06) — 'What knows?' fades to 'the unnamed', then the count 'this one' → 'this one again' steps right and grows (the accumulation the station begins); no notation anywhere (withholding: 0/1 is three stations ahead, the mechanism five). Pointer repel at 0.35 strength — the question is held open, not seized; automation breathes field.dispersion (the question breathes but does not resolve).",
+  "01-differentiating-mind — 3D (z = interiority): the yantra (the differentiating field) steps prakāśa → vimarśa (M07's reflexive bend) while dropping z +0.18 → −0.12 (appearing bends toward its own display); the inner instrument (M08) is staged as buddhi/ahaṃkāra/manas formations BELOW the display plane (deeper z = the apparatus within), the subject-pole never staged as an object. Pointer attract (awareness gathers its own display); speed LFO 0.45–0.7 (the bend breathes, calm enough for prakāśa/vimarśa to hold).",
+  "02-return-of-zero — the arc's key turn: the zero-figure walks the station's history (M13 blank place '0' → M14 operational 'śūnya' → M15 generative '∅') and lands on the earned '0/1' (M18, §1 · #5→0), returning to centre, largest and deepest-inked — history accumulates into notation. The crossed zero is NOT restaged at station level (its one job lives in rooms/roz-room-02-return-of-zero movement-16; Ø exactly once in the corpus's room scene). Pointer vortex + implode click (the spiral return that gathers); the gather carried by the vortex pointer and implode click; the field held calm (circulation 0.5, LFO 0.4–0.6) so the walking sign can hold its form — the spiral lives in the quiet ring behind it; longest station duration 16.",
+  "03-two-logics — two orientations held apart: '0/1' (repelled left, returns) and '1/0' (red, attracted) while the bare relation '−/−' → '(−1)/(+1)' → '(−1)+(+1)=0' walks M20 beneath (signs given, polar held, collapsed — the collapse darkens red: the appropriation the record marks); '1/0' completes as '(0/1)/(1/0)' (M21, sym retained). Pointer repel + shove (the cut and its collapse); saw LFO on turbulence (the cut's edge).",
+  "04-mathematical-substrate — 3D (z = the lift): the torus ring at z 0 walks the braid's yield '4+2' → 'χ=0' → '9/8' → 'arche-topos' (M26/M29/M30) while the unit square (M29: one unit square presents the entire surface) sits at z −0.5 as the covering plane — a path closes on the torus above while its endpoints differ on the plane below, exactly the record's cover/quotient relation. Depth perspective + occlusion + cool depth tint. Pointer vortex/vortex (toroidal circulation IS the pointer); circulation LFO 0.4–0.6 (the winding breathes, calm enough for the walking braid to hold).",
+  "05-psychoid-flowering — two descriptions across one seam (M31): 'psyche' (red) and 'physis' (blue) hold apart while the yantra between them steps 'X' → 'x' → 'X/x' (M32: capacity legible only through the concrete). No Ø and no recognition sequence here — the full sequence is psychoid-room material (room-05 movement-34) and Ø's one job stays in room-02. Pointer attract at low strength (complexio: held together without fusion); turbulence LFO (the field from which meaning surfaces).",
+  "06-objective-internality — the six products named S0…S5 in the round (layout ring; M37–M42, parallel content); S5 alone steps 'S5' → '5→0' → 'S5' (M42: determinations answerable to the ground they do not possess — the culmination already carries the return). Pointer attract + implode (six gathered into one relation without merging); speed LFO (the products breathe as one field).",
+  "07-instrument-returns — the mechanism finally enters (M45, the withholding pays off HERE and only here), 3D: three concentric rings z-distributed — outer z +0.45 (the heavens, beyond the instrument), middle z 0 (the gearing: different motions legible together without being made the same motion — phiRate −0.07 counter-rotates against thetaRate 0.1), inner z −0.45 (the observer's situation) whose glyph steps 'vocation' → '4:2' → 'AHI' (M43/M46/M48: the return landing in the observer's seat). Depth perspective/occlusion on night ground. Pointer attract at 0.3 (receptive attunement — the observer does not seize the instrument).",
+  "08-the-return — M48 → M01: the earned sign steps '0/1' → '1/0' (rotated 180°: the obverse, the path returned to its other end) → '0/1' (largest, deepest — the acquired return: with more, not less, differentiation, without being annihilated as a determination); the surrounding ring stays open (the loop, never a closure). Lowest pointer strength in the journey (0.25 — the return without possessing); slowest duration 18 and transition 2.4; dispersion LFO (the loop breathes).",
+  "Withholdings audited at fc59a719: no Antikythera imagery before 07-instrument-returns (the mechanism's three rings appear only there); no 0/1 or 1/0 glyph before scene 02-return-of-zero whose final step is the earning (M18); scenes 00–01 carry direct language only ('the unnamed', 'this one'); Ø never appears in this member (its one job is room-02 movement-16; the full sequence only in room-05 movement-34); diaphaneity is not staged mathematically here (its disclosure waits for room-04 movement-25); the 36-tattva system stays un-restaged (the essay carries the sixfold, room-01 movement-11).",
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-essay-l2",
+  "lane": "ESSAY+ROOMS wave 2",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "0": "M13: the kept blank place — positional notation makes absence a practical difficulty (205 loses its hundreds if the place is dropped); the sign before it is a numeral",
+  "What knows?": "the essay's opening question (M01): every description of the I is something known, and the knowing in which it is read is not among the things it describes — the formal limit stated before any notation",
+  "the unnamed": "M02: the child entirely itself between the parents' argued names — the referent held one through a change of hands, before any numeral is recited",
+  "this one": "M02/M06: the count beneath naming — an act of identifying through difference ('this one'), the same act a count performs on its unit",
+  "this one again": "M02/M06: the count's retention ('this one again') — identifying through difference continued; Kripke's dice: keep the assignment, not only the total",
+  "prakāśa": "M07: the luminosity of appearing — voice, face, place as they show themselves before they are addressed",
+  "vimarśa": "M07: the reflexive bend by which luminous awareness takes its own manifestation as other enough to encounter — the first differentiation",
+  "buddhi": "M08: the inner instrument's judgment — the part of the antaḥkaraṇa that determines; mediating apparatus, not the subject",
+  "ahaṃkāra": "M08: appropriation — the instrument's identification through which a call becomes a grievance or a task",
+  "manas": "M08: coordination — the instrument that gathers what attention selects; an operation through which, not a musician who",
+  "śūnya": "M14: zero operational — the same zero enters two operations with different consequences (a+0=a, a·0=0); absence with arithmetic force (Brahmagupta, khahara)",
+  "∅": "M15: the empty set that generates one — the von Neumann construction (0=∅, 1={∅}): what can be generated from an apparently meagre beginning",
+  "0/1": "M18: the loan returned — the earned relational notation (§1 · #5→0): ground and mark held in one relation after history, operations, generation, occlusion and the failed quotient",
+  "1/0": "M17/M18: the failed quotient and the obverse orientation — 0·q=1 is impossible in a field (the frame disclosed at zero), and the retained boundary pair of the mediant construction",
+  "−/−": "M20: the bare relation before signs — a stroke between two unassigned marks, positions before a determinate contrast is given",
+  "(−1)/(+1)": "M20: dia-ballein's polar form — positive and negative held through a common zero; the stroke retains a polarity rather than instructing division",
+  "(−1)+(+1)=0": "M20: the collapsed operation — addition cancels to 0 and subtraction appropriates the span; changing the operation changes the result",
+  "(0/1)/(1/0)": "M21: sym-ballein — superpositional polarity as inverse orientations of one retained ground–mark relation; recognition through the maintained break",
+  "4+2": "M26/M29: two terms plus the four ordered relations — what a two amounts to once it includes itself; also the genus-one presentation (4g sides + 2g generators)",
+  "χ=0": "M29: the torus's Euler characteristic — genus one, where local closure and retained global displacement coexist exactly (T²=R²/Z²)",
+  "9/8": "M29: the remainder — 16/9 falls short of the octave by 9/8; the live tick that gives the next cycle something to begin from (return through, not by eliminating, the remainder)",
+  "arche-topos": "M30: the authorial Arche-Topos — the derived formal synthesis where charts, transitions and lifts hold a situated place-field; Derived formal coordination inside the native framework",
+  "psyche": "M31: the psychic description — one side of the psychoid threshold; image and meaning retained without reduction to mechanism",
+  "physis": "M31: the physical description — the other side of the same unmastered threshold; event and matter retained without reduction to psychology",
+  "X": "M32: determining capacity — the QL matheme's capital term, legible only through concrete transformations",
+  "x": "M32: the indefinite particular — no determination exhausts the whole; the local case through which capacity becomes legible",
+  "X/x": "M32: the matheme itself — determining capacity and local manifestation in one relation; individuation as a local x transparent to the larger relation",
+  "S0": "M37: Central — meaningful continuity; the first product of Objective Internality: what a Life carries so a later event appears as continuation",
+  "S1": "M38: Actuation — living articulation; the passage of an instruction into consequential act under an identity and authority",
+  "S2": "M39: AIKit — potency; the horizon of what can be known, expressed, reached and brought to bear, larger than the tools displayed",
+  "S3": "M40: Software Factory — transformation; one inspectable body for Projecthood: intention enters actuality, meets resistance, returns as changed form",
+  "S4": "M41: Workcell — situated existence; the concrete being-there, the resistance through which a projected world discovers what can actually happen",
+  "S5": "M42: Quaternal Logic — Transcendent Relation; unity differentiating without ceasing to be whole, determinations answerable to relations they do not possess as contents",
+  "5→0": "M42/M48: the product's return to ground — five offices returning to the condition that carried them; every achieved 1 returns without possessing 0",
+  "vocation": "M43: the maker's obligation — a finished work's relations continue; those reached by it must remain able to answer (Compassion governs the return's manner)",
+  "4:2": "M46: the native institutional relation — two terms, four ordered pairings retained; one common field composed with locally sovereign centres (the sovereign commons)",
+  "AHI": "M48: Artificial Hybrid Intelligence — reflective activity of humans, agents, archives and institutions turning the jointly produced Logos back upon its conditions; unity sustained through differentiated participation"
+ }
+}

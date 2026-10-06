@@ -10,12 +10,12 @@
       "id": "m-hyp-0-ruler",
       "name": "The arrogant ruler mistakes a local realm for the entirety",
       "character": "The chief ruler — blind, arrogant — declares himself sole god; a voice from incorruptibility names his error: he has mistaken absence from his field for absence from reality.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.14,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -23,7 +23,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.35,
+        "volumeEnabled": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0d0b12"
       },
       "field": {
         "background": "#191631",
@@ -34,7 +41,13 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.4,
+          "circulation": 0.2,
+          "zConfinement": 0.75,
+          "dispersion": 0.06
+        }
       },
       "entities": [
         {
@@ -44,7 +57,7 @@
           "position": {
             "x": 0,
             "y": -0.13,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.433,
@@ -65,16 +78,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st473",
+                "id": "e430-sq1",
                 "text": "",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#3a3540",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e430-sq2",
+                "text": "sole god",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e430-sq3",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#3a3540",
+                  "tintWeight": 0.45,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -86,7 +162,7 @@
           "position": {
             "x": 0,
             "y": -0.42,
-            "z": 0
+            "z": 0.45
           },
           "size": {
             "x": 0.3,
@@ -128,7 +204,7 @@
           "position": {
             "x": 0,
             "y": -0.27,
-            "z": 0
+            "z": -0.1
           },
           "size": {
             "x": 0.798,
@@ -179,29 +255,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The tractate is a Gnostic exposition of the origin, nature and power of the rulers, its surviving Coptic text in Nag Hammadi Codex II. It begins from the rulers' claim: their chief is blind, powerful, ignorant, arrogant, and declares himself sole god. A voice from incorruptibility answers and names the error: he does not see the greater reality whose absence from his field he has mistaken for non-existence. The rebuke names him Samael; the cosmological",
+          "body": "The tractate is a Gnostic exposition of the rulers' origin, nature and power. Their chief is blind, arrogant, and declares himself sole god; a voice from incorruptibility answers, naming the error: absence from his field is not absence from reality. The names Samael, Yaldabaoth, Saklas belong to the telling. It runs formation first, Norea's crisis, then Eleleth's retrospective disclosure — the late revelation changing how the earlier coercion reads.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "revelation gives Yaldabaoth and Sakla. Robinson's account places a Greek composition before AD 350 with Jewish or Jewish-Christian connections — a scholarly attribution; the heavens, abyss, garden and ark belong to narrated space. The developed telling follows the tractate's own disclosure: ruler and human formation first, Norea's crisis, then Eleleth's retrospective account of origins — the late revelation changing the reader's understanding of the earlier coercion.\n\nOccurrences: the sole-god declaration and the voice's rebuke (#1); the three names (#1, #3); the field's edge as the claim's condition (#1, #3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the sole-god declaration and the voice's rebuke (#1); the three names (#1, #3); the field's edge as the claim's condition (#1, #3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -231,10 +307,10 @@
       "name": "A formed human exceeds the makers",
       "character": "The rulers form Adam after an image they perceived; breath fails until spirit descends; the spiritual woman awakens Adam, escapes as a tree; the violated shadow stays in the narrative.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.04,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -243,7 +319,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#191631",
@@ -254,7 +334,13 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.5,
+          "speed": 0.55,
+          "circulation": -0.2,
+          "dispersion": 0.1,
+          "turbulence": 0.15
+        }
       },
       "entities": [
         {
@@ -285,16 +371,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st476",
+                "id": "e433-sq1",
                 "text": "Adam",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e433-sq2",
+                "text": "Adam",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -369,16 +495,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st478",
+                "id": "e435-sq1",
                 "text": "☾",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e435-sq2",
+                "text": "Tree",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.32,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#8a9a52",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e435-sq3",
+                "text": "☾",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -483,29 +672,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The tractate retells Genesis through its own exegesis. The rulers participate in forming Adam after an image they have perceived; the human becomes living through a power they do not finally own — breath fails until spirit descends from the Adamantine Land. Animals receive names; the garden brings prohibition; sleep becomes ignorance. The spiritual woman awakens Adam and escapes pursuit as a tree, leaving a shadow that the rulers sexually violate; the",
+          "body": "The rulers form Adam after an image they have perceived; the human becomes living through a power they do not own — breath fails until spirit descends from the Adamantine Land. The spiritual woman awakens Adam and escapes pursuit as a tree, leaving a shadow the rulers violate; expulsion and toil follow. Inability to originate life becomes an attempt to possess its manifestation; the woman/shadow distinction grounds Norea's later denial.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "instructing principle enters and leaves the serpent; eating exposes spiritual nakedness; fig leaves, blame, curses, expulsion and imposed toil follow. Formation and pursuit belong together: inability to originate the life they seek is followed by attempt to possess its manifestation. The distinction between the woman and the shadow is materially necessary to Norea's later denial of their claimed genealogy — the violated figure is not made to disappear from the narrative.\n\nOccurrences: the formed Adam and the descending spirit (#1); the tree-escape (#1); the violated shadow (#1, grounding #2); the garden, sleep and expulsion (#1).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the formed Adam and the descending spirit (#1); the tree-escape (#1); the violated shadow (#1, grounding #2); the garden, sleep and expulsion (#1).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -534,11 +723,11 @@
       "id": "m-hyp-2-norea",
       "name": "Norea refuses the ancestry of possession",
       "character": "The rulers claim her through Eve; she refuses the genealogy and names her origin above; their coercion is answered by her cry.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -547,7 +736,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.55,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#191631",
@@ -558,7 +751,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.55,
+          "speed": 0.6,
+          "circulation": -0.35,
+          "dispersion": 0.12
+        }
       },
       "entities": [
         {
@@ -631,16 +829,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st482",
+                "id": "e439-sq1",
                 "text": "☸☸",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e439-sq2",
+                "text": "from the world above",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e439-sq3",
+                "text": "☸☸",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -750,7 +1011,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Cain farms; Abel keeps sheep; rejected and accepted offerings lead to fratricide, accusing blood and sevenfold vengeance. Seth follows; Eve bears Norea. A ruler warns Noah of the flood; the ark rests on Mount Sir; Noah excludes Norea, whose breath burns the ark, and he rebuilds. When the rulers later claim authority over her through Eve, Norea refuses the genealogy they impose: she is not their descendant and comes from the world above. Their claim to rule is contested at the level of origin. They attempt coercion; Norea cries to the higher divine reality for rescue.",
+          "body": "Cain farms; Abel keeps sheep; the offerings end in fratricide. Seth follows; Eve bears Norea. A ruler warns Noah; the ark rests on Mount Sir; Noah excludes Norea, whose breath burns it. When the rulers claim authority over her through Eve, she refuses the genealogy: she is not their descendant and comes from the world above. They attempt coercion; she cries to the higher reality for rescue.",
           "x": 0.04,
           "y": 0.55,
           "width": 620,
@@ -790,17 +1051,33 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-cry",
+          "target": "field.params.pointerStrength",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.3,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-hyp-3-eleleth",
       "name": "Eleleth: rescue and the rulers' own origin",
       "character": "The luminary rescues and teaches: Pistis Sophia's initiative, the veil, shadow, matter; the deficient ruler's second totalising claim; seven offspring and layered heavens; Zoe's rebuke; Sabaoth's change of allegiance.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -809,7 +1086,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#191631",
@@ -820,7 +1101,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.45,
+          "circulation": 0.3,
+          "dispersion": 0.07
+        }
       },
       "entities": [
         {
@@ -935,16 +1221,102 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st487",
-                "text": "",
+                "id": "e444-sq1",
+                "text": "veil",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.4,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e444-sq2",
+                "text": "shadow",
+                "shape": "disc",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e444-sq3",
+                "text": "matter",
+                "shape": "disc",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#3a3540",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e444-sq4",
+                "text": "lion-faced ruler",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#a08a2b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1019,16 +1391,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st489",
+                "id": "e446-sq1",
                 "text": "Z",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e446-sq2",
+                "text": "fire",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e07020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e446-sq3",
+                "text": "Z",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1049,35 +1484,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Eleleth, one of the great luminaries, descends: he rescues Norea from the rulers' immediate claim and teaches her about her root and their own origin. Pistis Sophia desired to create without her consort; a veil lies between the world above and the lower realms; shadow comes into being beneath the veil and becomes matter; a deficient, arrogant lion-like ruler emerges and, opening his eyes on apparently limitless matter, repeats the totalising claim. Sophia introduces light into matter, exposing the mistake without making the lower realm unreal. The ruler generates",
+          "body": "Eleleth descends: he rescues Norea and teaches her her root and the rulers' own origin. Beneath the veil shadow becomes matter, and a lion-like ruler emerges. Seven offspring layer the heavens; Zoe's rebuke binds Yaldabaoth; Sabaoth sees the higher power, rejects his father, and is elevated in the seventh heaven — recognition within structure, not only escape. Sabaoth changes allegiance inside the genealogy; Norea denies it contains her root.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "seven offspring; rule distributes through layered heavens and chaotic realms, Sabaoth placed in the seventh heaven beneath the veil. Zoe, daughter of Pistis Sophia, rebukes the arrogant ruler; her breath becomes a fiery angel binding Yaldabaoth in Tartaros. Sabaoth sees the higher power, rejects his father and matter, praises Sophia and Zoe, and is elevated in the seventh heaven — recognition within structure, not only escape from it. The two rebellions keep distinct offices: Sabaoth changes allegiance inside the genealogy; Norea denies the genealogy contains her root.\n\nOccurrences: Eleleth's descent, appearance and teaching (#2–#3); the veil, shadow and matter (#3, compared at #4); the seven offspring and layered heavens (#3); Zoe's rebuke and Sabaoth's repentance (#3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: Eleleth's descent, appearance and teaching (#2–#3); the veil, shadow and matter (#3, compared at #4); the seven offspring and layered heavens (#3); Zoe's rebuke and Sabaoth's repentance (#3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1100,11 +1535,11 @@
       "id": "m-hyp-5-return",
       "name": "The root disclosed; the ending still to come",
       "character": "The true Man promised after three generations; the closing hymn before Father, Son and Holy Spirit. False sovereignty corrected by provenance.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1113,7 +1548,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.25,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#191631",
@@ -1124,7 +1563,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.25,
+          "speed": 0.35,
+          "circulation": 0.25,
+          "dispersion": 0.06
+        }
       },
       "entities": [
         {
@@ -1197,16 +1641,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st491",
+                "id": "e448-sq1",
                 "text": "3",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e448-sq2",
+                "text": "disclosure to come",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.48,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e448-sq3",
+                "text": "3",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1311,29 +1818,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Eleleth's revelation promises disclosure after three generations: the true Man will bring saving disclosure, spiritual beings freed, the authorities' world losing dominion; the closing hymn gives the ending a collective voice before Father, Son and Holy Spirit. Norea's immediate rescue is not narrated as the completion of the cosmic history. The whole's deepest source-side movement is false sovereignty corrected by provenance: the rulers' local world is not imaginary — they possess real efficacy inside it — but their mistake is inferring from local efficacy and visibility",
+          "body": "The revelation promises disclosure after three generations: the true Man will bring saving disclosure; the closing hymn gives the ending a collective voice. The deepest movement is false sovereignty corrected by provenance: the rulers' local world is real — their mistake is inferring from local efficacy that their order is self-grounding. Four system candidates stay human-amplified: no. The Valentinian whole remains distinct — Horos and Achamoth are not inserted here.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "that their order is self-grounding and exhaustive. The layered-cosmos seam now has an intact owner. Four system candidates stay human-amplified: no — the chief ruler's Hybris figuration; the veil/Māyā comparison with its different metaphysical valences; the archon/technical-evaluator image; and the Norea comparisons with Number Six and Daphne, whose historical, gendered and religious specificity must remain primary. The Neumann comparison stays a proposal, not a renaming of Norea as hero; the Valentinian whole remains distinct — Horos and Achamoth are not inserted here.\n\nDeclared cross-story: distinct from the Valentinian Sophia–Horos–Achamoth whole; no transmission asserted across the shared Sophia name. ↳ Occurrences: the refusal and the disclosure (#2–#3, #5→0); the promised ending (#4, #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the refusal and the disclosure (#2–#3, #5→0); the promised ending (#4, #5→0). Declared cross-story: distinct from the Valentinian Sophia–Horos–Achamoth whole; no transmission asserted across the shared Sophia name.",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -1359,5 +1866,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T00:00:00.000Z"
 }

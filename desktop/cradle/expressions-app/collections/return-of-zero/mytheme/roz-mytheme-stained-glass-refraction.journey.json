@@ -10,8 +10,8 @@
       "id": "m-gla-0-aperture",
       "name": "Light entering a made aperture",
       "character": "Sun, aperture, glass, seams, room and viewer belong to one event; what is prior in being is later in recognition.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.35,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#141118",
@@ -35,7 +39,12 @@
           "#3c6e71"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
+        }
       },
       "entities": [
         {
@@ -66,18 +75,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st577",
+                "id": "st-e534-1",
                 "text": "☀",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.55,
+                  "y": -0.07,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e534-2",
+                "text": "☀",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.22,
+                  "y": -0.24,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -192,18 +249,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st580",
+                "id": "st-e537-1",
                 "text": "B/p",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e537-2",
+                "text": "p→B",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#a5623a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -241,10 +338,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "historical window or sacred programme reconstructed. The originating light has priority over the projected image, yet the viewer encounters the image first and follows its differences back: what is prior in being can be later in recognition. Bimba names the Original order; pratibimba names its determinate display; neither viewer nor maker supplies the Original by finishing the picture.\n\nOccurrences: the light, aperture and cast image (#0, transformed at #4); the encounter-first asymmetry (#0, #5→0).",
+          "body": "historical window or sacred programme reconstructed. The originating light has priority over the projected image, yet the viewer encounters the image first and follows its differences back: what is prior in being can be later in recognition. Bimba names the Original order; pratibimba names its determinate display; neither viewer nor maker supplies the Original by finishing the picture.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the light, aperture and cast image (#0, transformed at #4); the encounter-first asymmetry (#0, #5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -274,7 +384,7 @@
       "name": "The spectrum implicated in the light",
       "character": "QL figures the full ordered spectrum immanent to the light; the pane gives a difference a passage — it does not first create the capacity for difference.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -286,10 +396,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#141118",
+        "background": "#16141c",
         "palette": [
           "#c9a227",
           "#141118",
@@ -299,7 +413,12 @@
           "#8c3b2e"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.35,
+          "circulation": 0.14,
+          "dispersion": 0.05,
+          "pointerStrength": 0.35
+        }
       },
       "entities": [
         {
@@ -330,18 +449,104 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st581",
+                "id": "st-e538-1",
                 "text": "",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e538-2",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.38,
+                    "y": 0.38
+                  },
+                  "rotation": 0,
+                  "tint": "#b0413e",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e538-3",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.38,
+                    "y": 0.38
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e538-4",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#4a5d7e",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -414,18 +619,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st583",
+                "id": "st-e540-1",
                 "text": "∅#",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e540-2",
+                "text": "QL",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -449,7 +694,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The white light carries plenitude: its apparent unity holds the possibility of differentiated colour together with the relations through which the colours belong to one field. Within Taylor's optic this full ordered spectrum figures QL — immanent to the originating light as its harmonic articulation. The pane gives a difference a passage; it does not first create the capacity for difference in a contentless source. The native theorem spine grounds the relation formally: the",
+          "body": "The white light carries plenitude: its apparent unity holds the possibility of differentiated colour together with the relations through which the colours belong to one field. Within Taylor's optic this full ordered spectrum figures QL — immanent to the originating light as its harmonic articulation. The pane gives a difference a passage; it does not first create the capacity for difference in a contentless source.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -463,16 +708,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "parent phases bearing the complete positional field in inverse orientations, the First Spanda's source-to-expression and return-to-recognition joined through their interference term. The optical whole makes implicated fullness and differentiated return visible, leaving the equations' derivation in the theorem field. QL's sixfold body and eight-determination traversal remain distinct from the number of panes: none requires a pane to receive a permanent number, tradition or colour.\n\nOccurrences: the plenitude and its spectrum (#1, differentiated at #2); the First Spanda's interference term (#1); the pane-count independence (#1, #2).",
+          "body": "The native theorem spine grounds the relation: the parent phases bearing the positional field in inverse orientations, the First Spanda's source-to-expression and return-to-recognition joined through their interference term. The optical whole makes that fullness and return visible, leaving the equations' derivation in the theorem field. QL's sixfold body and eight-determination traversal remain distinct from the number of panes: none requires a pane to receive a permanent number, tradition or colour.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the plenitude and its spectrum (#1, differentiated at #2); the First Spanda's interference term (#1); the pane-count independence (#1, #2).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -489,13 +747,29 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-spectrum",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.08,
+          "max": 0.08,
+          "rate": 0.2,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-gla-2-seams",
       "name": "Colour acquires a passage; the joins stay visible",
       "character": "MEF figures the panes, media, angles, densities and joins; the lead carries provenance, discontinuity, translation limits, contradiction, changes of register.",
-      "duration": 12,
+      "duration": 14,
       "transition": 1.5,
       "view": {
         "mode": "2d",
@@ -508,10 +782,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.8,
+        "pointerClickRadius": 0.4
       },
       "field": {
-        "background": "#141118",
+        "background": "#121016",
         "palette": [
           "#c9a227",
           "#141118",
@@ -521,7 +799,12 @@
           "#8c3b2e"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": 0.08,
+          "dispersion": 0.04,
+          "pointerStrength": 0.45
+        }
       },
       "entities": [
         {
@@ -594,18 +877,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st585",
+                "id": "st-e542-1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e542-2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -678,18 +1001,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st587",
+                "id": "st-e544-1",
                 "text": "≠",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e544-2",
+                "text": "/",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.0,
+                  "y": -0.48,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -713,7 +1080,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Each pane has a material, density, colour and angle: placement permits some transmission, bends or colours what passes, leaves something obstructed. Removing every difference in pursuit of neutrality would also remove the transformations through which the composition becomes articulate. The original quilt distinguishes the window from an opaque mosaic: the mosaic arranges fragments into a surface image; the window works through transmission and obstruction as well as arrangement. The lead cames carry the joins — holding neighbouring panes in relation while marking where one",
+          "body": "Each pane has a material, density, colour and angle: placement permits some transmission, bends or colours what passes, leaves something obstructed. Removing every difference in pursuit of neutrality would also remove the transformations through which the composition becomes articulate. The original quilt distinguishes the window from an opaque mosaic: the mosaic arranges fragments into a surface image; the window works through transmission and obstruction as well as arrangement.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -727,16 +1094,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "passage ends and another begins; in the epistemic construction the seams retain source provenance, historical discontinuity, translation limits, contradiction and changes of register. These figure MEF, whose office C39 defines: a lens changes a question, a permissible inference or an act of judgment while keeping its conditions inspectable. The correction matters at the material seam itself: the lead is assigned to the refractive apparatus and QL to the light's harmonic order — MEF makes distinctions available within that order without standing outside it as a certifying superior.\n\nOccurrences: the pane placements (#2); the lead's held joins (#2, reused at #4's comparison); the corrected apparatus/light assignment (#2, carried through #5→0).",
+          "body": "The lead cames carry the joins — holding neighbouring panes in relation while marking where one passage ends and another begins; in the epistemic construction the seams retain provenance, discontinuity, translation limits, contradiction and changes of register. These figure MEF, whose office C39 defines: a lens changes a question, a permissible inference or an act of judgment while keeping its conditions inspectable.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the pane placements (#2); the lead's held joins (#2, reused at #4's comparison); the corrected apparatus/light assignment (#2, carried through #5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -760,7 +1140,7 @@
       "name": "The image appears; changing light discloses the construction",
       "character": "The situated projection implicates its viewer; as sun, pane, angle, room and viewer change, the display changes — a later view reveals what an earlier arrangement withheld.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -772,10 +1152,14 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#141118",
+        "background": "#1a1418",
         "palette": [
           "#c9a227",
           "#141118",
@@ -785,7 +1169,12 @@
           "#8c3b2e"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.18,
+          "dispersion": 0.07,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -818,24 +1207,22 @@
           "sequence": {
             "enabled": true,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st589",
+                "id": "st-e545-1",
                 "text": "",
-                "shape": "yantra",
-                "hold": 2.4,
-                "transition": 1.4,
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.3,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.552,
-                    "y": 0.552
+                    "x": 0.5,
+                    "y": 0.3
                   },
                   "rotation": 0,
                   "tint": "#a5623a",
-                  "tintWeight": 1,
+                  "tintWeight": 0.8,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -845,43 +1232,43 @@
                 }
               },
               {
-                "id": "st590",
+                "id": "st-e545-2",
                 "text": "",
-                "shape": "yantra",
-                "hold": 2.4,
-                "transition": 1.4,
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.3,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.552,
-                    "y": 0.552
+                    "x": 0.55,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#7a2e1d",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e545-3",
+                "text": "",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.28
                   },
                   "rotation": 0,
                   "tint": "#3c6e71",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st591",
-                "text": "",
-                "shape": "yantra",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.552,
-                    "y": 0.552
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
+                  "tintWeight": 0.85,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -890,7 +1277,9 @@
                   }
                 }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -963,18 +1352,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st593",
+                "id": "st-e547-1",
+                "text": "180°",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e547-2",
                 "text": "360°",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1040,7 +1469,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The coloured display is produced through the relation of light and made aperture, appearing in an interior and encountered from a position. Looking only at the glass recovers matter and arrangement while missing the event of transmission; looking only at the cast image conceals the glass, its joins and placement. The situated image is pratibimba, and its danger begins when availability becomes a claim to possess the source. The viewer is implicated: body, position, attention and concern enter what is seen — P5's demand for an invested reading of text and subtext. As sun, pane, angle, room and viewer change, the projected colour",
+          "body": "The coloured display is produced through the relation of light and made aperture, encountered from a position. Looking only at the glass misses the event of transmission; looking only at the image conceals the glass, its joins and placement. The situated image is pratibimba; its danger begins when availability becomes a claim to possess the source. The viewer is implicated: body, position, attention and concern enter what is seen.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1054,10 +1483,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "changes: a later display makes visible a region previously obscured and can expose an aberration the first view concealed. The order recognisable across the transformations belongs to Bimba/QL; the appearances remain pratibimbas. The 180°→360° movement names the contextual turn — the first-, second- and third-person positions ceasing to claim isolated completeness as their joint conditions become available. The atlas carries the complementary discipline: a chart-transition is not light passing through glass; each whole retains the operation the other cannot perform; an attractor organising trajectories is not an atlas of charts.\n\nOccurrences: the changing sun and revealed region (#4); the implicated viewer (#3, #4); the atlas/window distinction (#4, #5→0).",
+          "body": "changes: a later display makes visible a region previously obscured. The order recognisable across the transformations belongs to Bimba/QL; the appearances remain pratibimbas. The 180°→360° movement names the contextual turn — positions ceasing to claim isolated completeness as joint conditions become available. The atlas carries the complementary discipline: a chart-transition is not light passing through glass; each whole retains the operation the other cannot perform.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the changing sun and revealed region (#4); the implicated viewer (#3, #4); the atlas/window distinction (#4, #5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -1080,29 +1522,52 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-projection",
+          "target": "field.params.dispersion",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.04,
+          "max": 0.04,
+          "rate": 0.24,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-gla-5-return",
       "name": "Recognition returns to the aperture",
       "character": "A seam examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment. The luminous image and its historical limits.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.0,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.35,
+        "zoom": 0.95,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.55,
+        "pointerClickRadius": 0.35,
+        "depthOcclusion": true,
+        "depthTintColor": "#0a0810",
+        "volumeEnabled": true
       },
       "field": {
-        "background": "#141118",
+        "background": "#10121a",
         "palette": [
           "#c9a227",
           "#141118",
@@ -1112,7 +1577,13 @@
           "#8c3b2e"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.2,
+          "dispersion": 0.06,
+          "zConfinement": 0.85,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -1122,7 +1593,7 @@
           "position": {
             "x": 0,
             "y": -0.6,
-            "z": 0
+            "z": -0.4
           },
           "size": {
             "x": 0.489,
@@ -1143,18 +1614,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st595",
+                "id": "st-e549-1",
                 "text": "",
                 "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#4a5d7e",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e549-2",
+                "text": "",
+                "shape": "square",
+                "hold": 3.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.38,
+                    "y": 0.46
+                  },
+                  "rotation": 0,
+                  "tint": "#5d7396",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1164,7 +1675,7 @@
           "position": {
             "x": 0.6,
             "y": 0.45,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.3,
@@ -1206,7 +1717,7 @@
           "position": {
             "x": -0.6,
             "y": -0.45,
-            "z": 0
+            "z": 0.2
           },
           "size": {
             "x": 0.34,
@@ -1248,7 +1759,7 @@
           "position": {
             "x": 0.6,
             "y": -0.45,
-            "z": 0
+            "z": 0.35
           },
           "size": {
             "x": 0.34,
@@ -1269,18 +1780,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st598",
+                "id": "st-e552-1",
                 "text": "M05",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e552-2",
+                "text": "C38",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1304,7 +1855,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The viewer returns to the window with a changed understanding: what first appeared as a self-contained pattern now discloses the source, selected passages and boundaries of its appearing. A seam can be examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment. The Original remains prior throughout; within a declared Context Frame the achieved map can genuinely serve as local Bimba while remaining pratibimba relative to wider sources, and returned evidence can correct that local Bimba itself. The historical limits are kept: Dyczkowski's lattice-window",
+          "body": "The viewer returns to the window with a changed understanding: what first appeared as a self-contained pattern now discloses the source, selected passages and boundaries of its appearing. A seam can be examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1318,16 +1869,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "image gives a neighbouring account of light appearing diverse through limiting conditions; the mirror analogy expressly loses the external object ordinary reflection requires; an inert mirror can display without knowing — Vimarśa names the self-apprehending power; the sun outside this authored window supplies no warrant for a metaphysical source outside Consciousness. Bohm is Resonant with, not an extraction; Gebser used through page-specific paraphrase; no additional symbolism assigned to particular colours or panes. The complete construction returns-to C09, C37 and C39, and to M05, M30 and M36 as the declared movements.\n\nOccurrences: the examined seam and reread source (#2, #5→0); the local-Bimba office (#4, #5→0); the declared movement returns (#5→0).",
+          "body": "The Original remains prior: within a declared Context Frame the achieved map can serve as local Bimba while remaining pratibimba to wider sources; returned evidence can correct that local Bimba itself. Dyczkowski's lattice-window image gives an account of light appearing diverse through limiting conditions; the mirror analogy loses the external object; an inert mirror can display without knowing — Vimarśa names the self-apprehending power. Bohm is Resonant with, not extraction.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the examined seam and reread source (#2, #5→0); the local-Bimba office (#4, #5→0); the declared movement returns (#5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1344,8 +1908,24 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-return",
+          "target": "field.params.pointerStrength",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": 0.35,
+          "max": 0.65,
+          "rate": 0.22,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }
