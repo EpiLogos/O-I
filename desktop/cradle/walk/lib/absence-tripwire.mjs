@@ -12,7 +12,7 @@ import {basename, dirname, join} from "node:path";
 
 export const EXCLUDED = /^(workcell|factory|software-factory)/;
 
-export function installTripwireEnvironment({localBin = join(homedir(), ".local/bin"), base = process.env} = {}) {
+export function installTripwireEnvironment({localBin = join(homedir(), ".local/bin"), base = process.env, home} = {}) {
   const root = mkdtempSync(join(tmpdir(), "oi-minimal-"));
   const bin = join(root, "bin"), trip = join(root, "tripwire"), log = join(root, "tripwire.log");
   mkdirSync(bin); mkdirSync(trip); writeFileSync(log, "");
@@ -20,7 +20,7 @@ export function installTripwireEnvironment({localBin = join(homedir(), ".local/b
   const withheld = [];
   for (const name of readdirSync(localBin)) { if (EXCLUDED.test(name)) withheld.push(name); else symlinkSync(join(localBin, name), join(bin, name)); }
   const shim = join(trip, "shim.sh");
-  writeFileSync(shim, `#!/bin/sh\necho "$(basename "$0") $*" >> "$OI_TRIPWIRE_LOG"\necho "tripwire: $(basename "$0") must not be dispatched in a minimal installation" >&2\nexit 97\n`);
+  writeFileSync(shim, `#!/bin/sh\necho "$(basename "$0") $* <- $(ps -o command= -p $PPID | cut -c1-160)" >> "$OI_TRIPWIRE_LOG"\necho "tripwire: $(basename "$0") must not be dispatched in a minimal installation" >&2\nexit 97\n`);
   chmodSync(shim, 0o755);
   for (const name of ["workcell", "factory"]) symlinkSync(shim, join(trip, name));
   const guard = join(trip, "oi-guard");
@@ -35,6 +35,9 @@ export function installTripwireEnvironment({localBin = join(homedir(), ".local/b
     PATH: [bin, node, "/usr/bin", "/bin", "/usr/sbin", "/sbin"].join(":"),
     OI_BIN: guard, OI_REAL_BIN: real, OI_WORKCELL_BIN: join(trip, "workcell"), OI_FACTORY_BIN: join(trip, "factory"), OI_TRIPWIRE_LOG: log,
   };
+  // A clean installation runs under its own HOME: nothing of the everyday installation (its ~/.local/bin, ~/.config/oi,
+  // ~/Applications, ~/.aikit) is reachable except what the sandbox PATH names.
+  if (home) Object.assign(env, {HOME: home, OI_HOME: join(home, "oi-home"), AIKIT_HOME: join(home, ".aikit")});
   Object.assign(base, env);
   return {root, env, withheld, log, entries: () => readFileSync(log, "utf8").split("\n").filter(Boolean), clear: () => writeFileSync(log, "")};
 }
