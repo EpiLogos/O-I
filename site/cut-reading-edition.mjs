@@ -36,6 +36,7 @@ const basis = git(vault, ['rev-parse', `${basisName}^{commit}`]);
 const origin = git(vault, ['remote', 'get-url', 'origin']);
 
 const scratch = option('scratch') ? resolve(option('scratch')) : mkdtempSync(join(tmpdir(), 'reading-edition-'));
+mkdirSync(scratch, { recursive: true });
 const clone = join(scratch, 'vault');
 git(scratch, ['clone', '--quiet', '--no-checkout', vault, clone]);
 git(clone, ['remote', 'set-url', 'origin', origin]);
