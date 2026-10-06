@@ -15,7 +15,7 @@ type Entry = {
 };
 type ExpressionIndex = { schema: string; collections: { id: string; label: string; count: number }[]; entries: Entry[] };
 type TextItem = { id: string; visible?: boolean; kicker?: string; title?: string; italic?: string; body?: string };
-type Scene = { id: string; name: string; character?: string; field?: { background?: string }; text?: TextItem[] };
+type Scene = { id: string; name: string; character?: string; field?: { background?: string }; engine?: Record<string, unknown>; text?: TextItem[] };
 type Journey = { id: string; name: string; scenes: Scene[] };
 type Failure = { kind: 'no-expression' | 'not-published' | 'index' | 'journey' | 'integrity' | 'invalid'; title: string; detail: string };
 type Loaded = { entry: Entry; journey: Journey; collection: string };
@@ -156,11 +156,18 @@ function useSceneParam(scenes: Scene[] | null): [string, (id: string) => void, s
   return [current, select, stray];
 }
 
+type Mode = 'touch' | 'orbit';
+const POINTER_VERBS: Record<string, string> = { pulse: 'pulse', implode: 'draw in', vortex: 'swirl', shove: 'scatter' };
+const MODE_VERBS: Record<string, string> = { repel: 'push the field away', attract: 'draw the field in', swirl: 'swirl the field', vortex: 'swirl the field', none: 'disturb the field' };
+
 function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene: Scene; playing: boolean; onPlaying: (next: boolean) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const field = useRef<PublicField | null>(null);
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
+  // Touch (the Expression's own pointer interaction) is the way in; Orbit is the camera.
+  const [mode, setMode] = useState<Mode>('touch');
+  const [touched, setTouched] = useState(false);
   const composition = useMemo(() => ({ revision: 1, scenes: journey.scenes.map((s) => ({ scene_ref: s.id, entity_refs: [] as string[] })), entities: {} }), [journey]);
   const sceneMap = useMemo(() => Object.fromEntries(journey.scenes.map((s) => [s.id, s.id])), [journey]);
   const latest = useRef({ composition, sceneMap, journey, sceneId: scene.id, playing });
@@ -184,8 +191,23 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
 
   const zoom = (factor: number) => { const f = field.current; if (f) f.view({ zoom: clamp(f.camera.zoom * factor, MIN_ZOOM, MAX_ZOOM) }); };
   const drag = useRef<{ x: number; y: number; yaw: number; pitch: number; panX: number; panY: number; pan: boolean } | null>(null);
+  const touching = useRef(false);
+  const last = useRef<{ x: number; y: number } | null>(null);
+  const settings = scene.engine ?? {};
+  const hint = (() => {
+    const verb = MODE_VERBS[String(settings.pointerMode ?? 'repel')] ?? 'disturb the field';
+    const click = POINTER_VERBS[String(settings.pointerClick ?? 'pulse')] ?? 'pulse';
+    return `Move to ${verb} · press to ${click}`;
+  })();
+  const orbiting = (e: { shiftKey: boolean; button: number }) => mode === 'orbit' || e.shiftKey || e.button === 2;
   const onKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
     const f = field.current;
+    if (f && mode === 'touch' && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault();
+      const box = e.currentTarget.getBoundingClientRect(), at = last.current ?? { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      f.pointerAt(at.x, at.y); f.burst(at.x, at.y); setTouched(true);
+      return;
+    }
     if (!f || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-', '0'].includes(e.key)) return;
     e.preventDefault();
     if (e.key === '0') f.home();
@@ -198,11 +220,27 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
     <div className="xp-stage" data-playing={playing ? 'true' : 'false'} data-scene={scene.id}>
       <div className="xp-field" style={ground ? { background: ground } : undefined}>
         <canvas
-          ref={canvas} tabIndex={0} data-testid="field" aria-label="Expression field. Drag to orbit, shift-drag to pan, scroll or plus and minus to zoom, zero to restore."
+          ref={canvas} tabIndex={0} data-testid="field" data-mode={mode}
+          aria-label={mode === 'touch'
+            ? 'Expression field. Move the pointer to disturb it, press to send a pulse, space or enter to pulse from the last position, shift-drag to orbit, scroll or plus and minus to zoom, zero to restore.'
+            : 'Expression field. Drag to orbit, shift-drag to pan, scroll or plus and minus to zoom, zero to restore.'}
           onContextMenu={(e) => e.preventDefault()}
-          onPointerDown={(e) => { const f = field.current; if (!f) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { x: e.clientX, y: e.clientY, yaw: f.camera.yaw, pitch: f.camera.pitch, panX: f.camera.panX, panY: f.camera.panY, pan: e.shiftKey || e.button === 2 }; }}
-          onPointerMove={(e) => { const d = drag.current, f = field.current; if (!d || !f) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (d.pan) f.view({ panX: d.panX + dx, panY: d.panY + dy }); else f.view({ mode: '3d', yaw: d.yaw + dx * 0.006, pitch: clamp(d.pitch + dy * 0.006, -1.4, 1.4) }); }}
-          onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}
+          onPointerDown={(e) => {
+            const f = field.current; if (!f) return;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            if (orbiting(e)) { drag.current = { x: e.clientX, y: e.clientY, yaw: f.camera.yaw, pitch: f.camera.pitch, panX: f.camera.panX, panY: f.camera.panY, pan: mode === 'orbit' ? (e.shiftKey || e.button === 2) : e.button === 2 }; return; }
+            touching.current = true; last.current = { x: e.clientX, y: e.clientY };
+            f.pointerAt(e.clientX, e.clientY); f.burst(e.clientX, e.clientY); setTouched(true);
+          }}
+          onPointerMove={(e) => {
+            const d = drag.current, f = field.current; if (!f) return;
+            last.current = { x: e.clientX, y: e.clientY };
+            if (d) { const dx = e.clientX - d.x, dy = e.clientY - d.y; if (d.pan) f.view({ panX: d.panX + dx, panY: d.panY + dy }); else f.view({ mode: '3d', yaw: d.yaw + dx * 0.006, pitch: clamp(d.pitch + dy * 0.006, -1.4, 1.4) }); return; }
+            if (mode === 'touch' && (e.pointerType !== 'touch' || touching.current)) { f.pointerAt(e.clientX, e.clientY); if (!touched) setTouched(true); }
+          }}
+          onPointerUp={(e) => { drag.current = null; if (touching.current) { touching.current = false; if (e.pointerType === 'touch') field.current?.pointerOff(); } }}
+          onPointerCancel={() => { drag.current = null; touching.current = false; field.current?.pointerOff(); }}
+          onPointerLeave={() => { if (!touching.current) field.current?.pointerOff(); }}
           onKeyDown={onKeyDown}
         />
         {!ready && !error && <div className="xp-loading" role="status"><span />Opening the field…</div>}
@@ -213,7 +251,14 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
             <button type="button" onClick={() => { setError(''); try { field.current?.recover(); } catch (e) { setError(String(e)); } }}>Recover field</button>
           </div>
         )}
+        {ready && !touched && mode === 'touch' && <p className="xp-hint" data-testid="hint">{hint}</p>}
         <div className="xp-controls" role="group" aria-label="Field controls">
+          <button type="button" aria-pressed={mode === 'touch'} aria-label={mode === 'touch' ? 'Touch mode: the pointer disturbs the field. Switch to orbit.' : 'Orbit mode: drag turns the view. Switch to touch.'} title={mode === 'touch' ? 'Touch the field (switch to orbit)' : 'Orbit the view (switch to touch)'} data-control="mode" onClick={() => { setMode(mode === 'touch' ? 'orbit' : 'touch'); field.current?.pointerOff(); }}>
+            {mode === 'touch'
+              ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v6M8 8.5V4.2a1.1 1.1 0 012.2 0V9M10.2 9V6a1.1 1.1 0 012.2 0v3.6c0 2.4-1.6 4-3.9 4-1.7 0-2.7-.8-3.6-2L3 8.6a1.1 1.1 0 011.7-1.4L6 8.5" /></svg>
+              : <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="6" ry="2.6" /><path d="M8 2a6 6 0 010 12" /></svg>}
+          </button>
+          <span className="xp-sep" aria-hidden="true" />
           <button type="button" aria-pressed={playing} aria-label={playing ? 'Pause the field' : 'Play the field'} title={playing ? 'Pause' : 'Play'} data-control="play" onClick={() => onPlaying(!playing)}>
             {playing
               ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" /></svg>
@@ -274,7 +319,6 @@ function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: st
             <button type="button" data-scene-id={scene.id} aria-current={scene.id === current ? 'step' : undefined} onClick={() => onSelect(scene.id)}>
               <span className="xp-num">{String(i + 1).padStart(2, '0')}</span>
               <span className="xp-scene-name">{scene.name}</span>
-              {scene.character && <span className="xp-scene-char">{scene.character}</span>}
             </button>
           </li>
         ))}
@@ -338,18 +382,12 @@ export function ExpressionApp() {
 
   return (
     <div className="xp" data-embed={embed ? 'true' : 'false'} data-theme-applied={theme} data-state={state.status === 'failed' ? state.failure.kind : state.status}>
-      {!embed && (
-        <header className="xp-bar">
-          <a className="xp-mark" href="./" aria-label="O:I home">O:I</a>
-          <a className="xp-back" href="./essay/">← The essay</a>
-        </header>
-      )}
       {state.status === 'loading' && <div className="xp-boot" role="status">Verifying the published Expression…</div>}
       {state.status === 'failed' && <State failure={state.failure} />}
       {data && scene && (
         <>
           <header className="xp-head">
-            <p className="xp-crumb">{data.collection}{data.entry.group && data.entry.group !== data.collection ? ` · ${data.entry.group}` : ''}</p>
+            {!embed && <div className="xp-nav"><a className="xp-mark" href="./" aria-label="O:I home">O:I</a><a className="xp-back" href="./essay/">← The essay</a></div>}
             <h1 title={data.entry.title}>{data.entry.title}</h1>
             <div className="xp-step">
               <button type="button" aria-label="Previous scene" disabled={index === 0} data-control="prev" onClick={() => step(scenes[index - 1].id)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg></button>
@@ -365,8 +403,7 @@ export function ExpressionApp() {
               {stray && <p className="xp-quiet" role="status">The scene named in the address (“{stray}”) is not in this Expression; showing its first scene.</p>}
               <Editorial scene={scene} />
               <SceneList scenes={scenes} current={scene.id} onSelect={pick} />
-              {data.entry.summary && <section className="xp-about"><h2 className="xp-label">About this Expression</h2><p>{data.entry.summary}</p></section>}
-              <InTheEssay nodes={data.entry.nodes ?? []} />
+              {!embed && <InTheEssay nodes={data.entry.nodes ?? []} />}
             </div>
           </main>
         </>
