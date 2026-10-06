@@ -68,7 +68,14 @@ impl ActStore {
         crate::expression_act_storage::encode(act)
     }
     pub(crate) fn expanded_bytes(act: &Act) -> Result<usize, String> {
-        crate::expression_act_storage::measure(act, crate::expression_act_storage::EXPANDED_BYTES)
+        if act.material_contract.is_some() {
+            crate::expression_performance_act::retained_bytes(act)
+        } else {
+            crate::expression_act_storage::measure(
+                act,
+                crate::expression_act_storage::EXPANDED_BYTES,
+            )
+        }
     }
     /// The store under an explicit O:I home (`<home>/desktop/expression-acts`).
     pub fn at_home(home: &Path) -> Self {
@@ -345,11 +352,22 @@ impl ActStore {
 
     /// Read one act by ref from the live register or the archive.
     pub fn read(&self, act_ref: &str) -> Result<Option<Act>, String> {
-        self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)
+        let act = self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)?;
+        if act.as_ref().is_some_and(|a| a.material_contract.is_some()) {
+            return Err("retained Act requires explicit read_retained material-v2 consumer".into());
+        }
+        Ok(act)
     }
-    /// Explicit large-record caller; uses the same lock, file and archive owner.
+    /// Explicit material-v2 caller; uses the same lock, file and archive owner.
     pub fn read_retained(&self, act_ref: &str) -> Result<Option<Act>, String> {
-        self.read_with_budget(act_ref, crate::expression_act_storage::LIVE_BYTES)
+        let act = self.read_with_budget(act_ref, crate::expression_act_storage::LIVE_BYTES)?;
+        if act.as_ref().is_some_and(|a| {
+            a.material_contract.as_deref()
+                != Some(crate::expression_performance_act::MATERIAL_SCHEMA)
+        }) {
+            return Err("Act has not opted into retained-performance material-v2".into());
+        }
+        Ok(act)
     }
     pub(crate) fn read_with_budget(
         &self,
@@ -371,6 +389,17 @@ impl ActStore {
     /// the store is lockable/writable and the record is at `expected`.
     pub fn check(&self, act_ref: &str, expected: Option<u64>) -> Result<Written, String> {
         self.check_fields(act_ref, expected, true)
+    }
+
+    /// Qualify revision and writability before request validation can make
+    /// room in a full register. This does not reserve a slot: the ordinary
+    /// capacity check and CAS write must still run after qualified archival.
+    pub(crate) fn check_before_capacity(
+        &self,
+        act_ref: &str,
+        expected: Option<u64>,
+    ) -> Result<Written, String> {
+        self.check_fields(act_ref, expected, false)
     }
 
     fn check_fields(
@@ -456,5 +485,269 @@ impl ActStore {
         // a consumer read still follows the complete original admission.
         self.remember_revision(&path, &bytes, act)?;
         Ok(Written::Written)
+    }
+}
+
+#[cfg(test)]
+mod admitted_read_tests {
+    use super::*;
+    use crate::expression::Document;
+    use crate::{Kernel, KernelOp, KernelOpResult};
+    use serde_json::{json, Value};
+
+    const WORLD: &str = "expression:act-read-revision-proof";
+    const ACTOR: &str = "agent:act-store-read-regression";
+
+    struct Home(PathBuf);
+    impl Home {
+        fn new() -> Self {
+            Self(std::env::temp_dir().join(format!(
+                "oi-admitted-act-read-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            )))
+        }
+    }
+    impl Drop for Home {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    fn kernel() -> Kernel {
+        // The actual Kernel and ActStore own these operations. No external
+        // Action/provider reply or numerical body is substituted.
+        Kernel::new(crate::flow::CentralClient::with(
+            "/nonexistent/oi".into(),
+            None,
+            String::new(),
+        ))
+    }
+    fn expression(kernel: &mut Kernel, request: Value) -> Value {
+        match kernel
+            .apply(KernelOp::Expression {
+                request: serde_json::from_value(request).unwrap(),
+            })
+            .unwrap()
+            .result
+        {
+            KernelOpResult::Expression { data } => data,
+            other => panic!("{other:?}"),
+        }
+    }
+    fn world(kernel: &mut Kernel, request: Value) -> Value {
+        match kernel
+            .apply(KernelOp::ExpressionWorld {
+                request: serde_json::from_value(request).unwrap(),
+            })
+            .unwrap()
+            .result
+        {
+            KernelOpResult::ExpressionWorld { data } => data,
+            other => panic!("{other:?}"),
+        }
+    }
+    fn document(kernel: &mut Kernel) -> Document {
+        serde_json::from_value(
+            expression(
+                kernel,
+                json!({"operation":"inspect","expression_ref":WORLD}),
+            )["document"]
+                .clone(),
+        )
+        .unwrap()
+    }
+    fn native_retained_act(home: &Home, act_ref: &str) -> (Kernel, Act, Document) {
+        let mut kernel = kernel();
+        kernel.attach_act_store(&home.0).unwrap();
+        expression(
+            &mut kernel,
+            json!({"operation":"create","expression_ref":WORLD,
+            "actor":ACTOR,"title":"Native Act read regression"}),
+        );
+        let revision = document(&mut kernel).revision;
+        let reply = world(
+            &mut kernel,
+            json!({"operation":"act_retained_perform",
+            "act_ref":act_ref,"expression_ref":WORLD,"expected_revision":revision,
+            "expected_act_revision":null,"actor":ACTOR,"summary":"Actual complete Edition",
+            "changes":[{"change":"rename","title":"First native Edition"}]}),
+        );
+        assert_eq!(reply["state"], "act_running");
+        let act: Act = serde_json::from_value(reply["act"].clone()).unwrap();
+        assert_eq!(act.sequence.len(), 1);
+        assert_eq!(
+            act.material_contract.as_deref(),
+            Some(crate::expression_performance_act::MATERIAL_SCHEMA)
+        );
+        let complete = document(&mut kernel);
+        (kernel, act, complete)
+    }
+
+    #[test]
+    fn admitted_read_stale_cas_successor_and_changed_bytes_keep_exact_native_record() {
+        let home = Home::new();
+        let (_kernel, act, _document) = native_retained_act(&home, "act:read-revision-proof");
+        let store = ActStore::at_home(&home.0);
+        let path = store.path(&act.act_ref);
+        let original = fs::read(&path).unwrap();
+        assert!(store.qualifications.lock().unwrap().is_empty());
+        assert_eq!(store.read_retained(&act.act_ref).unwrap().unwrap(), act);
+        {
+            let qualified = store.qualifications.lock().unwrap();
+            let witness = qualified.get(&path).unwrap();
+            let digest: [u8; 32] = Sha256::digest(&original).into();
+            assert_eq!(witness.sha256, digest);
+            assert_eq!(witness.bytes, original.len());
+            assert_eq!(witness.revision, act.revision);
+            assert_eq!(
+                witness.ended,
+                matches!(act.phase, ActPhase::Completed | ActPhase::Cancelled)
+            );
+            assert_eq!(witness.archived, act.archived);
+        }
+        assert_eq!(
+            store.write(&act, Some(act.revision - 1)).unwrap(),
+            Written::Conflict {
+                current: Some(act.revision)
+            }
+        );
+        assert_eq!(fs::read(&path).unwrap(), original);
+        let mut successor = act.clone();
+        successor.revision += 1;
+        successor.summary = "A separate actual native Store advances the Act".into();
+        let other = ActStore::at_home(&home.0);
+        assert_eq!(
+            other.write(&successor, Some(act.revision)).unwrap(),
+            Written::Written
+        );
+        let successor_bytes = fs::read(&path).unwrap();
+        assert_eq!(
+            store.write(&act, Some(act.revision)).unwrap(),
+            Written::Conflict {
+                current: Some(successor.revision)
+            }
+        );
+        assert_eq!(fs::read(&path).unwrap(), successor_bytes);
+        assert_eq!(
+            store.read_retained(&act.act_ref).unwrap().unwrap(),
+            successor
+        );
+        // Corrupt the actual canonical file after a fully admitted read.
+        // A revision witness cannot admit changed bytes or overwrite them.
+        let corrupt = b"{}\n";
+        fs::write(&path, corrupt).unwrap();
+        assert!(store.check(&act.act_ref, Some(successor.revision)).is_err());
+        assert!(store.write(&successor, Some(successor.revision)).is_err());
+        assert!(store.read_retained(&act.act_ref).is_err());
+        assert_eq!(fs::read(&path).unwrap(), corrupt);
+        assert!(!store.qualifications.lock().unwrap().contains_key(&path));
+    }
+
+    #[test]
+    fn restart_full_load_and_first_real_seek_preserve_complete_native_editions() {
+        let home = Home::new();
+        let (mut original, first_act, first) = native_retained_act(&home, "act:restart-read-proof");
+        let held = world(
+            &mut original,
+            json!({"operation":"act_interrupt",
+            "act_ref":first_act.act_ref,"actor":ACTOR,"reason":"Next actual Edition"}),
+        );
+        let revision = held["act"]["revision"].as_u64().unwrap();
+        let second = world(
+            &mut original,
+            json!({"operation":"act_retained_perform",
+            "act_ref":first_act.act_ref,"expression_ref":WORLD,"expected_revision":first.revision,
+            "expected_act_revision":revision,"actor":ACTOR,"summary":"Second actual complete Edition",
+            "changes":[{"change":"rename","title":"Second native Edition"}]}),
+        );
+        assert_eq!(second["state"], "act_running");
+        let act: Act = serde_json::from_value(second["act"].clone()).unwrap();
+        assert_eq!(act.sequence.len(), 2);
+        let latest = document(&mut original);
+        let encoded = crate::expression_file::encode(&latest).unwrap();
+        let store = ActStore::at_home(&home.0);
+        let path = store.path(&act.act_ref);
+        let before = fs::read(&path).unwrap();
+        let (loaded, errors) = store.load_all().unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(loaded, vec![act.clone()]);
+        assert_eq!(
+            store
+                .qualifications
+                .lock()
+                .unwrap()
+                .get(&path)
+                .unwrap()
+                .revision,
+            act.revision
+        );
+        assert_eq!(
+            store.check(&act.act_ref, Some(act.revision)).unwrap(),
+            Written::Written
+        );
+        assert_eq!(fs::read(&path).unwrap(), before);
+        drop(original);
+        let mut restarted = kernel();
+        restarted.attach_act_store(&home.0).unwrap();
+        expression(
+            &mut restarted,
+            json!({"operation":"open","actor":ACTOR,
+            "document":crate::expression_file::decode(&encoded).unwrap()}),
+        );
+        assert_eq!(document(&mut restarted), latest);
+        let sought = world(
+            &mut restarted,
+            json!({"operation":"act_seek",
+            "act_ref":act.act_ref,"actor":ACTOR,"position":0}),
+        );
+        assert_eq!(sought["state"], "act_sought");
+        assert_eq!(sought["performed"], true);
+        let mut expected = first;
+        // Restore is a real edit strictly ahead of the previous native draft.
+        expected.revision = latest.revision + 1;
+        assert_eq!(document(&mut restarted), expected);
+        let after: Act = serde_json::from_value(sought["act"].clone()).unwrap();
+        assert_eq!(after.sequence, act.sequence);
+        assert_eq!(after.performance_custody, act.performance_custody);
+        assert_eq!(after.revision, act.revision + 1);
+        assert_eq!(
+            ActStore::at_home(&home.0)
+                .read_retained(&act.act_ref)
+                .unwrap()
+                .unwrap(),
+            after
+        );
+    }
+
+    #[test]
+    fn poisoned_optional_revision_lock_preserves_prior_successful_full_read_behavior() {
+        let home = Home::new();
+        let (_kernel, act, _document) = native_retained_act(&home, "act:poison-read-proof");
+        let store = ActStore::at_home(&home.0);
+        let path = store.path(&act.act_ref);
+        let before = fs::read(&path).unwrap();
+        let poison = std::panic::catch_unwind(|| {
+            let _held = store.qualifications.lock().unwrap();
+            panic!("Poison optional revision metadata in this controlled test");
+        });
+        assert!(poison.is_err());
+        assert!(store.qualifications.is_poisoned());
+        assert_eq!(store.read_retained(&act.act_ref).unwrap().unwrap(), act);
+        let (loaded, errors) = store.load_all().unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(loaded, vec![act.clone()]);
+        // Existing CAS behavior still refuses an unavailable proof mutex.
+        assert!(store
+            .check(&act.act_ref, Some(act.revision))
+            .unwrap_err()
+            .contains("qualification lock is unavailable"));
+        assert!(store
+            .write(&act, Some(act.revision))
+            .unwrap_err()
+            .contains("qualification lock is unavailable"));
+        assert_eq!(fs::read(&path).unwrap(), before);
     }
 }

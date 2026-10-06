@@ -24,19 +24,89 @@ concurrency:
 jobs:
   kernel:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
+      - name: Read the separately qualified retained performance test source
+        id: retained-performance-source
+        run: |
+          python3 - <<'PY_SOURCE'
+          import json, os, re
+          from pathlib import Path
+          value = json.loads(Path('desktop/cradle/tests/fixtures/retained-performance/source-owner.json').read_text())
+          assert value['schema'] == 'oi.retained-performance-test-source-owner/v1'
+          assert value['repository'] == 'EpiLogos/QL-MEF'
+          assert value['consumer'] == 'retained-performance-native-kernel-tests'
+          assert re.fullmatch(r'[0-9a-f]{40}', value['revision'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('revision=' + value['revision'] + '\n')
+          PY_SOURCE
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.retained-performance-source.outputs.revision }}
+          path: .native-owner/retained-performance/QL-MEF
+          persist-credentials: false
+      - name: Native retained performance codec dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
-          workspaces: desktop/cradle/kernel
-      - name: Test and lint cradle kernel
+          workspaces: |
+            desktop/cradle/kernel
+            .native-owner/retained-performance/QL-MEF
+      - name: Produce the actual retained source, Manager, full workload and native checkpoints
+        timeout-minutes: 15
         run: |
-          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets
-          cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/retained-performance"
+          python3 scripts/prepare-retained-performance-fixture.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
+            > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-environment-regressions.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" \
+            > "$RUNNER_TEMP/retained-performance/publication-counterproof.json" \
+            2> "$RUNNER_TEMP/retained-performance/publication-counterproof.log"
+          python3 scripts/retained-performance-ci-environment.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" --github-env "$GITHUB_ENV"
+      - name: Complete cradle kernel unit and native target tests
+        if: always()
+        timeout-minutes: 15
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --lib --bins --examples --benches --no-fail-fast
+      - name: Complete cradle kernel integration tests
+        if: always()
+        timeout-minutes: 30
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test '*' --no-fail-fast -- --nocapture
+      - name: Complete the commissioned retained performance replay suites
+        if: always()
+        timeout-minutes: 120
+        run: |
+          cargo test --release --manifest-path desktop/cradle/kernel/Cargo.toml --locked --no-fail-fast \
+            --test expression_performance --test expression_performance_checkpoint --test expression_performance_delivery \
+            --test expression_performance_management --test expression_performance_recording --test expression_performance_source_asset \
+            -- --nocapture --include-ignored --skip actual_captured_prefix_170_to_original_171_public_native_cas_restart_and_selection --skip full_actual_fifteen_minute_committed_workload --skip full_actual_source_form_fifteen_minute_45k --skip full_original_native_source_recipe_keys --skip actual_current_world_personal_shared_and_workload
+      - name: Lint all cradle kernel targets
+        if: always()
+        timeout-minutes: 15
+        run: cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Preserve every actual producer fixture, original log and source receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retained-performance-kernel-${{ github.sha }}
+          path: ${{ runner.temp }}/retained-performance
+          if-no-files-found: error
+          retention-days: 14
 
   cradle:
     runs-on: ubuntu-latest

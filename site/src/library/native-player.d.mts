@@ -5,6 +5,7 @@ export class PublicField {
  camera:Camera;setScene(composition:Edition['publication']['composition'],sceneRef:string,camera?:Partial<Camera>,nativeJourney?:any,nativeSceneMap?:Record<string,string>,nativeEntityMap?:Record<string,string>):void;
  setActive(active:boolean):void;setPlaying(playing:boolean):void;setSelected(ref:string):void;
  view(change:Partial<Camera>):void;home():void;recover():void;dispose():void;
+ pointerAt(clientX:number,clientY:number):boolean;pointerOff():void;burst(clientX:number,clientY:number):boolean;pointerSettings():{mode:string;click:string};
  inspect():{frames:number;active:boolean;playing:boolean;camera:Camera;scene?:string};
 }
 export function loadNativeJourney(descriptor:NativeBodyDescriptor):Promise<{journey:any;sceneMap:Record<string,string>;entityMap:Record<string,string>}|null>;

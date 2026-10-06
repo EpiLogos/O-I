@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {compileLibrary,PRODUCT_IDS} from './build-library.mjs';
 import {parseRoute,routeHref,sceneCapacity,filterEntries,readIndex,readEdition,exactScene,safeUrl,readPosition,writePosition} from './src/library/model.mjs';
-import {canonicalHref} from './src/library/publication-model.mjs';
+import {canonicalHref} from './src/library/canonical-href.mjs';
 const source=await readFile(new URL('./content/public-site.md',import.meta.url),'utf8');
 const built=compileLibrary(source,'d6d92503a1d25e38c93aa0f5e11a306be2adb093');
 const first=built.editions[0];

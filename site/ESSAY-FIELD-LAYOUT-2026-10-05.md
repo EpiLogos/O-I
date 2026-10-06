@@ -57,8 +57,11 @@ Contracts that did not move: the shell links to `./essay/`; `essay/index.html` c
 | `site/expression.html`, `site/src/expression/` | The full renderer: verifies the body's SHA-256, then plays it with the same production adapter the Library used (`PublicField`). `?x=<id>&scene=<id>&embed=1&theme=`. |
 | `quartz/components/scripts/field/library.ts`, `tabs.ts` | The gallery view and the Expression tab. |
 
-The old Library publication shelf (`library.html`, `build-return-of-zero-publications.mjs`, the byte-verified editions) is
-untouched: CI still gates on it. The essay field is now the way in; retiring that pipeline is a separate decision.
+The old Library publication shelf (`build-return-of-zero-publications.mjs`, `build-publications.mjs`, `verify-public-edition.mjs`,
+`PublicLibrary.tsx`, the byte-verified editions and their CI gate) was retired on 2026-10-06. `library.html` remains, but only
+for the site-edition accounts (O:I, products, research, shared field, build). The old addresses `#/library?published=1…`,
+`?ref=…` and `explore.html?ref=…` continue into `./essay/?view=library` (client redirect in `src/shell/PublicApp.tsx`;
+`/explore` and `/explore.html` in `vercel.json`).
 
 ## Pipeline repairs made on the way
 

@@ -3,7 +3,7 @@
 import { ProductionAdapter } from '@epilogos/oi-design-system/expressions-engine/oi/retained.mjs';
 import { blankScene, validateJourney } from '@epilogos/oi-design-system/expressions-engine/shell/model.mjs';
 import { nativeExport, nativeSnapshotToJourney } from '@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs';
-import { defaultCamera, project } from '@epilogos/oi-design-system/expressions-engine/shell/camera.mjs';
+import { defaultCamera, project, unproject } from '@epilogos/oi-design-system/expressions-engine/shell/camera.mjs';
 // Paths are resolved by Vite's native-engine alias; renderer ownership is unchanged.
 const base=nativeExport(blankScene()).config;
 export async function loadNativeJourney(descriptor) {
@@ -42,7 +42,7 @@ export function projectComposition(composition,sceneRef,nativeJourney=null,nativ
 export class PublicField {
  constructor(canvas,onError,onPositions,onTick){
   this.width=0;this.height=0;
-  this.canvas=canvas;this.onError=onError;this.onPositions=onPositions;this.onTick=onTick;this.entityMap=null;this.selectedRef='';
+  this.canvas=canvas;this.onError=onError;this.onPositions=onPositions;this.onTick=onTick;this.entityMap=null;this.selectedRef='';this.pointer={active:false,world:{x:0,y:0,z:0}};
   this.adapter=new ProductionAdapter(canvas);this.camera=defaultCamera();this.raf=0;this.last=0;this.active=false;this.playing=true;this.scene=null;this.selected=[];this.frames=0;this.disposed=false;
   this.visibility=()=>{this.last=0;this.schedule();};document.addEventListener('visibilitychange',this.visibility);
   this.resize=new ResizeObserver(()=>this.measure());this.resize.observe(canvas);
@@ -73,6 +73,21 @@ export class PublicField {
  setSelected(ref){this.selectedRef=ref;this.selected=ref?[this.entityMap?.[ref]??ref]:[];this.schedule();}
  view(change){Object.assign(this.camera,change);this.fitPoint=null;this.schedule();}
  home(){this.camera=defaultCamera();this.camera.zoom=this.scene?.entities.length===1?1.5:.85;this.fitPoint=this.scene?.entities.length===1?this.scene.entities[0].position:null;this.schedule();}
+ // Pointer interaction is part of the Expression format: each scene carries pointerMode / pointerClick(+Strength/Radius).
+ // The host only maps the cursor onto the field's plane; what the pointer does is the scene's own setting.
+ worldAt(clientX,clientY){
+  const r=this.canvas.getBoundingClientRect();
+  try{return unproject(clientX-r.left,clientY-r.top,{...this.camera,plane:'XY',depth:0,snap:false},this.width,this.height,'XY',0);}catch{return null;}
+ }
+ pointerAt(clientX,clientY){const world=this.worldAt(clientX,clientY);this.pointer=world?{active:true,world}:{active:false,world:this.pointer.world};this.canvas.dataset.pointer=world?'on':'off';this.schedule();return !!world;}
+ pointerOff(){if(!this.pointer.active)return;this.pointer={active:false,world:this.pointer.world};this.canvas.dataset.pointer='off';this.schedule();}
+ pointerSettings(){const e=this.scene?.engine??{};return {mode:typeof e.pointerMode==='string'?e.pointerMode:'repel',click:['pulse','implode','vortex','shove'].includes(e.pointerClick)?e.pointerClick:'pulse'};}
+ burst(clientX,clientY){
+  const world=this.worldAt(clientX,clientY);if(!world)return false;
+  const e=this.scene?.engine??{},num=(v,d)=>Number.isFinite(v)?v:d;
+  try{this.adapter.command({type:'pointer-effect',kind:this.pointerSettings().click,x:world.x*400,y:world.y*400,strength:Math.min(20,Math.max(0,num(e.pointerClickStrength,2.2))),radius:Math.max(8,num(e.pointerClickRadius,.45)*400)});}catch{return false;}
+  this.canvas.dataset.bursts=String((Number(this.canvas.dataset.bursts)||0)+1);this.schedule();return true;
+ }
  recover(){this.adapter.command({type:'recover-context'});this.failed=false;this.last=0;this.schedule();}
  schedule(){cancelAnimationFrame(this.raf);this.raf=0;if(!this.disposed&&this.active&&!document.hidden&&!this.failed&&this.scene&&this.width>0&&this.height>0)this.raf=requestAnimationFrame(t=>this.frame(t));}
  frame(now){
@@ -80,8 +95,8 @@ export class PublicField {
   const delta=this.last&&this.playing?Math.min(.05,(now-this.last)/1000):0;this.last=now;
   try{
    if(this.fitPoint){const p=project(this.fitPoint,{...this.camera,panX:0,panY:0},this.width,this.height);this.camera.panX=this.width*.51-p.x;this.camera.panY=this.height*.48-p.y;this.fitPoint=null;}
-   this.adapter.render({scene:this.scene,delta,authoringRevision:this.revision,camera:this.camera,pointer:{active:false,world:{x:0,y:0,z:0}},selectedIds:this.selected,scaffold:'off'});
-   if(this.resetOnNextFrame){this.resetOnNextFrame=false;this.adapter.command({type:'reset-field'});this.adapter.render({scene:this.scene,delta:0,authoringRevision:this.revision,camera:this.camera,pointer:{active:false,world:{x:0,y:0,z:0}},selectedIds:this.selected,scaffold:'off'});}
+   this.adapter.render({scene:this.scene,delta,authoringRevision:this.revision,camera:this.camera,pointer:this.pointer,selectedIds:this.selected,scaffold:'off'});
+   if(this.resetOnNextFrame){this.resetOnNextFrame=false;this.adapter.command({type:'reset-field'});this.adapter.render({scene:this.scene,delta:0,authoringRevision:this.revision,camera:this.camera,pointer:this.pointer,selectedIds:this.selected,scaffold:'off'});}
    this.frames++;this.canvas.dataset.rendered='true';this.canvas.dataset.frames=String(this.frames);
    const nativeToPublic=this.entityMap?Object.fromEntries(Object.entries(this.entityMap).map(([publicRef,nativeRef])=>[nativeRef,publicRef])):null;
    this.onPositions(this.scene.entities.map(e=>({ref:nativeToPublic?.[e.id]??e.id,...project(e.position,this.camera,this.width,this.height)})));

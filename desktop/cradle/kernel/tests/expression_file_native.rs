@@ -143,11 +143,12 @@ fn file_reference_schema_cycle_context_and_document_digest_refuse() {
     let mut schema = original.clone();
     schema["schema"] = json!("oi.expression-storage/v999");
     refuse(&schema, "Unsupported Expression file storage schema");
-    // The retained-performance storage owner belongs to the replay stage; a
-    // v2-labelled envelope is not this build's storage schema and refuses.
-    let mut labelled_v2 = original.clone();
-    labelled_v2["schema"] = json!("oi.expression-storage/v2");
-    refuse(&labelled_v2, "Unsupported Expression file storage schema");
+    // v2 now has a real retained-performance owner. An image-only envelope
+    // labelled v2 still refuses its missing required native performance parts.
+    let mut incomplete_performance = original.clone();
+    incomplete_performance["schema"] =
+        json!(oi_cradle_kernel::expression_performance_storage::STORAGE_SCHEMA);
+    refuse(&incomplete_performance, "missing field `performance_parts`");
     let mut marker = original.clone();
     assert!(change_marker(&mut marker["document"], &mut |value| value
         ["schema"] =

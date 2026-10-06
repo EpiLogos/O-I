@@ -14,8 +14,8 @@ type Entry = {
   scenes: IndexScene[]; nodes: string[]; digest: string; bytes: number; journey: string; cover: string;
 };
 type ExpressionIndex = { schema: string; collections: { id: string; label: string; count: number }[]; entries: Entry[] };
-type TextItem = { id: string; visible?: boolean; kicker?: string; title?: string; italic?: string; body?: string };
-type Scene = { id: string; name: string; character?: string; field?: { background?: string }; text?: TextItem[] };
+type TextItem = { id: string; visible?: boolean; kicker?: string; title?: string; italic?: string; body?: string; x?: number; y?: number; width?: number; size?: number; align?: 'left' | 'center' | 'right' };
+type Scene = { id: string; name: string; character?: string; field?: { background?: string; palette?: string[] }; engine?: Record<string, unknown>; text?: TextItem[] };
 type Journey = { id: string; name: string; scenes: Scene[] };
 type Failure = { kind: 'no-expression' | 'not-published' | 'index' | 'journey' | 'integrity' | 'invalid'; title: string; detail: string };
 type Loaded = { entry: Entry; journey: Journey; collection: string };
@@ -156,11 +156,28 @@ function useSceneParam(scenes: Scene[] | null): [string, (id: string) => void, s
   return [current, select, stray];
 }
 
-function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene: Scene; playing: boolean; onPlaying: (next: boolean) => void }) {
+type Mode = 'touch' | 'orbit';
+const POINTER_VERBS: Record<string, string> = { pulse: 'pulse', implode: 'draw in', vortex: 'swirl', shove: 'scatter' };
+const MODE_VERBS: Record<string, string> = { repel: 'push the field away', attract: 'draw the field in', swirl: 'swirl the field', vortex: 'swirl the field', none: 'disturb the field' };
+
+function Stage({ journey, scene, playing, onPlaying, onWidth }: { journey: Journey; scene: Scene; playing: boolean; onPlaying: (next: boolean) => void; onWidth: (width: number) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const field = useRef<PublicField | null>(null);
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
+  // Touch (the Expression's own pointer interaction) is the way in; Orbit is the camera.
+  const [mode, setMode] = useState<Mode>('touch');
+  const [touched, setTouched] = useState(false);
+  const frame = useRef<HTMLDivElement>(null);
+  const [stageWidth, setStageWidth] = useState(900);
+  const [stageHeight, setStageHeight] = useState(600);
+  useEffect(() => {
+    const node = frame.current; if (!node) return;
+    const measure = () => { const r = node.getBoundingClientRect(); const w = Math.round(r.width) || 900; setStageWidth(w); setStageHeight(Math.round(r.height) || 600); onWidth(w); };
+    measure();
+    const watch = new ResizeObserver(measure); watch.observe(node);
+    return () => watch.disconnect();
+  }, []);
   const composition = useMemo(() => ({ revision: 1, scenes: journey.scenes.map((s) => ({ scene_ref: s.id, entity_refs: [] as string[] })), entities: {} }), [journey]);
   const sceneMap = useMemo(() => Object.fromEntries(journey.scenes.map((s) => [s.id, s.id])), [journey]);
   const latest = useRef({ composition, sceneMap, journey, sceneId: scene.id, playing });
@@ -184,8 +201,23 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
 
   const zoom = (factor: number) => { const f = field.current; if (f) f.view({ zoom: clamp(f.camera.zoom * factor, MIN_ZOOM, MAX_ZOOM) }); };
   const drag = useRef<{ x: number; y: number; yaw: number; pitch: number; panX: number; panY: number; pan: boolean } | null>(null);
+  const touching = useRef(false);
+  const last = useRef<{ x: number; y: number } | null>(null);
+  const settings = scene.engine ?? {};
+  const hint = (() => {
+    const verb = MODE_VERBS[String(settings.pointerMode ?? 'repel')] ?? 'disturb the field';
+    const click = POINTER_VERBS[String(settings.pointerClick ?? 'pulse')] ?? 'pulse';
+    return `Move to ${verb} · press to ${click}`;
+  })();
+  const orbiting = (e: { shiftKey: boolean; button: number }) => mode === 'orbit' || e.shiftKey || e.button === 2;
   const onKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
     const f = field.current;
+    if (f && mode === 'touch' && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault();
+      const box = e.currentTarget.getBoundingClientRect(), at = last.current ?? { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      f.pointerAt(at.x, at.y); f.burst(at.x, at.y); setTouched(true);
+      return;
+    }
     if (!f || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-', '0'].includes(e.key)) return;
     e.preventDefault();
     if (e.key === '0') f.home();
@@ -196,15 +228,32 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
   const ground = /^#[0-9a-f]{6}$/i.test(scene.field?.background ?? '') ? scene.field!.background : undefined;
   return (
     <div className="xp-stage" data-playing={playing ? 'true' : 'false'} data-scene={scene.id}>
-      <div className="xp-field" style={ground ? { background: ground } : undefined}>
+      <div className="xp-field" ref={frame} style={ground ? { background: ground } : undefined}>
         <canvas
-          ref={canvas} tabIndex={0} data-testid="field" aria-label="Expression field. Drag to orbit, shift-drag to pan, scroll or plus and minus to zoom, zero to restore."
+          ref={canvas} tabIndex={0} data-testid="field" data-mode={mode}
+          aria-label={mode === 'touch'
+            ? 'Expression field. Move the pointer to disturb it, press to send a pulse, space or enter to pulse from the last position, shift-drag to orbit, scroll or plus and minus to zoom, zero to restore.'
+            : 'Expression field. Drag to orbit, shift-drag to pan, scroll or plus and minus to zoom, zero to restore.'}
           onContextMenu={(e) => e.preventDefault()}
-          onPointerDown={(e) => { const f = field.current; if (!f) return; e.currentTarget.setPointerCapture(e.pointerId); drag.current = { x: e.clientX, y: e.clientY, yaw: f.camera.yaw, pitch: f.camera.pitch, panX: f.camera.panX, panY: f.camera.panY, pan: e.shiftKey || e.button === 2 }; }}
-          onPointerMove={(e) => { const d = drag.current, f = field.current; if (!d || !f) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (d.pan) f.view({ panX: d.panX + dx, panY: d.panY + dy }); else f.view({ mode: '3d', yaw: d.yaw + dx * 0.006, pitch: clamp(d.pitch + dy * 0.006, -1.4, 1.4) }); }}
-          onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}
+          onPointerDown={(e) => {
+            const f = field.current; if (!f) return;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            if (orbiting(e)) { drag.current = { x: e.clientX, y: e.clientY, yaw: f.camera.yaw, pitch: f.camera.pitch, panX: f.camera.panX, panY: f.camera.panY, pan: mode === 'orbit' ? (e.shiftKey || e.button === 2) : e.button === 2 }; return; }
+            touching.current = true; last.current = { x: e.clientX, y: e.clientY };
+            f.pointerAt(e.clientX, e.clientY); f.burst(e.clientX, e.clientY); setTouched(true);
+          }}
+          onPointerMove={(e) => {
+            const d = drag.current, f = field.current; if (!f) return;
+            last.current = { x: e.clientX, y: e.clientY };
+            if (d) { const dx = e.clientX - d.x, dy = e.clientY - d.y; if (d.pan) f.view({ panX: d.panX + dx, panY: d.panY + dy }); else f.view({ mode: '3d', yaw: d.yaw + dx * 0.006, pitch: clamp(d.pitch + dy * 0.006, -1.4, 1.4) }); return; }
+            if (mode === 'touch' && (e.pointerType !== 'touch' || touching.current)) { f.pointerAt(e.clientX, e.clientY); if (!touched) setTouched(true); }
+          }}
+          onPointerUp={(e) => { drag.current = null; if (touching.current) { touching.current = false; if (e.pointerType === 'touch') field.current?.pointerOff(); } }}
+          onPointerCancel={() => { drag.current = null; touching.current = false; field.current?.pointerOff(); }}
+          onPointerLeave={() => { if (!touching.current) field.current?.pointerOff(); }}
           onKeyDown={onKeyDown}
         />
+        <TextLayer scene={scene} width={stageWidth} height={stageHeight} />
         {!ready && !error && <div className="xp-loading" role="status"><span />Opening the field…</div>}
         {error && (
           <div className="xp-fielderror" role="alert">
@@ -213,7 +262,14 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
             <button type="button" onClick={() => { setError(''); try { field.current?.recover(); } catch (e) { setError(String(e)); } }}>Recover field</button>
           </div>
         )}
+        {ready && !touched && mode === 'touch' && stageWidth >= 460 && <p className="xp-hint" data-testid="hint">{hint}</p>}
         <div className="xp-controls" role="group" aria-label="Field controls">
+          <button type="button" aria-pressed={mode === 'touch'} aria-label={mode === 'touch' ? 'Touch mode: the pointer disturbs the field. Switch to orbit.' : 'Orbit mode: drag turns the view. Switch to touch.'} title={mode === 'touch' ? 'Touch the field (switch to orbit)' : 'Orbit the view (switch to touch)'} data-control="mode" onClick={() => { setMode(mode === 'touch' ? 'orbit' : 'touch'); field.current?.pointerOff(); }}>
+            {mode === 'touch'
+              ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v6M8 8.5V4.2a1.1 1.1 0 012.2 0V9M10.2 9V6a1.1 1.1 0 012.2 0v3.6c0 2.4-1.6 4-3.9 4-1.7 0-2.7-.8-3.6-2L3 8.6a1.1 1.1 0 011.7-1.4L6 8.5" /></svg>
+              : <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="6" ry="2.6" /><path d="M8 2a6 6 0 010 12" /></svg>}
+          </button>
+          <span className="xp-sep" aria-hidden="true" />
           <button type="button" aria-pressed={playing} aria-label={playing ? 'Pause the field' : 'Play the field'} title={playing ? 'Pause' : 'Play'} data-control="play" onClick={() => onPlaying(!playing)}>
             {playing
               ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" /></svg>
@@ -229,26 +285,48 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
   );
 }
 
-function Editorial({ scene }: { scene: Scene }) {
-  const items = (scene.text ?? []).filter((item) => item && item.visible !== false && (item.kicker || item.title || item.italic || item.body));
-  if (!items.length) return <p className="xp-quiet">This scene carries no editorial text.</p>;
-  let titled = false;
+/* The scene's text blocks belong to the Expression: each one sits at its own place on the stage (x, y as fractions of
+   the stage, width and size as authored), in the scene's own ink, exactly as the authoring shell lays them out. */
+const color = (value: string | undefined) => (/^#[0-9a-f]{6}$/i.test(value ?? '') ? value : undefined);
+const COMPACT = 640;
+const visibleText = (scene: Scene) => (scene.text ?? []).filter((item) => item && item.visible !== false && (item.kicker || item.title || item.italic || item.body));
+const paragraphsOf = (item: TextItem) => (item.body ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+function TextLayer({ scene, width, height }: { scene: Scene; width: number; height: number }) {
+  const items = visibleText(scene);
+  if (!items.length) return null;
+  const compact = width < COMPACT;
+  const ink = color(scene.field?.palette?.[0]);
+  const scale = Math.min(1, Math.max(width, 320) / 1100, Math.max(height, 240) / 680);
+  const edge = 10;
   return (
-    <div className="xp-text" data-testid="editorial">
+    <div className="xp-text" data-testid="editorial" role="group" aria-label="Scene text" style={ink ? ({ ['--xp-ink' as string]: ink } as React.CSSProperties) : undefined}>
       {items.map((item, i) => {
-        const heading = item.title ? (titled ? <h3 className="xp-title xp-title--minor">{item.title}</h3> : (titled = true, <h2 className="xp-title">{item.title}</h2>)) : null;
-        const paragraphs = (item.body ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+        const w = Math.max(120, Math.round(Math.min(item.width ?? 320, width * (compact ? 0.8 : width < 900 ? 0.5 : 0.42))));
+        const size = Math.round(clamp((item.size ?? 34) * scale, 17, item.size ?? 34));
+        const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
+        const at = clamp(item.x ?? 0.06, 0, 0.96) * width;
+        // the block's own edge stays inside the stage whatever its authored anchor
+        const left = align === 'left' ? clamp(at, edge, Math.max(edge, width - edge - w)) : align === 'center' ? clamp(at - w / 2, edge, Math.max(edge, width - edge - w)) : clamp(at - w, edge, Math.max(edge, width - edge - w));
+        const y = clamp(item.y ?? 0.08, 0, 0.94);
+        const paragraphs = compact ? [] : paragraphsOf(item);
         return (
-          <section key={item.id || i} className="xp-item">
+          <article key={item.id || i} className="xp-item" style={{ left, top: `${y * 100}%`, width: w, textAlign: align }}>
             {item.kicker && <p className="xp-kicker">{item.kicker}</p>}
-            {heading}
-            {item.italic && <p className="xp-italic">{item.italic}</p>}
+            {item.title && <h2 className="xp-title" style={{ fontSize: size }}>{item.title}</h2>}
+            {!compact && item.italic && <p className="xp-italic" style={{ fontSize: Math.round(size * 0.9) }}>{item.italic}</p>}
             {paragraphs.map((p, j) => <p key={j} className="xp-body">{p}</p>)}
-          </section>
+          </article>
         );
       })}
     </div>
   );
+}
+
+/* On a narrow stage the long paragraphs would sit on the glyphs; they move to the column under the field, unchanged. */
+function SceneBody({ scene }: { scene: Scene }) {
+  const blocks = visibleText(scene).flatMap((item) => [...(item.italic ? [{ italic: true, text: item.italic }] : []), ...paragraphsOf(item).map((text) => ({ italic: false, text }))]);
+  if (!blocks.length) return null;
+  return <div className="xp-scenebody" data-testid="scene-body">{blocks.map((block, i) => <p key={i} className={block.italic ? 'xp-sb-italic' : undefined}>{block.text}</p>)}</div>;
 }
 
 function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: string; onSelect: (id: string) => void }) {
@@ -274,7 +352,6 @@ function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: st
             <button type="button" data-scene-id={scene.id} aria-current={scene.id === current ? 'step' : undefined} onClick={() => onSelect(scene.id)}>
               <span className="xp-num">{String(i + 1).padStart(2, '0')}</span>
               <span className="xp-scene-name">{scene.name}</span>
-              {scene.character && <span className="xp-scene-char">{scene.character}</span>}
             </button>
           </li>
         ))}
@@ -322,6 +399,7 @@ export function ExpressionApp() {
   const state = useLoad(id);
   const data = state.status === 'ready' ? state.data : null;
   const [sceneId, selectScene, stray] = useSceneParam(data?.journey.scenes ?? null);
+  const [stageW, setStageW] = useState(900);
   const [playing, setPlaying] = useState(() => { try { return !matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return true; } });
 
   useEffect(() => { if (data) document.title = `${data.entry.title} — O:I`; }, [data]);
@@ -338,18 +416,12 @@ export function ExpressionApp() {
 
   return (
     <div className="xp" data-embed={embed ? 'true' : 'false'} data-theme-applied={theme} data-state={state.status === 'failed' ? state.failure.kind : state.status}>
-      {!embed && (
-        <header className="xp-bar">
-          <a className="xp-mark" href="./" aria-label="O:I home">O:I</a>
-          <a className="xp-back" href="./essay/">← The essay</a>
-        </header>
-      )}
       {state.status === 'loading' && <div className="xp-boot" role="status">Verifying the published Expression…</div>}
       {state.status === 'failed' && <State failure={state.failure} />}
       {data && scene && (
         <>
           <header className="xp-head">
-            <p className="xp-crumb">{data.collection}{data.entry.group && data.entry.group !== data.collection ? ` · ${data.entry.group}` : ''}</p>
+            {!embed && <div className="xp-nav"><a className="xp-mark" href="./" aria-label="O:I home">O:I</a><a className="xp-back" href="./essay/">← The essay</a></div>}
             <h1 title={data.entry.title}>{data.entry.title}</h1>
             <div className="xp-step">
               <button type="button" aria-label="Previous scene" disabled={index === 0} data-control="prev" onClick={() => step(scenes[index - 1].id)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg></button>
@@ -359,14 +431,13 @@ export function ExpressionApp() {
           </header>
           <main className="xp-main">
             <div className="xp-stagecol">
-              <Stage journey={data.journey} scene={scene} playing={playing} onPlaying={setPlaying} />
+              <Stage journey={data.journey} scene={scene} playing={playing} onPlaying={setPlaying} onWidth={setStageW} />
             </div>
             <div className="xp-side" ref={side}>
               {stray && <p className="xp-quiet" role="status">The scene named in the address (“{stray}”) is not in this Expression; showing its first scene.</p>}
-              <Editorial scene={scene} />
+              {stageW < COMPACT && <SceneBody scene={scene} />}
               <SceneList scenes={scenes} current={scene.id} onSelect={pick} />
-              {data.entry.summary && <section className="xp-about"><h2 className="xp-label">About this Expression</h2><p>{data.entry.summary}</p></section>}
-              <InTheEssay nodes={data.entry.nodes ?? []} />
+              {!embed && <InTheEssay nodes={data.entry.nodes ?? []} />}
             </div>
           </main>
         </>

@@ -1,5 +1,10 @@
 # Public Expressions Library — 19 September 2026
 
+> **Retired 2026-10-06 — superseded by the essay field's Expression layer (`site/ESSAY-FIELD-LAYOUT-2026-10-05.md`).**
+> The Return-of-Zero publication shelf this document describes (`build-return-of-zero-publications.mjs`,
+> `build-publications.mjs`, `verify-public-edition.mjs`, `PublicLibrary.tsx`, the `#/library?published=1` route and its tests)
+> has been removed. The old addresses continue into the essay field's Library view (`./essay/?view=library`). Kept as history; do not follow its commands.
+
 ## Commission and source
 
 Owner-approved direction: retain the present v2 home and hero, bring an existing video band below it, refresh public words from the developed O:I/paradigm position and §5, and replace the principal extra-page navigation with a Library-first, view-only Expressions host.
