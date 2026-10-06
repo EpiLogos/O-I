@@ -1,6 +1,6 @@
 # Central Field — UX transfer record (UX1–UX10)
 
-Standing: **candidate record, written by Sonnet B (#593) on 6 Oct 2026, uncommitted.** It states, for each interaction the
+Standing: **candidate record, written by Sonnet B (#593) on 6 Oct 2026; revised the same day to close the weakest gaps with checks. Uncommitted.** It states, for each interaction the
 commission names (UX1–UX10), what the site does, what the native field does, and which *named* walk check shows each of
 pointer and keyboard. A behaviour with no named check is listed under **Gaps**, not claimed. Where the native field differs
 from the site, the difference and its reason are under **Departures**.
@@ -16,7 +16,7 @@ from the site, the difference and its reason are under **Departures**.
 - Run: `FIELD_SITE_ROOT=<built site root> FIELD_BRIDGE_BIN=<walk-bridge> node walk/scenarios/<name>.mjs` (vite on :1451, the
   prebuilt bridge; Chrome via `OI_CHROMIUM`). Node tests: `node --test tests/field-*.test.mjs`.
 - The keyboard column is mostly `field-keyboard.mjs`, written for this record: it runs the site's own keyboard behaviours
-  (those `essay-reader-controls.py` covers) on the native field. Its latest run: **22/22** (`walk/artifacts/field-keyboard.json`).
+  (those `essay-reader-controls.py` covers) on the native field. Latest runs: KB **22/22**, UT **52/52**, TY **52/52** (`walk/artifacts/field-keyboard.json`, `field-ux-transfer.json`, `field-typography.json`).
 
 | Short name | Scenario |
 |---|---|
@@ -26,6 +26,9 @@ from the site, the difference and its reason are under **Departures**.
 | CO | `field-constellation.mjs` — gather, Technē, return |
 | CT | `field-continuity.mjs` — restore after reload / Epi toggle / mode change |
 | KB | `field-keyboard.mjs` — the site's keyboard behaviours on the native field |
+| UT | `field-ux-transfer.mjs` — UX4, UX5, UX7, UX2 (keyboard keep/promote), UX3 (drag), pointer and keyboard |
+| TY | `field-typography.mjs` — UX9: computed styles of the reading column, native vs the baseline site edition, at 1440 / 1000 / 760 |
+| RS | `field-resources.mjs` — 30 cycles of the encounter loop: latency, heap, DOM nodes, listeners, iframes, RSS, against `field-resources.budget.json` |
 | SP | `field-site-parity.mjs` — site and native side by side at 1440 and 760 px (screenshots only; asserts nothing) |
 | FM | `tests/field-model.test.mjs` — the pure encounter reducer |
 
@@ -63,11 +66,15 @@ from the site, the difference and its reason are under **Departures**.
   "a dirty standing preview is kept, never replaced"; "promote makes a tangent the main page, leaving the old page on the trail"; "back from a tangent returns to the main passage without closing the tangent".
 - **Keyboard**: KB — "graph: Enter opens the selected page as a tangent; the main page is kept"; "search: Enter opens the best hit as a tangent; the main page is kept";
   "Alt+Left goes back to the previous main page". FE — "back returns to the previous main page (the manuscript) at M16" (Alt+Left).
-  Keep and promote have **no keyboard route** (both are tab-strip buttons / double-click): see Gaps.
+  **Keep and promote now have keyboard routes in the product** (`Tabs.tsx`, `FieldSurface.tsx`): `K` keeps the tangent in view, or the focused preview tab; `P` opens the tangent in view as the main page;
+  `Shift+Enter` on a focused tab does the same (the ↗ button's route); `Delete` on a focused tab closes it (the middle-click route). Tab tooltips name the keys. UT — "UX2 keyboard: K keeps the tangent in view
+  (no longer a preview)"; "UX2 keyboard: K on a focused preview tab keeps it"; "UX2 keyboard: Shift+Enter on a tab opens it as the main page (the old page goes on the trail)";
+  "UX2 Alt+Left returns to the previous main page after a keyboard promote"; "UX2 keyboard: P with a tangent in view opens it as the main page"; "UX2 keyboard: Delete on a focused tab closes it (middle-click, by keyboard)".
+  Pointer for the same ops: FE (above). Departure from the site: the site has Enter/Space (activate) only on a tab; the keys above are native additions.
 - **Departures**: the site keeps the Essay tab mounted behind the tangent; the native field keeps the *encounter* and re-reads on focus (the main pane keeps its scroll
   position per page via `viewKey = focus:ref`; CT proves it survives a restore). Reason: the field is a hosted surface whose state is a serialisable binding.
-- **Gaps**: keyboard routes for keep and promote do not exist (an accessibility gap in the native field, not only a missing check). "Closing a tangent returns to the essay"
-  is asserted at the model level (FM — "close returns to a neighbour or the main page and clears an Expression's scene") but not as a pointer walk check.
+- **Gaps**: "Closing a tangent returns to the essay" is asserted at the model level (FM — "close returns to a neighbour or the main page and clears an Expression's scene") and by keyboard (UT — Delete),
+  but there is no pointer walk check of the ✕ button itself.
 
 ## UX3 — click selects; double-click opens; drag moves a node; explorer/pager/breadcrumbs navigate main
 
@@ -77,36 +84,41 @@ from the site, the difference and its reason are under **Departures**.
 - **Native**: `graphView.ts` (select / open / drag / gather), `Explorer.tsx`, `Center.tsx` (breadcrumbs, pager), `worldSync.ts` (select = kernel `selection_set`).
 - **Pointer**: FE — "click on a graph node SELECTS it (encounter.selected)"; "selecting opened no tab and navigated nowhere"; "the main page and position are untouched by selection";
   "selection advanced the generation exactly once". GE — "the click IS the kernel's selection_set: selection_read names the ref, origin graph, native owner Central, the node's revision".
-  Drag-a-node: no named native check (**gap**).
+  UT — "UX3 dragging a node moves it under the pointer"; "UX3 dragging a node moves what it is linked to (live re-simulation)"; "UX3 a dropped node stays where it was dropped";
+  "UX3 a drag neither selects nor navigates nor changes the encounter (generation unchanged)".
 - **Keyboard**: KB — "graph: arrow keys select and move between nodes (one selected, keyboard focus ring drawn)"; "graph: Escape lets go (selection cleared, card hidden)";
   "graph: Enter opens the selected page as a tangent; the main page is kept"; "graph: the keyboard open advanced the encounter generation (same op as the pointer)";
   "explorer: ArrowDown moves between rows"; "explorer: ArrowRight opens a closed folder"; "explorer: ArrowLeft closes it again";
   "explorer: Enter on a row turns the main page to that page".
 - **Departures**: none in the distinction itself. Added natively: Ctrl/Cmd-click or `g` gathers (CO — "Ctrl-click gathers a node into the constellation (and selects nothing)", "keyboard: g on the selected node takes it out").
-- **Gaps**: dragging a node (presentation-only) has no named native check; pager and breadcrumb navigation by pointer have none (see UX5).
+- **Gaps**: shift-drag pinning and shift-click release (site: "shift-drag pins a node") have no native check; the wheel/zoom checks of `graph_interaction_checks` are not ported.
 
 ## UX4 — graph and connections list share filters and the same neighbourhood
 
 - **Site**: `desktop()` — "connections grouped by register", "filter is one icon that opens one menu", "hiding a register removes its nodes from graph and connections",
   "a dot says a filter is active", "two hops reaches further".
 - **Native**: `filterModel.ts` (one `FieldFilter` for graph and connections), `Right.tsx` (`GraphPane`, `FilterMenu`, `Connections`), `corpusIndex.ts` (the one neighbourhood).
-- **Pointer**: none of the filter behaviours has a named native walk check (**gap**). FE has "the connections list offers a relation into the arguments" and "the graph is centred on the
-  movement under the reader (one locus)"; FE/GE "connections list the home page's links (paths and wiki names)" shows the list and the graph are fed by the same index, not that
-  they stay equal under a filter.
-- **Keyboard**: none (**gap**).
-- **Departures**: none intended.
-- **Gaps (all of UX4)**: hide-a-register, the active-filter dot, two hops, and graph/list agreement under a filter are implemented in the port of the site's code and untested natively.
-  This is the weakest transfer in the record.
+- **Pointer** (UT): "UX4 graph and connections list show the same neighbourhood (same refs)"; "UX4 no filter is active at first (no dot on the filter button)"; "UX4 the filter is one icon that opens one menu";
+  "UX4 hiding a register removes its nodes from the graph AND the connections list, and they still agree"; "UX4 a dot says a filter is active"; "UX4 'Show everything' restores both lists to the first neighbourhood";
+  "UX4 two hops reaches further in the graph (a superset of the direct neighbourhood)"; "UX4 reach changes what the graph draws, never the direct connections: the list and the header count stay the direct neighbourhood (as on the site)".
+- **Keyboard** (UT; the Escape binding is new in `Right.tsx`): "UX4 keyboard: Enter on the filter button opens the menu"; "UX4 keyboard: Space on a register's checkbox hides it everywhere, and the two lists agree";
+  "UX4 keyboard: Enter on 'Show everything' restores both"; "UX4 keyboard: Escape closes the filter menu and returns to the filter button".
+- **Departures**: none. One reading worth stating: "the same neighbourhood" is the *direct* neighbourhood; reach (1–3 hops) changes only what the graph draws, exactly as on the site.
+- **Gaps**: the "Index & README pages" toggle (`data-hubs`) has no check.
 
 ## UX5 — breadcrumb footer exposes ancestry, folder contents and siblings
 
 - **Site**: `desktop()` — "footer breadcrumbs are structural, not slugs", "every crumb is a way back", "a folder crumb opens its contents", "clicking a crumb goes back through the pages",
-  "a separator opens that level's contents", "the pager turns the main page (single page application navigation, no reload)".
-- **Native**: `Center.tsx` (`breadcrumb-container`, folder menus, pager), refs stay native underneath (`FieldRef`).
-- **Pointer**: FE — "the footer names the reading position (M16)" only. Folder crumbs, separators and the pager have **no named native check**.
-- **Keyboard**: none.
-- **Departures**: crumbs show the adapter's structural path; the native ref is authoritative underneath (not asserted).
-- **Gaps (all of UX5)**: ancestry, folder contents, siblings, pager and "goes back through the pages" are unproven natively.
+  "a separator opens that level's contents", "the pager turns the main page (single page application navigation, no reload)", "after the turn the explorer and graph follow".
+- **Native**: `Center.tsx` (`Crumbs`: `breadcrumb-container`, sibling and folder menus), `Article.tsx` (`Pager`), refs stay native underneath (`FieldRef`).
+- **Pointer** (UT): "UX5 breadcrumbs are structural labels, not slugs or paths"; "UX5 every crumb but the last is a way back (a link, or a button that opens what is in the folder)";
+  "UX5 a separator opens that level's siblings (the sibling menu lists the folders beside it)"; "UX5 pointer: a sibling in the menu turns the main page to it"; "UX5 clicking a crumb goes back up the structure (the main page turns to that level)";
+  "UX5 a folder crumb opens its contents (the movements/pages inside it)"; "UX5 a room page has a pager with a next link"; "UX5 pointer: the pager turns the main page to the next room (and the old page goes on the trail)";
+  "UX5 after the turn the pager offers the way back (prev)"; "UX5 pointer: prev returns to the first room"; "UX5 clicking back (Alt+Left) returns through the pages the crumbs took".
+- **Keyboard** (UT; Escape on the crumb menu is new in `Center.tsx`): "UX5 keyboard: Enter on a separator opens the sibling menu"; "UX5 keyboard: Escape puts the sibling menu away";
+  "UX5 keyboard: Enter on a sibling turns the main page to it and puts the menu away"; "UX5 keyboard: Enter on the pager's next link turns the page the same way"; "UX5 keyboard: Enter on prev returns".
+- **Departures**: none intended.
+- **Gaps**: "after the turn the explorer and graph follow" is covered by the one-locus checks of UX1, not asserted again after a pager turn.
 
 ## UX6 — fast title/path search, deeper text loaded only when needed, located results
 
@@ -130,9 +142,14 @@ from the site, the difference and its reason are under **Departures**.
   "the encounter holds the Expression and its scene"; "the real Expression renderer is playing in the frame"; "the contents are its scenes"; "the graph follows the pages the Expression is about";
   "choosing a scene from the contents changes the scene (set-scene)"; "return: the main passage at M16, the Expression's frame released"; "leaving the Expression stops it (no frame left running)".
   `field-matrix.mjs` (every cell) repeats it: "an Expression opened as the tangent with its scene"; "the real Expression renderer is playing in its frame"; "return: the passage at M16, the Expression's frame released".
-- **Keyboard**: KB — "L opens the Library"; "L again returns to reading"; "1 / 2 / 3 / 4 choose Essay / Split / Field / Library". Opening a card is by pointer only (**gap**).
+- **Keyboard**: KB — "L opens the Library"; "L again returns to reading"; "1 / 2 / 3 / 4 choose Essay / Split / Field / Library". UT — "UX7 keyboard: Enter on the chip opens the Expression the same way";
+  "UX7 keyboard: Enter on a Library card opens the Expression as a tab, leaving the Library".
+- **Marks and the Library, now checked** (UT, pointer): "UX7 a page with an Expression says so under its title (a chip per Expression)"; "UX7 explorer rows mark the pages that have an Expression";
+  "UX7 the graph rings the nodes that have an Expression"; "UX7 the connections list marks exactly the nodes the graph rings"; "UX7 pointer: the chip opens its Expression as a tab";
+  "UX7 'Here' counts the Expressions about this page and its neighbourhood, narrows the gallery to exactly them, and marks them"; "UX7 the count line says the gallery is narrowed (\"here\")";
+  "UX7 a collection filters the gallery to its members"; "UX7 search finds an Expression by what it says".
 - **Departures**: the renderer runs in the field's own iframe with the host-told theme; the Expression is a tab *of the field's encounter* (kernel portal), not a separate Quartz tab.
-- **Gaps**: the three indicators (chip under the title, explorer marks, graph rings), the gallery's collections/search/column view, the 135-Expression count, "a page named inside the Expression opens as its own tab" — none has a named native check.
+- **Gaps**: the column ("rows") view, the gallery's total (135 on the site; here the published collection's size is not asserted), covers loading as real images, and "a page named inside the Expression opens as its own tab" have no native check.
 
 ## UX8 — emphasis (Essay/Split/Field/Library); collapsible rails; responsive drawers
 
@@ -157,12 +174,20 @@ from the site, the difference and its reason are under **Departures**.
   "clicking a figure opens the lightbox", "theme toggles light/dark and remembers it", "no literal [[wikilinks]] left in the manuscript".
 - **Native**: `scripts/port-field-styles.mjs` (the site's own SCSS compiled; `.field-root`, container-query units, host-adaptation block), `src/field/field.css` (generated),
   `Article.tsx` (rendering, `BUNDLED_SHEET` skips the CDN KaTeX link), `src/field/vendor/katex/**` (KaTeX 0.16.21 bundled), `index.html` (inline favicon).
-- **Pointer**: FE — "maths renders with KaTeX's bundled fonts (no CDN stylesheet)"; "no request left the machine: no CDN, no font service". GE — "an image beside the page is the owner's bytes, inlined".
-  SP — the side-by-side screenshots at 1440 and 760 (`field-compare-1440.png`, `field-compare-760.png`): **visual evidence, not an assertion**.
+- **Computed styles, native vs the baseline site edition** (TY — no screenshots): for the title, eyebrow, meta line, body column, paragraph, h2, h3, list item, block quote, inline link, inline code and figure caption at M16,
+  font family, size, weight, style, line height, letter spacing, colour, case, alignment, margins and decoration are compared (numbers within 0.05px). Checks of the form
+  "[1440px] <element>: computed type styles equal the site's", repeated at 1000 and 760 px (the field's *container* equals the site's viewport; the walk widens the native viewport by the few px the window takes).
+  "[w] the reading pane has the same measure rule (padding and max-width)"; "[w] the column's used width follows that rule on both sides"; "[w] the pane is centred on both sides".
+  **Two real differences were found and fixed in the port** (`scripts/port-field-styles.mjs`, regenerated `field.css`): the title's font stack (the site's headings take `--headerFont`, a stack the hosted surface did not inherit)
+  and the eyebrow's line height (`1.6rem` on the site, `normal` here). Both compare equal now at every width.
+- **Pointer** (earlier): FE — "maths renders with KaTeX's bundled fonts (no CDN stylesheet)"; "no request left the machine: no CDN, no font service". GE — "an image beside the page is the owner's bytes, inlined".
+  SP — side-by-side screenshots (`field-compare-1440.png`, `field-compare-760.png`), supporting only.
 - **Keyboard**: not applicable beyond the focus ring (KB — "keyboard focus ring drawn").
-- **Departures**: fonts and maths are bundled (the site loads a CDN stylesheet); the favicon is inline; theme follows the host's (`data-theme` told by the shell), not a separate remembered toggle.
-- **Gaps**: figure/caption placement at its anchor, image dimension stability (reading position does not jump as images load), the lightbox, the theme toggle's remembering, and an "icons ≤ 24px" equivalent
-  are not asserted natively. Typography fidelity rests on the ported stylesheet and the SP screenshots, which a reviewer must read.
+- **Departures (asserted as true so a change is noticed)**: TY — "DEPARTURE recorded: the field panel is 340px natively and 300px in the baseline edition (site-version drift: the baseline predates the resizable panel)" at 1000 and 760 px;
+  equal (340/340) at 1440. The baseline edition the lead snapshotted (`ca603fb4e`) has a fixed 300px tablet column; the site stylesheet in this tree (which the native field is generated from) uses `var(--cr)` = 340px.
+  Fonts and maths are bundled (the site loads a CDN stylesheet); theme follows the host's `data-theme`, not a separate remembered toggle.
+- **Gaps**: the figure's placement at its anchor, image dimension stability, the lightbox and the theme toggle's remembering have no native check. The panel-width drift needs a rebuilt baseline edition to close
+  (the lead's decision: rebuild the reference from the current site sources, or keep the snapshot and the recorded departure).
 
 ## UX10 — site navigation has explicit actions and shared state
 
@@ -183,5 +208,6 @@ from the site, the difference and its reason are under **Departures**.
 
 - **Touch.** The site's `graph_touch_checks()` (pinch, touch select) are not ported or run natively.
 - **Counts.** This file cites check names; pass counts live in `walk/artifacts/field-*.json` per run. Only `field-keyboard.mjs` was written for this record and run for it (22/22).
-- **Weak spots, in order**: UX4 (filters, neighbourhood agreement), UX5 (breadcrumb/pager), UX9 (typography is screenshots), UX7 (indicators and gallery), UX2/UX3 (no keyboard route for keep and promote; drag a node).
-  These need native walk checks, and for keep/promote a keyboard route in the product, before the transfer can be called complete.
+- **Closed in this revision**: UX4, UX5, UX7 (marks, chips, Library Here/collections/search, card by keyboard), UX2 keyboard keep/promote/close, UX3 drag, UX9 computed typography. Each is a named check above.
+- **Still open, in order**: UX9 (figures/captions at anchors, image stability, lightbox, theme; the baseline edition needs rebuilding for the panel width), UX6 (full-text second stage, located results), UX8 (the 760px drawer, handle reset and persistence),
+  UX7 (rows view, covers), UX3 (shift-pin, wheel zoom), UX1 (live position while scrolling). Touch is not ported.

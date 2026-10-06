@@ -1,0 +1,1710 @@
+{
+  "scenario": "field-typography",
+  "at": "2026-10-06T23:14:44.414Z",
+  "record": {
+    "760": {
+      "title": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "27.36px",
+          "letterSpacing": "-0.96px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "Confronting the Limit: Determination, Su"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "27.36px",
+          "letterSpacing": "-0.96px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "Confronting the Limit: Determination, Su"
+        }
+      },
+      "eyebrow": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "10.88px",
+          "fontWeight": "650",
+          "fontStyle": "normal",
+          "lineHeight": "25.6px",
+          "letterSpacing": "1.7408px",
+          "color": "rgb(128, 100, 46)",
+          "textTransform": "uppercase",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "17.6px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "ManuscriptM01–M48"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "10.88px",
+          "fontWeight": "650",
+          "fontStyle": "normal",
+          "lineHeight": "25.6px",
+          "letterSpacing": "1.7408px",
+          "color": "rgb(128, 100, 46)",
+          "textTransform": "uppercase",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "17.6px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "ManuscriptM01–M48"
+        }
+      },
+      "meta line": {
+        "native": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "10.88px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "17.6px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "155,532 words11 h readcites 48cited by 4"
+        },
+        "site": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "10.88px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "17.6px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "155,532 words11 h readcites 48cited by 4"
+        }
+      },
+      "body column": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "30.4px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "30.4px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+        }
+      },
+      "body paragraph": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "19.3072px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "Frank G. Taylor"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "19.3072px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "Frank G. Taylor"
+        }
+      },
+      "section heading (h2)": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "26.4px",
+          "letterSpacing": "-0.96px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "54.4px",
+          "marginBottom": "19.2px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "§0/1 — The Integral Threshold"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "26.4px",
+          "letterSpacing": "-0.96px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "54.4px",
+          "marginBottom": "19.2px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "§0/1 — The Integral Threshold"
+        }
+      },
+      "sub-heading (h3)": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "19.52px",
+          "fontWeight": "550",
+          "fontStyle": "normal",
+          "lineHeight": "24.4px",
+          "letterSpacing": "-0.488px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "42.944px",
+          "marginBottom": "11.712px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "M07 — Awareness becomes articulate"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "19.52px",
+          "fontWeight": "550",
+          "fontStyle": "normal",
+          "lineHeight": "24.4px",
+          "letterSpacing": "-0.488px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "42.944px",
+          "marginBottom": "11.712px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "M07 — Awareness becomes articulate"
+        }
+      },
+      "list item": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "5.2656px",
+          "marginBottom": "5.2656px",
+          "textDecorationLine": "none",
+          "usedWidth": 336.41,
+          "text": "Martin Heidegger, Being and Time, trans."
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "5.2656px",
+          "marginBottom": "5.2656px",
+          "textDecorationLine": "none",
+          "usedWidth": 376.41,
+          "text": "Martin Heidegger, Being and Time, trans."
+        }
+      },
+      "block quote": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "italic",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "26.328px",
+          "marginBottom": "26.328px",
+          "textDecorationLine": "none",
+          "usedWidth": 359.22,
+          "text": "The approachable limit is the basis of i"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "italic",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "26.328px",
+          "marginBottom": "26.328px",
+          "textDecorationLine": "none",
+          "usedWidth": 399.22,
+          "text": "The approachable limit is the basis of i"
+        }
+      },
+      "inline link in a paragraph": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 0,
+          "text": ""
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.552px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.1894px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 0,
+          "text": ""
+        }
+      },
+      "inline code": {
+        "native": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "14.7437px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 38.41,
+          "text": "?/!"
+        },
+        "site": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "14.7437px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 38.41,
+          "text": "?/!"
+        }
+      },
+      "figure caption": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "14.4px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "23.04px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 375.22,
+          "text": "Diagram 1 — A pair of dice, counted thre"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "14.4px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "23.04px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 415.22,
+          "text": "Diagram 1 — A pair of dice, counted thre"
+        }
+      },
+      "measure": {
+        "native": {
+          "paddingLeft": "30.4px",
+          "paddingRight": "30.4px",
+          "marginLeft": "0px",
+          "marginRight": "0px",
+          "maxWidth": "672px",
+          "centre": 420,
+          "column": 359.21875,
+          "right": 340,
+          "expected": 359.20000000000005
+        },
+        "site": {
+          "paddingLeft": "30.4px",
+          "paddingRight": "30.4px",
+          "marginLeft": "0px",
+          "marginRight": "0px",
+          "maxWidth": "672px",
+          "centre": 460,
+          "column": 399.21875,
+          "right": 300,
+          "expected": 399.20000000000005
+        }
+      }
+    },
+    "1000": {
+      "title": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontSize": "25px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "28.5px",
+          "letterSpacing": "-1px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "Confronting the Limit: Determination, Su"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontSize": "25px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "28.5px",
+          "letterSpacing": "-1px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Confronting the Limit: Determination, Su"
+        }
+      },
+      "eyebrow": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "10.88px",
+          "fontWeight": "650",
+          "fontStyle": "normal",
+          "lineHeight": "25.6px",
+          "letterSpacing": "1.7408px",
+          "color": "rgb(128, 100, 46)",
+          "textTransform": "uppercase",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "17.6px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "ManuscriptM01–M48"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "10.88px",
+          "fontWeight": "650",
+          "fontStyle": "normal",
+          "lineHeight": "25.6px",
+          "letterSpacing": "1.7408px",
+          "color": "rgb(128, 100, 46)",
+          "textTransform": "uppercase",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "17.6px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "ManuscriptM01–M48"
+        }
+      },
+      "meta line": {
+        "native": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "10.88px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "17.6px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "155,532 words11 h readcites 48cited by 4"
+        },
+        "site": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "10.88px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "17.6px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "155,532 words11 h readcites 48cited by 4"
+        }
+      },
+      "body column": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "30.4px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "30.4px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+        }
+      },
+      "body paragraph": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "19.624px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "Frank G. Taylor"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "19.624px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Frank G. Taylor"
+        }
+      },
+      "section heading (h2)": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "26.4px",
+          "letterSpacing": "-0.96px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "54.4px",
+          "marginBottom": "19.2px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "§0/1 — The Integral Threshold"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "26.4px",
+          "letterSpacing": "-0.96px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "54.4px",
+          "marginBottom": "19.2px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "§0/1 — The Integral Threshold"
+        }
+      },
+      "sub-heading (h3)": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "19.52px",
+          "fontWeight": "550",
+          "fontStyle": "normal",
+          "lineHeight": "24.4px",
+          "letterSpacing": "-0.488px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "42.944px",
+          "marginBottom": "11.712px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "M07 — Awareness becomes articulate"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "19.52px",
+          "fontWeight": "550",
+          "fontStyle": "normal",
+          "lineHeight": "24.4px",
+          "letterSpacing": "-0.488px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "42.944px",
+          "marginBottom": "11.712px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "M07 — Awareness becomes articulate"
+        }
+      },
+      "list item": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "5.352px",
+          "marginBottom": "5.352px",
+          "textDecorationLine": "none",
+          "usedWidth": 556.81,
+          "text": "Martin Heidegger, Being and Time, trans."
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "5.352px",
+          "marginBottom": "5.352px",
+          "textDecorationLine": "none",
+          "usedWidth": 568.81,
+          "text": "Martin Heidegger, Being and Time, trans."
+        }
+      },
+      "block quote": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "italic",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "26.76px",
+          "marginBottom": "26.76px",
+          "textDecorationLine": "none",
+          "usedWidth": 580,
+          "text": "The approachable limit is the basis of i"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "italic",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "26.76px",
+          "marginBottom": "26.76px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "The approachable limit is the basis of i"
+        }
+      },
+      "inline link in a paragraph": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 0,
+          "text": ""
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "17.84px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "30.6848px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 0,
+          "text": ""
+        }
+      },
+      "inline code": {
+        "native": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "14.9856px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 39.03,
+          "text": "?/!"
+        },
+        "site": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "14.9856px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 39.03,
+          "text": "?/!"
+        }
+      },
+      "figure caption": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "14.4px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "23.04px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 596,
+          "text": "Diagram 1 — A pair of dice, counted thre"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "14.4px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "23.04px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 608,
+          "text": "Diagram 1 — A pair of dice, counted thre"
+        }
+      },
+      "measure": {
+        "native": {
+          "paddingLeft": "40px",
+          "paddingRight": "40px",
+          "marginLeft": "0px",
+          "marginRight": "0px",
+          "maxWidth": "672px",
+          "centre": 660,
+          "column": 580,
+          "right": 340,
+          "expected": 580
+        },
+        "site": {
+          "paddingLeft": "40px",
+          "paddingRight": "40px",
+          "marginLeft": "14px",
+          "marginRight": "14px",
+          "maxWidth": "672px",
+          "centre": 700,
+          "column": 592,
+          "right": 300,
+          "expected": 592
+        }
+      }
+    },
+    "1440": {
+      "title": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontSize": "32px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "36.48px",
+          "letterSpacing": "-1.28px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Confronting the Limit: Determination, Su"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontSize": "32px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "36.48px",
+          "letterSpacing": "-1.28px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Confronting the Limit: Determination, Su"
+        }
+      },
+      "eyebrow": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "10.88px",
+          "fontWeight": "650",
+          "fontStyle": "normal",
+          "lineHeight": "25.6px",
+          "letterSpacing": "1.7408px",
+          "color": "rgb(128, 100, 46)",
+          "textTransform": "uppercase",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "17.6px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "ManuscriptM01–M48"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "10.88px",
+          "fontWeight": "650",
+          "fontStyle": "normal",
+          "lineHeight": "25.6px",
+          "letterSpacing": "1.7408px",
+          "color": "rgb(128, 100, 46)",
+          "textTransform": "uppercase",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "17.6px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "ManuscriptM01–M48"
+        }
+      },
+      "meta line": {
+        "native": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "10.88px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "17.6px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "155,532 words11 h readcites 48cited by 4"
+        },
+        "site": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "10.88px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "17.6px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "155,532 words11 h readcites 48cited by 4"
+        }
+      },
+      "body column": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "30.4px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "30.4px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+        }
+      },
+      "body paragraph": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "20.2048px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Frank G. Taylor"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "20.2048px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "Frank G. Taylor"
+        }
+      },
+      "section heading (h2)": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "32px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "35.2px",
+          "letterSpacing": "-1.28px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "54.4px",
+          "marginBottom": "19.2px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "§0/1 — The Integral Threshold"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "32px",
+          "fontWeight": "500",
+          "fontStyle": "normal",
+          "lineHeight": "35.2px",
+          "letterSpacing": "-1.28px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "54.4px",
+          "marginBottom": "19.2px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "§0/1 — The Integral Threshold"
+        }
+      },
+      "sub-heading (h3)": {
+        "native": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "19.52px",
+          "fontWeight": "550",
+          "fontStyle": "normal",
+          "lineHeight": "24.4px",
+          "letterSpacing": "-0.488px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "42.944px",
+          "marginBottom": "11.712px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "M07 — Awareness becomes articulate"
+        },
+        "site": {
+          "fontFamily": "\"Avenir Next\", Avenir, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "19.52px",
+          "fontWeight": "550",
+          "fontStyle": "normal",
+          "lineHeight": "24.4px",
+          "letterSpacing": "-0.488px",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "42.944px",
+          "marginBottom": "11.712px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "M07 — Awareness becomes articulate"
+        }
+      },
+      "list item": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "5.5104px",
+          "marginBottom": "5.5104px",
+          "textDecorationLine": "none",
+          "usedWidth": 568.13,
+          "text": "Martin Heidegger, Being and Time, trans."
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "5.5104px",
+          "marginBottom": "5.5104px",
+          "textDecorationLine": "none",
+          "usedWidth": 568.13,
+          "text": "Martin Heidegger, Being and Time, trans."
+        }
+      },
+      "block quote": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "italic",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "27.552px",
+          "marginBottom": "27.552px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "The approachable limit is the basis of i"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "italic",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "27.552px",
+          "marginBottom": "27.552px",
+          "textDecorationLine": "none",
+          "usedWidth": 592,
+          "text": "The approachable limit is the basis of i"
+        }
+      },
+      "inline link in a paragraph": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 0,
+          "text": ""
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "18.368px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "31.593px",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 0,
+          "text": ""
+        }
+      },
+      "inline code": {
+        "native": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "15.4291px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 40.17,
+          "text": "?/!"
+        },
+        "site": {
+          "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          "fontSize": "15.4291px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "color": "rgb(17, 17, 18)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 40.17,
+          "text": "?/!"
+        }
+      },
+      "figure caption": {
+        "native": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "14.4px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "23.04px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 608,
+          "text": "Diagram 1 — A pair of dice, counted thre"
+        },
+        "site": {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "fontSize": "14.4px",
+          "fontWeight": "400",
+          "fontStyle": "normal",
+          "lineHeight": "23.04px",
+          "letterSpacing": "normal",
+          "color": "rgb(102, 100, 95)",
+          "textTransform": "none",
+          "textAlign": "start",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "textDecorationLine": "none",
+          "usedWidth": 608,
+          "text": "Diagram 1 — A pair of dice, counted thre"
+        }
+      },
+      "measure": {
+        "native": {
+          "paddingLeft": "40px",
+          "paddingRight": "40px",
+          "marginLeft": "64px",
+          "marginRight": "64px",
+          "maxWidth": "672px",
+          "centre": 800,
+          "column": 592,
+          "right": 340,
+          "expected": 592
+        },
+        "site": {
+          "paddingLeft": "40px",
+          "paddingRight": "40px",
+          "marginLeft": "64px",
+          "marginRight": "64px",
+          "maxWidth": "672px",
+          "centre": 800,
+          "column": 592,
+          "right": 340,
+          "expected": 592
+        }
+      }
+    }
+  },
+  "passed": true,
+  "counts": {
+    "passed": 52,
+    "total": 52
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "[1440px] the field's container is 1440px wide (the site's viewport)",
+      "detail": {
+        "container": 1440,
+        "viewport": 1442
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] title: computed type styles equal the site's",
+      "detail": {
+        "sample": "Confronting the Limit: Determination, Su"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] eyebrow: computed type styles equal the site's",
+      "detail": {
+        "sample": "ManuscriptM01–M48"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] meta line: computed type styles equal the site's",
+      "detail": {
+        "sample": "155,532 words11 h readcites 48cited by 4"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] body column: computed type styles equal the site's",
+      "detail": {
+        "sample": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] body paragraph: computed type styles equal the site's",
+      "detail": {
+        "sample": "Frank G. Taylor"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] section heading (h2): computed type styles equal the site's",
+      "detail": {
+        "sample": "§0/1 — The Integral Threshold"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] sub-heading (h3): computed type styles equal the site's",
+      "detail": {
+        "sample": "M07 — Awareness becomes articulate"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] list item: computed type styles equal the site's",
+      "detail": {
+        "sample": "Martin Heidegger, Being and Time, trans."
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] block quote: computed type styles equal the site's",
+      "detail": {
+        "sample": "The approachable limit is the basis of i"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] inline link in a paragraph: computed type styles equal the site's",
+      "detail": {
+        "sample": ""
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] inline code: computed type styles equal the site's",
+      "detail": {
+        "sample": "?/!"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] figure caption: computed type styles equal the site's",
+      "detail": {
+        "sample": "Diagram 1 — A pair of dice, counted thre"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] the reading pane has the same measure rule (padding and max-width)",
+      "detail": {
+        "maxWidth": "672px",
+        "padding": "40px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] the pane is centred on both sides (auto margins; their used value follows the centre width, so it is not compared)",
+      "detail": {
+        "native": "64px",
+        "site": "64px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] the column's used width follows that rule on both sides",
+      "detail": {
+        "native": [
+          592,
+          592
+        ],
+        "site": [
+          592,
+          592
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1440px] DEPARTURE recorded: the field panel is 340px natively and 340px in the baseline edition (equal)",
+      "detail": {
+        "native": 340,
+        "site": 340
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] the field's container is 1000px wide (the site's viewport)",
+      "detail": {
+        "container": 1000,
+        "viewport": 1002
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] title: computed type styles equal the site's",
+      "detail": {
+        "sample": "Confronting the Limit: Determination, Su"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] eyebrow: computed type styles equal the site's",
+      "detail": {
+        "sample": "ManuscriptM01–M48"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] meta line: computed type styles equal the site's",
+      "detail": {
+        "sample": "155,532 words11 h readcites 48cited by 4"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] body column: computed type styles equal the site's",
+      "detail": {
+        "sample": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] body paragraph: computed type styles equal the site's",
+      "detail": {
+        "sample": "Frank G. Taylor"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] section heading (h2): computed type styles equal the site's",
+      "detail": {
+        "sample": "§0/1 — The Integral Threshold"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] sub-heading (h3): computed type styles equal the site's",
+      "detail": {
+        "sample": "M07 — Awareness becomes articulate"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] list item: computed type styles equal the site's",
+      "detail": {
+        "sample": "Martin Heidegger, Being and Time, trans."
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] block quote: computed type styles equal the site's",
+      "detail": {
+        "sample": "The approachable limit is the basis of i"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] inline link in a paragraph: computed type styles equal the site's",
+      "detail": {
+        "sample": ""
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] inline code: computed type styles equal the site's",
+      "detail": {
+        "sample": "?/!"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] figure caption: computed type styles equal the site's",
+      "detail": {
+        "sample": "Diagram 1 — A pair of dice, counted thre"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] the reading pane has the same measure rule (padding and max-width)",
+      "detail": {
+        "maxWidth": "672px",
+        "padding": "40px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] the pane is centred on both sides (auto margins; their used value follows the centre width, so it is not compared)",
+      "detail": {
+        "native": "0px",
+        "site": "14px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] the column's used width follows that rule on both sides",
+      "detail": {
+        "native": [
+          580,
+          580
+        ],
+        "site": [
+          592,
+          592
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "[1000px] DEPARTURE recorded: the field panel is 340px natively and 300px in the baseline edition (site-version drift: the baseline predates the resizable panel)",
+      "detail": {
+        "native": 340,
+        "site": 300
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] the field's container is 760px wide (the site's viewport)",
+      "detail": {
+        "container": 760,
+        "viewport": 762
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] title: computed type styles equal the site's",
+      "detail": {
+        "sample": "Confronting the Limit: Determination, Su"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] eyebrow: computed type styles equal the site's",
+      "detail": {
+        "sample": "ManuscriptM01–M48"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] meta line: computed type styles equal the site's",
+      "detail": {
+        "sample": "155,532 words11 h readcites 48cited by 4"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] body column: computed type styles equal the site's",
+      "detail": {
+        "sample": "Frank G. Taylor\n\n\n\nSection room\n§0/1 — T"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] body paragraph: computed type styles equal the site's",
+      "detail": {
+        "sample": "Frank G. Taylor"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] section heading (h2): computed type styles equal the site's",
+      "detail": {
+        "sample": "§0/1 — The Integral Threshold"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] sub-heading (h3): computed type styles equal the site's",
+      "detail": {
+        "sample": "M07 — Awareness becomes articulate"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] list item: computed type styles equal the site's",
+      "detail": {
+        "sample": "Martin Heidegger, Being and Time, trans."
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] block quote: computed type styles equal the site's",
+      "detail": {
+        "sample": "The approachable limit is the basis of i"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] inline link in a paragraph: computed type styles equal the site's",
+      "detail": {
+        "sample": ""
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] inline code: computed type styles equal the site's",
+      "detail": {
+        "sample": "?/!"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] figure caption: computed type styles equal the site's",
+      "detail": {
+        "sample": "Diagram 1 — A pair of dice, counted thre"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] the reading pane has the same measure rule (padding and max-width)",
+      "detail": {
+        "maxWidth": "672px",
+        "padding": "30.4px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] the pane is centred on both sides (auto margins; their used value follows the centre width, so it is not compared)",
+      "detail": {
+        "native": "0px",
+        "site": "0px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] the column's used width follows that rule on both sides",
+      "detail": {
+        "native": [
+          359.21875,
+          359.20000000000005
+        ],
+        "site": [
+          399.21875,
+          399.20000000000005
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "[760px] DEPARTURE recorded: the field panel is 340px natively and 300px in the baseline edition (site-version drift: the baseline predates the resizable panel)",
+      "detail": {
+        "native": 340,
+        "site": 300
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

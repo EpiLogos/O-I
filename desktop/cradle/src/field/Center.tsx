@@ -43,7 +43,9 @@ export function Crumbs({index, current, openMain, hostRef}: {index: CorpusIndex;
   useEffect(() => {
     if (!pop) return;
     const away = (e: Event) => { const t = e.target as Element; if (!t.closest(".cpop") && !t.closest(".cr__s") && !t.closest("[data-kids]")) setPop(null); };
-    document.addEventListener("pointerdown", away); return () => document.removeEventListener("pointerdown", away);
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setPop(null); } };
+    document.addEventListener("pointerdown", away); document.addEventListener("keydown", esc, true);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc, true); };
   }, [pop]);
   useEffect(() => setPop(null), [current]);
 
