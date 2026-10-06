@@ -1,0 +1,143 @@
+{
+  "artifact": "rooms/roz-room-01-differentiating-mind.journey.json",
+  "family": "rooms",
+  "room_slug": "01-differentiating-mind",
+  "worker": "E1",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-essay",
+    "family-section-room"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719",
+    "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+    "records": [
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+        "sha256": "9e75af9563613dbb61293c01b669d9a9512c076e8bf52562f0385b9a73413438"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+        "sha256": "869159e26694407749d88e0adafe77b4f21fc143a9347fbe221be6ce088afc09"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/07-s0-p0-awareness-bends-display.md",
+        "sha256": "6f966d87bd6bfadca83626d8dd24938ce4aa77dd1056a145726327343518c026"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/08-s0-p1-inner-instrument.md",
+        "sha256": "1b15eb79917f3f770700197e751239b0118350b6f204bf7ffbd98fae5ed6d2d2"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/09-s0-p2-vikalpa-samkalpa.md",
+        "sha256": "8bbe89746678f48cf5e039bf4b10a0e88932a3fcf955b746d72c092238d9897b"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/10-s0-p3-apoha.md",
+        "sha256": "c12cdb35998c551c7bcdf6751738dd96df747e7c9b778ded0423590bf0474940"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/11-s0-p4-tattvic-compression.md",
+        "sha256": "d9e8bff025edc0d2f9cdba014c96c79f77360de72e9868a6829c3786fe5120dc"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/12-s0-p5-objective-internality.md",
+        "sha256": "c87b61c502ae426aedfd07582a7337c430bfeff4569e782afa1940c7bbc8cd2c"
+      }
+    ]
+  },
+  "pointcloud_revision": "f257de5",
+  "scenes": [
+    {
+      "scene_id": "movement-07",
+      "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/movements/07-s0-p0-awareness-bends-display.md",
+      "relations": "movement identity: §0 · #0 — Awareness Bends Toward Display · canonical route: P1-M07 → A01 · A05 · A26 / C01 · C13 · C41 — Encounter + Śaiva depth · reading path: ← previous · M06 The Return to Zero   ·   next → M08 The Inner Instrument"
+    },
+    {
+      "scene_id": "movement-08",
+      "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/movements/08-s0-p1-inner-instrument.md",
+      "relations": "movement identity: §0 · #1 — The Inner Instrument · canonical route: P1-M08 → A09 · A26 / C15 · C16 · C41 — regioned inner-instrument depth · reading path: ← previous · M07 Awareness Bends Toward Display   ·   next → M09 Vikalpa and Saṃkalpa"
+    },
+    {
+      "scene_id": "movement-09",
+      "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/movements/09-s0-p2-vikalpa-samkalpa.md",
+      "relations": "movement identity: §0 · #2 — Vikalpa and Saṃkalpa · canonical route: P1-M09 → A07 · A09 / C12 · C17 — Encounter/Name/Count; Script = frozen conditioned will · reading path: ← previous · M08 The Inner Instrument   ·   next → M10 Apoha"
+    },
+    {
+      "scene_id": "movement-10",
+      "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/movements/10-s0-p3-apoha.md",
+      "relations": "movement identity: §0 · #3 — Apoha · canonical route: P1-M10 → A08 / C03 · C18 · C23 — Name-through-Count; Buddhist Apoha remains source-distinct from technical neighbours · reading path: ← previous · M09 Vikalpa and Saṃkalpa   ·   next → M11 The Sixfold Tattvic Compression"
+    },
+    {
+      "scene_id": "movement-11",
+      "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/movements/11-s0-p4-tattvic-compression.md",
+      "relations": "movement identity: §0 · #4 — The Sixfold Tattvic Compression · canonical route: P1-M11 → A09 / C14 · C15 · C16 · C17 — Apportionment/Economy; sixfold compression is a reading, not source-tradition identity · reading path: ← previous · M10 Apoha   ·   next → M12 Objective Internality"
+    },
+    {
+      "scene_id": "movement-12",
+      "source_ref": "submission-package/essay/section-rooms/01-differentiating-mind/movements/12-s0-p5-objective-internality.md",
+      "relations": "movement identity: §0 · #5→0 — Objective Internality · canonical route: P1-M12 → A26 / C07 · C08 · C40 · C41 · C57 — Encounter Region→Account; general Objective Internality · reading path: ← previous · M11 The Sixfold Tattvic Compression   ·   next → M13 A Sign Migrates Between Worlds"
+    }
+  ],
+  "assets": [
+    {
+      "kind": "diagram",
+      "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "rooms/roz-room-01-differentiating-mind.cover.png",
+  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+  "status": "captured",
+  "notes": [
+    "E0 acceptance repair: text/field collision class fixed on all six scenes — formations shifted right-of-centre (GX 0.2), route layer moved to top-left, text column 400→360; cover re-captured at authored count.",
+    "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+    "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+    "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+    "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+    "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+    "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+    "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+    "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+    "m07 the bend: prakāśa → vimarśa with the step rotating 180° — the reflexive bend staged as the glyph's own turn; slow sine on speed = awareness breathing toward its display.",
+    "m08 the inner instrument (layout line — operations in series): buddhi steps to its office ('determines') while ahaṃkāra and manas hold as standing operations; pointer repel 0.4 — the subject is not among the instruments.",
+    "m09 vikalpa → saṃkalpa: the walker contracts from wide-faint to tight-dark (many alternatives gather into one intention); vortex pointer + implode click; circulation LFO = the gathering swirl.",
+    "m10 apoha: the centre steps 'a promise' → 'not prediction' → 'not idle remark' while the excluded alternatives (prediction/hope/idle) dim by degrees — determination by graduated exclusion, the record's own example; shove pointer = the exclusions' edge.",
+    "m11 3D (z = the descent of manifestation): the walker descends #0 → #2 → #5→0 through the depth axis while #1/#3/#4 hold their stations — the sixfold as an inhabitable depth; any local unit retains the whole descent (the record's hologram image). Depth LFO = the descent breathes.",
+    "m12 the means: 'the means' → 'internal' → 'objective' — the record's two-sided definition delivered in sequence, inside a faint horizon ring (the lived horizon partly transparent to its conditions); transitions lengthen to 1.8 — the station releases slowly into §1.",
+    "Legibility pattern (all members, 2026-10-06): every sequence walks on a dedicated TEXT-shaped walker entity; the scene's original formation stays as the quiet field form behind it (tintWeight ≤ 0.25), and walk scenes run calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22) so letterforms can hold — the wave-1 legible-walk pattern. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-essay-l2",
+    "lane": "ESSAY+ROOMS wave 2",
+    "basis_commit": "dbf3b17"
+  },
+  "glyph_rationales": {
+    "prakāśa": "M07: the luminosity of appearing — awareness as display before it addresses itself",
+    "vimarśa": "M07: the reflexive bend — awareness takes its own manifestation as other enough to encounter; the first differentiation (the step rotates 180°: the bend itself)",
+    "buddhi": "M08: the inner instrument's judgment — determination as an operation available to reflection",
+    "determines": "M08: buddhi's office — 'buddhi determines' in the contracted field",
+    "ahaṃkāra": "M08: appropriation — the identification through which a call becomes grievance or task",
+    "manas": "M08: coordination — the operation that gathers what attention selects",
+    "vikalpa": "M09: the articulation of alternatives — the possibility-space before intention (wide, faint: many courses at once)",
+    "saṃkalpa": "M09: the gathering of relevant differences into an intention definite enough to act upon (tight, dark: one course)",
+    "a promise": "M10: the determinate utterance — its content depends on the alternatives from which it is distinguished",
+    "not prediction": "M10: the first exclusion — calling it a promise distinguishes it from a prediction",
+    "not idle remark": "M10: the exclusion completed — not prediction, not hope, not idle remark; remove the contrasts and the same sounds carry no commitment",
+    "prediction": "M10: an excluded alternative — held faint at the rim (apoha: the positive lives by not-this)",
+    "hope": "M10: an excluded alternative — fainter still",
+    "idle": "M10: an excluded alternative — faintest (the non-selection that lets the name apply)",
+    "#0": "M11: the descent's origin — Paramaśiva/Anuttara, nearest depth (z +0.5)",
+    "#2": "M11: Sadāśiva–Īśvara at mid-descent — the sixfold carried argumentatively",
+    "#5→0": "M11: Pratyabhijñā — recognition at the deepest station; the descent's return",
+    "#1": "M11: Śiva–Śakti — a descent station held at z +0.3",
+    "#3": "M11: Sadvidyā–Māyā — a descent station at z −0.25",
+    "#4": "M11: the kañcukas and contracted apparatus — deepest of the held stations",
+    "the means": "M12: Objective Internality — the constituted means through which a Life inhabits, discriminates and acts",
+    "internal": "M12: internal because knowing and action always occur through a situated mediating field",
+    "objective": "M12: objective because the field has determinate relations, constraints and consequences available to reflection and correction"
+  }
+}
