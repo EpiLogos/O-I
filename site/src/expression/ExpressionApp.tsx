@@ -160,7 +160,7 @@ type Mode = 'touch' | 'orbit';
 const POINTER_VERBS: Record<string, string> = { pulse: 'pulse', implode: 'draw in', vortex: 'swirl', shove: 'scatter' };
 const MODE_VERBS: Record<string, string> = { repel: 'push the field away', attract: 'draw the field in', swirl: 'swirl the field', vortex: 'swirl the field', none: 'disturb the field' };
 
-function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene: Scene; playing: boolean; onPlaying: (next: boolean) => void }) {
+function Stage({ journey, scene, playing, onPlaying, onWidth }: { journey: Journey; scene: Scene; playing: boolean; onPlaying: (next: boolean) => void; onWidth: (width: number) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const field = useRef<PublicField | null>(null);
   const [error, setError] = useState('');
@@ -172,7 +172,7 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
   const [stageWidth, setStageWidth] = useState(900);
   useEffect(() => {
     const node = frame.current; if (!node) return;
-    const measure = () => setStageWidth(Math.round(node.getBoundingClientRect().width) || 900);
+    const measure = () => { const w = Math.round(node.getBoundingClientRect().width) || 900; setStageWidth(w); onWidth(w); };
     measure();
     const watch = new ResizeObserver(measure); watch.observe(node);
     return () => watch.disconnect();
@@ -261,7 +261,7 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
             <button type="button" onClick={() => { setError(''); try { field.current?.recover(); } catch (e) { setError(String(e)); } }}>Recover field</button>
           </div>
         )}
-        {ready && !touched && mode === 'touch' && <p className="xp-hint" data-testid="hint">{hint}</p>}
+        {ready && !touched && mode === 'touch' && stageWidth >= 460 && <p className="xp-hint" data-testid="hint">{hint}</p>}
         <div className="xp-controls" role="group" aria-label="Field controls">
           <button type="button" aria-pressed={mode === 'touch'} aria-label={mode === 'touch' ? 'Touch mode: the pointer disturbs the field. Switch to orbit.' : 'Orbit mode: drag turns the view. Switch to touch.'} title={mode === 'touch' ? 'Touch the field (switch to orbit)' : 'Orbit the view (switch to touch)'} data-control="mode" onClick={() => { setMode(mode === 'touch' ? 'orbit' : 'touch'); field.current?.pointerOff(); }}>
             {mode === 'touch'
@@ -287,9 +287,13 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
 /* The scene's text blocks belong to the Expression: each one sits at its own place on the stage (x, y as fractions of
    the stage, width and size as authored), in the scene's own ink, exactly as the authoring shell lays them out. */
 const color = (value: string | undefined) => (/^#[0-9a-f]{6}$/i.test(value ?? '') ? value : undefined);
+const COMPACT = 640;
+const visibleText = (scene: Scene) => (scene.text ?? []).filter((item) => item && item.visible !== false && (item.kicker || item.title || item.italic || item.body));
+const paragraphsOf = (item: TextItem) => (item.body ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 function TextLayer({ scene, width }: { scene: Scene; width: number }) {
-  const items = (scene.text ?? []).filter((item) => item && item.visible !== false && (item.kicker || item.title || item.italic || item.body));
+  const items = visibleText(scene);
   if (!items.length) return null;
+  const compact = width < COMPACT;
   const ink = color(scene.field?.palette?.[0]);
   const narrow = width < 520;
   return (
@@ -299,7 +303,7 @@ function TextLayer({ scene, width }: { scene: Scene; width: number }) {
         const size = Math.round(clamp((item.size ?? 34) * Math.min(1, Math.max(width, 320) / 1100), 18, item.size ?? 34));
         const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
         const x = clamp(item.x ?? 0.06, 0, 0.96), y = clamp(item.y ?? 0.08, 0, 0.94);
-        const paragraphs = (item.body ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+        const paragraphs = compact ? [] : paragraphsOf(item);
         return (
           <article key={item.id || i} className="xp-item" style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: w, textAlign: align, transform: align === 'center' ? 'translateX(-50%)' : align === 'right' ? 'translateX(-100%)' : undefined }}>
             {item.kicker && <p className="xp-kicker">{item.kicker}</p>}
@@ -311,6 +315,13 @@ function TextLayer({ scene, width }: { scene: Scene; width: number }) {
       })}
     </div>
   );
+}
+
+/* On a narrow stage the long paragraphs would sit on the glyphs; they move to the column under the field, unchanged. */
+function SceneBody({ scene }: { scene: Scene }) {
+  const blocks = visibleText(scene).flatMap((item) => paragraphsOf(item));
+  if (!blocks.length) return null;
+  return <div className="xp-scenebody" data-testid="scene-body">{blocks.map((p, i) => <p key={i}>{p}</p>)}</div>;
 }
 
 function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: string; onSelect: (id: string) => void }) {
@@ -383,6 +394,7 @@ export function ExpressionApp() {
   const state = useLoad(id);
   const data = state.status === 'ready' ? state.data : null;
   const [sceneId, selectScene, stray] = useSceneParam(data?.journey.scenes ?? null);
+  const [stageW, setStageW] = useState(900);
   const [playing, setPlaying] = useState(() => { try { return !matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return true; } });
 
   useEffect(() => { if (data) document.title = `${data.entry.title} — O:I`; }, [data]);
@@ -414,10 +426,11 @@ export function ExpressionApp() {
           </header>
           <main className="xp-main">
             <div className="xp-stagecol">
-              <Stage journey={data.journey} scene={scene} playing={playing} onPlaying={setPlaying} />
+              <Stage journey={data.journey} scene={scene} playing={playing} onPlaying={setPlaying} onWidth={setStageW} />
             </div>
             <div className="xp-side" ref={side}>
               {stray && <p className="xp-quiet" role="status">The scene named in the address (“{stray}”) is not in this Expression; showing its first scene.</p>}
+              {stageW < COMPACT && <SceneBody scene={scene} />}
               <SceneList scenes={scenes} current={scene.id} onSelect={pick} />
               {!embed && <InTheEssay nodes={data.entry.nodes ?? []} />}
             </div>
