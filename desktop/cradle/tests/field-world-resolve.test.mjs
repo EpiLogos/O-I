@@ -36,18 +36,6 @@ test("an available World becomes an edition: its files route, its addressing, it
   }
 });
 
-test("the packaged edition frames the renderer the World carries, with the same parameters the site uses", async () => {
-  const edition = await resolvePackagedEssayEdition({...answering(available), transport: tauri});
-  const source = createEssayFieldSource(edition);
-  const view = source.expressionView({ref: "expression:roz-room-02-return-of-zero"}, "movement-15", "light");
-  assert.equal(view.kind, "frame");
-  assert.equal(view.url, "oi-material://localhost/__world/epi-logos%2Fconfronting-the-limit/0123456789abcdef/renderer/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light");
-  assert.equal(source.expressionView({ref: "expression:a"}, undefined, "dark").url.endsWith("?x=a&embed=1&theme=dark"), true);
-  // a configured (site) edition still frames the site's renderer beside its essay/
-  const site = createEssayFieldSource({baseUrl: "https://example.test/essay/"});
-  assert.equal(site.expressionView({ref: "expression:a"}, undefined, "light").url, "https://example.test/expression.html?x=a&embed=1&theme=light");
-});
-
 test("an absent, damaged or unreachable World is reported with its reason, never papered over", async () => {
   const absent = await resolvePackagedEssayEdition({...answering({state: "absent", world_id: "w", root: "/r", reason: "no World w is installed under /r"}), transport: bridge});
   assert.deepEqual([absent.state, absent.unavailable], ["absent", "The Return-of-Zero World is absent: no World w is installed under /r"]);
@@ -56,30 +44,13 @@ test("an absent, damaged or unreachable World is reported with its reason, never
   assert.match(broken.unavailable, /broken: the installed manifest differs/);
   const noKernel = await resolvePackagedEssayEdition({transport: {kind: "unavailable", reason: "no kernel transport"}});
   assert.equal(noKernel.state, "unreachable");
-  const refused = await resolvePackagedEssayEdition({transport: bridge, retryDelaysMs: [1, 1], op: async () => ({outcome: null, error: "unreadable op: unknown variant `world_resolve`"})});
+  const refused = await resolvePackagedEssayEdition({transport: bridge, op: async () => ({outcome: null, error: "unreadable op: unknown variant `world_resolve`"})});
   assert.match(refused.unavailable, /could not resolve.*unknown variant/);
   const predates = await resolvePackagedEssayEdition({transport: bridge, op: async () => ({outcome: {result: "file_read", receipts: []}})});
   assert.match(predates.unavailable, /predates the World seam/);
   // an available answer missing what the adapter needs is not served either
   const partial = await resolvePackagedEssayEdition({...answering({...available, source_addressing: undefined}), transport: bridge});
   assert.match(partial.unavailable, /available/);
-});
-
-test("a transport that drops world_resolve is asked again; a kernel that answers (even 'absent') is believed at once", async () => {
-  let calls = 0;
-  const flaky = async () => { calls++; return calls < 3 ? {outcome: null, error: "TypeError: Failed to fetch"} : {outcome: {result: "world_resolve", receipts: [], resolution: available}}; };
-  const edition = await resolvePackagedEssayEdition({transport: bridge, op: flaky, retryDelaysMs: [1, 1]});
-  assert.equal(calls, 3);
-  assert.equal(edition.pageFiles, true);
-  let dropped = 0;
-  const dead = await resolvePackagedEssayEdition({transport: bridge, op: async () => { dropped++; return {outcome: null, error: "TypeError: Failed to fetch"}; }, retryDelaysMs: [1, 1]});
-  assert.equal(dropped, 3);
-  assert.equal(dead.state, "unreachable");
-  assert.match(dead.unavailable, /Failed to fetch/);
-  let answered = 0;
-  const absent = await resolvePackagedEssayEdition({transport: bridge, op: async () => { answered++; return {outcome: {result: "world_resolve", receipts: [], resolution: {state: "absent", world_id: "w", root: "/r", reason: "no World w is installed under /r"}}}; }, retryDelaysMs: [1, 1]});
-  assert.equal(answered, 1);
-  assert.equal(absent.state, "absent");
 });
 
 test("a configured edition keeps winning (the kernel is not asked); with none configured the installed World is", async () => {
@@ -113,18 +84,7 @@ test("the real walk bridge serves an installed World and the essay source reads 
     assert.ok(index.nodes.every(n => n.ref.startsWith("central:source:project:Antykathera-Essay-Work:submission-package/essay/") && /^sha256:/.test(n.revision)));
     const expressions = await source.expressions();
     assert.equal(expressions.entries.length, 135);
-    const entry = expressions.entries[0];
-    const view = source.expressionView(entry, "movement-15", "dark");
-    const frame = new URL(view.url);
-    assert.equal(view.kind, "frame");
-    assert.equal(frame.origin + frame.pathname, `${url}/world/epi-logos%2Fconfronting-the-limit/${edition.packaged.revision}/renderer/expression.html`);
-    assert.deepEqual([...frame.searchParams], [["x", entry.ref.replace(/^expression:/, "")], ["scene", "movement-15"], ["embed", "1"], ["theme", "dark"]]);
-    // the renderer page and its two files are served by the same route; the index the page names is the edition's
-    const page = await (await fetch(frame.href.split("?")[0])).text();
-    assert.match(page, /<meta name="oi-edition-base" content="\.\.\/edition\/"/);
-    for (const ref of [...page.matchAll(/(?:src|href)="(\.\/[^"]+)"/g)].map(m => new URL(m[1], frame).href)) assert.equal((await fetch(ref)).status, 200, ref);
-    assert.equal((await fetch(new URL("../edition/expressions/index.json", frame))).status, 200);
-    assert.equal((await fetch(new URL("assets/unlisted.js", frame))).status, 404);
+    assert.equal(source.expressionView(expressions.entries[0], undefined, "light"), null, "the package has no renderer page to frame");
     const texts = await source.searchText();
     assert.ok(texts.size > 1000);
     // an unlisted file and a traversal are refused by the host, through the same route

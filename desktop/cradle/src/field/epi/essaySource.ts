@@ -12,6 +12,8 @@
  * source is honestly *unavailable* and says why; nothing here falls back to a hard-coded host.
  */
 import {CorpusIndex} from "../corpusIndex";
+import {detectTransport, kernelOp} from "../../kernel/bridge";
+import type {KernelOp, KernelTransportStatus} from "../../kernel/types";
 import {
   FieldStaleRevision, parseSourceRef,
   type FieldExpression, type FieldExpressionIndex, type FieldReading, type FieldSource, type FieldStanding,
@@ -23,6 +25,11 @@ export interface EssayEdition {
   baseUrl: string;
   addressing?: EssayAddressing;
   fetchImpl?: typeof fetch;
+  /** Pages are files named `<slug>.html` (`index.html` for the root). The packaged World's route serves only files its manifest lists,
+   * so a directory-style address would be a refusal, not a page. */
+  pageFiles?: boolean;
+  /** Set when the edition came from the installed World package: which revision, so a reading can say what it read. */
+  packaged?: { world_id: string; revision: string; manifest_sha256?: string; verified?: { level: string; files: number; bytes: number } };
 }
 
 const STORAGE_KEY = "oi-cradle.essay-edition";
@@ -35,6 +42,57 @@ export function resolveEssayEdition(): EssayEdition | undefined {
     return pick ? { baseUrl: pick } : undefined;
   } catch { return undefined; }
 }
+/** The kernel's answer to `world_resolve` (desktop/cradle/kernel/src/world_resolve.rs). */
+export interface WorldResolution {
+  state: "available" | "absent" | "broken";
+  world_id: string; root: string; reason?: string;
+  revision?: string; manifest_sha256?: string;
+  dir?: string; edition_dir?: string; praxis_dir?: string; manifest?: string;
+  source_addressing?: { world: string; prefix: string };
+  counts?: unknown;
+  verified?: { level: string; files: number; bytes: number };
+  /** `__world/<world id, one percent-encoded segment>/<revision>/`; the edition is under `edition/` beneath it. */
+  route_path?: string;
+}
+
+/** Where the host serves the installed World's files: the Tauri host through its `oi-material:` protocol, the dev walk bridge at `/world/`. */
+export function worldBase(transport: KernelTransportStatus, routePath: string): string | undefined {
+  if (transport.kind === "tauri") return `oi-material://localhost/${routePath}`;
+  if (transport.kind === "bridge") return `${transport.url}/world/${routePath.replace(/^__world\//, "")}`;
+  return undefined;
+}
+
+export interface PackagedDeps {
+  transport?: KernelTransportStatus;
+  op?: typeof kernelOp;
+}
+
+/** The installed World package, asked of the kernel and served by the host. An absent or damaged install, or no kernel to ask, is reported
+ * with its reason; nothing falls back to a hard-coded host. */
+export async function resolvePackagedEssayEdition(deps: PackagedDeps = {}): Promise<EssayEdition | { unavailable: string; state: "absent" | "broken" | "unreachable" }> {
+  const transport = deps.transport ?? detectTransport();
+  if (transport.kind === "unavailable") return { unavailable: `The installed Return-of-Zero World cannot be asked for: ${transport.reason}`, state: "unreachable" };
+  const call = await (deps.op ?? kernelOp)(transport, { op: "world_resolve" } as unknown as KernelOp);
+  if (!call.outcome) return { unavailable: `The kernel could not resolve the installed Return-of-Zero World: ${call.error ?? "no answer"}`, state: "unreachable" };
+  const resolution = (call.outcome as unknown as { resolution?: WorldResolution }).resolution;
+  if (!resolution) return { unavailable: "The kernel answered world_resolve without a resolution (the host predates the World seam)", state: "unreachable" };
+  if (resolution.state !== "available" || !resolution.route_path || !resolution.source_addressing || !resolution.revision) {
+    return { unavailable: `The Return-of-Zero World is ${resolution.state}${resolution.reason ? `: ${resolution.reason}` : ""}`, state: resolution.state === "broken" ? "broken" : "absent" };
+  }
+  const base = worldBase(transport, resolution.route_path);
+  if (!base) return { unavailable: "No host serves the installed World's files", state: "unreachable" };
+  return {
+    baseUrl: `${base}edition/`, addressing: resolution.source_addressing, pageFiles: true,
+    packaged: { world_id: resolution.world_id, revision: resolution.revision, manifest_sha256: resolution.manifest_sha256, verified: resolution.verified },
+  };
+}
+
+/** The edition the Epi world reads: a runtime override or the person's configured edition when there is one (they keep winning, for development),
+ * otherwise the installed World package. */
+export async function resolveEssayEditionAsync(deps: PackagedDeps = {}): Promise<EssayEdition | { unavailable: string; state: "absent" | "broken" | "unreachable" }> {
+  return resolveEssayEdition() ?? resolvePackagedEssayEdition(deps);
+}
+
 export function rememberEssayEdition(baseUrl: string | null) {
   try { baseUrl ? window.localStorage.setItem(STORAGE_KEY, baseUrl) : window.localStorage.removeItem(STORAGE_KEY); } catch { /* per-viewer convenience */ }
 }
@@ -74,13 +132,16 @@ export function createEssayFieldSource(edition: EssayEdition): FieldSource & { m
 
   /** An absolute URL inside the edition → the page ref it names, if it is a page of the essay. */
   function refForUrl(model: EssayModel, u: URL): string | undefined {
-    if (u.origin !== base.origin || !u.pathname.startsWith(base.pathname)) return undefined;
+    // A custom scheme (`oi-material:`) has an opaque origin: compare what makes an address the same place.
+    if (u.protocol !== base.protocol || u.host !== base.host || !u.pathname.startsWith(base.pathname)) return undefined;
     let slug: string;
     try { slug = decodeURIComponent(u.pathname.slice(base.pathname.length)); } catch { return undefined; }
     slug = slug.replace(/\.html$/, "").replace(/\/+$/, "") || "index";
     return model.refOfSlug.get(slug) ?? model.refOfSlug.get(slug + "/index") ?? (slug.endsWith("/README") ? undefined : model.refOfSlug.get(slug + "/README"));
   }
-  const pageUrl = (slug: string) => slug === "index" ? base.href : new URL(slug.split("/").map(encodeURIComponent).join("/"), base).href;
+  const pageUrl = (slug: string) => edition.pageFiles
+    ? new URL(slug.split("/").map(encodeURIComponent).join("/") + ".html", base).href
+    : slug === "index" ? base.href : new URL(slug.split("/").map(encodeURIComponent).join("/"), base).href;
 
   const source: FieldSource & { model(): Promise<EssayModel>; edition: EssayEdition } = {
     id: "epi-logos/essay",
@@ -108,7 +169,7 @@ export function createEssayFieldSource(edition: EssayEdition): FieldSource & { m
       // A stale revision is refused, never coerced into the current one.
       if (opts?.revision && node.revision && opts.revision !== node.revision) throw new FieldStaleRevision(ref, opts.revision, node.revision);
       let res = await doFetch(pageUrl(slug));
-      if (!res.ok && res.status === 404) res = await doFetch(pageUrl(slug) + ".html");
+      if (!res.ok && res.status === 404 && !edition.pageFiles) res = await doFetch(pageUrl(slug) + ".html");
       if (!res.ok) throw new Error(`${node.path}: ${res.status} ${res.statusText}`.trim());
       const finalUrl = new URL(res.url || pageUrl(slug));
       const doc = new DOMParser().parseFromString(await res.text(), "text/html");
@@ -121,7 +182,7 @@ export function createEssayFieldSource(edition: EssayEdition): FieldSource & { m
         if (a.hasAttribute("role") && a.getAttribute("role") === "anchor") { a.setAttribute("data-fjump", href.replace(/^#/, "")); a.setAttribute("href", "#" + href.replace(/^.*#/, "")); continue; }
         if (href.startsWith("#")) { a.setAttribute("data-fjump", decodeURIComponent(href.slice(1))); continue; }
         let target: URL; try { target = new URL(href, finalUrl); } catch { continue; }
-        if (!/^https?:$/.test(target.protocol)) { a.removeAttribute("href"); continue; }
+        if (!/^https?:$/.test(target.protocol) && target.protocol !== base.protocol) { a.removeAttribute("href"); continue; }
         const dest = refForUrl(model, target);
         a.setAttribute("href", target.href);
         if (dest) {
@@ -145,6 +206,9 @@ export function createEssayFieldSource(edition: EssayEdition): FieldSource & { m
     async expressions(): Promise<FieldExpressionIndex | null> { return (await ensure()).model.expressions; },
 
     expressionView(entry: FieldExpression, scene, theme) {
+      // The World package carries the Expression bodies and covers but not the renderer page (`expression.html` is a product of the site build,
+      // beside `essay/`, not inside it): a packaged edition has no renderer to name, and says so rather than framing a refusal.
+      if (edition.pageFiles) return null;
       const u = new URL("../expression.html", base);
       u.searchParams.set("x", expressionId(entry.ref));
       if (scene) u.searchParams.set("scene", scene);
