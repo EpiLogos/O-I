@@ -321,8 +321,16 @@ export function KernelProvider(props: { children: ReactNode }) {
           }
         }
       }
-      const backlog = await eventsSince(transport, 1);
-      if (alive) admitReceipts(backlog);
+      // The replay-stage client qualifies its backlog reads by owner
+      // generation; a transport without retained history (embedded hosts,
+      // controlled harnesses) refuses honestly. Live receipts still arrive
+      // through the subscription below; the backlog never blocks the boot.
+      try {
+        const backlog = await eventsSince(transport, 1);
+        if (alive) admitReceipts(backlog);
+      } catch {
+        if (alive) admitReceipts([]);
+      }
       // Other native windows share this kernel, so pushed receipts mean this
       // window's pulled state may be behind. The re-pull is coalesced: a
       // burst of receipts is one trailing `state` read, not one per receipt
