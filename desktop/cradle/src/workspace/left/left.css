@@ -215,9 +215,9 @@
 /* Personal-history intake (Central #242): the /user entrance in the personal
  * ground. Layout follows the left-panel conventions; disposition colours
  * carry the intake contract's own names. */
-.ph-flow {border-top: 1px solid var(--oi-line, #3336); margin-top: 8px; padding-top: 8px; display: grid; gap: 6px;}
+.ph-flow {border-top: 1px solid var(--oi-shell-edge); margin-top: 8px; padding-top: 8px; display: grid; gap: 6px;}
 .ph-flow h3 {margin: 0; font-size: 12px; font-weight: 600;}
-.ph-flow p {margin: 0; font-size: 11px; color: var(--oi-dim, #999);}
+.ph-flow p {margin: 0; font-size: 11px; color: var(--oi-muted-2);}
 .ph-anchor {font-size: 10px;}
 .ph-choose {display: flex; gap: 4px;}
 .ph-path {flex: 1; min-width: 0; font-size: 11px; padding: 3px 6px;}
@@ -227,11 +227,11 @@
 .ph-entry-date {color: var(--oi-dim, #888);}
 .ph-entry-type {color: var(--oi-dim, #888);}
 .ph-disposition {font-size: 9px; padding: 0 4px; border-radius: 6px;}
-.ph-disposition.is-retained {background: #2d4a2d; color: #bde3bd;}
-.ph-disposition.is-unreadable {background: #4a2d2d; color: #e3bdbd;}
-.ph-disposition.is-excluded {background: #3a3a2d; color: #d8d8b0;}
+.ph-disposition.is-retained {background: var(--oi-accent-soft); color: var(--oi-accent-ink);}
+.ph-disposition.is-unreadable {background: var(--oi-muted-3); color: var(--oi-foreground);}
+.ph-disposition.is-excluded {background: var(--oi-muted-2); color: var(--oi-muted);}
 .ph-actions {display: flex; gap: 6px; flex-wrap: wrap;}
-.ph-warnings {border-left: 2px solid #b8863b; padding-left: 6px;}
+.ph-warnings {border-left: 2px solid var(--oi-accent-ink); padding-left: 6px;}
 .ph-conflict, .ph-divergence, .ph-refused p {font-size: 10px; margin: 2px 0;}
 .ph-verify {font-size: 9px; max-height: 140px; overflow: auto;}
 .ph-busy {font-size: 10px; font-style: italic;}
