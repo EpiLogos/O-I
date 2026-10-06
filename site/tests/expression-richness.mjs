@@ -159,7 +159,10 @@ function checkJourney(journey, journeyPath) {
 
   // 4 — pointer profiles
   const profiles = new Set(scenes.map((s) => { const e = { ...DEFAULT_ENGINE_SETTINGS, ...(s.engine ?? {}) }; return `${e.pointerMode}/${e.pointerClick}/${e.pointerClickStrength}/${e.pointerClickRadius}`; }));
-  if (profiles.size < 3) fail("pointer", `${profiles.size} distinct pointer profiles (floor 3)`);
+  // size-aware floor: a scene carries one profile, so a journey of N scenes can
+  // hold at most N distinct ones (S-products lane finding, 2026-10-06).
+  const pointerFloor = Math.min(3, scenes.length);
+  if (profiles.size < pointerFloor) fail("pointer", `${profiles.size} distinct pointer profiles (floor ${pointerFloor} for ${scenes.length} scenes)`);
 
   // 5 — text blocks
   let textScenes = 0, longBody = null, overlapHit = null, smallSizes = new Set();
@@ -206,7 +209,7 @@ function checkJourney(journey, journeyPath) {
   const durations = new Set(scenes.map((s) => s.duration));
   const transitions = new Set(scenes.map((s) => s.transition));
   if (!autoScenes.length) fail("automation", "no automation lane or property track");
-  if (durations.size < 2 && transitions.size < 2) fail("automation", "one duration and one transition across the journey (no narrative beats)");
+  if (scenes.length >= 2 && durations.size < 2 && transitions.size < 2) fail("automation", "one duration and one transition across the journey (no narrative beats)");
 
   // 8 — layout
   const laidOut = scenes.filter((s) => s.composition?.layout && s.composition.layout !== "free");
