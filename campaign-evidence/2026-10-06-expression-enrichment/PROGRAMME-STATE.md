@@ -27,6 +27,8 @@
 **WAVE 1 COMPLETE through the office: 10/10 authored, 10/10 critic-PASS** (symbolon 2; arguments A + A′-after-revision; matheme 6 — matheme critic verified displaced-return geometry JSON-exact in x/y/z, Gödel proof-order-only confirmed in JSON and every frame, softmax at selection level with zero apoha/soteriological leakage across all six). Critic logs + contact sheets for all three families committed under renders/ and critic-log-wave1-*.md.
 
 **Wave 2 dispatched:** essay+rooms (9 journeys), episteme (8), mytheme (25) — lanes briefed with the wave-1 fidelity bar.
+**Episteme authored: 8/8 floor-clean** (independently linted). Its critic is running. Vault finding returned by the lane: lens-baudrillard.md and lens-foucault.md were deleted from the vault before fc59a719 (commit 722ae3da) — the lane re-read them at the dbf3b17 basis and recorded that in the bindings; the owner adjudicates the vault change. Commit-boundary race noted (dossiers' files inside the lenses-aphorism commit 6b088a7b6; content complete at HEAD).
+**Wave 3 dispatched:** S-products lane (83 members, env-2 point-cloud-demo checkout, branch enrich/s-products-20261006, product-by-product with clean stops).
 
 ## Wave-1 results so far (2026-10-06)
 
