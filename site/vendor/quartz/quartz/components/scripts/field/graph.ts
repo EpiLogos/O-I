@@ -37,7 +37,7 @@ export function mountGraph() {
   const focusIndex = () => {
     const c = S.cur; if (c.i == null) return null;
     const n = D.nodes[c.i];
-    return n.s === 'THE-RETURN-OF-ZERO' && c.m && D.moves[c.m] ? D.moves[c.m].i : c.i;
+    return n.k === 'manuscript' && c.m && D.moves[c.m] ? D.moves[c.m].i : c.i;
   };
   const filtersActive = () => S.hidden.size > 0 || S.hubs || S.depth > 1;
 
@@ -529,7 +529,7 @@ export function mountGraph() {
     for (const j of nb.all) (groups[D.nodes[j].r] = groups[D.nodes[j].r] || []).push(j);
     const hubHidden = !S.hubs && !n.hub ? [...D.out[focus], ...D.in[focus]].filter((j) => D.nodes[j].hub).length : 0;
     const filtered = nb.raw.length - nb.all.length;
-    const isM = S.cur.m && D.nodes[S.cur.i].s === 'THE-RETURN-OF-ZERO';
+    const isM = S.cur.m && D.nodes[S.cur.i].k === 'manuscript';
     const rows = REG_ORDER.filter((r) => groups[r]).map((r) => {
       const js = groups[r].sort((a, b) => a - b), arrow = (j) => (outS.has(j) && inS.has(j) ? '⇄' : outS.has(j) ? '→' : '←');
       return `<section class="conn__g" style="--rc:var(--c-${r})"><h4><i></i>${REGS[r]}<span>${js.length}</span></h4><ul>${js.slice(0, 40).map((j) => {

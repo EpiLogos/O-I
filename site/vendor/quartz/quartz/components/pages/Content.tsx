@@ -2,6 +2,7 @@ import { ComponentChildren } from "preact"
 import { Element, Root, RootContent } from "hast"
 import { htmlToJsx } from "../../util/jsx"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "../types"
+import { classify } from "../../util/essayField"
 
 /**
  * The corpus carries authoring scaffolding at the top of its pages: the first-level
@@ -54,7 +55,7 @@ function projection(tree: Root): Root {
 const Content: QuartzComponent = ({ fileData, tree }: QuartzComponentProps) => {
   const content = htmlToJsx(fileData.filePath!, projection(tree as Root)) as ComponentChildren
   const classes: string[] = fileData.frontmatter?.cssclasses ?? []
-  const ms = fileData.slug === "THE-RETURN-OF-ZERO" ? ["prose--ms"] : []
+  const ms = classify(fileData.slug!).k === "manuscript" ? ["prose--ms"] : []
   const classString = ["popover-hint", "prose", ...ms, ...classes].join(" ")
   return <article class={classString}>{content}</article>
 }

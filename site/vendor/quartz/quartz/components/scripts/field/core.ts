@@ -162,8 +162,8 @@ export const currentNode = () => {
   // a folder listing (section-rooms/index) is the folder's README as far as the structure is concerned
   return D.bySlug.get(slug) ?? (slug.endsWith("/index") ? D.bySlug.get(slug.slice(0, -"/index".length) + "/README") : null) ?? null
 }
-export const isManuscript = (n: any) => n?.s === "THE-RETURN-OF-ZERO"
-export const readsAsMovement = (n: any) => n && (n.s === "THE-RETURN-OF-ZERO" || n.k === "movement")
+export const isManuscript = (n: any) => n?.k === "manuscript"
+export const readsAsMovement = (n: any) => n && (n.k === "manuscript" || n.k === "movement")
 
 /* ───────── cross-module actions and per-page cleanup ───────── */
 /** Registered by the module that owns them, so modules never import each other. */
