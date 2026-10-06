@@ -4,7 +4,7 @@ import { symlink, mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { resolveEssaySource, readEssayInputs, stageEssayInputs, dedupeFrontmatter, unlinkWithheldWikilinks } from './essay-source.mjs';
+import { resolveEssaySource, readEssayInputs, stageEssayInputs, dedupeFrontmatter, unlinkWithheldWikilinks, exactCaseWikilinks } from './essay-source.mjs';
 
 test('a real cached Git source refreshes main and stages figures while withholding notes', async()=>{
   const dir=await mkdtemp(join(tmpdir(),'essay-source-'));
@@ -123,4 +123,40 @@ test('markdown links into withheld desks are unlinked in the angle-bracket and %
     const inputs=await readEssayInputs(essay),staged=join(dir,'staged');await stageEssayInputs(inputs,staged);
     assert.equal(await readFile(join(staged,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'utf8'),'# §0/1\nAdvent manuscript Brief [Root](../../README.md) Quilt\n');
   } finally { await rm(dir,{recursive:true,force:true}); }
+});
+
+test('a wikilink that differs from one published note only in case is written with the exact name and keeps what the reader saw',()=>{
+  const ctx={
+    publishedByLowerName:new Map([['parasociety',['parasociety']],['j-space',['J-Space']],['twin',['Twin','TWIN']],['exact',['exact']]]),
+    publishedByLowerPath:new Map([['section-rooms/arguments/concepts/j-space',['section-rooms/arguments/concepts/J-Space']]]),
+  };
+  const out=exactCaseWikilinks([
+    'alias: [[Parasociety|parasocial]] bare: [[Parasociety]] fragment: [[j-space#Part One|the J]] escaped: [[J-space\\|shown]]',
+    'path: [[section-rooms/arguments/concepts/j-SPACE|J-Space]] embed: ![[Parasociety]]',
+    'left alone: [[parasociety]] [[exact]] [[Twin]] [[twin]] [[unknown note]] `[[Parasociety]]`',
+    '```\n[[Parasociety]]\n```',
+  ].join('\n'),ctx);
+  assert.match(out,/^alias: \[\[parasociety\|parasocial\]\] bare: \[\[parasociety\|Parasociety\]\] fragment: \[\[J-Space#Part One\|the J\]\] escaped: \[\[J-Space\\\|shown\]\]$/m);
+  assert.match(out,/^path: \[\[section-rooms\/arguments\/concepts\/J-Space\|J-Space\]\] embed: !\[\[parasociety\|Parasociety\]\]$/m);
+  assert.match(out,/^left alone: \[\[parasociety\]\] \[\[exact\]\] \[\[Twin\]\] \[\[twin\]\] \[\[unknown note\]\] `\[\[Parasociety\]\]`$/m);
+  assert.match(out,/```\n\[\[Parasociety\]\]\n```/);
+});
+
+test('staging writes the exact-case wikilink and leaves the source bytes alone',async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'essay-case-'));
+  try {
+    const essay=join(dir,'submission-package/essay');await mkdir(join(essay,'section-rooms/00-integral-threshold'),{recursive:true});await mkdir(join(essay,'section-rooms/arguments/concepts'),{recursive:true});
+    await writeFile(join(essay,'README.md'),'# Foundation\n');
+    await writeFile(join(essay,'section-rooms/arguments/concepts/parasociety.md'),'# Parasociety\n');
+    const source='# §0/1\nSee [[Parasociety|the double]] and [[Parasociety]].\n';
+    await writeFile(join(essay,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),source);
+    const inputs=await readEssayInputs(essay),staged=join(dir,'staged');await stageEssayInputs(inputs,staged);
+    assert.equal(await readFile(join(staged,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'utf8'),'# §0/1\nSee [[parasociety|the double]] and [[parasociety|Parasociety]].\n');
+    assert.equal(await readFile(join(essay,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'utf8'),source);
+  } finally { await rm(dir,{recursive:true,force:true}); }
+});
+
+test('the essay edition does not turn prose #tags into links to tag pages it does not emit',async()=>{
+  const config=await readFile(new URL('./vendor/quartz/quartz.config.ts',import.meta.url),'utf8');
+  assert.match(config,/Plugin\.ObsidianFlavoredMarkdown\(\{[^}]*parseTags:\s*false[^}]*\}\)/);
 });

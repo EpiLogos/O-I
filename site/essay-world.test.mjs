@@ -313,9 +313,10 @@ test('edition dead links inherit the disposition of the source reference; unacco
     { page: 'p', href: '../x#m02', why: 'fragment #m02 missing on x', target: 'x', fragment: 'm02', candidates: ['m02--title'] },
     { page: 'p', href: '../../tags/1-4', why: 'no such page', target: 'tags/1-4' },
     { page: 'p', href: '../Parasociety', why: 'no such page', target: 'section-rooms/Parasociety' },
-  ], table, { slugs: new Set(['section-rooms/arguments/concepts/parasociety']) });
-  assert.deepEqual(d.links.map((l) => l.disposition), ['authoring-defect', 'authoring-defect', 'withheld-by-design', 'undispositioned', 'publication-defect', 'publication-defect', 'publication-defect']);
-  assert.deepEqual(d.links.map((l) => l.kind), [undefined, undefined, undefined, undefined, 'withheld-desk-link', 'hashtag-link', 'resolver-mismatch']);
+    { page: 'p', href: '../../the-slash', why: 'no such page', target: 'the-slash' },
+  ], table, { slugs: new Set(['section-rooms/arguments/concepts/parasociety', 'a/the-slash', 'b/the-slash']) });
+  assert.deepEqual(d.links.map((l) => l.disposition), ['authoring-defect', 'authoring-defect', 'withheld-by-design', 'undispositioned', 'publication-defect', 'publication-defect', 'publication-defect', 'authoring-defect']);
+  assert.deepEqual(d.links.map((l) => l.kind), [undefined, undefined, undefined, undefined, 'withheld-desk-link', 'hashtag-link', 'resolver-mismatch', 'ambiguous-wikilink']);
   assert.equal(d.summary.links.undispositioned, 1);
   assert.deepEqual(d.fragments[0].repair, { kind: 'candidates', candidates: ['m02--title'] });
 });

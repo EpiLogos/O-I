@@ -483,6 +483,7 @@ export function dispositionEditionDefects(dangling, sourceTable, { slugs = new S
         const row = byPath.get(key) ?? [...byPath].find(([k]) => key.endsWith(`-${k}`) || key === k)?.[1] ?? byName.get(leaf) ?? byName.get(`~${leaf}`);
         const alike = bySlugLeaf.get(leaf);
         if (row) verdict = { disposition: row.disposition, reason: row.reason };
+        else if (alike?.length > 1) verdict = { disposition: 'authoring-defect', kind: 'ambiguous-wikilink', reason: `the wikilink names ${alike.length} published notes (${alike.slice(0, 3).join(', ')}); the edition cannot tell which is meant, so it links to none`, repair: { kind: 'candidates', candidates: alike.slice(0, 3) } };
         else if (alike?.length) verdict = { disposition: 'publication-defect', kind: 'resolver-mismatch', reason: `the vault resolves this wikilink (a note named ${alike[0]} exists) but the edition's link names it differently, so the page was not found`, repair: { kind: 'candidates', candidates: alike.slice(0, 3) } };
       }
       links.push({ page: item.page, href: item.href, disposition: verdict?.disposition ?? 'undispositioned', ...(verdict?.kind ? { kind: verdict.kind } : {}), reason: verdict?.reason ?? 'no source reference accounts for this link', ...(verdict?.repair ? { repair: verdict.repair } : {}) });
