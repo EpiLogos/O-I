@@ -224,8 +224,8 @@
 .ph-collections ul, .ph-members, .ph-plan {list-style: none; margin: 0; padding: 0; display: grid; gap: 2px;}
 .ph-collection-row, .ph-member, .ph-plan-entry {display: flex; gap: 6px; align-items: baseline; font-size: 10px; min-width: 0;}
 .ph-entry-id {overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%;}
-.ph-entry-date {color: var(--oi-dim, #888);}
-.ph-entry-type {color: var(--oi-dim, #888);}
+.ph-entry-date {color: var(--oi-muted-2);}
+.ph-entry-type {color: var(--oi-muted-2);}
 .ph-disposition {font-size: 9px; padding: 0 4px; border-radius: 6px;}
 .ph-disposition.is-retained {background: var(--oi-accent-soft); color: var(--oi-accent-ink);}
 .ph-disposition.is-unreadable {background: var(--oi-muted-3); color: var(--oi-foreground);}
