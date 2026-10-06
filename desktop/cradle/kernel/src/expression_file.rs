@@ -194,34 +194,6 @@ pub(crate) fn png(value: &str) -> bool {
                 .all(|b| b.is_ascii_alphanumeric() || b"+/=".contains(&b))
     })
 }
-/// The one admitted `constructor` key shape: the native world-construction
-/// source-inputs record (schema, identity profile, natal, sky, occasion,
-/// calibration, return context). Every other `constructor` key is unsafe.
-pub(crate) fn native_constructor_metadata(object: &serde_json::Map<String, Value>) -> bool {
-    const KEYS: [&str; 9] = [
-        "schema",
-        "constructor",
-        "world_request",
-        "identity_profile",
-        "natal",
-        "sky",
-        "original_occasion",
-        "calibration",
-        "return_context",
-    ];
-    object.len() == KEYS.len()
-        && KEYS.iter().all(|key| object.contains_key(*key))
-        && object["schema"] == "ql.native-performance-receiving-source-inputs/v1"
-        && object["constructor"].as_str().is_some_and(|tag| {
-            [
-                "native-world",
-                "native-protected",
-                "explicit-reference-world",
-            ]
-            .contains(&tag)
-        })
-}
-
 fn safe(value: &Value, depth: usize) -> Result<(), String> {
     if depth > MAX_FILE_DEPTH {
         return Err("Expression file nesting budget exceeded".into());
@@ -250,7 +222,10 @@ fn safe(value: &Value, depth: usize) -> Result<(), String> {
                         "$serde_json::private::RawValue",
                     ]
                     .contains(&key.as_str())
-                    || (key == "constructor" && !native_constructor_metadata(values))
+                    || (key == "constructor"
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(
+                            values,
+                        ))
                 {
                     return Err("Unsafe Expression file key".into());
                 }
@@ -306,6 +281,9 @@ pub(crate) fn intern(value: &mut Value, refs: &BTreeMap<String, String>) {
 /// Save the exact full native Document through its file owner. No serializer
 /// or public Document shape changes: only the file has reference encoding.
 pub fn encode(document: &Document) -> Result<String, String> {
+    if document.scenes.iter().any(|s| s.performance.is_some()) {
+        return crate::expression_performance_storage::encode_document(document);
+    }
     document.validate()?;
     let full = serde_json::to_vec(document).map_err(|e| e.to_string())?;
     let mut value = serde_json::to_value(document).map_err(|e| e.to_string())?;
@@ -426,6 +404,9 @@ pub fn decode(content: &str) -> Result<Document, String> {
     }
     let UniqueValue(value) =
         serde_json::from_str(content).map_err(|e| format!("Invalid Expression file: {e}"))?;
+    if crate::expression_performance_storage::supports_storage(&value["schema"]) {
+        return crate::expression_performance_storage::decode_document(value);
+    }
     safe(&value, 0)?;
     if value["schema"] == crate::expression::SCHEMA {
         let document: Document = serde_json::from_str(content).map_err(|e| e.to_string())?;
@@ -553,6 +534,9 @@ mod native_json_admission_tests {
                 serde_json::to_value(op).unwrap()["request"]["value"].as_f64(),
                 Some(0.00001)
             );
+            let scalar: crate::expression_performance::Scalar =
+                read_native_json(token.as_bytes()).unwrap();
+            assert_eq!(scalar.value().to_bits(), 0.00001_f64.to_bits());
         }
     }
 
@@ -572,6 +556,7 @@ mod native_json_admission_tests {
         let infinite: Value = serde_json::from_str("1e400").unwrap();
         assert!(safe(&infinite, 0).is_err());
         assert!(crate::expression_scene::data(&infinite, 0).is_err());
+        assert!(crate::expression_performance::safe(&infinite, 0).is_err());
         for key in [
             "$serde_json::private::Number",
             "$serde_json::private::RawValue",
@@ -583,6 +568,7 @@ mod native_json_admission_tests {
             );
             assert!(safe(&object, 0).is_err());
             assert!(crate::expression_scene::data(&object, 0).is_err());
+            assert!(crate::expression_performance::safe(&object, 0).is_err());
         }
     }
 }
