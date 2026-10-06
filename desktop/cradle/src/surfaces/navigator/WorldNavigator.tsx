@@ -14,6 +14,7 @@ import { ChatRows, useConversations } from "../../workspace/left/ChatRows";
 import { FlowRows, RememberedRows } from "../../workspace/left/materialRows";
 import { useProjectMarks } from "../../workspace/left/sessionMarks";
 import "./navigator.css";
+import {PersonalHistory} from "../../personal/PersonalHistory";
 
 /** The Base body (10-SIDEBARS §3.2): destinations Central · Today · Library
  * · Explore, then CONTROL (the Control file tree), FLOWS and WORK (projects;
@@ -121,6 +122,7 @@ export function WorldNavigator({ onOpenIdentity, onExplore, onOpenEncounter, cen
         {centralMode === "files" && <FileTree path="" onOpen={onOpenFile} refresh={fileRefresh} onRootRef={ref=>setDirectoryRefs(held=>({...held,"":ref}))} expanded={centralNavigation?.directories??[]} onExpansion={directories=>{if(centralKey)onNavigationChange(centralKey,{directories,locationPath:""});}}/>}
         {centralMode === "wiki" && <button className="project-wiki-link" disabled={!root.control.agent_wiki.wiki.space_ref} onClick={()=>openWiki(root.control.agent_wiki.wiki.space_ref!,"Central wiki")}><Glyph name="wiki" size={12}/><span>Central neighbourhood</span></button>}
         {centralMode === "chats" && <ChatRows project="" label="Central" state={centralChats.state} retry={centralChats.retry} activeRef={activeEncounterRef} onOpen={row => { void Promise.resolve((host.onOpenChat ?? onOpenEncounter)({...row, project: row.project})).catch(reason => setError(String(reason))); }}/>}
+        {centralMode === "files" && <PersonalHistory refresh={fileRefresh}/>}
       </div>}
       {onOpenToday && <DestinationRow glyph="today" label="Today" ariaLabel="Open today" className="today-open" onClick={() => void onOpenToday().catch(reason => setError(String(reason)))}/>}
       {onOpenIdentity && <DestinationRow glyph="agent" label="Identity · Nara" ariaLabel="Open identity and Nara" onClick={onOpenIdentity}/>}
