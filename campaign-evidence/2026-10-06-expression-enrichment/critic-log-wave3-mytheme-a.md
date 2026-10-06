@@ -52,3 +52,21 @@ The wave findings re-confirmed from the critic's own captures: (a) scene-entry c
 - `renders/mytheme-a/roz-mytheme-apollo-dionysus-daphne.return-evidence.png` — critic captures of scenes 0 and 5 (rejection evidence).
 - `renders/mytheme-a/roz-mytheme-uroboros-trickster.m-urob-5-return.settled.png`, `renders/mytheme-a/roz-mytheme-goethe-permanence-change.m-goe-4-muses.muses.png` — critic settled-state captures (t=9 s).
 - Objective gate: linter 25/25 (re-run this pass); binding diff vs PCD priors all-OK (records, human_amplified, occurrence_index, cross_story_relations, rebase); identity diff vs origin/main all-OK.
+
+---
+
+# Re-check — 2026-10-06 (lane revision `a0a0d1eef`)
+
+Scope: the two rejects only. Objective gate re-run: linter **25/25 PASS** on the revised collection (both members re-verified individually); `human_amplified` / `occurrence_index` / `cross_story_relations` / source records and identity (id, description, scene names/characters) re-diffed against origin/main and the PCD priors — all unchanged and clean. Lane fix frames inspected (`/tmp/expression-enrich/mytheme/…​.fix.png`); the critic also re-captured independently.
+
+## roz-mytheme-apollo-dionysus-daphne — PASS (revised)
+
+The staging option was taken and it is what the JSON now stages: `m-apd-5-return` carries **e147**, a triangle ("the definite image offered again — Apollo's articulation returned, bearing its acknowledged relation", tint #a5623a as #0's sight-line, tw 0.95) at (0, −0.3) — centre distance 0.02 from the relation ring's centre (0, −0.32, size 0.737), i.e. **inside the ring**, beside the renewed ◉/A20/A21/↺. The grounding sentence is the record's own ("Apollo returns to articulation. A definite image can again be offered to another…" — read at fc59a719, §#5→0). The craft note now describes exactly what #0 and #5→0 stage: the #0 description corrected to the sight-line walking inside the gold ring toward its edge (verified against the triangle's position sequence: (−0.2, 0) → (0.34, −0.18), both inside the ring's frame), and the ending clause claims only the re-formed triangle-at-rest-in-the-ring with attract halved 0.7→0.35. The legibility secondary is fixed: body columns in all six scenes moved to y 0.55–0.60 and narrowed (460/380, 620/300), sitting clear of the formation mass in the lane frame and in the critic's own settled re-capture at t=9 (`renders/mytheme-a/roz-mytheme-apollo-dionysus-daphne.m-apd-5-return.recheck.png`). Rationale coverage still complete (no texted entity or step without a rationale).
+
+## roz-mytheme-antikythera-attunement — PASS (revised)
+
+Both ungrounded glyphs are withdrawn and the record's own terms carry the scenes. `m-ant-3-wreck`: the fragment count "82" is gone — the fragment mass is now the unnamed shape-disc carrier ("fragments → model", steps · · ·), exactly the record's "surviving parts"/"damaged instrument" language, which the scene body quotes verbatim. `m-ant-1-gearing`: the inscription no longer asserts a wording — the entity walks · → ☉ in sequence, staging the record's own #1 move ("an inscription tells a reader what a mark is to be read as") with the ☉ Sun-indication separately grounded in Freeth 2006's reported functions. `"82"`/`Ἡλίου` occur nowhere in the journey JSON; in the binding they survive only inside the dated withdrawal note, which also restates the no-new-archaeological-identity guard. Rationale keys updated ('82' and 'Ἡλίου' keys removed; the '·' unnamed-carrier rationale expanded to name the fragment mass, the scale-mark, the plate and the heavens — "no glyph is pretended"). Offered band, nine outputs, plate→ring→plate limit, X/x→1/0, and every numeric claim in the ending note unchanged and still exact. Lane fix frame inspected (`roz-mytheme-antikythera-attunement.m-ant-3-wreck.fix.png`): unnamed masses only, bodies clear.
+
+**Wave-3 mytheme-A standing after re-check: 13/13 PASS.**
+
+Re-check evidence: `renders/mytheme-a/roz-mytheme-apollo-dionysus-daphne.m-apd-5-return.recheck.png` (critic, t=9 settled); lane frames at `/tmp/expression-enrich/mytheme/roz-mytheme-apollo-dionysus-daphne.m-apd-5-return.fix.png` and `/tmp/expression-enrich/mytheme/roz-mytheme-antikythera-attunement.m-ant-3-wreck.fix.png`.
