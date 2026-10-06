@@ -1,0 +1,173 @@
+{
+  "scenario": "candidate-route",
+  "spec_ref": "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §5 and scripts/candidate-launch.mjs (the owner's candidate route)",
+  "grade": "A",
+  "at": "2026-10-06T23:21:54.240Z",
+  "worlds_root": "/Users/admin/.oi-candidates/worlds",
+  "launch": {
+    "pid": 37366,
+    "args": [
+      "--mode",
+      "web",
+      "--worlds-root",
+      "/Users/admin/.oi-candidates/worlds",
+      "--bridge-port",
+      "61224",
+      "--vite-port",
+      "61225",
+      "--no-open",
+      "--oi",
+      "/Users/admin/Central/worktrees/env-2/o-i/target/debug/oi"
+    ],
+    "app": "http://127.0.0.1:61225/",
+    "bridge": "http://127.0.0.1:61224",
+    "edition_server": "none"
+  },
+  "network_changed_aborts": {
+    "console_errors": 0,
+    "failed_requests": 0
+  },
+  "requests": {
+    "world": 15,
+    "sample": [
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/quartz-source.json",
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/expressions/index.json",
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/static/fieldIndex.json",
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/index.html"
+    ],
+    "failed": []
+  },
+  "projects": [
+    "ACTUATION",
+    "CENTRAL",
+    "FACTORY",
+    "O-I",
+    "QUATERNAL-LOGIC",
+    "AI-KIT"
+  ],
+  "launcher_stopped": true,
+  "passed": true,
+  "counts": {
+    "passed": 16,
+    "total": 16
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the candidate launched with the installed World and no edition server",
+      "detail": [
+        "candidate: essay World    installed under /Users/admin/.oi-candidates/worlds (kernel WorldResolve; no edition server)",
+        "candidate: kernel (bridge) http://127.0.0.1:61224   OI_HOME=/Users/admin/.oi-candidates/central-field/oi-home   ground=/Users/admin/Central",
+        "candidate: Cradle          http://127.0.0.1:61225/   (profile central-field, store f270263820c91abc08b8db3e3bf08d40)"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a fresh profile shows the first-run welcome over the shell"
+    },
+    {
+      "ok": true,
+      "label": "one click dismisses the welcome (it fades out and leaves the shell)"
+    },
+    {
+      "ok": true,
+      "label": "the field opens on 'Choose a corpus', listing the real ground's projects",
+      "detail": [
+        "ACTUATION",
+        "CENTRAL",
+        "FACTORY",
+        "O-I",
+        "QUATERNAL-LOGIC",
+        "AI-KIT"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the utility bar is there (scope, modes, companion, settings)",
+      "detail": [
+        "scope",
+        "modes",
+        "companion",
+        "settings"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the Epi-Logos lens is on (the chip is shown, the lens is pressed)"
+    },
+    {
+      "ok": true,
+      "label": "the packaged essay appears: its title and its graph",
+      "detail": {
+        "title": "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.",
+        "graph_nodes": 19,
+        "opened_after_ms": 16447
+      }
+    },
+    {
+      "ok": true,
+      "label": "the field stands at M16, addressed by the World's native refs",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "selecting a relation selects it without leaving the passage",
+      "detail": {
+        "selected": "ments/concepts/dimensional-reframing-at-zero-and-infinity.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "double-click opens the relation as a tangent beside the passage",
+      "detail": {
+        "tangent": "dimensional-reframing-at-zero-and-infinity.md",
+        "generation": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "an Expression opened as the tangent with its scene",
+      "detail": {
+        "ref": "expression:roz-room-02-return-of-zero",
+        "scene": "movement-15"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the frame is the packaged renderer, served by the bridge's /world/ route",
+      "detail": "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/renderer/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+    },
+    {
+      "ok": true,
+      "label": "the Expression plays (state ready: the body was checked against the index digest)",
+      "detail": {
+        "text": 812,
+        "state": "ready",
+        "canvas": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "every edition and renderer request went to the bridge's /world/ route and was served (index, receipt, pages, renderer, journey)",
+      "detail": {
+        "requests": 15,
+        "statuses": [
+          200
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "nothing was requested from any other host (no edition server, no edition address)",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors (0 request(s) aborted by the browser's ERR_NETWORK_CHANGED are counted separately)",
+      "detail": []
+    }
+  ]
+}
