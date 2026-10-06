@@ -59,6 +59,14 @@ export function adapterNeeded(reading: SystemDisclosureReading): HarnessRow[] {
   return rows.filter((row) => row.detected && row.capability !== "descriptor");
 }
 
+/** Why a detected harness sits outside the ready set. A row whose owner
+ * plans an effect carries a working AIKit adapter — what it lacks is the
+ * native capability census, not the adapter. Only an unplanned row is
+ * genuinely adapterless. */
+export function adapterNeededReason(row: HarnessRow): "census-pending" | "no-adapter" {
+  return row.effect ? "census-pending" : "no-adapter";
+}
+
 export function notFound(reading: SystemDisclosureReading): HarnessRow[] {
   const rows = reading.harness.harnesses.state === "ok" ? reading.harness.harnesses.rows : [];
   return rows.filter((row) => !row.detected);
