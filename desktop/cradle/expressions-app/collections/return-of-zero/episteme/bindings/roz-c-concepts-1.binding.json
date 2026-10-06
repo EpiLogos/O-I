@@ -1,0 +1,1221 @@
+{
+  "artifact": "episteme/roz-c-concepts-1.journey.json",
+  "family": "episteme-concepts",
+  "worker": "E3",
+  "date": "2026-09-17",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "family-concept"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "census_caveat": "receipt sha256 values predate the 5c22906 content landing; per-record current sha256 computed at dbf3b17 (see hash_note)",
+    "records": [
+      {
+        "record_id": "C01",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C01-Subject-Defined-Indefinability.md",
+        "sha256": "698985115706165bedf169eb630eba096bd23ca330e6a1cf7056f08511408012",
+        "sha256_census_receipt": "c3e78c2c1dec788131b7eeecad2825541ec97e417d230c9e3521015f2c0fcc49",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C02",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C02-Faithful-Definition.md",
+        "sha256": "3e30e195e468a5d6d31709a74664c2b0e65a5137394df3a5a8cef37863ea333b",
+        "sha256_census_receipt": "3e30e195e468a5d6d31709a74664c2b0e65a5137394df3a5a8cef37863ea333b",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "C03",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C03-Determination.md",
+        "sha256": "36eceb4d3ee026c5e3a46adcafca06fda5070a2a15f3662eacc184ecb7f51a97",
+        "sha256_census_receipt": "290a6c8febac1464b868a9715a4df5b30c54f996178dbd6b8858c28509a7e75c",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C04",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C04-Formal-Limit.md",
+        "sha256": "eaa4532ad65a282e15a89a40dfca78bf586728e606f2d0fc9a6e7eaca5339a0e",
+        "sha256_census_receipt": "5bb78309872e2812dfb69d756c5c03067c7e4312ef61184b71b6a5ebca2f36cc",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C05",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C05-Immutable-Gap.md",
+        "sha256": "da7304560864e10f4eb66d997755427b45e9bf798cda0ea3659ca3d306e6d94b",
+        "sha256_census_receipt": "cdba439fcbda5b43223a32662599ddc7f4d51c9951fcb481baea47d6ccbe2532",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C06",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C06-Copula-Identification-with-Difference.md",
+        "sha256": "21ff4eaad14203a327bf8425addd59f5cd95289340322e72f404980be7a8da65",
+        "sha256_census_receipt": "4986ca50ff5f68c5e2df63d6505e51b8858cd8534d319b56eb85bf1b5272a5b6",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C07",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C07-Conditions-of-Worldhood.md",
+        "sha256": "868b90b98b5144a61b4c0d938f130ed3247516cf63f3cd62e17f542bf75c6e78",
+        "sha256_census_receipt": "9880e6f1b33d062a049b1d0739a52793732385547f2da5dbd310084a38c3fd9c",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C08",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C08-Context-Context-Frame.md",
+        "sha256": "e38a3de8294d9022b80669a7c3367ff267e56ecbce8379f711ee207063c6b343",
+        "sha256_census_receipt": "d6e4d6512378b5172142c54859c9f09fc505ad4c7d1598f974e27c9246123346",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C09",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C09-Diaphaneity.md",
+        "sha256": "fbeb94a77d12e5dadd0eb940986e41ed685b5c5414b4da1996dd24cf665da10f",
+        "sha256_census_receipt": "46f9a2a2ad7d501f9933b8477e197a6391357c7f790a6f40dd7548607e97f399",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C10",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C10-Mediation-Pramana.md",
+        "sha256": "d104361f1dfa4a71b3bb9a61559988b7b282b26864e31bfaf83ec9f74e49878e",
+        "sha256_census_receipt": "f0bd77cbab0be92e69f707de73e9f1a65746d6ea8b27433ae1b78ff28119049a",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C11",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C11-Quaternal-Logic.md",
+        "sha256": "ea1b5f51e19dfff7ee83c51ca3bfeca582adb84a93917ec9aeae1d998fd96431",
+        "sha256_census_receipt": "ac854490c281b9202b515750ca64259fd7861cc18946e9033f5fbb83515a65dd",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C12",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C12-Script-Frozen-Conditioned-Will.md",
+        "sha256": "dd5942bfd5a36ef43d55ccd4e59c41d833d16db10bb31d43c8a160214ea4fd2e",
+        "sha256_census_receipt": "c607111810107cb788dbe888bc229cd01dd09ce772771109e99695ed31f7b6bd",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C13",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C13-Prakasa-Vimarsa.md",
+        "sha256": "8fb9e3702f00c9d54cb275963f04363fd300bcd03713a995d845a0b6fdbf6599",
+        "sha256_census_receipt": "b2629b9f55a27484497db3283b57ca3298677151703fcd5f2266731105ae2278",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C14",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C14-Maya-Operative-Measure.md",
+        "sha256": "c8d14531064efe54d476b56650bb5a50926a868da6f77936d26eb6d0a44e7d83",
+        "sha256_census_receipt": "a4f55336cd57cc5ebe06224538edcaa9eb5fd4ff3304971ff838e3f240b326b2",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C15",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C15-Pasu-Bounded-Subject-Position.md",
+        "sha256": "272d029dc64c5be2c758ec34437922807d3d3b7ec9925085dd5cfc9644630ea7",
+        "sha256_census_receipt": "c027f399447f66310a6bd2042baa7e0c575ceeced921802b324ac890b47a77ba",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C16",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C16-Antahkarana-Inner-Instrument.md",
+        "sha256": "e74e839f75f6e899e2689ce1bf36fc14b52b9557a393ee8ba7b3f4e9f99e6d00",
+        "sha256_census_receipt": "5a00a4107bb31a2b09c9b9ba3d4e60a8c3809e87777887c22db44d90637cad12",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C17",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C17-Vikalpa-Samkalpa.md",
+        "sha256": "1d5cd1141f63bd60a02bcd8e5f19624574d472f0d9959d6a5a8f11ba190da180",
+        "sha256_census_receipt": "bb9278b7143dcd3ae47df3e078f49add3acccf8a87f33e7e55ef6ce08f3be107",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C18",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C18-Apoha.md",
+        "sha256": "d271c967a9ba8a8fdd5872ec8408557ba35eba24fe1f619c0807c2a3cdadd8fb",
+        "sha256_census_receipt": "53cd708255759d3bec7d0c35b64949e31de24ee60c50bbd33f00e4cab297ddb6",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C19",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C19-Pratyabhijna-Recognition.md",
+        "sha256": "6c7f7cfc0816a3e5d3c43a77f7d9c94f8cbf2b8c916ed88159719ee1ea0d81ca",
+        "sha256_census_receipt": "581013c2c228b0c939bdd36cb45e9b6459f1e4774d57c3079408caa15746a5c6",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C20",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C20-Arche-Topos.md",
+        "sha256": "5c41cdbc400ce14e0d48532e158d46205ee0ed97974dfd704a8223bca83feef9",
+        "sha256_census_receipt": "dc0e09a046970c8ee3619a3662a4b2f961f2093c891bc819933faf048b0ad94e",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C21",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C21-Living-Symbol-Idol.md",
+        "sha256": "81e501b743597f1ca6842fcb0164fa21a641a235451ca38d466e7e0a7a7a6420",
+        "sha256_census_receipt": "eebc80e938dfd53198a0f0789893c5d8470595bfd502ca6626ae1e3dae685fbc",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C22",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C22-Counterfeit-Symbolon.md",
+        "sha256": "9040bb6664f13d262d7cf470f0a90dd72488defd311faa5b24c6e972435d3943",
+        "sha256_census_receipt": "ae7833804db2f889be3514b25abeb0612c27881860e4ef3ebea87ef3e040ca73",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C23",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C23-Severance.md",
+        "sha256": "5fd5e3612dd11f78e81dc81da0849895d748fee58d0ea17bcfb4f0e7327bf044",
+        "sha256_census_receipt": "a15d4607f4e25b670ebdb933ee883fba541c4ffbb34daabbf23342a586658902",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C24",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C24-Fusion.md",
+        "sha256": "7d6dc77209cea8b8b4fa1ecf36d3c9452d611b629d193d82269b9e2a085b4410",
+        "sha256_census_receipt": "02eecc76161d931002a5f8e7a12b6d08c052200a693caac16c7ae98ee0ec4e38",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C25",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C25-Counterfeit-Gathering.md",
+        "sha256": "b74ba84bce8c92b51347701476d5776ad2966fcd8069a9c638819d6849bba7f0",
+        "sha256_census_receipt": "337ee1468492561f90d560509582236f08387a6b460e227d09b2e4c2748f70c9",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C26",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C26-Monoisation-Counter-Generation.md",
+        "sha256": "2ae8e0eeea7a55683cb62cb1b00273f11c9aa351b05aa14eec3a11708e3fab3a",
+        "sha256_census_receipt": "77fced4a60e8114fd2e75fd437ca945adff845ccba055ce9993c8bddc3c049ea",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C27",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim.md",
+        "sha256": "54b3b17acfe4670dca950d9b668b852352f5631ce8eb6e0ad0ebc02fd6ca504a",
+        "sha256_census_receipt": "1424096d1a7b28245dcb193d4e6a12750e0d6b6dc5edff0cb4d6395fce13269d",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C28",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C28-Covenant-Primary-Arbitration.md",
+        "sha256": "e26ccf9bfef85013d3b5c83df68e6570ba15d7d4342429cf9c461172a7d9364c",
+        "sha256_census_receipt": "615ae7cf198d4acc45eeeb37479fa5a88d79a4c6b93b3e31c6f6fdd660f4853f",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C29",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C29-Mediating-Office-Derivative-Sovereignty.md",
+        "sha256": "04b51b2f5e5e48fc4d803bb330ed131630b8560cf817bd187762f5bc11c2f747",
+        "sha256_census_receipt": "50585afbbfd190bcfadcb323f9d1e9244581c39d5848fe2d2e52e751416c46e6",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C30",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C30-Psychoid-Number.md",
+        "sha256": "9ed2196a76a86f2ec7053bad31f578288b56a3e54c4ce98e8ab570b5e49056da",
+        "sha256_census_receipt": "b503e87d30738c5199d4ae4ccd9ec7db0191b1e91a470d047fed5893ed93e7b6",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C31",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C31-Complex.md",
+        "sha256": "0a09377d3c777223bca24bd0ff3edef0b748301499355437a337598496d92643",
+        "sha256_census_receipt": "95452ed6b422c56a78628beaa898a58e0a36526d6bade5d4fcb657d316a9a085",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      },
+      {
+        "record_id": "C32",
+        "path": "submission-package/essay/symbolon/episteme/concepts/C32-Archetype.md",
+        "sha256": "6a6577093e0ca6d980c10c0857398c8f188faea09965874a09c1433d776fb8c7",
+        "sha256_census_receipt": "969a7e00c77f3f862afec67bdc2adab5ffa45b4ef1c0d8fd8818b27ae226411c",
+        "hash_note": "receipt hash stale, current-bytes hash used"
+      }
+    ]
+  },
+  "pointcloud_revision": "f257de5",
+  "journey": {
+    "id": "roz-c-concepts-1",
+    "name": "Return of Zero — Episteme Concepts C01–C32",
+    "scenes": 32,
+    "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+  },
+  "scenes": [
+    {
+      "scene_id": "c01",
+      "source_ref": "C01",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C01-Subject-Defined-Indefinability.md",
+      "sha256": "698985115706165bedf169eb630eba096bd23ca330e6a1cf7056f08511408012",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A02",
+          " A05",
+          " A27",
+          " A34",
+          " A36"
+        ],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "A ring of appearing; a given inside it that never becomes the ring."
+    },
+    {
+      "scene_id": "c02",
+      "source_ref": "C02",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C02-Faithful-Definition.md",
+      "sha256": "3e30e195e468a5d6d31709a74664c2b0e65a5137394df3a5a8cef37863ea333b",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A03",
+          " A18",
+          " A23",
+          " A36"
+        ],
+        "concept_links": [
+          "C03",
+          "C04",
+          "C21",
+          "C48"
+        ],
+        "source_ids": []
+      },
+      "form": "A definition that makes a window where a cage was feared."
+    },
+    {
+      "scene_id": "c03",
+      "source_ref": "C03",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C03-Determination.md",
+      "sha256": "36eceb4d3ee026c5e3a46adcafca06fda5070a2a15f3662eacc184ecb7f51a97",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A02",
+          " A03",
+          " A04",
+          " A08",
+          " A09",
+          " A10",
+          " A11",
+          " A15",
+          " A18",
+          " A33"
+        ],
+        "concept_links": [
+          "C02",
+          "C04",
+          "C08",
+          "C14",
+          "C17",
+          "C18",
+          "C45"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-definition-god-draft3",
+          "spencer-brown-1969-laws-form"
+        ]
+      },
+      "form": "A cut: this and its alternative held together by the slash that made them."
+    },
+    {
+      "scene_id": "c04",
+      "source_ref": "C04",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C04-Formal-Limit.md",
+      "sha256": "eaa4532ad65a282e15a89a40dfca78bf586728e606f2d0fc9a6e7eaca5339a0e",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A03",
+          " A10",
+          " A23",
+          " A33",
+          " A36"
+        ],
+        "concept_links": [
+          "C02",
+          "C03",
+          "C05",
+          "C09"
+        ],
+        "source_ids": [
+          "taylor-2026-definition-god-draft3",
+          "taylor-2026-core-theorems-pithy",
+          "godel-1931-undecidable-propositions",
+          "russell-1908-theory-types",
+          "spencer-brown-1969-laws-form"
+        ]
+      },
+      "form": "The account succeeds inside a condition it reproduces and never captures."
+    },
+    {
+      "scene_id": "c05",
+      "source_ref": "C05",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C05-Immutable-Gap.md",
+      "sha256": "da7304560864e10f4eb66d997755427b45e9bf798cda0ea3659ca3d306e6d94b",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A02",
+          " A03",
+          " A04",
+          " A17",
+          " A23",
+          " A27",
+          " A36"
+        ],
+        "concept_links": [
+          "C01",
+          "C02",
+          "C04",
+          "C06",
+          "C09"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-definition-god-draft3",
+          "taylor-2026-revision-notes-trust"
+        ]
+      },
+      "form": "Portrait and seeing: two edges with a gap no enlargement closes."
+    },
+    {
+      "scene_id": "c06",
+      "source_ref": "C06",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C06-Copula-Identification-with-Difference.md",
+      "sha256": "21ff4eaad14203a327bf8425addd59f5cd95289340322e72f404980be7a8da65",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A02",
+          " A03",
+          " A11",
+          " A12",
+          " A13",
+          " A21",
+          " A27",
+          " A34"
+        ],
+        "concept_links": [
+          "C03",
+          "C05",
+          "C08",
+          "C19",
+          "C23",
+          "C24",
+          "C50",
+          "C63"
+        ],
+        "source_ids": [
+          "kripke-1981-naming-and-necessity",
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-definition-god-draft3"
+        ]
+      },
+      "form": "A is A: two moments crossed; identification doing distinguishing work."
+    },
+    {
+      "scene_id": "c07",
+      "source_ref": "C07",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C07-Conditions-of-Worldhood.md",
+      "sha256": "868b90b98b5144a61b4c0d938f130ed3247516cf63f3cd62e17f542bf75c6e78",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A04",
+          " A22",
+          " A26",
+          " A30",
+          " A34"
+        ],
+        "concept_links": [
+          "C08",
+          "C09",
+          "C37",
+          "C41"
+        ],
+        "source_ids": [
+          "taylor-2026-symbolon-dynamics",
+          "taylor-2026-core-theorems-pithy"
+        ]
+      },
+      "form": "A centre of acting held by the conditions that let anything appear, matter, answer."
+    },
+    {
+      "scene_id": "c08",
+      "source_ref": "C08",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C08-Context-Context-Frame.md",
+      "sha256": "e38a3de8294d9022b80669a7c3367ff267e56ecbce8379f711ee207063c6b343",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A03",
+          " A04",
+          " A22",
+          " A26",
+          " A27",
+          " A28",
+          " A30"
+        ],
+        "concept_links": [
+          "C07",
+          "C09",
+          "C44"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-symbolon-dynamics"
+        ]
+      },
+      "form": "A bounded holding of conditions; the operation inside stays inside its world."
+    },
+    {
+      "scene_id": "c09",
+      "source_ref": "C09",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C09-Diaphaneity.md",
+      "sha256": "fbeb94a77d12e5dadd0eb940986e41ed685b5c5414b4da1996dd24cf665da10f",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A04",
+          " A22",
+          " A26",
+          " A31",
+          " A33"
+        ],
+        "concept_links": [
+          "C05",
+          "C08",
+          "C39",
+          "C40",
+          "C47"
+        ],
+        "source_ids": [
+          "gebser-1985-ever-present-origin",
+          "maroski-2025-seeing-through-solid-words",
+          "taylor-2026-core-theorems-pithy"
+        ]
+      },
+      "form": "Two fields of view: the medium visible in what the seeing lets through."
+    },
+    {
+      "scene_id": "c10",
+      "source_ref": "C10",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C10-Mediation-Pramana.md",
+      "sha256": "d104361f1dfa4a71b3bb9a61559988b7b282b26864e31bfaf83ec9f74e49878e",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A04",
+          " A05",
+          " A06",
+          " A23",
+          " A25",
+          " A31",
+          " A33"
+        ],
+        "concept_links": [
+          "C05",
+          "C08",
+          "C09",
+          "C29",
+          "C41",
+          "C48"
+        ],
+        "source_ids": [
+          "dyczkowski-2000-doctrine-vibration",
+          "taylor-2026-definition-god-draft3"
+        ]
+      },
+      "form": "Knower, means, known — the means in the middle carrying the whole warrant."
+    },
+    {
+      "scene_id": "c11",
+      "source_ref": "C11",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C11-Quaternal-Logic.md",
+      "sha256": "ea1b5f51e19dfff7ee83c51ca3bfeca582adb84a93917ec9aeae1d998fd96431",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A11",
+          " A12",
+          " A13",
+          " A14",
+          " A15",
+          " A16",
+          " A17",
+          " A18",
+          " A24",
+          " A33",
+          " A36"
+        ],
+        "concept_links": [
+          "C46",
+          "C49",
+          "C50",
+          "C61"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy"
+        ]
+      },
+      "form": "The relational field that generates forms, follows their transformations, makes return explicit."
+    },
+    {
+      "scene_id": "c12",
+      "source_ref": "C12",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C12-Script-Frozen-Conditioned-Will.md",
+      "sha256": "dd5942bfd5a36ef43d55ccd4e59c41d833d16db10bb31d43c8a160214ea4fd2e",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A07",
+          " A19",
+          " A24",
+          " A26",
+          " A31",
+          " A33"
+        ],
+        "concept_links": [
+          "C17",
+          "C31",
+          "C44",
+          "C46",
+          "C47"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "kripke-1981-naming-and-necessity",
+          "taylor-2026-symbolon-dynamics"
+        ]
+      },
+      "form": "A formed selection hardened into one repeatable course; alternatives obscured."
+    },
+    {
+      "scene_id": "c13",
+      "source_ref": "C13",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C13-Prakasa-Vimarsa.md",
+      "sha256": "8fb9e3702f00c9d54cb275963f04363fd300bcd03713a995d845a0b6fdbf6599",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A05",
+          " A06",
+          " A09",
+          " A14",
+          " A26",
+          " A32"
+        ],
+        "concept_links": [
+          "C10",
+          "C14",
+          "C17",
+          "C19",
+          "C43"
+        ],
+        "source_ids": [
+          "dyczkowski-2000-doctrine-vibration",
+          "abhinavagupta-singh-1988-paratrisika-vivarana"
+        ]
+      },
+      "form": "Luminous appearing; the reflexive gleam through which it is present to itself."
+    },
+    {
+      "scene_id": "c14",
+      "source_ref": "C14",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C14-Maya-Operative-Measure.md",
+      "sha256": "c8d14531064efe54d476b56650bb5a50926a868da6f77936d26eb6d0a44e7d83",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A09",
+          " A15",
+          " A19",
+          " A24",
+          " A26"
+        ],
+        "concept_links": [
+          "C13",
+          "C15",
+          "C16"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "dyczkowski-2000-doctrine-vibration"
+        ]
+      },
+      "form": "Operative measure: revealing and withholding in one measured field."
+    },
+    {
+      "scene_id": "c15",
+      "source_ref": "C15",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C15-Pasu-Bounded-Subject-Position.md",
+      "sha256": "272d029dc64c5be2c758ec34437922807d3d3b7ec9925085dd5cfc9644630ea7",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A09",
+          " A19",
+          " A26",
+          " A27",
+          " A28"
+        ],
+        "concept_links": [
+          "C01",
+          "C14",
+          "C16",
+          "C19",
+          "C41",
+          "C44"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "dyczkowski-2000-doctrine-vibration"
+        ]
+      },
+      "form": "A bounded knower: real capacities contracted into a finite horizon."
+    },
+    {
+      "scene_id": "c16",
+      "source_ref": "C16",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C16-Antahkarana-Inner-Instrument.md",
+      "sha256": "e74e839f75f6e899e2689ce1bf36fc14b52b9557a393ee8ba7b3f4e9f99e6d00",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A09",
+          " A19",
+          " A26",
+          " A27",
+          " A33"
+        ],
+        "concept_links": [
+          "C12",
+          "C15",
+          "C17",
+          "C18",
+          "C35",
+          "C40",
+          "C41",
+          "C47"
+        ],
+        "source_ids": [
+          "isvarakrishna-colebrooke-wilson-1837-sankhya-karika",
+          "taylor-2026-core-theorems-pithy"
+        ]
+      },
+      "form": "The inner instrument: determines, appropriates, coordinates — inspectable, not the subject."
+    },
+    {
+      "scene_id": "c17",
+      "source_ref": "C17",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C17-Vikalpa-Samkalpa.md",
+      "sha256": "1d5cd1141f63bd60a02bcd8e5f19624574d472f0d9959d6a5a8f11ba190da180",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A06",
+          " A07",
+          " A08",
+          " A09",
+          " A19",
+          " A26",
+          " A33"
+        ],
+        "concept_links": [
+          "C12",
+          "C13",
+          "C16",
+          "C18",
+          "C44",
+          "C47"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "dyczkowski-2000-doctrine-vibration",
+          "maccracken-2017-recognizing-recognition",
+          "kripke-1981-naming-and-necessity"
+        ]
+      },
+      "form": "Alternatives differentiated; a selected determination gathered into intention."
+    },
+    {
+      "scene_id": "c18",
+      "source_ref": "C18",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C18-Apoha.md",
+      "sha256": "d271c967a9ba8a8fdd5872ec8408557ba35eba24fe1f619c0807c2a3cdadd8fb",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A08",
+          " A12",
+          " A13",
+          " A14",
+          " A19",
+          " A33"
+        ],
+        "concept_links": [
+          "C03",
+          "C13",
+          "C17",
+          "C40",
+          "C45"
+        ],
+        "source_ids": [
+          "pind-2009-dignaga-anyapoha-dissertation",
+          "siderits-tillemans-chakrabarti-2011-apoha",
+          "taylor-2026-core-theorems-pithy",
+          "kripke-1981-naming-and-necessity"
+        ]
+      },
+      "form": "The mark carries its field of non-application; exclusion is how it applies."
+    },
+    {
+      "scene_id": "c19",
+      "source_ref": "C19",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C19-Pratyabhijna-Recognition.md",
+      "sha256": "6c7f7cfc0816a3e5d3c43a77f7d9c94f8cbf2b8c916ed88159719ee1ea0d81ca",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A09",
+          " A21",
+          " A27",
+          " A31",
+          " A35",
+          " A36"
+        ],
+        "concept_links": [
+          "C06",
+          "C13",
+          "C15",
+          "C34",
+          "C41",
+          "C43",
+          "C47",
+          "C51"
+        ],
+        "source_ids": [
+          "dyczkowski-2000-doctrine-vibration",
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-symbolon-dynamics",
+          "van-eenwyk-1997-archetypes-strange-attractors"
+        ]
+      },
+      "form": "Return through which the estranged determination is known from its source."
+    },
+    {
+      "scene_id": "c20",
+      "source_ref": "C20",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C20-Arche-Topos.md",
+      "sha256": "5c41cdbc400ce14e0d48532e158d46205ee0ed97974dfd704a8223bca83feef9",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A16",
+          " A17",
+          " A18",
+          " A19",
+          " A22",
+          " A26",
+          " A32"
+        ],
+        "concept_links": [
+          "C11",
+          "C41",
+          "C52"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-symbolon-dynamics",
+          "hatcher-2002-algebraic-topology"
+        ]
+      },
+      "form": "Place-making: axes through which positions, poles and horizons become determinate."
+    },
+    {
+      "scene_id": "c21",
+      "source_ref": "C21",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C21-Living-Symbol-Idol.md",
+      "sha256": "81e501b743597f1ca6842fcb0164fa21a641a235451ca38d466e7e0a7a7a6420",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A01",
+          " A18",
+          " A20",
+          " A23",
+          " A36"
+        ],
+        "concept_links": [
+          "C19",
+          "C22",
+          "C27",
+          "C41",
+          "C51",
+          "C61"
+        ],
+        "source_ids": [
+          "taylor-2026-symbolon-dynamics",
+          "taylor-2026-core-theorems-pithy",
+          "van-eenwyk-1997-archetypes-strange-attractors"
+        ]
+      },
+      "form": "The broken token: the fracture makes the absent counterpart operative."
+    },
+    {
+      "scene_id": "c22",
+      "source_ref": "C22",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C22-Counterfeit-Symbolon.md",
+      "sha256": "9040bb6664f13d262d7cf470f0a90dd72488defd311faa5b24c6e972435d3943",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A18",
+          " A19",
+          " A20",
+          " A24",
+          " A27",
+          " A36"
+        ],
+        "concept_links": [
+          "C12",
+          "C21",
+          "C23",
+          "C24",
+          "C25",
+          "C26",
+          "C27",
+          "C45",
+          "C51"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-symbolon-dynamics"
+        ]
+      },
+      "form": "A form of gathering that suppresses the difference through which it could live."
+    },
+    {
+      "scene_id": "c23",
+      "source_ref": "C23",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C23-Severance.md",
+      "sha256": "5fd5e3612dd11f78e81dc81da0849895d748fee58d0ea17bcfb4f0e7327bf044",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A13",
+          " A18",
+          " A19",
+          " A20",
+          " A24",
+          " A27",
+          " A29"
+        ],
+        "concept_links": [
+          "C12",
+          "C18",
+          "C21",
+          "C22",
+          "C24",
+          "C50"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy"
+        ]
+      },
+      "form": "Two grounds declared independent; the cut still leans on what it externalised."
+    },
+    {
+      "scene_id": "c24",
+      "source_ref": "C24",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C24-Fusion.md",
+      "sha256": "7d6dc77209cea8b8b4fa1ecf36d3c9452d611b629d193d82269b9e2a085b4410",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [
+          "A02",
+          " A13",
+          " A18",
+          " A19",
+          " A20",
+          " A21",
+          " A27",
+          " A35"
+        ],
+        "concept_links": [
+          "C06",
+          "C19",
+          "C22",
+          "C23",
+          "C36",
+          "C50"
+        ],
+        "source_ids": [
+          "taylor-2026-core-theorems-pithy",
+          "taylor-2026-symbolon-dynamics"
+        ]
+      },
+      "form": "Relation preserved only by erasing the distinctions through which terms meet."
+    },
+    {
+      "scene_id": "c25",
+      "source_ref": "C25",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C25-Counterfeit-Gathering.md",
+      "sha256": "b74ba84bce8c92b51347701476d5776ad2966fcd8069a9c638819d6849bba7f0",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "Differences arranged under a relation whose terms cannot be revised by the gathered."
+    },
+    {
+      "scene_id": "c26",
+      "source_ref": "C26",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C26-Monoisation-Counter-Generation.md",
+      "sha256": "2ae8e0eeea7a55683cb62cb1b00273f11c9aa351b05aa14eec3a11708e3fab3a",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "A local part occupying the whole’s source-office, then claiming to generate the field."
+    },
+    {
+      "scene_id": "c27",
+      "source_ref": "C27",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim.md",
+      "sha256": "54b3b17acfe4670dca950d9b668b852352f5631ce8eb6e0ad0ebc02fd6ca504a",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [
+          "C28",
+          "C29",
+          "C51"
+        ],
+        "source_ids": []
+      },
+      "form": "The account insulated from revision; a local 1 seated in the uncounted 0."
+    },
+    {
+      "scene_id": "c28",
+      "source_ref": "C28",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C28-Covenant-Primary-Arbitration.md",
+      "sha256": "e26ccf9bfef85013d3b5c83df68e6570ba15d7d4342429cf9c461172a7d9364c",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "Participants bound to a shared source-condition; authority finite, measure returned."
+    },
+    {
+      "scene_id": "c29",
+      "source_ref": "C29",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C29-Mediating-Office-Derivative-Sovereignty.md",
+      "sha256": "04b51b2f5e5e48fc4d803bb330ed131630b8560cf817bd187762f5bc11c2f747",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "A real office deciding within a received field; sovereignty derivative, not source."
+    },
+    {
+      "scene_id": "c30",
+      "source_ref": "C30",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C30-Psychoid-Number.md",
+      "sha256": "9ed2196a76a86f2ec7053bad31f578288b56a3e54c4ce98e8ab570b5e49056da",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Offered",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "Number crossed: intelligible relation, quantity, and image in one organising question."
+    },
+    {
+      "scene_id": "c31",
+      "source_ref": "C31",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C31-Complex.md",
+      "sha256": "0a09377d3c777223bca24bd0ff3edef0b748301499355437a337598496d92643",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "An affect-organised cluster deciding what can matter before judgment arrives."
+    },
+    {
+      "scene_id": "c32",
+      "source_ref": "C32",
+      "source_path": "submission-package/essay/symbolon/episteme/concepts/C32-Archetype.md",
+      "sha256": "6a6577093e0ca6d980c10c0857398c8f188faea09965874a09c1433d776fb8c7",
+      "hash_note": "receipt hash stale, current-bytes hash used",
+      "claim_status": "Argued",
+      "relations": {
+        "argument_consumers": [],
+        "concept_links": [],
+        "source_ids": []
+      },
+      "form": "The manifestation outstrips its content; the ordering relation never appears as an object."
+    }
+  ],
+  "assets": [
+    {
+      "kind": "glyph",
+      "ref": "inline entity text sources (only where the record states its own notation: c03 and c49 '/', c48 '0/1'); field materials and shape entities",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "episteme/roz-c-concepts-1.cover.png",
+  "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 32 scenes drafted at count 8000 and read as images via the scratch setScene driver (/tmp/roz-e3-drafts, session evidence)",
+  "status": "reviewed",
+  "notes": [
+    "Grammar: family-concept — one governing formation per concept shaped by its declared operation (64 distinct operations mapped: appearing-ring, cut, window-in-cage, broken token, merged disc, focal satellites, occupied centre, and so on); one definitional card (kicker = record_id + claim_status; italic = declared argument consumers, concept links, source_ids, capped with +n more — the exact lists are in this binding); body = the record's governing proposition compressed from the record's opening only.",
+    "Material: episteme register treatment per roz-corpus-base — print material on cooler paper #e9ece7, cooler ink #20262b: the instituted lattice. Status accent (Argued/Derived/Offered) is presentation-only encoding recorded in the family profile.",
+    "Text-layer sizes respect the engine minimum of 14 (sizes below 14 fail validateJourney: \"Invalid page text\" is also triggered by undersized text).",
+    "C scene ids are the lower-cased census record ids (c01…c64) per the collection README.",
+    "Enrichment moves 2026-10-06 (episteme lane, records re-read at fc59a719 under submission-package/essay/section-rooms/arguments/concepts/):",
+    "c01: the given disc walks the record's own list (a thought → a remembered scene → an ache → an act of judgment → “this is me”), each step growing/darkening as it becomes known; the ring never joins — repel pointer, breathing automation on the ring (appearing holds).",
+    "c02: attract pointer — the faithful definition draws the source in; warmer paper, slower dispersion (positive account).",
+    "c03: governing disc sequences the field → this (record: 'a field becomes this'), this grows and darkens; shove click = the cut.",
+    "c04: near-still operation that reproduces its bound — repel with edges weighted; camera eases back (transition 2.2).",
+    "c05: crossed-zero traversal 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 → 0/1 with tint/size objectStates (Ø darkest = occlusion); the two squares drift in opposed phase (the gap never closes); very weak repel (non-coincidence).",
+    "c06: the personal circuit I = Is → Who I am = What is → What I am = Who is? → I = Am, growing to its inward completion; two discs pulse in alternation (identification across difference); vortex click (the crossing).",
+    "c07: five conditions as a line layout; vortex pointer (the conditioning field); moss palette (worldhood as habitat).",
+    "c08: the frame's boundary — repel inside a tight radius, edge-weighted squares; slow speed (selection, not excuse).",
+    "c09: personed traversal knower → means → known → 180°→360°; excitation lfo = the luminous read-through; long transition (transparency develops).",
+    "c10: knower–means–known as three discs; attract (the means joins); body trimmed to ≤70 words, no claim changed.",
+    "c11: THE 3D SCENE — the compass plate: yantra centre at z −0.25 beneath, circumference ring at z 0, the ordering 00→01→10→11 walking the East–West diameter at z +0.15, N/S cardinal markers on the plate. Depth means: the four positions are borne by one traversable whole seen at an angle that shows the crossing across the diameter; centre = the untraversed aspect beneath the traversal. depthPerspective+occlusion+tint authored; vortex pointer (traversal).",
+    "c12: frozen script — the arrest: speed 0.07, turbulence 0.01, near-zero pointer (nothing reaches the criterion); flat earth palette.",
+    "c13: prakāśa–vimarśa — warm luminous field, attract (self-presence holds appearing and apprehending together).",
+    "c14: māyā as operative measure — the gnomon sequence five-by-five → 36−25 → 6²−5² → (6−5)(6+5) → 11 = 5+1+5 → six-by-six, growing to completion; dispersion lfo = contraction giving positive work.",
+    "c15: paśu — bounded horizon: repel with small radius; the disc's real capacities inside a finite ring.",
+    "c16: antaḥkaraṇa — inner instrument's offices in a column layout; attract (coordination).",
+    "c17: vikalpa → saṃkalpa — the two movements verbatim; alternatives scatter (high dispersion) and saṃkalpa gathers (smaller, denser); implode click = the gathering.",
+    "c18: apoha — a word → excludes other referents → not-non-pot → pot; the exclusion step slides toward the non-application ring with falling tintWeight (reach through what the mark does not apply to); ring drifts (the non-application field).",
+    "c19: pratyabhijñā — x → X → x with the middle grown and lit (the unknown expands capacity) and the returned x darker-edged (difference retained); triangle beat = the return; implode click (recognition gathers).",
+    "c20: arche-topos — place-making field: vortex/vortex with wide swirl (positions, poles, paths from one relation).",
+    "c21: living symbol — attract with halo (efficacy related to a source it does not exhaust); moss/earth (living).",
+    "c22: counterfeit symbolon — resemblance in the blocked return: shove click against a rust-ink field; slow, brittle roundness.",
+    "c23: severance — the strongest rupture: repel + shove, high turbulence (achieved difference misread as loss of relation).",
+    "c24: fusion — the opposite failure: implode click into a soft over-large disc (distinction erased); the journey's softest scene.",
+    "c25: counterfeit gathering — arranged grid of squares (differences arranged under a protected relation); attract with shove click (inclusion that can be revoked); italic authored from the record's own sentence.",
+    "c26: monoisation — local 1 → occupied source-office → field redescribed as derivative with the office swelling (scale lfo); vortex/vortex (the part turning the field around itself).",
+    "c27: protected account — insulated criterion: repel in a tight radius with edge-weighted square (the wall); dim, still field.",
+    "c28: covenant — binding to fidelity, scope and return: attract with steady pulse; blue/moss (a held relation).",
+    "c29: mediating office — vortex with weak strength (acts within a received field, does not source it); long transition (derivative, not originating).",
+    "c30: psychoid number (OFFERED kept on the kicker) — near-still luminous field with barely-there pointer (a research intuition held open); violet/slate.",
+    "c31: complex — salience grid with slow salience drift on the leading disc; attract (organises what can matter).",
+    "c32: archetype — vortex with irregular, haloed particles (the generative organisation drawn along paths no single interpretation commands).",
+    "Material character: concepts-1 keeps the print register — warm neutral papers, ink/slate/earth inks, rust reserved for the counterfeit/failure concepts (C22, C23, C25, C26, C27, C18's exclusion step), violet for the psychic/archetypal (C30, C32), moss for the living (C07, C16, C21, C28).",
+    "Beats: durations 12–16s and transitions 1.4–2.6 vary with the concept's tempo (arrests slow, ruptures snap, integrations lengthen); 9 automation lanes across the journey.",
+    "Sequences appear ONLY where the record itself is sequential (C01 list, C03 act, C05 crossed-zero, C06 circuit, C09 personed turn, C11 ordering, C14 gnomon, C17 two movements, C18 exclusion, C19 cross-reading, C26 reversal) — all step texts verbatim from the records at fc59a719."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-episteme-l2",
+    "lane": "enrich/expressions-20261006",
+    "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "note": "records re-read at fc59a719 — the C concepts live under submission-package/essay/section-rooms/arguments/concepts/ at that revision (bound source_path values keep their dbf3b17 homes under submission-package/essay/symbolon/episteme/concepts/; hashes below are dbf3b17 receipts and are not re-bound)"
+  },
+  "glyph_rationales": {
+    "0": "unobjectifiable presence bracketing-prior — the kartṛ-pole of the crossed-zero recognition (C05)",
+    "1": "unity affirmed with the differentiations retained (C05)",
+    "10": "third cardinal placement — expression meets its inverse across the diameter (C11)",
+    "11": "fourth cardinal placement — the crossing completed at the West (C11)",
+    "/": "the bare mark before assignment — two unassigned placements held by the slash (C03, C11's minimal form `/ = −/−`)",
+    "Ø": "the slash fused into the zero — the means has taken the knower's office (C05; AC §2)",
+    "X": "the expanded moment of the determining capacity — Taylor's notation (C19)",
+    "Ø/X": "the slash becomes visible between subject-side occlusion and object-side determination (C05)",
+    "(0/Ø)/(1/X)": "the two recognitions held in one field of availability (C05)",
+    "0/1": "the return that recognises the relation active throughout — ground and manifestation (C05, C01's field)",
+    "the field": "the undetermined side of determination — what the act makes definite (C03)",
+    "this": "the determined side — the field become distinguishable and addressable (C03)",
+    "a thought": "a content that becomes known while the Subject does not become an appearance (C01's own list)",
+    "a remembered scene": "a content that becomes known while the Subject does not become an appearance (C01's own list)",
+    "an ache": "a content that becomes known while the Subject does not become an appearance (C01's own list)",
+    "an act of judgment": "a content that becomes known while the Subject does not become an appearance (C01's own list)",
+    "“this is me”": "the self-referential content in C01's list — known without converting the Subject into an item",
+    "I = Is": "being spoken in its impersonal form — presence still said as something that is (C06 §5→0)",
+    "Who I am = What is": "the identification unfolded through the articulated whole (C06 §5→0)",
+    "What I am = Who is?": "the equating turned back toward the one performing it (C06 §5→0)",
+    "I = Am": "the identification spoken from within — the traversed relation carried in it (C06 §5→0)",
+    "knower": "first traversed position of the personed recognition (C09)",
+    "means": "second traversed position of the personed recognition (C09)",
+    "known": "third traversed position of the personed recognition (C09)",
+    "180°→360°": "the turn that voids each view's exclusive completeness and returns the achieved relation (C09)",
+    "00": "first cardinal placement of QL's ordering, borne by the whole circle (C11)",
+    "01": "second cardinal placement — the walk's approach to the diameter (C11)",
+    "five-by-five": "the bounded apparatus of the Sāṅkhya twenty-five in the gnomon reading (C14)",
+    "36−25": "the exact difference the tattva-gnomon cross-reading names (C14)",
+    "6²−5²": "the difference written as squares of the two gnomon sides (C14)",
+    "(6−5)(6+5)": "the factorisation through which 11 arises (C14)",
+    "11 = 5+1+5": "two five-unit strips and one new corner — Māyā's hinge (C14)",
+    "six-by-six": "the completed square the difference builds (C14)",
+    "vikalpa": "the movement that differentiates experience into qualified alternatives (C17)",
+    "saṃkalpa": "the movement that gathers selected differences into intention or workable arrangement (C17)",
+    "a word": "the mark whose application is at issue (C18)",
+    "excludes other referents": "apoha's constitutive exclusion — the word's reach through non-application (C18, Pind PSV V:11d)",
+    "not-non-pot": "the negative route by which the account reaches a pot (C18)",
+    "pot": "the positive term reached through exclusion — determinate reach (C18)",
+    "x": "the determining capacity as a particular — start and changed return of the cross-reading (C19, C34)",
+    "local 1": "the local determination before occupation (C26)",
+    "occupied source-office": "the part seated in the whole's source-office (C26)",
+    "field redescribed as derivative": "counter-generation — the conditioned field made to answer to the part (C26)"
+  }
+}
