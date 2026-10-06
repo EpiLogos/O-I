@@ -196,6 +196,7 @@ def desktop(page, base, prefix, label):
     check(f'[{label}] no horizontal overflow', ev('document.documentElement.scrollWidth <= innerWidth + 1'))
     library(page, base, prefix, label)
     check(f'[{label}] no page errors', not errors, '; '.join(errors[:3]))
+    graph_interaction_checks(page, base, prefix, label)
 
 
 def library(page, base, prefix, label):
@@ -280,6 +281,183 @@ def narrow(page, base, prefix, label):
     page.click('.bottombar [data-view="essay"]'); page.wait_for_timeout(500)
     page.screenshot(path=str(OUT / f'{label}-03-essay.png'))
     check(f'[{label}] no page errors', not errors, '; '.join(errors[:3]))
+    graph_touch_checks(page, base, prefix, label)
+
+
+# ───────── graph interaction checks (own block: the graph is a live force layout you can handle) ─────────
+# Corpus-agnostic: nothing here names a page other than the manuscript's movement 16, which every edition carries.
+
+
+def g_centre(page, nid):
+    b = page.locator(f'.gn[data-i="{nid}"] circle.n').bounding_box()
+    return b['x'] + b['width'] / 2, b['y'] + b['height'] / 2
+
+
+def g_positions(page):
+    return page.evaluate("Object.fromEntries(OI.graph.nodes().map(n=>[n.i,[n.x,n.y]]))")
+
+
+def g_still(page):
+    """Wait for the graph's own animation (fit, zoom buttons, a held drag) to finish: frames can be slow in software GL."""
+    page.wait_for_function('!OI.graph.moving()', timeout=60000)
+
+
+def g_empty_spot(page):
+    """A point inside the graph that is neither a node, nor the card, nor a control."""
+    return page.evaluate("""(()=>{const r=document.querySelector('#graph-svg').getBoundingClientRect();
+      for(let y=r.top+r.height*0.9;y>r.top+20;y-=14)for(let x=r.left+r.width*0.35;x<r.right-20;x+=14){const t=document.elementFromPoint(x,y);
+        if(t&&t.closest('#graph-svg')&&!t.closest('.gn')&&!t.closest('.gcard')&&!t.closest('.gzoom'))return [x,y]}return null})()""")
+
+
+def graph_interaction_checks(page, base, prefix, label):
+    """Click selects, double-click opens, drag moves the node and its neighbours without navigating, the view pans and zooms
+    about the cursor, the keyboard walks the graph, and it all survives a single-page navigation."""
+    ev = page.evaluate
+    errs = []
+    on_err = lambda e: errs.append(str(e))
+    on_con = lambda m: errs.append(m.text) if m.type == 'error' else None
+    page.on('pageerror', on_err); page.on('console', on_con)
+    page.goto(f'{base}{prefix}/essay/{MS}?m=16&view=field'); ready(page, 1500)
+    L = f'[{label}] graph:'
+    check(f'{L} the graph is one tab stop, announced as an interactive graph', ev("(()=>{const s=document.querySelector('#graph-svg');return s.tabIndex===0&&s.getAttribute('role')==='application'&&/Arrow keys/.test(s.getAttribute('aria-label'))})()"))
+    ids = ev("OI.graph.nodes().filter(n=>!n.focus).map(n=>n.i)")
+    check(f'{L} there are nodes to handle (at least 6)', len(ids) >= 6, str(len(ids)))
+    nid = ids[0]
+    # a 4 px dot is still a fair target: 8 px off its centre still lands on it
+    x, y = g_centre(page, nid)
+    hit = ev(f"(()=>{{const t=document.elementFromPoint({x + 8},{y});return t&&t.closest('.gn')?.dataset.i}})()")
+    check(f'{L} the hit area is larger than the dot', str(hit) == str(nid), f'{hit} vs {nid}')
+    # click selects: the node and its neighbourhood stay lit, the card offers the page; it does not navigate
+    page.mouse.click(x, y); page.wait_for_timeout(300)
+    check(f'{L} click selects one node and lights its neighbourhood', ev("document.querySelectorAll('.gn.is-sel').length") == 1 and ev("document.querySelector('#graph-svg').classList.contains('has-sel')") and ev("document.querySelectorAll('.gn.is-near').length") >= 2 and ev('OI.graph.selected()') == nid)
+    check(f'{L} the card names the page, its neighbours, and offers Open page', ev("!document.querySelector('#gcard').hidden") and 'Open page' in ev("document.querySelector('#gcard [data-open]')?.textContent||''") and 'neighbours' in ev("document.querySelector('#gcard').textContent") and ev('OI.T.list.length') == 1)
+    page.wait_for_timeout(1000); x, y = g_centre(page, nid)   # a second click, after the double-click window, keeps the selection
+    page.mouse.click(x, y); page.wait_for_timeout(300)
+    check(f'{L} clicking the selected node again does not toggle it off', ev('OI.graph.selected()') == nid)
+    spot = g_empty_spot(page)
+    check(f'{L} there is empty space to pan', spot is not None)
+    if spot:
+        page.mouse.click(*spot); page.wait_for_timeout(200)
+        check(f'{L} clicking empty space lets go', ev('OI.graph.selected()') is None and ev("document.querySelector('#gcard').hidden"))
+    # drag: the node follows, the others re-settle, nothing is opened or selected by the drag
+    x, y = g_centre(page, nid)
+    before = g_positions(page); mid = None
+    page.mouse.move(x, y); page.mouse.down(); page.mouse.move(x + 20, y + 15, steps=4); page.mouse.move(x + 70, y + 50, steps=8); page.wait_for_timeout(250)
+    mid = g_positions(page)
+    held = ev(f"OI.graph.nodes().find(n=>n.i=={nid}).fx!=null")
+    page.mouse.up(); page.wait_for_timeout(900)
+    after = g_positions(page)
+    d = lambda a, b, i: ((a[str(i)][0] - b[str(i)][0]) ** 2 + (a[str(i)][1] - b[str(i)][1]) ** 2) ** 0.5
+    others = [i for i in before if int(i) != nid and d(mid, before, i) > 0.5]
+    check(f'{L} dragging pins the node under the pointer while held', held and 60 < d(mid, before, nid) < 120, f'{d(mid, before, nid):.0f}px')
+    check(f'{L} dragging a node moves what it is linked to (live re-simulation)', len(others) >= 2, f'{len(others)} others moved')
+    check(f'{L} a dropped node stays where it was dropped', d(after, mid, nid) < 6, f'{d(after, mid, nid):.1f}px')
+    check(f'{L} a drag neither navigates nor selects (no click after a drag)', ev('OI.T.list.length') == 1 and ev('OI.graph.selected()') is None and ev("document.querySelector('#gcard').hidden"))
+    # shift-drag pins for good; shift-click lets go
+    x, y = g_centre(page, nid)
+    page.keyboard.down('Shift'); page.mouse.move(x, y); page.mouse.down(); page.mouse.move(x - 40, y - 20, steps=5); page.mouse.up(); page.keyboard.up('Shift'); page.wait_for_timeout(500)
+    check(f'{L} shift-drag pins a node', ev(f"document.querySelector('.gn[data-i=\"{nid}\"]').classList.contains('is-pinned')") and ev(f"OI.graph.nodes().find(n=>n.i=={nid}).fx!=null"))
+    x, y = g_centre(page, nid)
+    page.keyboard.down('Shift'); page.mouse.click(x, y); page.keyboard.up('Shift'); page.wait_for_timeout(400)
+    check(f'{L} shift-click lets a pinned node go', not ev(f"document.querySelector('.gn[data-i=\"{nid}\"]').classList.contains('is-pinned')"))
+    # wheel zooms about the cursor
+    v0 = ev('OI.graph.view()'); spot = g_empty_spot(page) or [700, 300]
+    r = ev("(()=>{const r=document.querySelector('#graph-svg').getBoundingClientRect();return [r.left,r.top]})()")
+    wx0 = (spot[0] - r[0] - v0['x']) / v0['k']; wy0 = (spot[1] - r[1] - v0['y']) / v0['k']
+    page.mouse.move(*spot); page.mouse.wheel(0, -400); page.wait_for_timeout(200)
+    v1 = ev('OI.graph.view()')
+    wx1 = (spot[0] - r[0] - v1['x']) / v1['k']; wy1 = (spot[1] - r[1] - v1['y']) / v1['k']
+    check(f'{L} the wheel zooms in about the cursor (the point under it stays put)', v1['k'] > v0['k'] * 1.2 and abs(wx1 - wx0) < 1.5 and abs(wy1 - wy0) < 1.5, f"k {v0['k']:.2f}→{v1['k']:.2f}")
+    page.mouse.wheel(0, 3000); page.wait_for_timeout(200)
+    check(f'{L} zoom is bounded', 0.29 < ev("OI.graph.view().k") < 6.01)
+    # pan: drag on empty space
+    page.keyboard.press('0'); g_still(page)
+    spot = g_empty_spot(page)
+    if spot:
+        v0 = ev('OI.graph.view()')
+        page.mouse.move(*spot); page.mouse.down(); page.mouse.move(spot[0] + 50, spot[1] + 30, steps=6); page.mouse.up(); page.wait_for_timeout(150)
+        v1 = ev('OI.graph.view()')
+        check(f'{L} dragging empty space pans the view without moving a node', abs((v1['x'] - v0['x']) - 50) < 1.5 and abs((v1['y'] - v0['y']) - 30) < 1.5 and abs(v1['k'] - v0['k']) < 1e-6 and ev('OI.T.list.length') == 1, f"{v0} → {v1}")
+    # the on-graph buttons
+    k0 = ev('OI.graph.view().k')
+    page.click('.gzoom [data-z="in"]'); g_still(page)
+    k1 = ev('OI.graph.view().k')
+    page.click('.gzoom [data-z="out"]'); page.click('.gzoom [data-z="out"]'); g_still(page)
+    k2 = ev('OI.graph.view().k')
+    check(f'{L} + and − buttons zoom', k1 > k0 and k2 < k1, f'{k0:.2f} {k1:.2f} {k2:.2f}')
+    page.click('#graph-fit'); g_still(page)
+    inside = ev("(()=>{const v=OI.graph.view(),s=OI.graph.size();return OI.graph.nodes().every(n=>{const x=n.x*v.k+v.x,y=n.y*v.k+v.y;return x>=0&&x<=s.W&&y>=0&&y<=s.H})})()")
+    check(f'{L} fit frames every node', inside)
+    # keyboard: arrows walk, Escape lets go, Enter opens
+    page.focus('#graph-svg'); page.keyboard.press('ArrowRight'); page.wait_for_timeout(250)
+    first = ev('OI.graph.selected()')
+    page.keyboard.press('ArrowDown'); page.wait_for_timeout(250)
+    second = ev('OI.graph.selected()')
+    check(f'{L} arrow keys select and move between nodes', first is not None and second is not None and ev("document.querySelectorAll('.gn.is-sel').length") == 1 and ev("document.querySelector('#graph-svg').classList.contains('kb-focus')"), f'{first} → {second}')
+    page.keyboard.press('Escape'); page.wait_for_timeout(150)
+    check(f'{L} Escape lets go', ev('OI.graph.selected()') is None and ev("document.querySelector('#gcard').hidden"))
+    page.keyboard.press('ArrowLeft'); page.wait_for_timeout(200)
+    target = ev('OI.graph.selected()')
+    page.keyboard.press('Enter'); page.wait_for_timeout(1600)
+    check(f'{L} Enter opens the selected page as a tangent, the essay tab is kept', ev('OI.T.list.length') == 2 and ev('OI.S.cur.i') == target and ev('OI.T.list[0].main') and ev('OI.T.list[1].preview'), f'{target}')
+    # double-click opens a reader page; from here (a tangent) the graph is still alive
+    ids = ev("OI.graph.nodes().filter(n=>!n.focus).map(n=>n.i)")
+    if ids:
+        x, y = g_centre(page, ids[0])
+        page.mouse.dblclick(x, y); page.wait_for_timeout(1500)
+        check(f'{L} double-click opens the page (reader and graph follow)', ev('OI.S.cur.i') == ids[0] and ev('OI.T.list.length') == 2 and ev("!document.querySelector('#tangent-pane').hidden"), str(ids[0]))
+    # a single-page navigation rebuilds the graph: the handlers must not be doubled, and nothing leaks
+    nxt = ev("OI.graph.nodes().find(n=>!n.focus).i")
+    ev(f'OI.openMain({nxt})'); page.wait_for_timeout(2500)
+    ids = ev("OI.graph.nodes().filter(n=>!n.focus).map(n=>n.i)")
+    if ids:
+        x, y = g_centre(page, ids[0])
+        page.mouse.click(x, y); page.wait_for_timeout(300)
+        check(f'{L} after a page turn one click selects (handlers mounted once)', ev("document.querySelectorAll('.gn.is-sel').length") == 1 and ev('OI.graph.selected()') == ids[0])
+        before = g_positions(page); page.mouse.move(x, y); page.mouse.down(); page.mouse.move(x + 40, y + 30, steps=6); page.mouse.up(); page.wait_for_timeout(500)
+        after = g_positions(page)
+        check(f'{L} after a page turn dragging still works', d(after, before, ids[0]) > 30 and ev('OI.T.list.length') >= 1)
+    check(f'{L} one live region and one set of zoom buttons after the turn', ev("document.querySelectorAll('.gzoom').length") == 1 and ev("document.querySelectorAll('#graph-container .sr-only').length") == 1)
+    # the force layout holds up: 400 nodes settle quickly and a step costs a few milliseconds
+    cost = ev("""(()=>{const D=OI.D,top=[...D.nodes.keys()].sort((a,b)=>D.deg[b]-D.deg[a]).slice(0,400);OI.graph.stress(top);
+      const t=performance.now();for(let k=0;k<30;k++)OI.graph.step(0.5);return (performance.now()-t)/30})()""")
+    check(f'{L} a 400-node layout steps in under 12 ms', cost < 12, f'{cost:.2f} ms/step')
+    page.remove_listener('pageerror', on_err); page.remove_listener('console', on_con)
+    check(f'{L} no console or page errors during all of it', not errs, '; '.join(errs[:3]))
+
+
+def graph_touch_checks(page, base, prefix, label):
+    """Phone: tap selects, a touch drag moves a node, two fingers pinch, and the graph takes the touches the page must not."""
+    ev = page.evaluate
+    L = f'[{label}] graph (touch):'
+    errs = []
+    on_err = lambda e: errs.append(str(e)); page.on('pageerror', on_err)
+    page.goto(f'{base}{prefix}/essay/{MS}?m=16&view=field'); ready(page, 1500)
+    cdp = page.context.new_cdp_session(page)
+    touch = lambda typ, pts: cdp.send('Input.dispatchTouchEvent', {'type': typ, 'touchPoints': [{'x': a, 'y': b, 'id': i} for i, (a, b) in enumerate(pts)]})
+    check(f'{L} the graph owns its touches (touch-action none), the rest of the page keeps scrolling', ev("getComputedStyle(document.querySelector('#graph-svg')).touchAction")  in ('none',) or ev("getComputedStyle(document.querySelector('#graph-container')).touchAction") == 'none')
+    ids = ev("OI.graph.nodes().filter(n=>!n.focus).map(n=>n.i)"); nid = ids[0]
+    x, y = g_centre(page, nid)
+    page.touchscreen.tap(x, y); page.wait_for_timeout(350)
+    check(f'{L} a tap selects and shows the card', ev('OI.graph.selected()') == nid and ev("!document.querySelector('#gcard').hidden"))
+    page.touchscreen.tap(*(g_empty_spot(page) or [20, 100])); page.wait_for_timeout(300)
+    x, y = g_centre(page, nid); p0 = g_positions(page)[str(nid)]
+    touch('touchStart', [(x, y)])
+    for k in range(1, 9): touch('touchMove', [(x + k * 6, y + k * 5)]); page.wait_for_timeout(16)
+    touch('touchEnd', []); page.wait_for_timeout(500)
+    p1 = g_positions(page)[str(nid)]
+    check(f'{L} a touch drag moves the node, and neither selects nor navigates', ((p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2) ** 0.5 > 30 and ev('OI.graph.selected()') is None and ev('OI.T.list.length') == 1)
+    c = ev("(()=>{const r=document.querySelector('#graph-svg').getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2]})()")
+    k0 = ev('OI.graph.view().k')
+    touch('touchStart', [(c[0] - 30, c[1]), (c[0] + 30, c[1])])
+    for k in range(1, 9): touch('touchMove', [(c[0] - 30 - k * 8, c[1]), (c[0] + 30 + k * 8, c[1])]); page.wait_for_timeout(16)
+    touch('touchEnd', []); page.wait_for_timeout(300)
+    k1 = ev('OI.graph.view().k')
+    check(f'{L} two fingers pinch to zoom', k1 > k0 * 1.8 and ev('OI.graph.selected()') is None, f'{k0:.2f}→{k1:.2f}')
+    ok_zoom = ev("(()=>{const r=document.querySelector('.gzoom button').getBoundingClientRect();return r.width>=36&&r.height>=34})()")
+    check(f'{L} the zoom buttons are finger-sized', ok_zoom)
+    page.remove_listener('pageerror', on_err)
+    check(f'{L} no page errors', not errs, '; '.join(errs[:3]))
 
 
 def main():
