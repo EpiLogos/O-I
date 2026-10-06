@@ -1,0 +1,135 @@
+{
+  "artifact": "rooms/roz-room-02-return-of-zero.journey.json",
+  "family": "rooms",
+  "room_slug": "02-return-of-zero",
+  "worker": "E1",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-essay",
+    "family-section-room"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719",
+    "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+    "records": [
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+        "sha256": "a844e41ad2fb8cb15a8d8e82dd9cf1e27135408af1bf9a8267327934638e71cc"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+        "sha256": "5019fd721937429c9bd1c177f7f10292a6affc99ccb8aeefa1550c9246c004a5"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/13-s1-p0-sign-migrates.md",
+        "sha256": "cd73f03956fbf4982812468bb382d9487f552c51aefbbc868a932ea3052009af"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+        "sha256": "020e2b99f009b93eb71285090821b5f0cedb1af9a954eea241ed4aac26a5c2f0"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+        "sha256": "f8bb4b9d84b72809b65c264081585cf097159a926d1aeca01b09903cba600498"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+        "sha256": "6d80ad9ba234df2f7b6331e80c4980b71d94eef1b8befa31ff057b36d535b84a"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "sha256": "ec53f6b9e68dba4112544e8692f22784e1bba1b4f000bbb457c1abeb41d00aae"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+        "sha256": "ed41e30a18998115a1a43790c1620b1269a2d6a52238988c6d3d0313bbafadc2"
+      }
+    ]
+  },
+  "pointcloud_revision": "f257de5",
+  "scenes": [
+    {
+      "scene_id": "movement-13",
+      "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/movements/13-s1-p0-sign-migrates.md",
+      "relations": "movement identity: §1 · #0 — A Sign Migrates Between Worlds · canonical route: P1-M13 → A10 · A15 / C03 · C52 — Encounter Name/Count/Account; zero-history Episteme · reading path: ← previous · M12 Objective Internality   ·   next → M14 Śūnya Becomes Operational"
+    },
+    {
+      "scene_id": "movement-14",
+      "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+      "relations": "movement identity: §1 · #1 — Śūnya Becomes Operational · canonical route: P1-M14 → A10 · A23 / C03 · C48 · C52 — Count + trust-under-limit · reading path: ← previous · M13 A Sign Migrates Between Worlds   ·   next → M15 The Empty Set Generates One"
+    },
+    {
+      "scene_id": "movement-15",
+      "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+      "relations": "movement identity: §1 · #2 — The Empty Set Generates One · canonical route: P1-M15 → A10 · A11 · A14 / C49 · C52 · C64 — formal-neighbour Matheme; no retrospective proof by set theory · reading path: ← previous · M14 Śūnya Becomes Operational   ·   next → M16 The Crossed Zero"
+    },
+    {
+      "scene_id": "movement-16",
+      "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+      "relations": "movement identity: §1 · #3 — The Crossed Zero · canonical route: P1-M16 → A10 · A18 / C21 · C52 · C61 — Symbol/Account/Trust + crossed-zero Matheme · reading path: ← previous · M15 The Empty Set Generates One   ·   next → M17 Zero Keeps One Foot Outside Mathematics"
+    },
+    {
+      "scene_id": "movement-17",
+      "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+      "relations": "movement identity: §1 · #4 — Zero Keeps One Foot Outside Mathematics · canonical route: P1-M17 → A10 · A18 · A23 / C21 · C48 · C52 · C61 — cross-register return with explicit warrant boundaries · reading path: ← previous · M16 The Crossed Zero   ·   next → M18 The Loan Returns"
+    },
+    {
+      "scene_id": "movement-18",
+      "source_ref": "submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+      "relations": "movement identity: §1 · #5→0 — The Loan Returns · canonical route: P1-M18 → A11 · A15 · A23 / C48 · C49 — Symbol/Account/Trust + Apportionment/Economy · reading path: ← previous · M17 Zero Keeps One Foot Outside Mathematics   ·   next → M19 Difference Cannot Be Escaped"
+    }
+  ],
+  "assets": [
+    {
+      "kind": "diagram",
+      "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "rooms/roz-room-02-return-of-zero.cover.png",
+  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+  "status": "captured",
+  "notes": [
+    "E0 acceptance repair: text/field collision fixed on movement-14 and movement-18 (spot-checked) and the same class on all six scenes — formations shifted right-of-centre (GX 0.2), 0/1↔1/0 pair re-centred at ±0.5 about GX with text column 320, route layer moved to top-left; cover re-captured at authored count.",
+    "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+    "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+    "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+    "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+    "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+    "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+    "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+    "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+    "m13 3D (z = the worlds of reception): the plate's own token walks the four-frame route Babylon → India → Arabia → Europe, each world a depth plane holding a faint square frame; the fifth step fades the token and cools it blue — the fork's empty frame drawn empty (no verified shelfmark). Depth LFO = the route drifts. Pointer attract 0.5.",
+    "m14 śūnya operational: 'a+0=a' → 'a·0=0' with the second rule darkening (difference absorbed); the standing ring = the differences the product cannot recover; vortex pointer, circulation LFO.",
+    "m15 the empty set generates one: ∅ → {∅} → {∅,{∅}} growing and deepening step to step — generation, not magic; implode click (assembled from nothing).",
+    "m16 the crossed zero — Ø's single appearance in the corpus: '0' → 'Ø' fuses the stroke into the zero at weight 0.9; repel pointer 0.7 (the zero-space cannot be filled); the scene holds two steps only — the plate performs the first occlusion and its recognition, no further step.",
+    "m17 outside mathematics: '1/0' → '0·q=1' (reddens: the impossible demand) → '∞' (the adjoined point that discloses the container); shove pointer = the exception that breaks the field open; saw LFO.",
+    "m18 the loan returns (#5→0, the earning): the boundaries 0/1 and 1/0 stand fixed at repel while the mediant walker fills between — 1/1 → 1/2 → 2/1 — and lands as the earned 0/1 below the row, reddened and heaviest (notation earned, not borrowed); vortex/vortex pointer = the generative spiral; longest duration 16.",
+    "Legibility pattern (all members, 2026-10-06): every sequence walks on a dedicated TEXT-shaped walker entity; the scene's original formation stays as the quiet field form behind it (tintWeight ≤ 0.25), and walk scenes run calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22) so letterforms can hold — the wave-1 legible-walk pattern. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-essay-l2",
+    "lane": "ESSAY+ROOMS wave 2",
+    "basis_commit": "dbf3b17"
+  },
+  "glyph_rationales": {
+    "0": "M13→M16: the kept blank place becoming the numeral — and at m16 the zero-space the stroke crosses without filling",
+    "·": "M13: the plate's own token (Plate 1: the disc stands for no historical numeral form) — the sign migrates; its witnesses do not migrate with it",
+    "a+0=a": "M14: addition — the other quantity survives unchanged (Brahmagupta's rules; absence operational)",
+    "a·0=0": "M14: multiplication — different quantities sent to the same result; the operation absorbs a distinction the numbers still possess (the step darkens: absorption)",
+    "∅": "M15: the empty set — 0=∅ in the von Neumann construction: what can be generated from an apparently meagre beginning",
+    "{∅}": "M15: 1={∅} — the multiplicative identity generated from nothing (the ladder grows: each step larger)",
+    "{∅,{∅}}": "M15: 2={∅,{∅}} — the construction's second rung, ordinals from the empty set",
+    "Ø": "M16: the crossed zero with its ONE job — the mediating stroke present but fused into the zero it crosses; a relation whose middle is not yet recognised as middle (Plate 2: 0 → Ø; occlusion only, no further step — the full sequence waits for psychoid material, room-05 m34)",
+    "1/0": "M17: the failed quotient — no element q satisfies 0·q=1 in a field; the frame disclosed at zero",
+    "0·q=1": "M17: the record's own equation — distributivity forces 0q=0, so the required product would make zero equal one (the step reddens: the impossible demand)",
+    "∞": "M17: the point at infinity the projective line adjoins — completion is always completion within a declared structure",
+    "0/1": "M18: the earned relational notation (§1 · #5→0) — the loan returned with mathematical interest; also the mediant walker's final form, recognition's return to the boundary pair",
+    "1/1": "M18: the first mediant (0+1)/(1+0) — inserted between the two boundaries",
+    "1/2": "M18: the mediant inserted between the left boundary and the result — Kaplan's generative construction",
+    "2/1": "M18: the mediant inserted between the result and the right boundary — endpoints remain while new terms become a sequence"
+  }
+}
