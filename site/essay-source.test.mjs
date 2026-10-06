@@ -52,3 +52,24 @@ test('frontmatter keeps the last native source identity without touching prose',
   const result=dedupeFrontmatter(input);
   assert.equal(result.changed,true);assert.equal(result.text,'---\ntitle: Source\nsource_id: admitted-source-slug\n---'+prose);
 });
+
+test('raster images publish from an images/ folder beside the record that cites them; nothing else rides along', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'essay-images-'));
+  try {
+    const essay = join(dir, 'submission-package/essay');
+    await mkdir(join(essay, 'section-rooms/00-integral-threshold'), { recursive: true });
+    await writeFile(join(essay, 'README.md'), '# Foundation\n');
+    await writeFile(join(essay, 'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'), '# §0/1\n');
+    const record = join(essay, 'symbolon/mytheme/worlds/hellenic/ares');
+    await mkdir(join(record, 'images'), { recursive: true });
+    await writeFile(join(record, 'WHOLE.md'), '# Ares\n\n![A painting](images/ares.jpg)\n');
+    await writeFile(join(record, 'images/ares.jpg'), Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
+    await writeFile(join(record, 'images/ares.gen.py'), 'print("generator")\n');
+    await writeFile(join(record, 'stray.png'), Buffer.from([1, 2, 3]));
+    await mkdir(join(essay, 'working/images'), { recursive: true });
+    await writeFile(join(essay, 'working/images/draft.png'), Buffer.from([1]));
+    const inputs = await readEssayInputs(essay);
+    const assets = inputs.entries.filter((e) => e.kind === 'asset').map((e) => e.rel);
+    assert.deepEqual(assets, ['symbolon/mytheme/worlds/hellenic/ares/images/ares.jpg']);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

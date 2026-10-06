@@ -115,9 +115,9 @@ export const arrowRegex = new RegExp(/(-{1,2}>|={1,2}>|<-{1,2}|<={1,2})/g)
 // \[\[               -> open brace
 // ([^\[\]\|\#]+)     -> one or more non-special characters ([,],|, or #) (name)
 // (#[^\[\]\|\#]+)?   -> # then one or more non-special characters (heading link)
-// (\\?\|[^\[\]\#]+)? -> optional escape \ then | then zero or more non-special characters (alias)
+// (\\?\|[^\[\]]*)?   -> optional escape \ then | then zero or more characters except [ and ] (alias; the corpus writes "#4" in aliases)
 export const wikilinkRegex = new RegExp(
-  /!?\[\[([^\[\]\|\#\\]+)?(#+[^\[\]\|\#\\]+)?(\\?\|[^\[\]\#]*)?\]\]/g,
+  /!?\[\[([^\[\]\|\#\\]+)?(#+[^\[\]\|\#\\]+)?(\\?\|[^\[\]]*)?\]\]/g,
 )
 
 // ^\|([^\n])+\|\n(\|) -> matches the header row

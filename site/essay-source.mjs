@@ -10,6 +10,9 @@ import { ESSAY_REF, ESSAY_REMOTE, isPublishedMarkdown } from './essay-browser.mj
 const exec = promisify(execFile);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const visualDomains = ['symbolon/matheme/diagrams/', 'symbolon/mytheme/plates/', 'symbolon/mytheme/media/', 'symbolon/episteme/figures/'];
+// Raster images live beside the record that cites them, in an `images/` folder
+// under the symbolon domains; they publish with the page that embeds them.
+const imageFolder = rel => rel.startsWith('symbolon/') && rel.split('/').slice(0, -1).includes('images');
 const assetExtensions = new Set(['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.pdf', '.mp4', '.webm', '.mp3', '.wav', '.ogg']);
 
 function essayDir(root) {
@@ -58,7 +61,7 @@ export async function readEssayInputs(essay) {
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) await walk(join(dir, entry.name), rel);
       else if (entry.isFile() && (isPublishedMarkdown(rel) ||
-        (visualDomains.some(domain => rel.startsWith(domain)) && assetExtensions.has(extname(rel).toLowerCase())))) {
+        ((visualDomains.some(domain => rel.startsWith(domain)) || imageFolder(rel)) && assetExtensions.has(extname(rel).toLowerCase())))) {
         const bytes = await readFile(join(dir, entry.name));
         entries.push({ rel, bytes, sha256: sha256(bytes), kind: rel.endsWith('.md') ? 'markdown' : 'asset' });
       }

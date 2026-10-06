@@ -1,15 +1,19 @@
 import { QuartzTransformerPlugin } from "../types"
 import {
-  FullSlug,
-  RelativeURL,
-  SimpleSlug,
-  TransformOptions,
+  type FullSlug,
+  type RelativeURL,
+  type SimpleSlug,
+  type TransformOptions,
   stripSlashes,
   simplifySlug,
   splitAnchor,
   transformLink,
+  resolveRelative,
+  slugifyFilePath,
+  type FilePath,
 } from "../../util/path"
 import path from "path"
+import fs from "fs"
 import { visit } from "unist-util-visit"
 import isAbsoluteUrl from "is-absolute-url"
 import { Root } from "hast"
@@ -32,11 +36,61 @@ const defaultOptions: Options = {
   externalLinkIcon: true,
 }
 
+
+/** Intrinsic pixel size of a staged image (png/jpeg/gif/webp/svg), read from its header. */
+function imageSize(file: string): { width: number; height: number } | null {
+  try {
+    const buf = fs.readFileSync(file)
+    if (buf.length > 24 && buf.readUInt32BE(0) === 0x89504e47) return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) }
+    if (buf.length > 10 && buf.toString("ascii", 0, 3) === "GIF") return { width: buf.readUInt16LE(6), height: buf.readUInt16LE(8) }
+    if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") {
+      const kind = buf.toString("ascii", 12, 16)
+      if (kind === "VP8X") return { width: 1 + buf.readUIntLE(24, 3), height: 1 + buf.readUIntLE(27, 3) }
+      if (kind === "VP8 ") return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff }
+      if (kind === "VP8L") { const b = buf.readUInt32LE(21); return { width: 1 + (b & 0x3fff), height: 1 + ((b >> 14) & 0x3fff) } }
+    }
+    if (buf[0] === 0xff && buf[1] === 0xd8) {
+      let at = 2
+      while (at + 9 < buf.length) {
+        if (buf[at] !== 0xff) { at++; continue }
+        const marker = buf[at + 1]
+        if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) return { height: buf.readUInt16BE(at + 5), width: buf.readUInt16BE(at + 7) }
+        at += 2 + buf.readUInt16BE(at + 2)
+      }
+      return null
+    }
+    const head = buf.toString("utf8", 0, 1200)
+    if (/<svg[\s>]/.test(head)) {
+      const box = head.match(/viewBox="[\d.\-]+[ ,]+[\d.\-]+[ ,]+([\d.]+)[ ,]+([\d.]+)"/)
+      if (box) return { width: Math.round(parseFloat(box[1])), height: Math.round(parseFloat(box[2])) }
+    }
+  } catch {}
+  return null
+}
+
+/**
+ * Corpus links are written as true relative file paths (`../ROOM-02-x.md`, `15-x.md#a`).
+ * Quartz reads them from the vault root unless the file name is unique, which breaks
+ * most of them. Resolve them against the linking page's own folder first.
+ */
+export function resolveRelativeSlug(cur: FullSlug, dest: string, slugs: Set<string>): string | null {
+  const [fp, anchor] = splitAnchor(decodeURI(dest))
+  if (!fp || /^[a-z][a-z0-9+.-]*:/i.test(fp)) return null
+  if (!/\.md$/i.test(fp) && !/^\.{1,2}\//.test(fp)) return null
+  const joined = path.posix.normalize(path.posix.join(path.posix.dirname(cur), fp.replace(/\/$/, "")))
+  if (joined.startsWith("..")) return null
+  const slug = slugifyFilePath((joined.replace(/\.md$/i, "") + ".md") as FilePath)
+  const hit = [slug, slug + "/index", slug === "README" ? "index" : slug].find((c) => slugs.has(c))
+  if (!hit) return null
+  return resolveRelative(cur, hit as FullSlug) + anchor
+}
+
 export const CrawlLinks: QuartzTransformerPlugin<Partial<Options>> = (userOpts) => {
   const opts = { ...defaultOptions, ...userOpts }
   return {
     name: "LinkProcessing",
     htmlPlugins(ctx) {
+      const slugSet = new Set<string>(ctx.allSlugs)
       return [
         () => {
           return (tree: Root, file) => {
@@ -103,11 +157,8 @@ export const CrawlLinks: QuartzTransformerPlugin<Partial<Options>> = (userOpts) 
                   isAbsoluteUrl(dest, { httpOnly: false }) || dest.startsWith("#")
                 )
                 if (isInternal) {
-                  dest = node.properties.href = transformLink(
-                    file.data.slug!,
-                    dest,
-                    transformOptions,
-                  )
+                  dest = node.properties.href = (resolveRelativeSlug(file.data.slug!, dest, slugSet) ??
+                    transformLink(file.data.slug!, dest, transformOptions)) as RelativeURL
 
                   // url.resolve is considered legacy
                   // WHATWG equivalent https://nodejs.dev/en/api/v18/url/#urlresolvefrom-to
@@ -150,12 +201,25 @@ export const CrawlLinks: QuartzTransformerPlugin<Partial<Options>> = (userOpts) 
 
                 if (!isAbsoluteUrl(node.properties.src, { httpOnly: false })) {
                   let dest = node.properties.src as RelativeURL
-                  dest = node.properties.src = transformLink(
-                    file.data.slug!,
-                    dest,
-                    transformOptions,
-                  )
-                  node.properties.src = dest
+                  // A path that already resolves to a staged file, relative to the page's
+                  // own folder, is correct as written (pages and assets publish at their
+                  // source paths). Only bare names fall back to link resolution.
+                  const clean = decodeURIComponent(dest.split(/[?#]/)[0])
+                  const found = file.data.relativePath
+                    ? path.join(ctx.argv.directory, path.dirname(file.data.relativePath), clean)
+                    : null
+                  if (found && fs.existsSync(found)) {
+                    if (node.tagName === "img") {
+                      const size = imageSize(found)
+                      if (size && node.properties.width === undefined) {
+                        node.properties.width = size.width
+                        node.properties.height = size.height
+                      }
+                    }
+                  } else {
+                    dest = node.properties.src = transformLink(file.data.slug!, dest, transformOptions)
+                    node.properties.src = dest
+                  }
                 }
               }
             })

@@ -4,7 +4,7 @@ import BodyConstructor from "../../components/Body"
 import { pageResources, renderPage } from "../../components/renderPage"
 import { FullPageLayout } from "../../cfg"
 import { FullSlug } from "../../util/path"
-import { sharedPageComponents } from "../../../quartz.layout"
+import { sharedPageComponents, defaultListPageLayout } from "../../../quartz.layout"
 import { NotFound } from "../../components"
 import { defaultProcessedContent } from "../vfile"
 import { write } from "./helpers"
@@ -15,7 +15,7 @@ export const NotFoundPage: QuartzEmitterPlugin = () => {
     ...sharedPageComponents,
     pageBody: NotFound(),
     beforeBody: [],
-    left: [],
+    left: defaultListPageLayout.left,
     right: [],
   }
 
@@ -25,7 +25,7 @@ export const NotFoundPage: QuartzEmitterPlugin = () => {
   return {
     name: "404Page",
     getQuartzComponents() {
-      return [Head, Body, pageBody, Footer]
+      return [Head, Body, pageBody, Footer, ...opts.left, ...opts.header]
     },
     async *emit(ctx, _content, resources) {
       const cfg = ctx.cfg.configuration

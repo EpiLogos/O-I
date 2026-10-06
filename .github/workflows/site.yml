@@ -104,7 +104,7 @@ jobs:
       - name: Install the vendored Quartz
         run: npm ci --prefix vendor/quartz --no-audit --no-fund
       - name: Verify the essay publication builders and host contract
-        run: node --experimental-strip-types --test essay-source.test.mjs essay-browser.test.mjs essay-host.test.mjs quartz-staged-input.test.mjs
+        run: node --experimental-strip-types --test essay-source.test.mjs essay-browser.test.mjs essay-host.test.mjs quartz-staged-input.test.mjs essay-field.test.mjs essay-expressions.test.mjs
       - name: Verify the full live Explore client build separately
         env:
           VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
@@ -125,6 +125,8 @@ jobs:
         # not a member of this edition.
         env:
           OI_ESSAY_BROWSER_REPO: ${{ github.workspace }}/.publication-sources/essay-reading/published-reading/2026-10-04
+          # the S0–S5 product Expressions (lifted into the essay field's Library) come from this pinned checkout
+          OI_PCD_S_PRODUCTS_ROOT: ${{ github.workspace }}/.publication-sources/Point-Cloud-Demo/production/s-products
         run: npm run build:public
       - name: Verify exact curated publication bytes
         run: node verify-public-edition.mjs --directory dist --expected-inputs "$OI_LIBRARY_PUBLICATIONS" --out evidence/library/curated-byte-receipt.json
@@ -143,6 +145,7 @@ jobs:
           python tests/publication-acceptance.py || result=1
           python tests/essay-host-smoke.py || result=1
           python tests/essay-reader-controls.py || result=1
+          python tests/expression-render.py || result=1
           exit "$result"
       - name: Retain publication verification separately from deployable files
         if: always()

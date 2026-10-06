@@ -23,8 +23,7 @@ import Breadcrumbs from "./Breadcrumbs"
 import Comments from "./Comments"
 import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
-import EssayAnchor from "./EssayAnchor"
-import FadeToggles from "./FadeToggles"
+import { FieldTitle, FieldSearch, FieldExplorer, FieldHead, FieldFoot, FieldGraph, FieldContents, FieldConnections, ArticleHead, Pager } from "./Field"
 
 export {
   ArticleTitle,
@@ -52,6 +51,14 @@ export {
   Comments,
   Flex,
   ConditionalRender,
-  EssayAnchor,
-  FadeToggles,
+  FieldTitle,
+  FieldSearch,
+  FieldExplorer,
+  FieldHead,
+  FieldFoot,
+  FieldGraph,
+  FieldContents,
+  FieldConnections,
+  ArticleHead,
+  Pager,
 }

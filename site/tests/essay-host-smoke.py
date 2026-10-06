@@ -6,8 +6,8 @@ Vercel mode mirrors vercel.json: folder pages live at trailing-slash URLs
 legacy vault aliases enter the essay, and a missing essay path falls back to
 the reading root (200) — an existing page always wins. Pages mode (prefix
 /O-I) serves a missing path as essay/404.html with status 404. The essay
-must paint the Quartz night reading surface with graph and explorer present;
-/ retains the original O:I hero and developed home.
+must paint the reading surface (the O:I shell's paper or black ground) with the field's graph, the explorer and
+the footer breadcrumbs present; / retains the original O:I hero and developed home.
 """
 import json, os, sys
 import threading
@@ -15,8 +15,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DIST = ROOT / 'dist'
-NIGHT_BG = 'rgb(20, 19, 17)'  # --night, the Plate B ground the essay shares
+DIST = Path(os.environ.get('OI_DIST') or ROOT / 'dist')
+GROUNDS = ('rgb(251, 250, 246)', 'rgb(11, 11, 12)')  # the shell's paper and black: the essay follows the visitor's light or dark
 
 LEGACY_ALIASES = (
     ('/section-rooms', '/essay/section-rooms/'),
@@ -43,7 +43,7 @@ def dist_guards():
     assert '<title>' in index, 'essay/index.html has no title'
     assert 'graph-container' in index, 'essay/index.html missing the Quartz graph'
     manuscript = (DIST / 'essay' / 'THE-RETURN-OF-ZERO.html').read_text()
-    assert 'class="article-title"' in manuscript, 'a vault alias overwrote the manuscript reading address'
+    assert 'ahead__title' in manuscript, 'a vault alias overwrote the manuscript reading address'
     assert 'http-equiv="refresh"' not in manuscript, 'manuscript address became an alias redirect'
     stamp = json.loads((DIST / 'essay' / 'quartz-source.json').read_text())
     assert stamp.get('vault_commit'), 'quartz-source.json missing vault commit'
@@ -177,23 +177,19 @@ def main():
                     assert response is not None and response.status == status, f'status {None if response is None else response.status}'
                     if status == 200:
                         expect(page.locator('.graph-container').first).to_be_attached(timeout=20000)
-                        expect(page.locator('.graph-container canvas').first).to_be_visible(timeout=20000)
+                        expect(page.locator('.graph-container svg').first).to_be_visible(timeout=20000)
                         expect(page.locator('.explorer').first).to_be_visible(timeout=20000)
-                        expect(page.locator('nav[aria-label="Essay reading routes"]')).to_be_visible(timeout=20000)
-                        if '/ROOM-00-integral-threshold' not in page.url:
-                            foundation = page.locator('.essay-anchor a').filter(has_text='§0/1')
-                            expect(foundation).to_have_count(1)
-                            assert 'ROOM-00-integral-threshold' in foundation.get_attribute('href')
+                        expect(page.locator('#crumbs')).to_be_visible(timeout=20000)
+                        expect(page.locator('body')).to_have_attribute('data-ready', '1', timeout=30000)
                         assert page.locator('.tags').count() == 0, 'tag dump still on the page'
                         assert page.locator('.content-meta').count() == 0, 'content meta still on the page'
-                        has_body = page.locator('article .body p').count() > 0
-                        if has_body:
-                            lh = page.evaluate('parseFloat(getComputedStyle(document.querySelector("article .body p")).lineHeight) / parseFloat(getComputedStyle(document.querySelector("article .body p")).fontSize)')
+                        if page.locator('article p').count() > 0:
+                            lh = page.evaluate('parseFloat(getComputedStyle(document.querySelector("article p")).lineHeight) / parseFloat(getComputedStyle(document.querySelector("article p")).fontSize)')
                             assert lh >= 1.6, f'body line-height too tight: {lh}'
                         background = page.evaluate('getComputedStyle(document.body).backgroundColor')
-                        assert background == NIGHT_BG, f'essay background {background}, expected the night ground'
+                        assert background in GROUNDS, f'essay background {background}, expected the shell paper or black'
                         if heading:
-                            expect(page.locator('h1').first).to_have_text(heading, timeout=20000)
+                            expect(page.locator('#essay-pane .ahead__title')).to_have_text(heading, timeout=20000)
                     else:
                         assert 'Not Found' in page.content(), 'missing path lost the not-found page'
                     assert errors == [], errors

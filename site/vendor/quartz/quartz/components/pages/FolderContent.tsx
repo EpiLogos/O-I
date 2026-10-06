@@ -103,7 +103,7 @@ export default ((opts?: Partial<FolderContentOptions>) => {
     ) as ComponentChildren
 
     return (
-      <div class="popover-hint">
+      <div class="popover-hint prose">
         <article class={classes}>{content}</article>
         <div class="page-listing">
           {options.showFolderCount && (

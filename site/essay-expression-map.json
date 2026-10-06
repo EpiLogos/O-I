@@ -1,0 +1,402 @@
+{
+ "schema": "oi.essay-expression-map/v1",
+ "about": "Which essay pages each curated Expression member is about. A member is matched to pages by slug pattern (anchored regexes over the published slugs); `range` narrows a pattern to numbered records (C01–C32). A member with no pattern, or whose patterns match nothing, lives in the library gallery only. Authored, reviewed with the corpus: change it here, not in the pipeline.",
+ "members": {
+  "roz-essay-reading": {
+   "nodes": [
+    {
+     "match": "^THE-RETURN-OF-ZERO$"
+    },
+    {
+     "match": "^index$"
+    }
+   ]
+  },
+  "roz-room-00-integral-threshold": {
+   "nodes": [
+    {
+     "match": "^section-rooms/00\\-integral\\-threshold/"
+    }
+   ]
+  },
+  "roz-room-01-differentiating-mind": {
+   "nodes": [
+    {
+     "match": "^section-rooms/01\\-differentiating\\-mind/"
+    }
+   ]
+  },
+  "roz-room-02-return-of-zero": {
+   "nodes": [
+    {
+     "match": "^section-rooms/02\\-return\\-of\\-zero/"
+    }
+   ]
+  },
+  "roz-room-03-two-logics": {
+   "nodes": [
+    {
+     "match": "^section-rooms/03\\-two\\-logics/"
+    }
+   ]
+  },
+  "roz-room-04-mathematical-substrate": {
+   "nodes": [
+    {
+     "match": "^section-rooms/04\\-mathematical\\-substrate/"
+    }
+   ]
+  },
+  "roz-room-05-psychoid-flowering": {
+   "nodes": [
+    {
+     "match": "^section-rooms/05\\-psychoid\\-flowering/"
+    }
+   ]
+  },
+  "roz-room-06-objective-internality": {
+   "nodes": [
+    {
+     "match": "^section-rooms/06\\-objective\\-internality/"
+    }
+   ]
+  },
+  "roz-room-07-instrument-returns": {
+   "nodes": [
+    {
+     "match": "^section-rooms/07\\-instrument\\-returns/"
+    }
+   ]
+  },
+  "roz-a-arguments": {
+   "nodes": [
+    {
+     "match": "^section-rooms/arguments/A\\d+-"
+    }
+   ]
+  },
+  "roz-a-prime-conjugates": {
+   "nodes": [
+    {
+     "match": "^section-rooms/arguments/conjugate/"
+    }
+   ]
+  },
+  "roz-ac-root": {
+   "nodes": [
+    {
+     "match": "^section-rooms/arguments/README$"
+    }
+   ]
+  },
+  "roz-c-concepts-1": {
+   "nodes": [
+    {
+     "match": "^section-rooms/arguments/concepts/C\\d+-",
+     "range": [
+      1,
+      32
+     ]
+    }
+   ]
+  },
+  "roz-c-concepts-2": {
+   "nodes": [
+    {
+     "match": "^section-rooms/arguments/concepts/C\\d+-",
+     "range": [
+      33,
+      64
+     ]
+    }
+   ]
+  },
+  "roz-s-products": {
+   "nodes": [
+    {
+     "match": "^section-rooms/arguments/products/"
+    }
+   ]
+  },
+  "roz-dossiers": {
+   "nodes": [
+    {
+     "match": "^symbolon/episteme/dossiers/"
+    }
+   ]
+  },
+  "roz-etymologies": {
+   "nodes": [
+    {
+     "match": "^symbolon/episteme/etymologies/"
+    }
+   ]
+  },
+  "roz-histories": {
+   "nodes": [
+    {
+     "match": "^symbolon/episteme/histories/"
+    }
+   ]
+  },
+  "roz-lenses-aphorism": {
+   "nodes": [
+    {
+     "match": "^symbolon/episteme/lenses/"
+    },
+    {
+     "match": "^symbolon/episteme/aphorisms/"
+    }
+   ]
+  },
+  "roz-matheme-computation": {
+   "nodes": [
+    {
+     "match": "^symbolon/matheme/computation/"
+    }
+   ]
+  },
+  "roz-matheme-formal-neighbours": {
+   "nodes": [
+    {
+     "match": "^symbolon/matheme/formal-neighbours/"
+    }
+   ]
+  },
+  "roz-matheme-four-files": {
+   "nodes": [
+    {
+     "match": "^symbolon/matheme/definition/"
+    },
+    {
+     "match": "^symbolon/matheme/process/"
+    },
+    {
+     "match": "^symbolon/matheme/music/"
+    }
+   ]
+  },
+  "roz-matheme-logics": {
+   "nodes": [
+    {
+     "match": "^symbolon/matheme/dia-syn/"
+    },
+    {
+     "match": "^symbolon/matheme/mono-poly/"
+    }
+   ]
+  },
+  "roz-matheme-ql-spanda": {
+   "nodes": [
+    {
+     "match": "^symbolon/matheme/ql/"
+    },
+    {
+     "match": "^symbolon/matheme/spanda/"
+    }
+   ]
+  },
+  "roz-matheme-topology-harmonics": {
+   "nodes": [
+    {
+     "match": "^symbolon/matheme/topology/"
+    },
+    {
+     "match": "^symbolon/matheme/harmonics/"
+    }
+   ]
+  },
+  "roz-symbolon-spine": {
+   "nodes": [
+    {
+     "match": "^symbolon/[^/]+$"
+    }
+   ]
+  },
+  "roz-symbolon-whole": {
+   "nodes": [
+    {
+     "match": "^symbolon/README$"
+    },
+    {
+     "match": "^symbolon/(matheme|mytheme|episteme)/README$"
+    }
+   ]
+  },
+  "roz-mytheme-antikythera-attunement": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/antikythera\\-attunement/"
+    }
+   ]
+  },
+  "roz-mytheme-apollo-dionysus-daphne": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/apollo\\-dionysus\\-daphne/"
+    }
+   ]
+  },
+  "roz-mytheme-apollo-eros-daphne-peneus": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/apollo\\-eros\\-daphne\\-peneus/"
+    }
+   ]
+  },
+  "roz-mytheme-ares-aphrodite-hephaestus-poseidon": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/ares\\-aphrodite\\-hephaestus\\-poseidon/"
+    }
+   ]
+  },
+  "roz-mytheme-avatar-image-mask-idol": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/avatar\\-image\\-mask\\-idol/"
+    }
+   ]
+  },
+  "roz-mytheme-eros-psyche": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/eros\\-psyche/"
+    }
+   ]
+  },
+  "roz-mytheme-goethe-permanence-change": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/goethe\\-permanence\\-change/"
+    }
+   ]
+  },
+  "roz-mytheme-indra-net": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/indra\\-net/"
+    }
+   ]
+  },
+  "roz-mytheme-job": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/job/"
+    }
+   ]
+  },
+  "roz-mytheme-maya-eye-veil-frame-horizon": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/maya\\-eye\\-veil\\-frame\\-horizon/"
+    }
+   ]
+  },
+  "roz-mytheme-meal-epistemic-metabolism": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/meal\\-epistemic\\-metabolism/"
+    }
+   ]
+  },
+  "roz-mytheme-mirror-that-moves-first": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/mirror\\-that\\-moves\\-first/"
+    }
+   ]
+  },
+  "roz-mytheme-mother-assumption-chiasm": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/mother\\-assumption\\-chiasm/"
+    }
+   ]
+  },
+  "roz-mytheme-myth-attica-athena-poseidon-cecrops": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/attica\\-athena\\-poseidon\\-cecrops/"
+    }
+   ]
+  },
+  "roz-mytheme-myth-hypostasis-archons-norea-sophia": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/hypostasis\\-archons\\-norea\\-sophia/"
+    }
+   ]
+  },
+  "roz-mytheme-narrative-fanon-language-gaze-mask-recognition": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/fanon\\-language\\-gaze\\-mask\\-recognition/"
+    }
+   ]
+  },
+  "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/jung\\-aion\\-fishes\\-christ\\-antichrist\\-alchemy/"
+    }
+   ]
+  },
+  "roz-mytheme-neumann-images": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/neumann\\-images/"
+    }
+   ]
+  },
+  "roz-mytheme-pauli-egg-dream": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/pauli\\-egg\\-dream/"
+    }
+   ]
+  },
+  "roz-mytheme-stained-glass-refraction": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/stained\\-glass\\-refraction/"
+    }
+   ]
+  },
+  "roz-mytheme-taylor-authored-images": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/taylor\\-authored\\-images/"
+    }
+   ]
+  },
+  "roz-mytheme-the-prisoner": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/the\\-prisoner/"
+    }
+   ]
+  },
+  "roz-mytheme-travelling-jigsaw-atlas": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/worlds/frank-taylor/travelling\\-jigsaw\\-atlas/"
+    }
+   ]
+  },
+  "roz-mytheme-uroboros-trickster": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/uroboros\\-trickster/"
+    }
+   ]
+  },
+  "roz-mytheme-valentinian-sophia-horos-achamoth": {
+   "nodes": [
+    {
+     "match": "^symbolon/mytheme/(?:worlds/[^/]+|archetypal-ground)/valentinian\\-sophia\\-horos\\-achamoth/"
+    }
+   ]
+  }
+ }
+}

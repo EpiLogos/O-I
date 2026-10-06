@@ -2,11 +2,11 @@ import { QuartzConfig } from "./quartz/cfg"
 import * as Plugin from "./quartz/plugins"
 
 /**
- * Quartz 4 Configuration — O:I night-paper edition.
+ * Quartz 4 Configuration — O:I essay edition.
  *
- * The palette mirrors the Plate B essay shell tokens (site/src/essay/essay.css):
- * the essay and the html entrance read as one publication. See
- * site/ESSAY-QUARTZ-HARD-BRIEF-2026-09-25.md for the standing brief.
+ * The palette is the O:I shell's own (site/src/tokens.css, shell.css): paper #fbfaf6 / black #0b0b0c,
+ * gold #b2944f (#80642e on paper), so the entrance and the essay read as one publication.
+ * The layout and the reading UI are in quartz.layout.ts and quartz/components/Field.tsx.
  */
 const config: QuartzConfig = {
   configuration: {
@@ -20,36 +20,36 @@ const config: QuartzConfig = {
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "modified",
     theme: {
-      fontOrigin: "googleFonts",
+      // Local stacks only: the reading faces are set in styles/field.scss, so no font service is called.
+      fontOrigin: "local",
       cdnCaching: true,
       typography: {
-        header: "EB Garamond",
-        body: "EB Garamond",
-        code: "IBM Plex Mono",
+        header: "Avenir Next",
+        body: "Iowan Old Style",
+        code: "ui-monospace",
       },
       colors: {
-        // Both modes carry the night palette: one theme, no jarring white page.
         lightMode: {
-          light: "#141311",
-          lightgray: "#3a372f",
-          gray: "#a39b8c",
-          darkgray: "#e6e0d4",
-          dark: "#f0e9da",
-          secondary: "#d7c4a3",
-          tertiary: "#b08958",
-          highlight: "rgba(176, 137, 88, 0.15)",
-          textHighlight: "#b0895888",
+          light: "#fbfaf6",
+          lightgray: "#e3e1d9",
+          gray: "#8f8c84",
+          darkgray: "#111112",
+          dark: "#111112",
+          secondary: "#80642e",
+          tertiary: "#a67f2c",
+          highlight: "rgba(178, 148, 79, 0.18)",
+          textHighlight: "#b2944f55",
         },
         darkMode: {
-          light: "#141311",
-          lightgray: "#3a372f",
-          gray: "#a39b8c",
-          darkgray: "#e6e0d4",
-          dark: "#f0e9da",
-          secondary: "#d7c4a3",
-          tertiary: "#b08958",
-          highlight: "rgba(176, 137, 88, 0.15)",
-          textHighlight: "#b0895888",
+          light: "#0b0b0c",
+          lightgray: "#2a2a2c",
+          gray: "#7e7c76",
+          darkgray: "#f4f2ec",
+          dark: "#f4f2ec",
+          secondary: "#b2944f",
+          tertiary: "#d2ae5e",
+          highlight: "rgba(178, 148, 79, 0.2)",
+          textHighlight: "#b2944f66",
         },
       },
     },
@@ -58,7 +58,7 @@ const config: QuartzConfig = {
     transformers: [
       Plugin.FrontMatter(),
       Plugin.CreatedModifiedDate({
-        priority: ["frontmatter", "git", "filesystem"],
+        priority: ["frontmatter", "filesystem"],
       }),
       Plugin.SyntaxHighlighting({
         theme: {
@@ -70,7 +70,7 @@ const config: QuartzConfig = {
       Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false }),
       Plugin.GitHubFlavoredMarkdown(),
       Plugin.TableOfContents(),
-      Plugin.CrawlLinks({ markdownLinkResolution: "shortest" }),
+      Plugin.CrawlLinks({ markdownLinkResolution: "shortest", lazyLoad: true }),
       Plugin.Description(),
       Plugin.Latex({ renderEngine: "katex" }),
     ],
@@ -85,6 +85,7 @@ const config: QuartzConfig = {
         enableSiteMap: true,
         enableRSS: true,
       }),
+      Plugin.FieldIndex(),
       Plugin.Assets(),
       Plugin.Static(),
       Plugin.Favicon(),
