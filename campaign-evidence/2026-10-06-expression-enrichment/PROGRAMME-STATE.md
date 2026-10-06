@@ -18,6 +18,14 @@
 - **Wave 3:** S-products (83 members, PCD env-2 checkout, own branch+PR; split internally by product: actuation 19, factory 20, quaternal-logic 15, aikit 11, central 10, workcell 7, ql 1). Sources: product repos at the commits pinned in each binding's `material_source_ref`; essay product records under `submission-package/essay/symbolon/episteme/products/` at vault fc59a719.
 - **Critic (Aletheia's office):** runs after each wave's members land on the branch — CRITIC-RUBRIC.md, reject with named reasons; revise-and-resubmit.
 
+## Programme progress (2026-10-06, updated through wave-2 dispatch)
+
+**Wave 1 authored and gate-clean: 10/10 journeys** (symbolon 2, arguments+conjugates 2, matheme 6) — all independently linted by the parent, not only by the lanes.
+
+**Critic verdicts:** symbolon PASS×2 (contact sheets + independent pixel diffs committed). arguments: A PASS; A′ REJECT(1) — a26p attributed A26's recognition-sequence glyphs to A26′; revision dispatched to the lane (critic's smallest fix: re-attribute rationales to A26/other-face relation, keep sequence, note it). matheme critic dispatched.
+
+**Wave 2 dispatched:** essay+rooms (9 journeys), episteme (8), mytheme (25) — lanes briefed with the wave-1 fidelity bar.
+
 ## Wave-1 results so far (2026-10-06)
 
 - symbolon: author lane PASS 2/2 (`38a53e5fe`, `f030a8a83`); critic PASS both (independent pixel diffs, contact sheets in `renders/symbolon/`, log `critic-log-wave1-symbolon.md`).
