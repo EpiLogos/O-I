@@ -168,7 +168,7 @@ function eyebrow(n: FNode, m: FieldModel): ComponentChildren {
   if (n.k === "movement") return <><span>{n.sec}</span><span>Movement {n.m} of 48</span></>
   if (n.k === "room") return <><span>{n.sec}</span><span>Room {pad2(n.room!)}</span></>
   if (n.k === "reading" || n.k === "alignment") return <><span>{room?.sec}</span><span>{room?.title}</span></>
-  if (n.k === "manuscript") return <><span>Manuscript</span><span>{n.s === "THE-RETURN-OF-ZERO" ? "M01–M48" : "§0/1"}</span></>
+  if (n.k === "manuscript") return <><span>Manuscript</span><span>{n.mvs && n.mvs.length !== 48 ? "§0/1" : "M01–M48"}</span></>
   if (n.k === "argument") return <><span>Argument</span><span>{n.coord}</span></>
   const ch = treePath(m, n.i).slice(0, -1), st = STATIONS[n.st]
   const tail = ch.length ? ch[ch.length - 1].label : ""
