@@ -55,7 +55,9 @@ const edition = await serveEdition(siteRoot, editionPort);
 const editionUrl = `http://127.0.0.1:${edition.port}/essay/`;
 console.log(`candidate: essay edition   ${editionUrl}   (from ${siteRoot})`);
 
-const env = {...process.env, OI_HOME: home, OI_CENTRAL_ROOT: ground, OI_BIN: oi, VITE_ESSAY_EDITION: editionUrl};
+// The desktop's expression socket defaults to a path keyed by HOME alone, which the everyday app also uses; the
+// profile gets its own so the two can run side by side.
+const env = {...process.env, OI_HOME: home, OI_CENTRAL_ROOT: ground, OI_BIN: oi, VITE_ESSAY_EDITION: editionUrl, OI_EXPRESSION_SOCKET: join(profileDir, "expression.sock")};
 if (mode === "web") {
   const bridgeBin = process.env.FIELD_BRIDGE_BIN ?? join(cradle, "kernel/target/debug/walk-bridge");
   if (!existsSync(bridgeBin)) { console.error(`candidate: no walk bridge at ${bridgeBin} — build it: (cd desktop/cradle/kernel && cargo build --bin walk-bridge)`); process.exit(2); }
