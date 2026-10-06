@@ -122,3 +122,23 @@ Consequences: `FieldEncounter.selected` and the tangent are *projections* of the
 Equivalence test: pointer select ≡ `selection_set` ≡ agent `selection_set` produce the same `selection_read`; an agent
 `selection_set` moves the field's selected node without navigation; `portal_open preview` opens the same tangent a
 double-click does.
+
+## 7 — Candidate launch route (main machine)
+
+Isolated profile: `~/.oi-candidates/<profile>/` holds `OI_HOME`, a persistent WebKit store id and its own expression
+socket (`OI_EXPRESSION_SOCKET`), so the everyday O-I installation, its workspaces and layouts are untouched.
+The Central ground defaults to the real one (`--ground` to change); the Epi lens reads the real published essay edition
+served from `--site-root`.
+
+```bash
+cd desktop/cradle
+# once: candidate CLI + kernel bridge (web) and the native debug shell (tauri)
+(cd ../../cli && CARGO_TARGET_DIR=$PWD/../target cargo build --bin oi)
+(cd kernel && cargo build --bin walk-bridge)      # web mode
+(cd src-tauri && cargo build)                       # tauri mode
+node scripts/candidate-launch.mjs --mode tauri --site-root <built site root> --oi <repo>/target/debug/oi
+node scripts/candidate-launch.mjs --mode web   --site-root <built site root> --oi <repo>/target/debug/oi   # browser
+```
+
+`--site-root` is a built site (`essay/static/fieldIndex.json`, `expression.html`): `site/dist` after
+`npm run build:public`, or a snapshot of it. Ctrl-C stops everything the launcher started.
