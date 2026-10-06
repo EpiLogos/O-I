@@ -187,10 +187,14 @@ function checkJourney(journey, journeyPath) {
   // 6 — glyph rationales
   const binding = findBinding(journeyPath);
   const rationales = new Map(Object.entries(binding?.glyph_rationales ?? {}));
-  const noteText = [binding?.notes].flat(Infinity).filter((s) => typeof s === "string").join("\n") + "\n" + JSON.stringify(binding?.glyph_rationales ?? {});
+  // A rationale is an exact glyph_rationales key, or a notes line that begins
+  // with the glyph (an entry ABOUT that glyph). Incidental mentions inside
+  // prose do not count (critic wave-2 finding on the substring fallback).
+  const noteLines = [binding?.notes].flat(Infinity).filter((x) => typeof x === "string").flatMap((x) => x.split("\n")).map((l) => l.trim());
+  const hasRationale = (g) => rationales.has(g) || noteLines.some((l) => l.startsWith(g) && /^([\s:,—–-]|$)/.test(l.slice(g.length)));
   const used = new Set(scenes.flatMap(glyphsOf));
-  const unexplained = [...used].filter((g) => !rationales.has(g) && !noteText.includes(g));
-  const placeholders = [...used].filter((g) => g.length <= 2 && (PLACEHOLDER_GLYPHS.has(g) || NOTATION_GLYPHS.has(g)) && !rationales.has(g) && !noteText.includes(g));
+  const unexplained = [...used].filter((g) => !hasRationale(g));
+  const placeholders = [...used].filter((g) => g.length <= 2 && (PLACEHOLDER_GLYPHS.has(g) || NOTATION_GLYPHS.has(g)) && !hasRationale(g));
   if (!binding) fail("glyphs", "no craft note (binding record) beside the journey");
   else {
     if (unexplained.length) fail("glyphs", `glyphs without rationale: ${unexplained.map((g) => JSON.stringify(g)).join(", ").slice(0, 300)}`);
