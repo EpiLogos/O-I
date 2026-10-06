@@ -1,0 +1,1330 @@
+{
+  "scenario": "field-resources",
+  "at": "2026-10-06T22:19:00.029Z",
+  "record": {
+    "cycles": 30,
+    "timing": {
+      "cold_shell_ms": 901,
+      "cold_essay_after_lens_ms": 412,
+      "cold_total_ms": 1313,
+      "warm_reload_total_ms": 278
+    },
+    "start": {
+      "heapMB": 70.96,
+      "nodes": 29739,
+      "listeners": 528,
+      "documents": 2,
+      "frames": 1,
+      "iframes": 0,
+      "liveNodes": 14998,
+      "rssMB": 1290
+    },
+    "settled": [
+      {
+        "cycle": 0,
+        "heapMB": 70.96,
+        "nodes": 29739,
+        "listeners": 528,
+        "documents": 2,
+        "frames": 1,
+        "iframes": 0,
+        "liveNodes": 14998,
+        "rssMB": 1290
+      },
+      {
+        "cycle": 1,
+        "heapMB": 72.48,
+        "nodes": 32086,
+        "listeners": 789,
+        "documents": 2,
+        "frames": 1,
+        "iframes": 0,
+        "liveNodes": 16145,
+        "rssMB": 1693
+      },
+      {
+        "cycle": 10,
+        "heapMB": 73.93,
+        "nodes": 35272,
+        "listeners": 807,
+        "documents": 2,
+        "frames": 1,
+        "iframes": 0,
+        "liveNodes": 16145,
+        "rssMB": 1876
+      },
+      {
+        "cycle": 20,
+        "heapMB": 75.72,
+        "nodes": 38812,
+        "listeners": 827,
+        "documents": 2,
+        "frames": 1,
+        "iframes": 0,
+        "liveNodes": 16145,
+        "rssMB": 1594
+      },
+      {
+        "cycle": 30,
+        "heapMB": 76.45,
+        "nodes": 42352,
+        "listeners": 847,
+        "documents": 2,
+        "frames": 1,
+        "iframes": 0,
+        "liveNodes": 16145,
+        "rssMB": 1548
+      }
+    ],
+    "diag": [],
+    "peak": {
+      "heapMB": 111.43,
+      "nodes": 108785,
+      "listeners": 7197,
+      "documents": 2,
+      "frames": 2,
+      "iframes": 1,
+      "liveNodes": 14998,
+      "rssMB": 2261
+    },
+    "latency": {
+      "select": {
+        "n": 30,
+        "p50": 71.2,
+        "p95": 78.9,
+        "max": 79.7,
+        "first": 78.9,
+        "last": 68.3
+      },
+      "open-tangent": {
+        "n": 30,
+        "p50": 96.6,
+        "p95": 119.6,
+        "max": 122.9,
+        "first": 100.6,
+        "last": 118.1
+      },
+      "keep": {
+        "n": 30,
+        "p50": 62.6,
+        "p95": 64.1,
+        "max": 64.3,
+        "first": 47.8,
+        "last": 63.3
+      },
+      "promote": {
+        "n": 30,
+        "p50": 63.7,
+        "p95": 79.3,
+        "max": 82.1,
+        "first": 52.3,
+        "last": 60.1
+      },
+      "back": {
+        "n": 30,
+        "p50": 231,
+        "p95": 279.6,
+        "max": 288.8,
+        "first": 220.9,
+        "last": 279.1
+      },
+      "open-expression": {
+        "n": 30,
+        "p50": 82.6,
+        "p95": 156.8,
+        "max": 160.7,
+        "first": 82.6,
+        "last": 139.8
+      },
+      "return": {
+        "n": 30,
+        "p50": 197.1,
+        "p95": 231.4,
+        "max": 233.2,
+        "first": 199.9,
+        "last": 233.2
+      }
+    },
+    "latencySamples": [
+      {
+        "kind": "select",
+        "ms": 78.9,
+        "cycle": 1
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 100.6,
+        "cycle": 1
+      },
+      {
+        "kind": "keep",
+        "ms": 47.8,
+        "cycle": 1
+      },
+      {
+        "kind": "promote",
+        "ms": 52.3,
+        "cycle": 1
+      },
+      {
+        "kind": "back",
+        "ms": 220.9,
+        "cycle": 1
+      },
+      {
+        "kind": "open-expression",
+        "ms": 82.6,
+        "cycle": 1
+      },
+      {
+        "kind": "return",
+        "ms": 199.9,
+        "cycle": 1
+      },
+      {
+        "kind": "select",
+        "ms": 71.6,
+        "cycle": 2
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 96.6,
+        "cycle": 2
+      },
+      {
+        "kind": "keep",
+        "ms": 47.2,
+        "cycle": 2
+      },
+      {
+        "kind": "promote",
+        "ms": 51.6,
+        "cycle": 2
+      },
+      {
+        "kind": "back",
+        "ms": 237.2,
+        "cycle": 2
+      },
+      {
+        "kind": "open-expression",
+        "ms": 79.1,
+        "cycle": 2
+      },
+      {
+        "kind": "return",
+        "ms": 199.2,
+        "cycle": 2
+      },
+      {
+        "kind": "select",
+        "ms": 71.2,
+        "cycle": 3
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 95.7,
+        "cycle": 3
+      },
+      {
+        "kind": "keep",
+        "ms": 63.3,
+        "cycle": 3
+      },
+      {
+        "kind": "promote",
+        "ms": 62.6,
+        "cycle": 3
+      },
+      {
+        "kind": "back",
+        "ms": 247.6,
+        "cycle": 3
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.5,
+        "cycle": 3
+      },
+      {
+        "kind": "return",
+        "ms": 197.2,
+        "cycle": 3
+      },
+      {
+        "kind": "select",
+        "ms": 70.8,
+        "cycle": 4
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 97.5,
+        "cycle": 4
+      },
+      {
+        "kind": "keep",
+        "ms": 62.6,
+        "cycle": 4
+      },
+      {
+        "kind": "promote",
+        "ms": 60.9,
+        "cycle": 4
+      },
+      {
+        "kind": "back",
+        "ms": 230.9,
+        "cycle": 4
+      },
+      {
+        "kind": "open-expression",
+        "ms": 79.6,
+        "cycle": 4
+      },
+      {
+        "kind": "return",
+        "ms": 196.1,
+        "cycle": 4
+      },
+      {
+        "kind": "select",
+        "ms": 61.6,
+        "cycle": 5
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 85.2,
+        "cycle": 5
+      },
+      {
+        "kind": "keep",
+        "ms": 64.1,
+        "cycle": 5
+      },
+      {
+        "kind": "promote",
+        "ms": 61.5,
+        "cycle": 5
+      },
+      {
+        "kind": "back",
+        "ms": 233.8,
+        "cycle": 5
+      },
+      {
+        "kind": "open-expression",
+        "ms": 79.1,
+        "cycle": 5
+      },
+      {
+        "kind": "return",
+        "ms": 195.7,
+        "cycle": 5
+      },
+      {
+        "kind": "select",
+        "ms": 69.9,
+        "cycle": 6
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 84.1,
+        "cycle": 6
+      },
+      {
+        "kind": "keep",
+        "ms": 63.8,
+        "cycle": 6
+      },
+      {
+        "kind": "promote",
+        "ms": 75.2,
+        "cycle": 6
+      },
+      {
+        "kind": "back",
+        "ms": 231,
+        "cycle": 6
+      },
+      {
+        "kind": "open-expression",
+        "ms": 72.7,
+        "cycle": 6
+      },
+      {
+        "kind": "return",
+        "ms": 195.8,
+        "cycle": 6
+      },
+      {
+        "kind": "select",
+        "ms": 58.7,
+        "cycle": 7
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 95.7,
+        "cycle": 7
+      },
+      {
+        "kind": "keep",
+        "ms": 62.1,
+        "cycle": 7
+      },
+      {
+        "kind": "promote",
+        "ms": 63.7,
+        "cycle": 7
+      },
+      {
+        "kind": "back",
+        "ms": 229.1,
+        "cycle": 7
+      },
+      {
+        "kind": "open-expression",
+        "ms": 78.3,
+        "cycle": 7
+      },
+      {
+        "kind": "return",
+        "ms": 196.3,
+        "cycle": 7
+      },
+      {
+        "kind": "select",
+        "ms": 68.3,
+        "cycle": 8
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 84.6,
+        "cycle": 8
+      },
+      {
+        "kind": "keep",
+        "ms": 61.4,
+        "cycle": 8
+      },
+      {
+        "kind": "promote",
+        "ms": 63.6,
+        "cycle": 8
+      },
+      {
+        "kind": "back",
+        "ms": 219,
+        "cycle": 8
+      },
+      {
+        "kind": "open-expression",
+        "ms": 137,
+        "cycle": 8
+      },
+      {
+        "kind": "return",
+        "ms": 197.1,
+        "cycle": 8
+      },
+      {
+        "kind": "select",
+        "ms": 62.2,
+        "cycle": 9
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 83.8,
+        "cycle": 9
+      },
+      {
+        "kind": "keep",
+        "ms": 63,
+        "cycle": 9
+      },
+      {
+        "kind": "promote",
+        "ms": 62.7,
+        "cycle": 9
+      },
+      {
+        "kind": "back",
+        "ms": 230.8,
+        "cycle": 9
+      },
+      {
+        "kind": "open-expression",
+        "ms": 82.9,
+        "cycle": 9
+      },
+      {
+        "kind": "return",
+        "ms": 196,
+        "cycle": 9
+      },
+      {
+        "kind": "select",
+        "ms": 71.4,
+        "cycle": 10
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 95.1,
+        "cycle": 10
+      },
+      {
+        "kind": "keep",
+        "ms": 63.2,
+        "cycle": 10
+      },
+      {
+        "kind": "promote",
+        "ms": 62.6,
+        "cycle": 10
+      },
+      {
+        "kind": "back",
+        "ms": 228.2,
+        "cycle": 10
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.6,
+        "cycle": 10
+      },
+      {
+        "kind": "return",
+        "ms": 197.7,
+        "cycle": 10
+      },
+      {
+        "kind": "select",
+        "ms": 75.4,
+        "cycle": 11
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 95.5,
+        "cycle": 11
+      },
+      {
+        "kind": "keep",
+        "ms": 62.6,
+        "cycle": 11
+      },
+      {
+        "kind": "promote",
+        "ms": 63.9,
+        "cycle": 11
+      },
+      {
+        "kind": "back",
+        "ms": 230.7,
+        "cycle": 11
+      },
+      {
+        "kind": "open-expression",
+        "ms": 138.2,
+        "cycle": 11
+      },
+      {
+        "kind": "return",
+        "ms": 196.8,
+        "cycle": 11
+      },
+      {
+        "kind": "select",
+        "ms": 68,
+        "cycle": 12
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 96.3,
+        "cycle": 12
+      },
+      {
+        "kind": "keep",
+        "ms": 63.6,
+        "cycle": 12
+      },
+      {
+        "kind": "promote",
+        "ms": 74,
+        "cycle": 12
+      },
+      {
+        "kind": "back",
+        "ms": 230.8,
+        "cycle": 12
+      },
+      {
+        "kind": "open-expression",
+        "ms": 137.1,
+        "cycle": 12
+      },
+      {
+        "kind": "return",
+        "ms": 214.6,
+        "cycle": 12
+      },
+      {
+        "kind": "select",
+        "ms": 69,
+        "cycle": 13
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 101,
+        "cycle": 13
+      },
+      {
+        "kind": "keep",
+        "ms": 48.3,
+        "cycle": 13
+      },
+      {
+        "kind": "promote",
+        "ms": 67.2,
+        "cycle": 13
+      },
+      {
+        "kind": "back",
+        "ms": 249.4,
+        "cycle": 13
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.4,
+        "cycle": 13
+      },
+      {
+        "kind": "return",
+        "ms": 196.3,
+        "cycle": 13
+      },
+      {
+        "kind": "select",
+        "ms": 70.3,
+        "cycle": 14
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 83.8,
+        "cycle": 14
+      },
+      {
+        "kind": "keep",
+        "ms": 63.5,
+        "cycle": 14
+      },
+      {
+        "kind": "promote",
+        "ms": 63.2,
+        "cycle": 14
+      },
+      {
+        "kind": "back",
+        "ms": 229.5,
+        "cycle": 14
+      },
+      {
+        "kind": "open-expression",
+        "ms": 139.6,
+        "cycle": 14
+      },
+      {
+        "kind": "return",
+        "ms": 194.6,
+        "cycle": 14
+      },
+      {
+        "kind": "select",
+        "ms": 74.5,
+        "cycle": 15
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 94.3,
+        "cycle": 15
+      },
+      {
+        "kind": "keep",
+        "ms": 47.7,
+        "cycle": 15
+      },
+      {
+        "kind": "promote",
+        "ms": 67.5,
+        "cycle": 15
+      },
+      {
+        "kind": "back",
+        "ms": 222.8,
+        "cycle": 15
+      },
+      {
+        "kind": "open-expression",
+        "ms": 123.5,
+        "cycle": 15
+      },
+      {
+        "kind": "return",
+        "ms": 181.4,
+        "cycle": 15
+      },
+      {
+        "kind": "select",
+        "ms": 71.8,
+        "cycle": 16
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 97.7,
+        "cycle": 16
+      },
+      {
+        "kind": "keep",
+        "ms": 63.3,
+        "cycle": 16
+      },
+      {
+        "kind": "promote",
+        "ms": 62.5,
+        "cycle": 16
+      },
+      {
+        "kind": "back",
+        "ms": 229.5,
+        "cycle": 16
+      },
+      {
+        "kind": "open-expression",
+        "ms": 79.3,
+        "cycle": 16
+      },
+      {
+        "kind": "return",
+        "ms": 196.8,
+        "cycle": 16
+      },
+      {
+        "kind": "select",
+        "ms": 63.4,
+        "cycle": 17
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 100,
+        "cycle": 17
+      },
+      {
+        "kind": "keep",
+        "ms": 62.6,
+        "cycle": 17
+      },
+      {
+        "kind": "promote",
+        "ms": 79.3,
+        "cycle": 17
+      },
+      {
+        "kind": "back",
+        "ms": 220.7,
+        "cycle": 17
+      },
+      {
+        "kind": "open-expression",
+        "ms": 137.2,
+        "cycle": 17
+      },
+      {
+        "kind": "return",
+        "ms": 194.4,
+        "cycle": 17
+      },
+      {
+        "kind": "select",
+        "ms": 76.6,
+        "cycle": 18
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 92.9,
+        "cycle": 18
+      },
+      {
+        "kind": "keep",
+        "ms": 62.3,
+        "cycle": 18
+      },
+      {
+        "kind": "promote",
+        "ms": 63.7,
+        "cycle": 18
+      },
+      {
+        "kind": "back",
+        "ms": 225.8,
+        "cycle": 18
+      },
+      {
+        "kind": "open-expression",
+        "ms": 78.8,
+        "cycle": 18
+      },
+      {
+        "kind": "return",
+        "ms": 196.8,
+        "cycle": 18
+      },
+      {
+        "kind": "select",
+        "ms": 61.3,
+        "cycle": 19
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 84.1,
+        "cycle": 19
+      },
+      {
+        "kind": "keep",
+        "ms": 47.7,
+        "cycle": 19
+      },
+      {
+        "kind": "promote",
+        "ms": 51.5,
+        "cycle": 19
+      },
+      {
+        "kind": "back",
+        "ms": 228.3,
+        "cycle": 19
+      },
+      {
+        "kind": "open-expression",
+        "ms": 119.5,
+        "cycle": 19
+      },
+      {
+        "kind": "return",
+        "ms": 181.2,
+        "cycle": 19
+      },
+      {
+        "kind": "select",
+        "ms": 67.8,
+        "cycle": 20
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 96.1,
+        "cycle": 20
+      },
+      {
+        "kind": "keep",
+        "ms": 49.1,
+        "cycle": 20
+      },
+      {
+        "kind": "promote",
+        "ms": 49.3,
+        "cycle": 20
+      },
+      {
+        "kind": "back",
+        "ms": 232.5,
+        "cycle": 20
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.6,
+        "cycle": 20
+      },
+      {
+        "kind": "return",
+        "ms": 180.1,
+        "cycle": 20
+      },
+      {
+        "kind": "select",
+        "ms": 72.4,
+        "cycle": 21
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 106.5,
+        "cycle": 21
+      },
+      {
+        "kind": "keep",
+        "ms": 63.9,
+        "cycle": 21
+      },
+      {
+        "kind": "promote",
+        "ms": 71.2,
+        "cycle": 21
+      },
+      {
+        "kind": "back",
+        "ms": 248.3,
+        "cycle": 21
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.2,
+        "cycle": 21
+      },
+      {
+        "kind": "return",
+        "ms": 214.6,
+        "cycle": 21
+      },
+      {
+        "kind": "select",
+        "ms": 78.5,
+        "cycle": 22
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 122.9,
+        "cycle": 22
+      },
+      {
+        "kind": "keep",
+        "ms": 64.3,
+        "cycle": 22
+      },
+      {
+        "kind": "promote",
+        "ms": 82.1,
+        "cycle": 22
+      },
+      {
+        "kind": "back",
+        "ms": 266.6,
+        "cycle": 22
+      },
+      {
+        "kind": "open-expression",
+        "ms": 160.7,
+        "cycle": 22
+      },
+      {
+        "kind": "return",
+        "ms": 229.7,
+        "cycle": 22
+      },
+      {
+        "kind": "select",
+        "ms": 70.6,
+        "cycle": 23
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 108.3,
+        "cycle": 23
+      },
+      {
+        "kind": "keep",
+        "ms": 64.1,
+        "cycle": 23
+      },
+      {
+        "kind": "promote",
+        "ms": 76.3,
+        "cycle": 23
+      },
+      {
+        "kind": "back",
+        "ms": 268.5,
+        "cycle": 23
+      },
+      {
+        "kind": "open-expression",
+        "ms": 156.8,
+        "cycle": 23
+      },
+      {
+        "kind": "return",
+        "ms": 229.8,
+        "cycle": 23
+      },
+      {
+        "kind": "select",
+        "ms": 77.6,
+        "cycle": 24
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 119.6,
+        "cycle": 24
+      },
+      {
+        "kind": "keep",
+        "ms": 62.5,
+        "cycle": 24
+      },
+      {
+        "kind": "promote",
+        "ms": 77.1,
+        "cycle": 24
+      },
+      {
+        "kind": "back",
+        "ms": 288.8,
+        "cycle": 24
+      },
+      {
+        "kind": "open-expression",
+        "ms": 139.2,
+        "cycle": 24
+      },
+      {
+        "kind": "return",
+        "ms": 229.2,
+        "cycle": 24
+      },
+      {
+        "kind": "select",
+        "ms": 76.5,
+        "cycle": 25
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 113.3,
+        "cycle": 25
+      },
+      {
+        "kind": "keep",
+        "ms": 63.5,
+        "cycle": 25
+      },
+      {
+        "kind": "promote",
+        "ms": 75.7,
+        "cycle": 25
+      },
+      {
+        "kind": "back",
+        "ms": 279.6,
+        "cycle": 25
+      },
+      {
+        "kind": "open-expression",
+        "ms": 145.7,
+        "cycle": 25
+      },
+      {
+        "kind": "return",
+        "ms": 231.4,
+        "cycle": 25
+      },
+      {
+        "kind": "select",
+        "ms": 79.7,
+        "cycle": 26
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 106.7,
+        "cycle": 26
+      },
+      {
+        "kind": "keep",
+        "ms": 63.7,
+        "cycle": 26
+      },
+      {
+        "kind": "promote",
+        "ms": 78,
+        "cycle": 26
+      },
+      {
+        "kind": "back",
+        "ms": 268,
+        "cycle": 26
+      },
+      {
+        "kind": "open-expression",
+        "ms": 138,
+        "cycle": 26
+      },
+      {
+        "kind": "return",
+        "ms": 231,
+        "cycle": 26
+      },
+      {
+        "kind": "select",
+        "ms": 76.2,
+        "cycle": 27
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 107.7,
+        "cycle": 27
+      },
+      {
+        "kind": "keep",
+        "ms": 60.2,
+        "cycle": 27
+      },
+      {
+        "kind": "promote",
+        "ms": 77.5,
+        "cycle": 27
+      },
+      {
+        "kind": "back",
+        "ms": 266.5,
+        "cycle": 27
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.8,
+        "cycle": 27
+      },
+      {
+        "kind": "return",
+        "ms": 229.9,
+        "cycle": 27
+      },
+      {
+        "kind": "select",
+        "ms": 77.2,
+        "cycle": 28
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 108.9,
+        "cycle": 28
+      },
+      {
+        "kind": "keep",
+        "ms": 47.2,
+        "cycle": 28
+      },
+      {
+        "kind": "promote",
+        "ms": 78.3,
+        "cycle": 28
+      },
+      {
+        "kind": "back",
+        "ms": 270.9,
+        "cycle": 28
+      },
+      {
+        "kind": "open-expression",
+        "ms": 138.9,
+        "cycle": 28
+      },
+      {
+        "kind": "return",
+        "ms": 212.4,
+        "cycle": 28
+      },
+      {
+        "kind": "select",
+        "ms": 73.4,
+        "cycle": 29
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 106.1,
+        "cycle": 29
+      },
+      {
+        "kind": "keep",
+        "ms": 46.5,
+        "cycle": 29
+      },
+      {
+        "kind": "promote",
+        "ms": 61.5,
+        "cycle": 29
+      },
+      {
+        "kind": "back",
+        "ms": 251.8,
+        "cycle": 29
+      },
+      {
+        "kind": "open-expression",
+        "ms": 80.8,
+        "cycle": 29
+      },
+      {
+        "kind": "return",
+        "ms": 228.3,
+        "cycle": 29
+      },
+      {
+        "kind": "select",
+        "ms": 68.3,
+        "cycle": 30
+      },
+      {
+        "kind": "open-tangent",
+        "ms": 118.1,
+        "cycle": 30
+      },
+      {
+        "kind": "keep",
+        "ms": 63.3,
+        "cycle": 30
+      },
+      {
+        "kind": "promote",
+        "ms": 60.1,
+        "cycle": 30
+      },
+      {
+        "kind": "back",
+        "ms": 279.1,
+        "cycle": 30
+      },
+      {
+        "kind": "open-expression",
+        "ms": 139.8,
+        "cycle": 30
+      },
+      {
+        "kind": "return",
+        "ms": 233.2,
+        "cycle": 30
+      }
+    ],
+    "warmed": {
+      "cycle": 1,
+      "heapMB": 72.48,
+      "nodes": 32086,
+      "listeners": 789,
+      "documents": 2,
+      "frames": 1,
+      "iframes": 0,
+      "liveNodes": 16145,
+      "rssMB": 1693
+    },
+    "drift": {
+      "heapMB": 3.97,
+      "nodes": 10266,
+      "listeners": 58,
+      "iframes": 0,
+      "frames": 0,
+      "rssMB": -145
+    },
+    "budget": {
+      "file": "walk/artifacts/field-resources.budget.json",
+      "established_by_this_run": true,
+      "established_at": "2026-10-06T22:19:00.028Z",
+      "basis": "first run; observed values with allowances, set before any tuning",
+      "latency_p95_ms": {
+        "select": 119,
+        "open-tangent": 180,
+        "keep": 97,
+        "promote": 119,
+        "back": 420,
+        "open-expression": 236,
+        "return": 348
+      },
+      "settled_drift_allowed": {
+        "nodes_pct": 10,
+        "listeners_pct": 10,
+        "heapMB_pct": 25,
+        "rssMB_pct": 30,
+        "iframes": 0,
+        "frames": 0
+      }
+    },
+    "monotonic": {
+      "nodes": true,
+      "listeners": true,
+      "heapMB": true,
+      "rssMB": false
+    },
+    "verdict": {
+      "leak_or_orphan_found": true,
+      "leak": {
+        "orphan_iframes": false,
+        "nodes": true,
+        "listeners": false,
+        "heap": false,
+        "rss": false
+      },
+      "monotonic_growth": {
+        "nodes": true,
+        "listeners": true,
+        "heapMB": true,
+        "rssMB": false
+      },
+      "note": "budget created by this run (not a judgement against itself); verdict uses its allowances"
+    }
+  },
+  "passed": false,
+  "counts": {
+    "passed": 5,
+    "total": 6
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "every transition of every cycle was timed (input to paint)",
+      "detail": {
+        "timed": 210,
+        "expected": 210
+      }
+    },
+    {
+      "ok": true,
+      "label": "no orphan iframes or frames after the loop (the Expression frame is released every time)",
+      "detail": {
+        "start": [
+          0,
+          1
+        ],
+        "end": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "ok": false,
+      "label": "settled DOM nodes and event listeners stay within the allowance of the warmed state (cycle 1)",
+      "detail": {
+        "nodes": [
+          32086,
+          42352
+        ],
+        "listeners": [
+          789,
+          847
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "settled JS heap stays within the allowance of the warmed state",
+      "detail": {
+        "warmed": 72.48,
+        "end": 76.45
+      }
+    },
+    {
+      "ok": true,
+      "label": "settled process-tree RSS stays within the allowance of the warmed state",
+      "detail": {
+        "warmed": 1693,
+        "end": 1548
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

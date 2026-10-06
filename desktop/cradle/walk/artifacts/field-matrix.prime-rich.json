@@ -1,0 +1,536 @@
+{
+  "scenario": "field-matrix",
+  "harness": "prime",
+  "context": "rich",
+  "at": "2026-10-06T22:12:05.711Z",
+  "real_turn": true,
+  "record": {
+    "harness": "prime",
+    "context": "rich",
+    "kev": {
+      "address": "127.0.0.1:8019",
+      "run": "jaredpalmer/kev-0.8b",
+      "base": "Qwen/Qwen3.5-0.8B-Base",
+      "requests_before": 22,
+      "requests_after": 29
+    },
+    "now": {
+      "now_ref": "central:now:project:field-walk:dea8e875ed7f3f534e674f6706ed5b3803a797b3456819a028a5638f1c707960",
+      "allocated_by": "central.now.allocate",
+      "policy_revision": "central.content-fnv1a64/v1:2711:4a87fece27b0ab9a",
+      "created": true
+    },
+    "facultyConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/faculty.walk.json",
+    "facultyEvidence": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/faculty-evidence",
+    "installation": {
+      "installed": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/.aikit-home/tools/prime-epi/8d53f1cb09cfe849",
+      "binding": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/.aikit-home/tools/prime-epi/current.json",
+      "extension": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/.aikit-home/tools/prime-epi/8d53f1cb09cfe849/extensions/ql-faculty-bindings.ts",
+      "id": "8d53f1cb09cfe849",
+      "faculty": {
+        "probed": true,
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "program": "/Users/admin/Central/Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument"
+      }
+    },
+    "configured": {
+      "body_ref": "agent-body/epi-prime-ql",
+      "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+      "configured": true,
+      "model_selection": "Prime native configured model unless an explicit AIKit model policy overrides it",
+      "provider": "epi-prime-ql",
+      "ql_revision": "ebcaa895ae9fe9e66cbc69f94994b4b3b77be940",
+      "standing": "configured-not-started"
+    },
+    "redisConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/redis-now/redis-now.json",
+    "candidates": [
+      {
+        "ref": "context-source/field-walk-1",
+        "title": "§3 · #0 — Eight Determinations",
+        "walk_kind": "relevant",
+        "slug": "section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations"
+      },
+      {
+        "ref": "context-source/field-walk-2",
+        "title": "§4′ — 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/harmonics-symmetries"
+      },
+      {
+        "ref": "context-source/field-walk-3",
+        "title": "§3′ — 4′+2′ = 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/spanda"
+      },
+      {
+        "ref": "context-source/field-walk-4",
+        "title": "Diaphaneity",
+        "walk_kind": "adjacent",
+        "slug": "section-rooms/arguments/concepts/diaphaneity"
+      },
+      {
+        "ref": "context-source/field-walk-5",
+        "title": "Jung — Aion, CW 9.2 (1978 corrected printing)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/psychology/jung/jung-1978-aion-cw9-2/jung-1978-aion-cw9-2"
+      },
+      {
+        "ref": "context-source/field-walk-6",
+        "title": "Pauli — The Influence of Archetypal Ideas on the Scientific Theories of Kepler (Silz trans., 1955)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/physics/pauli/pauli-1955-kepler-archetypal-ideas/pauli-1955-kepler-archetypal-ideas"
+      }
+    ],
+    "preflight": {
+      "ok": true,
+      "mode": "provider",
+      "decisionInvocation": {
+        "answer": {
+          "answers": {
+            "candidate/000": {
+              "noul": 0.717,
+              "type": "noul"
+            },
+            "candidate/001": {
+              "noul": 0.9105,
+              "type": "noul"
+            },
+            "candidate/002": {
+              "noul": 0.811,
+              "type": "noul"
+            },
+            "candidate/003": {
+              "noul": 0.9356,
+              "type": "noul"
+            },
+            "candidate/004": {
+              "noul": 0.9431,
+              "type": "noul"
+            },
+            "candidate/005": {
+              "noul": 0.8203,
+              "type": "noul"
+            },
+            "catalogue-sufficient": {
+              "noul": 0.6269,
+              "type": "noul"
+            }
+          },
+          "latency_ms": 4290.1,
+          "model": "kev-latest",
+          "usage": {
+            "input_tokens": 2536,
+            "output_tokens": 179
+          }
+        },
+        "attempts": [
+          {
+            "effect_uncertain": false,
+            "elapsed_ms": 4344,
+            "failure": null,
+            "http_status": 200,
+            "model": "kev-latest",
+            "ordinal": 1,
+            "usage": {
+              "input_tokens": 2536,
+              "output_tokens": 179
+            }
+          }
+        ],
+        "elapsed_ms": 4516,
+        "endpoint": "http://127.0.0.1:8019/v1/systemone",
+        "failure": null,
+        "invocation_ref": "invocation/jev/02e358823a69f6f0be3ecb63f8cf21ae7e41922b19919c359f4347d2e7799081",
+        "limits": {
+          "max_attempts": 2,
+          "max_input_tokens_per_attempt": 16384,
+          "max_output_tokens_per_attempt": 8000,
+          "model": "kev-latest",
+          "timeout_ms": 120000
+        },
+        "outcome": "completed",
+        "protocol": "systemone-compatible/v1",
+        "request_digest": "blake3:d808dfb2704e0314e433f19a0984f68cec43cdb132f5a6a82b9e41f5c71a121b",
+        "requested_model": "kev-latest",
+        "schema": "aikit.decision-invocation/v1",
+        "standing": "local-protocol"
+      },
+      "decisionProvider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+      "selected": [
+        "context-source/field-walk-1",
+        "context-source/field-walk-2",
+        "context-source/field-walk-3",
+        "context-source/field-walk-4",
+        "context-source/field-walk-5",
+        "context-source/field-walk-6"
+      ]
+    },
+    "nowContext": {
+      "configured": true,
+      "now_context": {
+        "external_provider": true,
+        "prepare_request": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-VRMkgW/now-prepare.json",
+        "redis": {
+          "address": "127.0.0.1:5101",
+          "allow_remote": false,
+          "connect_timeout_ms": 1000,
+          "coordination_retention_seconds": 1209600,
+          "credential_ref": null,
+          "database": 0,
+          "io_timeout_ms": 1000,
+          "key_prefix": "aikit-now",
+          "prepared_ttl_seconds": 21600,
+          "schema": "aikit.redis-now-config/v1",
+          "username": null
+        },
+        "required": false
+      },
+      "preparation": {
+        "participant_ref": "agent/field-walk-chat",
+        "project_ref": "field-walk",
+        "selection": {
+          "mode": "provider",
+          "provider_file": "/Users/admin/.aikit/decision-provider.json",
+          "relevance_threshold": 0.2
+        }
+      },
+      "provider": "epi-prime-ql",
+      "standing": "configuration only; nothing was prepared or delivered"
+    },
+    "epiOff": {
+      "title": "Harbour Notes",
+      "primary": "central:source:project:field-walk:README.md",
+      "default_body_for_a_new_conversation": "none (modeDefaultAgentBody returns undefined without the epi-logos world; tests/epi-prime-agent-mode.test.mjs)"
+    },
+    "credentialProbe": {
+      "home": "/Users/admin",
+      "home_logins_present": [
+        ".prime/agent/auth.json",
+        ".pi/agent/auth.json"
+      ],
+      "credential_env_names": [
+        "EPILOGOS_NEO4J_PASSWORD",
+        "CLAUDE_CODE_MESSAGING_TOKEN",
+        "MINIMAX_API_KEY",
+        "KIMI_API_KEY",
+        "ZAI_API_KEY",
+        "DEEPSEEK_API_KEY",
+        "SLACK_APP_TOKEN",
+        "SLACK_BOT_TOKEN",
+        "OPENROUTER_API_KEY"
+      ]
+    },
+    "opsAfterSend": [
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "expression_world"
+      },
+      {
+        "op": "presentation_observe"
+      },
+      {
+        "op": "encounter_provision",
+        "preferred_body_ref": "agent-body/epi-prime-ql"
+      },
+      {
+        "op": "expression_world"
+      }
+    ],
+    "agentSession": "agent-session/field-walk-chat-1791323819-1668",
+    "status": {
+      "provider": {
+        "body_ref": "agent-body/epi-prime-ql",
+        "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+        "command": "actuation-epi-prime",
+        "entry": "cli.js",
+        "id": "epi-prime-ql",
+        "label": "Epi-Logos Prime-QL",
+        "protocol": "prime-rpc",
+        "sandboxed": false
+      },
+      "native_session_id": "01a11338-55ad-704e-b928-51a5dbc6eec2",
+      "model_observation": {
+        "available_models": [
+          {
+            "description": "Prime Agent 0.9.4 native configured model",
+            "modelId": "glm-5.3-flash",
+            "name": "GLM-5.3-Flash",
+            "rosterIdentity": {
+              "provider_native_id": "glm-5.3-flash",
+              "provider_ref": "provider:zai"
+            }
+          }
+        ],
+        "current_model_id": "glm-5.3-flash",
+        "native_provider": "zai",
+        "standing": "Prime native get_state observes provider=zai; native configured default, not an AIKit selection or inference proof"
+      }
+    },
+    "chatTail": "Wo\nEarlier messages\nWORLD\n\nI now have the exact pinned span (6780 bytes from commit 3b949007). \nQL CALL 2 OF 3\n — harmonic (MEF) read of the event at generation 1, now carrying the exact span text as semantic-span evidence.\n\nWORLD\n\nWorld\n· using ipython\n· 14m 53s\n\nError: TypeError: Failed to fetch\n\nGLM-5.3-Flash\nStop",
+    "toolSignals": [
+      {
+        "i": 20,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_a2afb79d5c8f47538ce9010d",
+        "args": "{\"code\":\"skill_path = \\\"/Users/admin/Central/Work/Actuation/experiments/ql-runtime/prime/skills/ql-relational/SKILL.md\\\"\\ntext = open(skill_path).read()\\nprint("
+      },
+      {
+        "i": 21,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_a2afb79d5c8f47538ce9010d",
+        "args": "{\"code\":\"skill_path = \\\"/Users/admin/Central/Work/Actuation/experiments/ql-runtime/prime/skills/ql-relational/SKILL.md\\\"\\ntext = open(skill_path).read()\\nprint("
+      },
+      {
+        "i": 22,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_a2afb79d5c8f47538ce9010d",
+        "args": "{\"code\":\"skill_path = \\\"/Users/admin/Central/Work/Actuation/experiments/ql-runtime/prime/skills/ql-relational/SKILL.md\\\"\\ntext = open(skill_path).read()\\nprint("
+      },
+      {
+        "i": 23,
+        "kind": "tool-result",
+        "toolName": "ipython",
+        "id": "call_a2afb79d5c8f47538ce9010d"
+      },
+      {
+        "i": 30,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_42e72118251641b8843c3252",
+        "args": "{\"code\":\"import inspect, ql_relational\\nprint([n for n in dir(ql_relational) if not n.startswith('_')])\"}"
+      },
+      {
+        "i": 63,
+        "kind": "tool-call",
+        "toolName": "ql_project_event",
+        "id": "call_cea8dfee3e04493ab99c844b",
+        "args": "{\"event\":{\"bindings\":{\"body_ref\":\"agent/field-walk-chat\",\"session_ref\":\"agent-session/field-walk-chat-1791323819-1668\"},\"event_ref\":\"field-walk-event/field-walk"
+      },
+      {
+        "i": 64,
+        "kind": "tool-result",
+        "toolName": "ql_project_event",
+        "id": "call_cea8dfee3e04493ab99c844b"
+      },
+      {
+        "i": 88,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 89,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 90,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 91,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 92,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 93,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 94,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 95,
+        "kind": "tool-call",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c",
+        "args": "{\"code\":\"import os, subprocess\\n\\n# Locate the Central checkout root and the selected span file\\nfor root in [\\\"/Users/admin/Central\\\"]:\\n    print(root, os.pat"
+      },
+      {
+        "i": 96,
+        "kind": "tool-result",
+        "toolName": "ipython",
+        "id": "call_aec84d4acbc64ec6bdd0881c"
+      }
+    ],
+    "encounterUse": {
+      "status": 0,
+      "stdout": "{\n  \"absences\": [\n    \"owner faculty receipts are read by schema and session; their content-addressed file names are not re-verified here\",\n    \"addressed deliveries are not segmented as turns; only user messages open a turn\"\n  ],\n  \"agent_session\": \"agent-session/field-walk-chat-1791323819-1668\",\n  \"decision\": {\n    \"from_delivery_receipt\": {\n      \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n      \"jev_invocation_ref\": \"invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67\"\n    },\n    \"note\": \"the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt\",\n    \"selection_readback\": {\n      \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n      \"jev_invocation_ref\": \"invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67\",\n      \"read\": true,\n      \"read_as\": \"local view\",\n      \"selected_source_refs\": [\n        \"context-source/field-walk-1\",\n        \"context-source/field-walk-2\",\n        \"context-source/field-walk-3\",\n        \"context-source/field-walk-4\",\n        \"context-source/field-walk-5\",\n        \"context-source/field-walk-6\"\n      ],\n      \"version\": 2,\n      \"view_is_the_delivered_one\": true\n    }\n  },\n  \"prepared_context\": {\n    \"degraded\": [],\n    \"delivered\": [\n      {\n        \"cursor\": 5,\n        \"kind\": \"now-context-delivered\",\n        \"observed_at_ms\": 1791323831913,\n        \"receipt\": {\n          \"agent_session\": \"agent-session/field-walk-chat-1791323819-1668\",\n          \"basis_digest\": \"blake3:9de192f1239ef14e6b546751a3536166026b7c66b1826d5f6d208a2e5269b6fe\",\n          \"change_cursor\": 0,\n          \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n          \"delivered_at_unix_ms\": 1791323831911,\n          \"jev_invocation_ref\": \"invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67\",\n          \"participant_ref\": \"agent/field-walk-chat\",\n          \"prepared_digest\": \"blake3:c1768ff8d3bee69f9aca16eea7cbe56b246a3a2df6375869ee42547de9875063\",\n          \"prepared_version\": 2,\n          \"schema\": \"aikit.now-context-delivery/v1\"\n        },\n        \"standing\": \"provider-turn-delivery-accepted; not a claim of model response\"\n      }\n    ],\n    \"source\": \"encounter journal: now-context-* events\",\n    \"state\": \"delivered\",\n    \"uncertain\": []\n  },\n  \"ql_operations\": {\n    \"faculty_receipts\": [\n      {\n        \"declared_locus_ref\": \"agent-session/field-walk-chat-1791323819-1668\",\n        \"error\": null,\n        \"observed_unix_nanos\": \"1791324355922148000\",\n        \"operation\": \"epi-faculty\",\n        \"ql_mef_revision\": \"6a81fc441e4dda477f4de3a7ebd59c368cb28f37\",\n        \"request_digest\": \"7a2cadc37dba861fd021bf187d8a5aa64756c1ebdb9591082e7c864b5b9460e7\",\n        \"response_digest\": \"02c10351e527fe41d7d0a5ad394d4b5050e8e97787a1406b1df35186c4495d34\",\n        \"success\": true\n      }\n    ],\n    \"python_faculty_calls\": [\n      {\n        \"cursor\": 653,\n        \"function\": \"epi_faculty\",\n        \"tool_call_id\": \"call_347ff68ac26c4005992fe104\"\n      }\n    ],\n    \"reconciliation\": {\n      \"faculty_receipts_in_turn\": 1,\n      \"python_calls_recorded\": 1,\n      \"statement\": \"every recorded Python faculty call has an owner receipt in the turn window (counts agree; calls are matched by count and time, not by identity)\"\n    },\n    \"tool_calls\": [\n      {\n        \"cursor\": 64,\n        \"operation\": null,\n        \"position\": null,\n        \"result\": {\n          \"cursor\": 65,\n          \"is_error\": false,\n          \"result_schema\": \"ql.agent-projection/v1\",\n          \"result_sha256\": \"ed2f3ac35300c02b9698f53f7acc245787455c3151ede2dcf34258beac8d6cf4\"\n        },\n        \"tool\": \"ql_project_event\",\n        \"tool_call_id\": \"call_cea8dfee3e04493ab99c844b\"\n      }\n    ]\n  },\n  \"schema\": \"aikit.encounter-use-reading/v1\",\n  \"sources\": [\n    \"encounter journal (encounters.sqlite3)\",\n    \"Actuation faculty evidence (actuation.prime-ql-operation/v1)\",\n    \"Redis prepared view\"\n  ],\n  \"turn\": {\n    \"end_cursor_exclusive\": null,\n    \"index\": 1,\n    \"last_event_at_ms\": 1791324384018,\n    \"of\": 1,\n    \"outcome\": \"turn-ended\",\n    \"start_cursor\": 4,\n    \"started_at_ms\": 1791323831908\n  }\n}\n",
+      "stderr": ""
+    },
+    "tripwire": "n/a — the rich context withholds nothing"
+  },
+  "passed": true,
+  "counts": {
+    "passed": 15,
+    "total": 15,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "Epi OFF: the field reads the project's own corpus (generic adapter), not the essay",
+      "detail": {
+        "title": "Harbour Notes",
+        "ref": "central:source:project:field-walk:README.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Epi ON: the field reads the essay at M16",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "an Expression opened as the tangent with its scene",
+      "detail": {
+        "ref": "expression:roz-room-02-return-of-zero",
+        "scene": "movement-15"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the real Expression renderer is playing in its frame"
+    },
+    {
+      "ok": true,
+      "label": "return: the passage at M16, the Expression's frame released",
+      "detail": {
+        "focus": "primary",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the field stands at M16 with a tangent open and a different page selected",
+      "detail": {
+        "gen": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "Epi lens ON: the panel's provision asked for the Epi body (existing selection mechanism)",
+      "detail": {
+        "op": "encounter_provision",
+        "preferred_body_ref": "agent-body/epi-prime-ql"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the conversation is the Prime-QL body at the delivered revision",
+      "detail": {
+        "body_ref": "agent-body/epi-prime-ql",
+        "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+        "command": "actuation-epi-prime",
+        "entry": "cli.js",
+        "id": "epi-prime-ql",
+        "label": "Epi-Logos Prime-QL",
+        "protocol": "prime-rpc",
+        "sandboxed": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "the delivered turn carried the field item (reviewed context)",
+      "detail": {
+        "len": 3016
+      }
+    },
+    {
+      "ok": true,
+      "label": "AIKit delivered Redis-prepared NOW context to the turn",
+      "detail": {
+        "delivered": 1,
+        "degraded": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "the recorder read the turn",
+      "detail": {
+        "status": 0,
+        "outcome": "turn-ended"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the recorder shows the decision invocation behind the delivered view (Kev)",
+      "detail": {
+        "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+        "jev_invocation_ref": "invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Kev's own counters moved (it answered requests during this cell)",
+      "detail": {
+        "before": 22,
+        "after": 29
+      }
+    },
+    {
+      "ok": true,
+      "label": "the body made QL faculty calls",
+      "detail": [
+        "epi_faculty"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ],
+  "skipped": []
+}

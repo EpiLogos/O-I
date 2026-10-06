@@ -1,0 +1,21 @@
+{
+  "established_at": "2026-10-06T22:19:00.028Z",
+  "basis": "first run; observed values with allowances, set before any tuning",
+  "latency_p95_ms": {
+    "select": 119,
+    "open-tangent": 180,
+    "keep": 97,
+    "promote": 119,
+    "back": 420,
+    "open-expression": 236,
+    "return": 348
+  },
+  "settled_drift_allowed": {
+    "nodes_pct": 10,
+    "listeners_pct": 10,
+    "heapMB_pct": 25,
+    "rssMB_pct": 30,
+    "iframes": 0,
+    "frames": 0
+  }
+}

@@ -1,11 +1,11 @@
 {
   "scenario": "field-matrix",
-  "harness": "prime",
+  "harness": "pi",
   "context": "clean",
-  "at": "2026-10-06T22:22:25.578Z",
+  "at": "2026-10-06T22:22:47.771Z",
   "real_turn": false,
   "record": {
-    "harness": "prime",
+    "harness": "pi",
     "context": "clean",
     "credentialScrub": {
       "removed_env_names": [
@@ -85,14 +85,14 @@
       "remaining_credential_shaped": []
     },
     "tripwire": {
-      "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-KxcFSQ",
+      "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-6a95i5",
       "withheld": [
         "factory",
         "workcell",
         "workcell-write-boundary"
       ],
-      "sandbox_home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-FYdJq8",
-      "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-KxcFSQ/bin:/opt/homebrew/Cellar/node@24/24.21.0_1/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+      "sandbox_home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-tKHZvK",
+      "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-6a95i5/bin:/opt/homebrew/Cellar/node@24/24.21.0_1/bin:/usr/bin:/bin:/usr/sbin:/sbin",
       "entries": [],
       "count": 0
     },
@@ -100,37 +100,18 @@
       "address": "127.0.0.1:8019",
       "run": "jaredpalmer/kev-0.8b",
       "base": "Qwen/Qwen3.5-0.8B-Base",
-      "requests_before": 31
+      "requests_before": 32
     },
     "now": {
-      "now_ref": "central:now:project:field-walk:f0e68a8c9fcd206d42e1ff13979cf6f70915f1bf1759a2439e10f6a4c0bd91a2",
+      "now_ref": "central:now:project:field-walk:2e6b905d528b467ce2e2b094ab5fb96c8a5954e9211ca92ed68b55a798d1032b",
       "allocated_by": "central.now.allocate",
-      "policy_revision": "central.content-fnv1a64/v1:2711:8608e42cb739fa8b",
+      "policy_revision": "central.content-fnv1a64/v1:2711:55a9052f79a462ef",
       "created": true
     },
-    "facultyConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/faculty.walk.json",
-    "facultyEvidence": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/faculty-evidence",
-    "installation": {
-      "installed": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/.aikit-home/tools/prime-epi/9881fbbd9d67503f",
-      "binding": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/.aikit-home/tools/prime-epi/current.json",
-      "extension": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/.aikit-home/tools/prime-epi/9881fbbd9d67503f/extensions/ql-faculty-bindings.ts",
-      "id": "9881fbbd9d67503f",
-      "faculty": {
-        "probed": true,
-        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
-        "program": "/Users/admin/Central/Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument"
-      }
-    },
     "configured": {
-      "body_ref": "agent-body/epi-prime-ql",
-      "body_revision": "4b13b6d164ba43e4b13d285c10d66db08157f367",
-      "configured": true,
-      "model_selection": "Prime native configured model unless an explicit AIKit model policy overrides it",
-      "provider": "epi-prime-ql",
-      "ql_revision": "ebcaa895ae9fe9e66cbc69f94994b4b3b77be940",
-      "standing": "configured-not-started"
+      "configured": true
     },
-    "redisConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/redis-now/redis-now.json",
+    "redisConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-6Rouwm/redis-now/redis-now.json",
     "candidates": [
       {
         "ref": "context-source/field-walk-1",
@@ -204,7 +185,7 @@
               "type": "noul"
             }
           },
-          "latency_ms": 2254.4,
+          "latency_ms": 1886.5,
           "model": "kev-latest",
           "usage": {
             "input_tokens": 2536,
@@ -214,7 +195,7 @@
         "attempts": [
           {
             "effect_uncertain": false,
-            "elapsed_ms": 2307,
+            "elapsed_ms": 1923,
             "failure": null,
             "http_status": 200,
             "model": "kev-latest",
@@ -225,10 +206,10 @@
             }
           }
         ],
-        "elapsed_ms": 2403,
+        "elapsed_ms": 2011,
         "endpoint": "http://127.0.0.1:8019/v1/systemone",
         "failure": null,
-        "invocation_ref": "invocation/jev/73375aa9cdf3ae758bf781fdd31be7b0b613159b4539126c0c5eef6213cc14ee",
+        "invocation_ref": "invocation/jev/f42cc2fd41064eb2c66472775ad27e70eb686a3bbab8d17a5db21861f1368124",
         "limits": {
           "max_attempts": 2,
           "max_input_tokens_per_attempt": 16384,
@@ -257,9 +238,9 @@
       "configured": true,
       "now_context": {
         "external_provider": true,
-        "prepare_request": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-SAi8Py/now-prepare.json",
+        "prepare_request": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-6Rouwm/now-prepare.json",
         "redis": {
-          "address": "127.0.0.1:5087",
+          "address": "127.0.0.1:5118",
           "allow_remote": false,
           "connect_timeout_ms": 1000,
           "coordination_retention_seconds": 1209600,
@@ -274,7 +255,7 @@
         "required": false
       },
       "preparation": {
-        "participant_ref": "agent/field-walk-chat",
+        "participant_ref": "agent-session/field-turn",
         "project_ref": "field-walk",
         "selection": {
           "mode": "provider",
@@ -282,24 +263,31 @@
           "relevance_threshold": 0.2
         }
       },
-      "provider": "epi-prime-ql",
+      "provider": "field-walk-pi",
       "standing": "configuration only; nothing was prepared or delivered"
     },
+    "piBound": true,
     "epiOff": {
       "title": "Harbour Notes",
       "primary": "central:source:project:field-walk:README.md",
       "default_body_for_a_new_conversation": "none (modeDefaultAgentBody returns undefined without the epi-logos world; tests/epi-prime-agent-mode.test.mjs)"
     },
+    "heldFieldItem": [
+      {
+        "anchor": "field-encounter:e031dc6d-6da9-4d4d-9e31-b9da075325ee#10",
+        "text": "field generation 10 · essay\nmain: Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality. (central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md) @ sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6 · at M16\nta"
+      }
+    ],
     "credentialProbe": {
-      "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-FYdJq8",
+      "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-tKHZvK",
       "home_logins_present": [],
       "credential_env_names": []
     }
   },
   "passed": true,
   "counts": {
-    "passed": 9,
-    "total": 9,
+    "passed": 10,
+    "total": 10,
     "skipped": 1
   },
   "checks": [
@@ -348,9 +336,19 @@
     },
     {
       "ok": true,
+      "label": "AIKit holds the field item for the bound session at the field's generation (the companion's context, before any send)",
+      "detail": [
+        {
+          "anchor": "field-encounter:e031dc6d-6da9-4d4d-9e31-b9da075325ee#10",
+          "text": "field generation 10 · essay\nmain: Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality. (central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md) @ sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6 · at M16\nta"
+        }
+      ]
+    },
+    {
+      "ok": true,
       "label": "the clean context holds no provider login (sandbox HOME) and no credential environment variable",
       "detail": {
-        "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-FYdJq8",
+        "home": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-matrix-home-tKHZvK",
         "home_logins_present": [],
         "credential_env_names": []
       }
