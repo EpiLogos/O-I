@@ -48,7 +48,7 @@
 **Running tally: 110 of 135 fully through the office.** Outstanding: mytheme 25 (21 floor-clean, family critics after continuation-B lands), the S-products hygiene cleanup, then convergence.
 
 **Mytheme critics:** wave B 12/12 PASS (valentinian human-amplified verified true; pauli's no-finished-interpretation refusal verified in JSON). Wave A: 11 PASS, 2 REJECT — apollo-dionysus (ending note claims a triangle the return scene does not stage) and the antikythera capstone (glyphs "82" and "Ἡλίου" assert archaeology the record does not state, violating its own carried guard) — both routed back to the first worker; everything else about the capstone verified exact (Offered kept, returns precise).
-**Office tally: 122/135 PASS through Aletheia's office;** the two mytheme revisions in flight, covers pass running.
+**THE OFFICE IS COMPLETE: 135/135 PASS through Aletheia's office.** The two mytheme revisions re-checked PASS (93460e7fd): apollo-dionysus stages the triangle the record's own sentence describes (centre distance 0.02, inside the ring), and the antikythera capstone carries no ungrounded glyph — the withdrawal and its guard recorded in the binding. Every family now stands: wave 1 (10), episteme (8), essay+rooms (9), mytheme (25), S-products (83). Three revise-and-resubmit cycles closed cleanly across the programme (a26p attribution; episteme concepts-2/etymologies; mytheme apollo-dionysus/antikythera).
 
 ## Convergence additions from wave-2 critic findings (parent decisions)
 
