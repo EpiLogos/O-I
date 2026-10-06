@@ -24,6 +24,8 @@
 
 **Critic verdicts:** symbolon PASS×2 (contact sheets + independent pixel diffs committed). arguments: A PASS; A′ REJECT(1) — a26p attributed A26's recognition-sequence glyphs to A26′; revision dispatched to the lane (critic's smallest fix: re-attribute rationales to A26/other-face relation, keep sequence, note it). matheme critic dispatched.
 
+**WAVE 1 COMPLETE through the office: 10/10 authored, 10/10 critic-PASS** (symbolon 2; arguments A + A′-after-revision; matheme 6 — matheme critic verified displaced-return geometry JSON-exact in x/y/z, Gödel proof-order-only confirmed in JSON and every frame, softmax at selection level with zero apoha/soteriological leakage across all six). Critic logs + contact sheets for all three families committed under renders/ and critic-log-wave1-*.md.
+
 **Wave 2 dispatched:** essay+rooms (9 journeys), episteme (8), mytheme (25) — lanes briefed with the wave-1 fidelity bar.
 
 ## Wave-1 results so far (2026-10-06)
