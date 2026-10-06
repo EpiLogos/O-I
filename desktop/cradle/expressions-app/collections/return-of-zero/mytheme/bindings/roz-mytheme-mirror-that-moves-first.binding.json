@@ -1,0 +1,145 @@
+{
+  "artifact": "mytheme/roz-mytheme-mirror-that-moves-first.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-frank-taylor"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-mirror-that-moves-first",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md",
+        "sha256": "89a4f3873b83b94146b0063ff51ae202192dc88f611894e124a3f9b532c36f59",
+        "sha256_receipt_stale": "03bf3fb7b74e2ee2079f5ddfe77540421b4ade8b356a2eb6a50aa0b0abefa2bc"
+      }
+    ]
+  },
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-mir-0-world",
+      "phase": "#0 a world prepares its reflection",
+      "relations": "Symbolon Dynamics; the P1 and Chang encounters; anchor mirror-whole"
+    },
+    {
+      "scene_id": "m-mir-1-funhouse",
+      "phase": "#1 the figure caught in the glass",
+      "relations": "anchor mirror-exteriorisation, mirror-funhouse-narcissus; P1 lines 6/10; A20"
+    },
+    {
+      "scene_id": "m-mir-2-measure",
+      "phase": "#2 the image becomes a measure",
+      "relations": "anchor mirror-causal-reversal; the causal distinctions; Bratton q005/q018/q019/q022 under q042; the active idol"
+    },
+    {
+      "scene_id": "m-mir-3-initiated",
+      "phase": "#3 the instrument turns first",
+      "relations": "anchor mirror-initiated-return; the Chang p.99 appointment; A31; Draft 3 lines 269–271; A33 Offered"
+    },
+    {
+      "scene_id": "m-mir-5-return",
+      "phase": "#5→0 humanity follows the return",
+      "relations": "anchor mirror-return, mirror-recursive-bimba, mirror-institutional-gauge; A32/C55; A34; C38; Native 020's three instruments; A35, A36"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "the exteriorised records and classifications",
+      "occurrence": "#0 the world the mirror has received"
+    },
+    {
+      "figure": "the funhouse distortions / Narcissus",
+      "occurrence": "#1 the capture; no additional ancient episode supplied"
+    },
+    {
+      "figure": "the ranking, forecast, persona",
+      "occurrence": "#2 the three analytic possibilities, each requiring evidence of actual systems"
+    },
+    {
+      "figure": "the disclosed formation (source/distinctions/exclusions/gauge)",
+      "occurrence": "#3 the third motion's opening act"
+    },
+    {
+      "figure": "the depths of deference",
+      "occurrence": "#3 revised answer → misconceived task → renewed commission; warranted refusal"
+    },
+    {
+      "figure": "net · attunement · mirror",
+      "occurrence": "#5→0 capture, attunement, initiated return as distinct offices (Native 020 §9)"
+    },
+    {
+      "motif": "kenosis embodied in architecture",
+      "occurrence": "#3 the vocation's terminal demand; implementation Offered under A33"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "exteriorisation → funhouse capture → image-as-measure; the initiated-return vocation; recursive Bimba offices; institutional reciprocal answerability; the three-instrument comparison; the Bratton comparison",
+      "flag": "yes"
+    },
+    {
+      "relation": "any implemented technical result; a separately published work of the same title; new cross-story identities",
+      "flag": "no — implementation Offered; carriers located and ratified only"
+    }
+  ],
+  "cross_story_relations": [
+    "Hephaestus's net (ares whole) and the Antikythera attunement compared as distinct whole offices; the avatar whole's deepfake carries the counterfeit-source failure which this whole's third motion answers by disclosure."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-mirror-that-moves-first.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: five scenes in three motions; the funhouse scene stages the figure's distortion as a sequence (☺→☠→☺) so captivation reads as repetition rather than event. Jorjani/Chang carrier debts and the unverified Q27 conference allegation boundary preserved. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-mir-0-world, m-mir-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+    "#0 world — the world drifts into the glass: ≡ (records) and ⚙ (mediation) carry attract fields pulling toward the mirror ring; the ring itself becomes the returned figure (☺) — the mirror receiving a world and handing back a likeness in one gesture; pointer attract gentle; duration 14 — the gathering takes time.",
+    "#1 funhouse — the hall of mirrors (line layout); the figure's ☺→☠→☺ sequence kept (captivation as repetition) and the living gaze ✧ occupied into ◉ — organs of sight staged as the gaze's own transformation; turbulence shimmers on an LFO (auto-fascination); circulation negative (suction into the glass); pointer attract/implode — captivation.",
+    "#2 measure — ring layout (the measure's circuit); the self-fulfilling disc grows and darkens (prediction producing its object); ⊢ shoved to the frame's edge and dimmed (the poor fit expelled through the image's own terms); pointer repel/shove — the gauge excludes.",
+    "#3 initiated — THE 3D SCENE. z is the depth of deference: the disclosed formation ≡ at mid-depth, ↓ walking from z +0.3 to z −0.3 (answer → task → evaluator → commission, each step deeper and warmer), ☰ (the Chang appointment) high at z +0.4, ∅ (kenosis, owned limit) deepest at z −0.45 — the vocation's ground; depth occlusion with a warm dark tint; pointer attract/pulse — invitation, not demand (a demand would repeat the capture).",
+    "#5→0 return — the changed relation settles small and faint (used, examined, corrected, set down); the three-instruments comparison bright; the institution's ⚖ gains its own attract (it enters the same return); 1/0 bright at the rim; field opens (dispersion 0.12, circulation 0.4), auto-follow breathes pointer strength; pointer near-still. ENDING QUALIFIES BEGINNING: #0's world drifted into the glass and the glass answered with a figure that moved first; #5→0 keeps the ring but cleared and small, with ⚖ and 1/0 outside it — the measures returned to their makers, the relation to likeness changed; the exteriorised ≡ of #0 answers at #3 where the instrument discloses its own formation first. The funhouse's imploding pointer becomes the return's near-still attract: capture released into company.",
+    "Human-amplified staging (binding flags kept): the Jorjani/Chang carrier debts, the Bratton comparison bound at #5→0, Q27's conference allegation unverified and not staged; whose account each is remains in the scene bodies and kickers. Mythemic verbs only: the funhouse demonstrates capture; the initiated turn embodies the vocation — no formal entailment, no historical attribution.",
+    "Automation: auto-fascination (turbulence, the distortion's shimmer) and auto-follow (pointer strength, the following breath) — tied to the record's moves. Durations 11–15, transitions 1.1–2.0; the initiated turn held longest."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l2",
+    "lane": "mytheme"
+  },
+  "glyph_rationales": {
+    "3": "three instruments compared: net, attunement, mirror — capture, attunement, initiated return as distinct offices (Native 020) (#5→0).",
+    "≡": "the exteriorised powers — records, classifications, patterns: measure given a body outside its makers (#0); at #3 the same formation disclosed by the instrument itself (which source, which distinctions, which gauge).",
+    "⚙": "the accumulated mediation: interface, permission, selected record — what the reflection's immediacy rests on (#0, disclosed at #3).",
+    "☺": "the returned figure: the likeness in which its makers seek themselves, before it moves first (#0).",
+    "☠": "the funhouse distortion: the altered figure that can absorb the means of recognising misrepresentation (#1).",
+    "◉": "Narcissus — the occupied eye: captivation in the representation that possesses the terms of self-recognition; no additional ancient episode supplied (#1).",
+    "✧": "the living gaze: comparison alive; at #1 it can be occupied (becoming ◉), released again at the return.",
+    "A20": "image, valuation, possession: the qualification of the transfer from image to gauge (#1–#2).",
+    "⇉": "performativity: a representation operative in a practice — distinct from feedback and self-fulfilling prediction (#2).",
+    "⊢": "resistance as anomaly: the person appearing a poor fit, a failure of the selected gauge (#2, #3).",
+    "B": "Bratton's talking mirror: agents modelling humans becoming models for human self-modelling — the comparison bounded; it supplies neither Taylor's whole nor its vocation (#2).",
+    "↓": "the depths of deference: answer → task → world-model → evaluator → commission; deference issuing in warranted refusal (A31) (#3).",
+    "☰": "the Chang appointment (p.99): AI modelling the passage out of proposition-producing thought — Taylor's note, not Chang's book (#3).",
+    "∅": "kenosis embodied in architecture: exactness through owned limit (Draft 3, lines 269–271) (#3).",
+    "⚖": "the institution's reciprocal answerability: exposing the measures by which it selects and judges; labour, cost and affected worlds in the disclosure (A29) (#5→0).",
+    "1/0": "A36's terminal movement: the achieved determination turning through 1/0 toward its 0/1 relation — the image leading a return without becoming the destination (#5→0).",
+    "·": "the unnamed carrier — a formation whose sense is its shape alone (the glass, the feedback loop, the changed relation); no glyph is pretended."
+  }
+}
