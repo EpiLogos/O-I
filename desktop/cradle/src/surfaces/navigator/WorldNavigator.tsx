@@ -7,6 +7,7 @@ import { FileTree, FileRowDecor } from "../../files/FileTree";
 import { ProjectBranch, ProjectModes } from "./ProjectBranch";
 import { Glyph } from "../../workspace/Glyph";
 import { MODE_CURATION, STRIP_MODES, type WorkspaceMode } from "../../workspace/mode";
+import { modesOffered, type ProductPresence } from "../../workspace/products";
 import { useEpiLens } from "../../workspace/lens";
 import { DestinationRow, OpenWhere, Section, type SectionState } from "../../workspace/left/rows";
 import { useLeftHost } from "../../workspace/left/host";
@@ -183,22 +184,27 @@ function ProjectChats({project, refresh, activeRef, onOpen}: {project: string; r
  * hint live in the tooltip. Arrow keys move and select, as a radiogroup does
  * (roving tabIndex — keyboard parity with the old sidebar-head switch this
  * strip replaces). It lives in the left frame's foot (10-SIDEBARS §3.1). */
-export function WorldModeStrip({mode,onMode}:{mode:WorkspaceMode;onMode:(mode:WorkspaceMode)=>void}) {
+export function WorldModeStrip({mode,onMode,presence}:{mode:WorkspaceMode;onMode:(mode:WorkspaceMode)=>void;presence?:ProductPresence}) {
   const group=useRef<HTMLDivElement>(null);
+  // A product the census says is absent offers no mode; a saved arrangement in
+  // that mode keeps its tree (the active mode stays in the strip as the one
+  // exception so the person can see and leave it).
+  const offered=modesOffered(STRIP_MODES,presence);
+  const strip=offered.includes(mode)||!STRIP_MODES.includes(mode)?offered:[...offered,mode];
   const step=(delta:number)=>{
-    const at=Math.max(0,STRIP_MODES.indexOf(mode));
-    const next=STRIP_MODES[(at+delta+STRIP_MODES.length)%STRIP_MODES.length];
+    const at=Math.max(0,strip.indexOf(mode));
+    const next=strip[(at+delta+strip.length)%strip.length];
     onMode(next);
     requestAnimationFrame(()=>group.current?.querySelector<HTMLElement>(`[data-mode="${next}"]`)?.focus());
   };
-  const focusable=STRIP_MODES.includes(mode)?mode:STRIP_MODES[0];
+  const focusable=strip.includes(mode)?mode:strip[0];
   return <div ref={group} className="world-mode-strip" role="radiogroup" aria-label="Workspace mode"
     onKeyDown={event=>{
       if(event.altKey||event.metaKey||event.ctrlKey)return;
       if(event.key==="ArrowRight"||event.key==="ArrowDown"){event.preventDefault();step(1);}
       else if(event.key==="ArrowLeft"||event.key==="ArrowUp"){event.preventDefault();step(-1);}
     }}>
-    {STRIP_MODES.map((id,index)=>{const curation=MODE_CURATION[id];const label=id==="base"?"Base":curation.label;return <button key={id} type="button" role="radio" aria-checked={mode===id} tabIndex={focusable===id?0:-1} aria-label={label} data-mode={id} title={`${label} — ${curation.hint} (⌘⌥${index+1})`} onClick={()=>onMode(id)}><Glyph name={curation.glyph} size={14}/></button>;})}
+    {strip.map(id=>{const curation=MODE_CURATION[id];const label=id==="base"?"Base":curation.label;return <button key={id} type="button" role="radio" aria-checked={mode===id} tabIndex={focusable===id?0:-1} aria-label={label} data-mode={id} title={`${label} — ${curation.hint} (⌘⌥${STRIP_MODES.indexOf(id)+1})`} onClick={()=>onMode(id)}><Glyph name={curation.glyph} size={14}/></button>;})}
   </div>;
 }
 
