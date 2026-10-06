@@ -1,6 +1,6 @@
 {
   "scenario": "field-continuity",
-  "at": "2026-10-06T20:06:08.311Z",
+  "at": "2026-10-06T22:21:45.566Z",
   "passed": true,
   "counts": {
     "passed": 23,
@@ -206,7 +206,7 @@
     {
       "ok": true,
       "label": "reload: the Expression returns at its scene",
-      "detail": "http://127.0.0.1:49736/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+      "detail": "http://127.0.0.1:51668/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
     },
     {
       "ok": true,
@@ -301,7 +301,7 @@
     {
       "ok": true,
       "label": "close and reopen: the Expression returns at its scene",
-      "detail": "http://127.0.0.1:49736/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+      "detail": "http://127.0.0.1:51668/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
     },
     {
       "ok": true,

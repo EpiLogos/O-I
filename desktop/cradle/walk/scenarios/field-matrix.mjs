@@ -50,7 +50,13 @@ if (flag("all")) {
 const HARNESS = arg("harness"), CONTEXT = arg("context");
 if (!["pi", "prime"].includes(HARNESS) || !["clean", "rich"].includes(CONTEXT)) { console.error("usage: field-matrix.mjs --harness pi|prime --context clean|rich | --all"); process.exit(2); }
 const need = n => { const v = process.env[n]; if (!v) { console.error(`${n} is required`); process.exit(2); } return v; };
-const aikit = need("OI_AIKIT_BIN");
+// the AIKit build that carries the delivered launcher contract (encounter-epi-prime-configure --extension/--installation, encounter-use)
+const aikit = process.env.OI_AIKIT_BIN ?? "/Users/admin/Central/worktrees/env-1/ai-kit/target/debug/aikit";
+if (!existsSync(aikit)) { console.error(`no AIKit at ${aikit}; set OI_AIKIT_BIN to the candidate build`); process.exit(2); }
+{
+  const help = spawnSync(aikit.replace(/aikit$/, "aikit-session-space"), ["encounter-epi-prime-configure", "--help"], {encoding: "utf8"});
+  if (!/--extension/.test(help.stdout ?? "") || !/--installation/.test(help.stdout ?? "")) { console.error(`${aikit} predates the Prime-QL launcher contract (no --extension/--installation on encounter-epi-prime-configure): use the candidate build in env-1/ai-kit/target/debug, not the installed aikit`); process.exit(2); }
+}
 const site = need("FIELD_SITE_ROOT");
 const wantReal = process.env.OI_WALK_REAL_PROVIDER === "1";
 const realHome = homedir();
@@ -81,25 +87,26 @@ const cell = `${HARNESS}-${CONTEXT}`;
 
 // ---- the material (the owner's installed material on this machine; env overrides) ------------------------------------
 const ACTUATION = process.env.EPI_ACTUATION_ROOT ?? "/Users/admin/Central/worktrees/env-1/actuation";
-const LAUNCHER = process.env.EPI_ACTUATION_PRIME_BINARY ?? join(ACTUATION, "target/debug/actuation-epi-prime");
-const QL_DIR = process.env.EPI_QL_DIR ?? join(realHome, ".workcell/tools/ql-agent/1a50b99ccf1884a4adbb3e3d6386854678de76d1ee899d89d629c7153977103d");
-const PRIME = process.env.EPI_PRIME_AGENT_BINARY ?? join(realHome, ".npm-global/bin/prime-agent");
+const CANDIDATE_TOOLS = join(realHome, ".oi-candidates/epi-prime/tools");
+const LAUNCHER = process.env.EPI_ACTUATION_PRIME_BINARY ?? join(CANDIDATE_TOOLS, "prime-epi/bin/actuation-epi-prime");   // the delivered launcher: requires --extension, loads the QL binding with explicit -e, fails closed
+const QL_BIN = process.env.EPI_QL_BINARY ?? "/Users/admin/Central/Work/Quaternal-Logic/target/debug/ql";
+const PRIME = process.env.EPI_PRIME_AGENT_BINARY ?? join(realHome, ".npm-global/lib/node_modules/prime-agent/dist/bundle/cli.js");
 const RESEARCH = process.env.EPI_ACTUATION_RESEARCH_BINARY ?? join(realHome, ".local/bin/actuation-research");
-const FACULTY = process.env.EPI_FACULTY_CONFIG ?? join(realHome, ".workcell/tools/actuation-ql-agent/af0b35ab1f11709a17a778fa129ebeb487715d96837788fb709d98bc3669525b/faculty.json");
-const SKILL = process.env.EPI_QL_SKILL_PATH ?? "/Users/admin/Central/Work/Actuation/experiments/native-research/prime/skills/ql-relational";
+const FACULTY = process.env.EPI_FACULTY_CONFIG ?? join(realHome, ".oi-candidates/epi-prime/faculty.coherent.json");   // pins the owner revision the instrument reports (the installer now verifies it); the owner's ~/.config/epi-logos/faculty.json is stale against that instrument
+const SKILL = process.env.EPI_QL_SKILL_PATH ?? "/Users/admin/Central/Work/Actuation/experiments/ql-runtime/prime/skills/ql-relational";
 const QL_ROOT = process.env.EPI_QL_SOURCE_ROOT ?? "/Users/admin/Central/Work/Quaternal-Logic";
 const KEV = process.env.EPI_DECISION_PROVIDER ?? join(realHome, ".aikit/decision-provider.json");
 const TEMPLATE = process.env.AIKIT_AGENCY_MINT_TEMPLATE ?? "/Users/admin/Central/worktrees/env-1/ai-kit/crates/aikit-cli/tests/fixtures/mint-agency-template.json";
 const CTRL = process.env.OI_CENTRAL_CTRL_BIN ?? join(realHome, ".local/bin/ctrl");
 const BODY = "agent-body/epi-prime-ql";
 const BODY_REVISION = process.env.EPI_ACTUATION_REVISION ?? execFileSync("git", ["-C", ACTUATION, "rev-parse", "HEAD"], {encoding: "utf8"}).trim();
-const QL_REVISION = process.env.EPI_QL_REVISION ?? JSON.parse(readFileSync(FACULTY, "utf8")).owner.revision;
+const QL_REVISION = process.env.EPI_QL_REVISION ?? "ebcaa895ae9fe9e66cbc69f94994b4b3b77be940";   // the QL-MEF revision the candidate ql binary was cut at (A's candidate set)
 const SPACE = "session-space/field-turn", SESSION = "agent-session/field-turn", PURPOSE = "Field encounter turn", PI_ID = "field-walk-pi", PI_LABEL = "Field walk Pi (GLM flash)";
 const kevModels = async () => (await (await fetch("http://127.0.0.1:8019/v1/models", {signal: AbortSignal.timeout(4000)})).json()).models?.find(m => m.name === "kev-latest");
 try { const m = await kevModels(); record.kev = {address: "127.0.0.1:8019", run: m.run, base: m.base, requests_before: m.batches?.requests ?? null}; }
 catch (e) { console.error(`the owner's Kev is not answering at 127.0.0.1:8019: ${e}`); process.exit(2); }
 const required = [["decision provider", KEV], ["ctrl", CTRL], ["redis-server", process.env.REDIS_SERVER ?? "/opt/homebrew/bin/redis-server"], ["mint template", TEMPLATE]];
-if (HARNESS === "prime") required.push(["launcher", LAUNCHER], ["prime-agent", PRIME], ["ql", join(QL_DIR, "ql")], ["actuation-research", RESEARCH], ["faculty config", FACULTY], ["skill path", SKILL], ["QL root", QL_ROOT]);
+if (HARNESS === "prime") required.push(["launcher", LAUNCHER], ["prime-agent", PRIME], ["ql", QL_BIN], ["actuation-research", RESEARCH], ["faculty config", FACULTY], ["skill path", SKILL], ["QL root", QL_ROOT]);
 for (const [n, p] of required) if (!existsSync(p)) { console.error(`missing ${n}: ${p}`); process.exit(2); }
 
 let native, ownerEnv, redisDir, ground;
@@ -143,7 +150,7 @@ const provision = async ({root, home: oiHome, projectRoot}) => {
     const toolsRoot = join(aikitHome, "tools"); mkdirSync(toolsRoot, {recursive: true});
     const installed = JSON.parse(run("node", [join(ACTUATION, "distribution/prime-epi/tools/epi-distribution.mjs"), "install", "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--root", toolsRoot]));
     record.installation = installed;
-    const configured = native("encounter-epi-prime-configure", "--provider-id", "epi-prime-ql", "--launcher", LAUNCHER, "--prime-bin", PRIME, "--ql-bin", join(QL_DIR, "ql"), "--ql-revision", QL_REVISION, "--body-revision", BODY_REVISION, "--skill-path", SKILL, "--extension", installed.extension, "--installation", installed.binding, "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--ql-root", QL_ROOT);
+    const configured = native("encounter-epi-prime-configure", "--provider-id", "epi-prime-ql", "--launcher", LAUNCHER, "--prime-bin", PRIME, "--ql-bin", QL_BIN, "--ql-revision", QL_REVISION, "--body-revision", BODY_REVISION, "--skill-path", SKILL, "--extension", installed.extension, "--installation", installed.binding, "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--ql-root", QL_ROOT);
     if (configured.ok === false) throw new Error(JSON.stringify(configured));
     record.configured = configured.data ?? configured;
     participant = "agent/field-walk-chat";                 // what the per-project agency mint discloses for this project (probed)
@@ -223,6 +230,20 @@ try {
   const generic = await page.evaluate(() => ({title: document.querySelector(".article.fpane:not([hidden]) .ahead__title")?.textContent, essayEyebrow: !!document.querySelector(".article.fpane:not([hidden]) .ahead__eyebrow")}));
   const eOff = await enc();
   check(!!generic.title && !!eOff.primary?.ref && !/\/essay\//.test(eOff.primary.ref), "Epi OFF: the field reads the project's own corpus (generic adapter), not the essay", {title: generic.title, ref: eOff.primary?.ref});
+  if (HARNESS === "pi") {
+    // the pre-created session is bound through the window's world navigator, which the Epi lens replaces with the field's explorer: bind first
+    await page.getByRole("button", {name: "Toggle left region"}).click(); await settle(600);
+    const nav = page.getByRole("complementary", {name: "World navigator"});
+    await nav.locator('[data-project-path="Work/Field"]').click({timeout: 20000}).catch(() => {});
+    await page.getByRole("button", {name: PURPOSE, exact: true}).click({timeout: 20000}); await settle(800);
+    await page.getByRole("button", {name: "Toggle left region"}).click(); await settle(500);
+    record.piBound = true;
+    if (CONTEXT === "rich" && wantReal) {
+      const opened = await (await fetch(`${f.bridgeUrl}/op`, {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({op: "encounter", project: "Field", request: {action: "open", space: SPACE, agent_session: SESSION, provider: PI_ID}})})).json();
+      check(opened.ok, "the owner opened the pinned pi route (the kernel's encounter op)", opened.error ?? opened.outcome?.result);
+      await page.locator('[data-region="right"] .chat-composer[data-connection="connected"]').waitFor({timeout: 90000});
+    }
+  }
   record.epiOff = {title: generic.title, primary: eOff.primary?.ref, default_body_for_a_new_conversation: "none (modeDefaultAgentBody returns undefined without the epi-logos world; tests/epi-prime-agent-mode.test.mjs)"};
 
   // 1 — Epi ON: the essay
@@ -266,6 +287,12 @@ try {
   await page.locator('.futil__menu[aria-label="Companion"] .futil__item', {hasText: "Follows the active locus"}).click(); await settle(300);
   await page.keyboard.press("Escape"); await settle(1500);
   await page.screenshot({path: shotPath(`field-matrix-${cell}-01-encounter.png`)});
+  if (HARNESS === "pi") {
+    const r = native("encounter", "--request-json", JSON.stringify({action: "context", agent_session: SESSION, request: {scope: {project: "field-walk", agent_session: SESSION}, request: {operation: "read"}}}));
+    const items = (r.data?.items ?? []).filter(i => i.selection?.anchor?.kind === "observation" && i.selection.anchor.role === "field-encounter");
+    record.heldFieldItem = items.map(i => ({anchor: i.selection.anchor.selector, text: (i.selection.text ?? "").slice(0, 300)}));
+    check(r.ok && items.length === 1 && items[0].selection.anchor.selector.endsWith(`#${e1.generation}`), "AIKit holds the field item for the bound session at the field's generation (the companion's context, before any send)", record.heldFieldItem);
+  }
 
   // 4 — the companion
   const credential = {
@@ -286,15 +313,7 @@ try {
       await page.getByRole("button", {name: "Toggle right region"}).click(); await settle(800);
       panel = page.locator('[data-region="right"]');
     } else {
-      await page.getByRole("button", {name: "Toggle left region"}).click(); await settle(600);
-      const nav = page.getByRole("complementary", {name: "World navigator"});
-      await nav.locator('[data-project-path="Work/Field"]').click({timeout: 20000}).catch(() => {});
-      await page.getByRole("button", {name: PURPOSE, exact: true}).click({timeout: 20000}); await settle(800);
-      await page.getByRole("button", {name: "Toggle left region"}).click(); await settle(500);
       panel = page.locator('[data-region="right"]');
-      const opened = await (await fetch(`${f.bridgeUrl}/op`, {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({op: "encounter", project: "Field", request: {action: "open", space: SPACE, agent_session: SESSION, provider: PI_ID}})})).json();
-      check(opened.ok, "the owner opened the pinned pi route (the kernel's encounter op)", opened.error ?? opened.outcome?.result);
-      await panel.locator('.chat-composer[data-connection="connected"]').waitFor({timeout: 90000});
     }
     await message().waitFor({timeout: 30000});
     await message().fill(HARNESS === "prime"
@@ -302,6 +321,7 @@ try {
       : "In two short sentences: which manuscript span is the reader on and what page is open beside it? End with DONE_FIELD_QL.");
     await page.waitForFunction(() => !document.querySelector(".agent-chat .chat-send")?.disabled, undefined, {timeout: 30000});
     await panel.getByRole("button", {name: "Send", exact: true}).click();
+    await settle(3000); record.opsAfterSend = ops.slice(-12);
     if (HARNESS === "prime") {
       await page.waitForFunction(() => !!document.querySelector(".agent-layer")?.dataset.agentSessionRef, null, {timeout: 120000});
       ref = await page.evaluate(() => document.querySelector(".agent-layer")?.dataset.agentSessionRef);
@@ -322,6 +342,8 @@ try {
     const user = events.filter(e => e?.kind === "user-message");
     const userText = JSON.stringify(user[0] ?? {});
     check(user.length >= 1 && /field-encounter|field generation/.test(userText), "the delivered turn carried the field item (reviewed context)", {len: userText.length});
+    // the journal's own tool signals, kept in the receipt so a recorder reading can be compared with what was journalled
+    record.toolSignals = events.map((e, i) => ({i, k: e?.event?.Signal?.kind})).filter(x => x.k && /tool/.test(x.k.kind ?? "")).map(x => ({i: x.i, kind: x.k.kind, toolName: x.k.payload?.toolName, id: x.k.payload?.toolCallId, args: x.k.payload?.args ? JSON.stringify(x.k.payload.args).slice(0, 160) : undefined}));
     const delivered = events.filter(e => e?.kind === "now-context-delivered"), degraded = events.filter(e => e?.kind === "now-context-degraded");
     check(delivered.length >= 1 && degraded.length === 0, "AIKit delivered Redis-prepared NOW context to the turn", {delivered: delivered.length, degraded: degraded.map(d => d.detail)});
     const use = spawnSync(aikit.replace(/aikit$/, "aikit-session-space"), ["-C", join(ground.root, "Work", "Field"), "encounter-use", "--agent-session", ref, ...(record.facultyConfig ? ["--faculty-config", record.facultyConfig] : []), "--redis-config", record.redisConfig], {encoding: "utf8", env: ownerEnv});
@@ -341,7 +363,12 @@ try {
     } else record.piNote = "pi has no QL faculty: ql_operations is expected to be empty for this harness";
   }
 } catch (error) {
-  failed = true; check(false, "the cell ran to its end", String(error?.stack ?? error).split("\n").slice(0, 6).join(" | "));
+  failed = true;
+  try { record.ownerLogTail = readFileSync(join(ground.root, ".aikit-home/state/encounter-owner.log"), "utf8").split("\n").slice(-25); } catch (e) { record.ownerLogTail = String(e); }
+  try { record.chatTailOnFailure = (await page.locator('[data-region="right"]').innerText()).slice(-1200); } catch { /* page gone */ }
+  record.failedAt = new Date().toISOString();
+  record.opsTail = ops.slice(-15); record.consoleErrors = f.errors.slice(-6);
+  check(false, "the cell ran to its end", String(error?.stack ?? error).split("\n").slice(0, 6).join(" | "));
   await page.screenshot({path: shotPath(`field-matrix-${cell}-failure.png`)}).catch(() => {});
 } finally {
   const errs = f.errors.filter(m => !/Failed to load resource|favicon/.test(m));
