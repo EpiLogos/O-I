@@ -1,7 +1,7 @@
 {
   "scenario": "clean-minimal-install",
   "grade": "B",
-  "sandbox_root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-4198",
+  "sandbox_root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-39495",
   "withheld": [
     "factory",
     "workcell",
@@ -65,13 +65,13 @@
       "detail": {
         "before": {
           "app": "1791173630905.0442:1",
-          "config": "1791191277809.4805:5",
-          "aikit": "1791048105028.9778:20"
+          "config": "1791324933183.312:5",
+          "aikit": "1791319439711.264:21"
         },
         "after": {
           "app": "1791173630905.0442:1",
-          "config": "1791191277809.4805:5",
-          "aikit": "1791048105028.9778:20"
+          "config": "1791324933183.312:5",
+          "aikit": "1791319439711.264:21"
         }
       }
     },
@@ -135,6 +135,25 @@
     {
       "ok": true,
       "label": "the application carries no hosted SharedField client"
+    },
+    {
+      "ok": true,
+      "label": "update (remove -> install 0.1.1) replaces the application",
+      "detail": {
+        "from": "0.1.0",
+        "to": "0.1.1"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the reader's state under OI_HOME/desktop survives the update"
+    },
+    {
+      "ok": true,
+      "label": "rollback to the recorded bundle restores the version and keeps the reader's state",
+      "detail": {
+        "version": "0.1.0"
+      }
     },
     {
       "ok": true,
