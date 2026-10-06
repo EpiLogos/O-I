@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Antykathera-Essay-Work
-          ref: b2b5b706105891f69e2a68ecd160dbe4add3828e
+          ref: 135182d1f53a2f272e6eb4a51a64d4259505bd4a
           path: .publication-sources/essay-reading
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -41,7 +41,7 @@ jobs:
       - name: Build the actual public site
         working-directory: site
         env:
-          OI_ESSAY_BROWSER_REPO: ${{ github.workspace }}/.publication-sources/essay-reading/published-reading/2026-10-04
+          OI_ESSAY_BROWSER_REPO: ${{ github.workspace }}/.publication-sources/essay-reading/published-reading/2026-10-06
         run: npm run build:public
       - name: Install test-only browser tooling
         run: |

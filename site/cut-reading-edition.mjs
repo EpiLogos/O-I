@@ -69,7 +69,10 @@ updates.push(`100644 ${receiptBlob}\t${prefix}/PUBLICATION-INPUTS.json\n`);
 git(clone, ['update-index', '--add', '--index-info'], { env, input: updates.join('') });
 const tree = git(clone, ['write-tree'], { env });
 const message = `Cut the essay reading edition ${date} from canonical main ${basis.slice(0, 8)}\n\nA byte-bound public projection (${inputs.files.length} files); canonical main, protected notes and authorial working drafts are preserved.\n`;
-const commit = git(clone, ['commit-tree', tree, '-p', basis], { input: message });
+// the clone carries no identity of its own: use the vault's, else a neutral one (CI has none)
+const config = (key, fallback) => { try { return git(vault, ['config', key]) || fallback; } catch { return fallback; } };
+const identity = { GIT_AUTHOR_NAME: config('user.name', 'O:I reading edition'), GIT_AUTHOR_EMAIL: config('user.email', 'reading-edition@invalid'), GIT_COMMITTER_NAME: config('user.name', 'O:I reading edition'), GIT_COMMITTER_EMAIL: config('user.email', 'reading-edition@invalid') };
+const commit = git(clone, ['commit-tree', tree, '-p', basis], { input: message, env: { ...process.env, ...identity } });
 git(clone, ['update-ref', `refs/heads/${branch}`, commit]);
 const escaped = git(clone, ['diff', '--name-only', basis, commit]).split('\n').filter((p) => p && !p.startsWith(`${prefix}/`));
 if (escaped.length) throw new Error(`The edition changed paths outside ${prefix}/: ${escaped.slice(0, 5).join(', ')}`);
