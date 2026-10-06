@@ -1,0 +1,103 @@
+{
+  "scenario": "absence-tripwire",
+  "grade": "B",
+  "firstLoadErrors": [
+    "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "environment": {
+    "withheld": [
+      "factory",
+      "workcell",
+      "workcell-write-boundary"
+    ],
+    "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-oHf6Wu/bin:/opt/homebrew/Cellar/node@24/24.16.0/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the owner's census reports Factory and Workcell missing",
+      "detail": {
+        "central": true,
+        "actuation": true,
+        "ai-kit": true,
+        "software-factory": false,
+        "workcell": false,
+        "quaternal-logic": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "…and Central, Actuation, AIKit and Quaternal Logic present",
+      "detail": {
+        "central": true,
+        "actuation": true,
+        "ai-kit": true,
+        "software-factory": false,
+        "workcell": false,
+        "quaternal-logic": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "present positions are exactly 0/1/2 + 5, an explicit selection",
+      "detail": {
+        "containing_frame": "cf5",
+        "install_mode": null,
+        "present_positions": [
+          0,
+          1,
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "the mode strip offers no Factory",
+      "detail": [
+        "base",
+        "expressions",
+        "techne"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the scope menu opens"
+    },
+    {
+      "ok": true,
+      "label": "Settings opens (its entry is pressed)"
+    },
+    {
+      "ok": true,
+      "label": "ZERO dispatches to Factory or Workcell across startup, scope menu, every mode and Settings",
+      "detail": {
+        "startup": [],
+        "scope-menu": [],
+        "modes": [],
+        "settings": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors after the reload (first-load errors, if any, are recorded in the receipt)",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "no failed requests (4xx/5xx) while Base starts and is walked",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "positive control: a deliberate Workcell dispatch is recorded and refused",
+      "detail": {
+        "entries": [
+          "workcell status --json"
+        ],
+        "ok": false
+      }
+    }
+  ],
+  "ok": true
+}

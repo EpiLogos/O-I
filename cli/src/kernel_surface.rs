@@ -89,6 +89,31 @@ pub struct KernelSurface {
 /// seam against the world reading it joins.
 use crate::current_world as oi_cli_current_world;
 
+/// Split owner specs into those the world reading reports missing (never
+/// probed) and those to discover. A reading that could not be taken leaves
+/// every owner probed: unknown is not absent.
+pub(crate) fn partition_by_world(
+    specs: Vec<crate::configuration::kernel::OwnerSpec>,
+    world: Option<&oi_cli_current_world::CurrentWorldReading>,
+) -> (
+    Vec<crate::configuration::kernel::OwnerSpec>,
+    Vec<crate::configuration::kernel::OwnerSpec>,
+) {
+    let missing: std::collections::BTreeSet<&str> = world
+        .map(|reading| {
+            reading
+                .positions
+                .iter()
+                .filter(|position| position.state == crate::status::NativeSurfaceState::Missing)
+                .map(|position| position.product_id.as_str())
+                .collect()
+        })
+        .unwrap_or_default();
+    specs
+        .into_iter()
+        .partition(|spec| missing.contains(spec.owner_ref.as_str()))
+}
+
 impl KernelSurface {
     /// Discover the machine's owners and open every store under the
     /// resolved O:I home. Discovery degradations are carried, not raised:
@@ -113,7 +138,6 @@ impl KernelSurface {
             .map_err(|error| format!("configuration engine cannot find the O:I home: {error}"))?;
         let transport = ProcessTransport::with_specs(&specs);
         let mut registry = OwnerRegistry::new();
-        registry.discover_specs(&transport, &specs);
         // The world reading is data, never a gate: a reading that fails
         // leaves every owner's standing `unknown` and the reason disclosed,
         // and does not stop the engine from answering.
@@ -121,6 +145,14 @@ impl KernelSurface {
             Ok(reading) => (Some(reading), None),
             Err(error) => (None, Some(error)),
         };
+        // An owner the reading reports MISSING has nothing to execute; it is
+        // recorded as not installed and never probed. An unread world probes
+        // everything, as before (unknown is not absent).
+        let (absent, probed) = partition_by_world(specs, world.as_ref());
+        for spec in &absent {
+            registry.note_not_installed(&spec.owner_ref);
+        }
+        registry.discover_specs(&transport, &probed);
         Ok(Self {
             registry,
             transport,
@@ -1531,7 +1563,64 @@ mod tests {
     use crate::configuration::kernel::transport::{
         OwnerTransport, TransportError, TransportFailure,
     };
+    use crate::configuration::kernel::OwnerSpec;
     use crate::configuration::refs::ScopeKind;
+
+    fn specs_for(ids: &[&str]) -> Vec<OwnerSpec> {
+        ids.iter()
+            .map(|id| OwnerSpec {
+                owner_ref: (*id).to_owned(),
+                program: PathBuf::from(format!("/native/{id}")),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn an_owner_the_world_reports_missing_is_never_probed_and_an_unread_world_probes_everything() {
+        let ids = [
+            "central",
+            "actuation",
+            "ai-kit",
+            "software-factory",
+            "workcell",
+            "quaternal-logic",
+            "oi",
+        ];
+        let mut world = oi_cli_current_world::CurrentWorldReading::from_disclosure(
+            &crate::status::SuiteCompositionDisclosure {
+                schema: "oi.desktop-composition-disclosure/v1".to_owned(),
+                personal_ground: None,
+                surfaces: Vec::new(),
+                warnings: Vec::new(),
+            },
+        );
+        for position in &mut world.positions {
+            if ["central", "actuation", "ai-kit", "quaternal-logic"]
+                .contains(&position.product_id.as_str())
+            {
+                position.state = crate::status::NativeSurfaceState::Registered;
+            }
+        }
+        let (absent, probed) = partition_by_world(specs_for(&ids), Some(&world));
+        let names = |specs: &[OwnerSpec]| {
+            specs
+                .iter()
+                .map(|spec| spec.owner_ref.clone())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            names(&absent),
+            ["software-factory", "workcell"],
+            "only what the world reports missing is withheld"
+        );
+        assert_eq!(
+            names(&probed),
+            ["central", "actuation", "ai-kit", "quaternal-logic", "oi"]
+        );
+        let (absent, probed) = partition_by_world(specs_for(&ids), None);
+        assert!(absent.is_empty(), "unknown is not absent");
+        assert_eq!(probed.len(), ids.len());
+    }
 
     /// A transport where every owner fails discovery: exactly the shape of
     /// a machine whose products did not answer.

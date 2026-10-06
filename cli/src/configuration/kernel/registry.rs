@@ -285,6 +285,18 @@ impl OwnerRegistry {
         None
     }
 
+    /// Record an owner the world reading reports missing, WITHOUT running any
+    /// command: there is nothing installed to execute, and probing it could
+    /// only fail — or reach a binary the reading never found.
+    pub fn note_not_installed(&mut self, owner_ref: &str) {
+        self.degradations.push(RegistryDegradation {
+            owner_ref: owner_ref.to_owned(),
+            state: DegradationState::Unavailable,
+            reason: "not installed in this world: the current-world reading reports it missing, so its contribution was not probed".to_owned(),
+            native_error: None,
+        });
+    }
+
     /// Discover a set of owner specs in order.
     pub fn discover_specs(&mut self, transport: &dyn OwnerTransport, specs: &[OwnerSpec]) {
         for spec in specs {
