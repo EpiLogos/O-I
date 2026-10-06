@@ -1,0 +1,559 @@
+{
+ "artifact": "matheme/roz-matheme-four-files.journey.json",
+ "family": "matheme",
+ "worker": "E4",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-matheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "matheme-definition-the-matheme",
+    "path": "submission-package/essay/symbolon/matheme/definition/the-matheme.md",
+    "sha256": "8fe0358aeb8996055a6c1607bed61bb4406330e9c5e93c8b1ac1be66ca302d9c"
+   },
+   {
+    "record_id": "matheme-definition-minus-over-minus",
+    "path": "submission-package/essay/symbolon/matheme/definition/minus-over-minus.md",
+    "sha256": "870d891efc70deda69fa7fd27f9be3ff8d88bb7ec7af452eac41bb3b0a2f5315"
+   },
+   {
+    "record_id": "matheme-definition-copula",
+    "path": "submission-package/essay/symbolon/matheme/definition/copula.md",
+    "sha256": "5fabbb3e15fab966dc9b907b5fdc725471c4dfd39e50eedef1c9b8e73c7a93ee"
+   },
+   {
+    "record_id": "matheme-definition-harmonics-and-recount",
+    "path": "submission-package/essay/symbolon/matheme/definition/harmonics-and-recount.md",
+    "sha256": "3563e416d1aee63a1d4cd0a48ae8758c532bfbc534d77f6c2800b7d76813258a"
+   },
+   {
+    "record_id": "matheme-definition-six-determinations",
+    "path": "submission-package/essay/symbolon/matheme/definition/six-determinations.md",
+    "sha256": "a3cc539a6d37b87b71463637077e17f05cf1fe9d41879783d8b06f6cee53d540"
+   },
+   {
+    "record_id": "matheme-definition-catuskoti-crossing",
+    "path": "submission-package/essay/symbolon/matheme/definition/catuskoti-crossing.md",
+    "sha256": "171ced1117cb1ebe22d2e4156721ffe1e51dedd63f392a24fbe3b711ab677d47"
+   },
+   {
+    "record_id": "matheme-definition-immutable-subject",
+    "path": "submission-package/essay/symbolon/matheme/definition/immutable-subject.md",
+    "sha256": "c972c1ca063731e65948e2e17b6d1ddca8711d47b0ed4ab95da07597819f2fc7"
+   },
+   {
+    "record_id": "matheme-process-t1-geometry",
+    "path": "submission-package/essay/symbolon/matheme/process/t1-geometry.md",
+    "sha256": "71d58b64dd571c159abed03c56917936d21de5dea57836884f4bf52f4eb35c62"
+   },
+   {
+    "record_id": "matheme-process-phase-flip",
+    "path": "submission-package/essay/symbolon/matheme/process/phase-flip.md",
+    "sha256": "2c906b0e6dff06b5950b2e225bf098ea7a9fc4586db19a2c8c72cb34a5d96c40"
+   },
+   {
+    "record_id": "matheme-process-t0-onto-logic",
+    "path": "submission-package/essay/symbolon/matheme/process/t0-onto-logic.md",
+    "sha256": "d13d0efa88786eecb3136d361b7c87b957791f235f80054b67963de3b3ff950b"
+   },
+   {
+    "record_id": "matheme-process-spanda",
+    "path": "submission-package/essay/symbolon/matheme/process/spanda.md",
+    "sha256": "a329b834e8137f640e47e4d0d5c00f8b2a0b655e74b75433c6d13a996587f64c"
+   },
+   {
+    "record_id": "matheme-process-ratio-threshold",
+    "path": "submission-package/essay/symbolon/matheme/process/ratio-threshold.md",
+    "sha256": "739ca3bdbc5539c8ac395cb5b520a8ce4cb3c1d2ce116907466ca81df9eec44d"
+   },
+   {
+    "record_id": "matheme-process-harmonics-symmetries",
+    "path": "submission-package/essay/symbolon/matheme/process/harmonics-symmetries.md",
+    "sha256": "039d469edb39ede1c681a3fd354e6cf023d32c39fc32f06cf062edf30351f8b0"
+   },
+   {
+    "record_id": "matheme-process-ql-positions",
+    "path": "submission-package/essay/symbolon/matheme/process/ql-positions.md",
+    "sha256": "4a52afeee151f8f5b3682609084dd65e7ebf51f124cd1f1be3200b4d7d41dedc"
+   },
+   {
+    "record_id": "matheme-quilt-etymology",
+    "path": "submission-package/essay/symbolon/matheme/quilt/etymology.md",
+    "sha256": "baed1df5a6667f8d91fb13c24ce138413f5c8215753a10e654d2c29d0958ff66"
+   },
+   {
+    "record_id": "matheme-quilt-psychology",
+    "path": "submission-package/essay/symbolon/matheme/quilt/psychology.md",
+    "sha256": "b1036dfcfb6250f6ebe0ebeebb51b52aae734e2734b61bc24b974c9115c732e8"
+   },
+   {
+    "record_id": "matheme-quilt-number",
+    "path": "submission-package/essay/symbolon/matheme/quilt/number.md",
+    "sha256": "1450f21c8418e24adb04da22ab91b0b85602c8c2c2c886220e8d53eedc914363"
+   },
+   {
+    "record_id": "matheme-quilt-topology",
+    "path": "submission-package/essay/symbolon/matheme/quilt/topology.md",
+    "sha256": "26cb2d81c83a701bff556894350e8001230e5f21bab611eda953ee92d46c3d40"
+   },
+   {
+    "record_id": "matheme-quilt-metaphysics",
+    "path": "submission-package/essay/symbolon/matheme/quilt/metaphysics.md",
+    "sha256": "78f0f74c856f9d3c2ed4a468ab4c6b97e583f03808b13a42f862dae4703ac37b"
+   },
+   {
+    "record_id": "matheme-quilt-recognition",
+    "path": "submission-package/essay/symbolon/matheme/quilt/recognition.md",
+    "sha256": "bba9bca3895d637c7d67b299a9b0a90fc6323529da5a862a74c6e364bbb78dd6"
+   },
+   {
+    "record_id": "matheme-quilt-enantiodromic-return",
+    "path": "submission-package/essay/symbolon/matheme/quilt/enantiodromic-return.md",
+    "sha256": "23a264100c07f91a5463c038fb1b9054b7b0c98c5735305ef69d28f1ec9cf20d"
+   },
+   {
+    "record_id": "matheme-music-foundational-ratios",
+    "path": "submission-package/essay/symbolon/matheme/music/foundational-ratios.md",
+    "sha256": "12b4803781a948394fd862aebad2fed68a9a4ebae89996f16ae5ece79a112b41"
+   },
+   {
+    "record_id": "matheme-music-chromatic-substrates",
+    "path": "submission-package/essay/symbolon/matheme/music/chromatic-substrates.md",
+    "sha256": "5b806d933667580e5b7e20d723e55dbc221778d62c438611f8e366d58d49b7bb"
+   },
+   {
+    "record_id": "matheme-music-pairing-grammar",
+    "path": "submission-package/essay/symbolon/matheme/music/pairing-grammar.md",
+    "sha256": "ea28a7c43e03de0b203449424fe5bb5e0e13625e0ce78ae9c6e66889945265a5"
+   },
+   {
+    "record_id": "matheme-music-lens-anchors",
+    "path": "submission-package/essay/symbolon/matheme/music/lens-anchors.md",
+    "sha256": "166c29139adc1098e6a1677635f8a0d181cfb4b3c259de9d27e3c776b8d6c897"
+   },
+   {
+    "record_id": "matheme-music-diatonic-cf-grammar",
+    "path": "submission-package/essay/symbolon/matheme/music/diatonic-cf-grammar.md",
+    "sha256": "dc4cfcc00222fd2f713a72787d0f7dc3c20df7c56978237b28827a75a117a403"
+   },
+   {
+    "record_id": "matheme-music-field",
+    "path": "submission-package/essay/symbolon/matheme/music/field.md",
+    "sha256": "faa8129880a381cb7b100989b32493d195c267e7c5d58326231909a3c428b681"
+   },
+   {
+    "record_id": "matheme-music-observer-instrument",
+    "path": "submission-package/essay/symbolon/matheme/music/observer-instrument.md",
+    "sha256": "eec1824c84b514d5faf6ca89450e0e3dde1f66208cae2778f6fdd8359ef70b34"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "def-the-matheme",
+   "source_ref": "matheme-definition-the-matheme",
+   "claim_status": "derived",
+   "relations": "returns-to A01, A18, Movement25; extends minus-over-minus, copula, harmonics-and-recount, six-determinations; grounds root 0/1"
+  },
+  {
+   "scene_id": "def-minus-over-minus",
+   "source_ref": "matheme-definition-minus-over-minus",
+   "claim_status": "derived",
+   "relations": "grounds the-matheme; returns-to A02, A18, Movement25; extends copula; root: the-slash"
+  },
+  {
+   "scene_id": "def-copula",
+   "source_ref": "matheme-definition-copula",
+   "claim_status": "derived",
+   "relations": "extends minus-over-minus; returns-to A02, Movement02, A18; extends harmonics-and-recount, immutable-subject"
+  },
+  {
+   "scene_id": "def-harmonics-and-recount",
+   "source_ref": "matheme-definition-harmonics-and-recount",
+   "claim_status": "derived",
+   "relations": "extends copula; returns-to A18, Movement24; extends six-determinations; process register extends further readings"
+  },
+  {
+   "scene_id": "def-six-determinations",
+   "source_ref": "matheme-definition-six-determinations",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 1 §5, core spine §II(c); returns-to A18, Movement25; extends catuskoti-crossing; root: 1/0"
+  },
+  {
+   "scene_id": "def-catuskoti-crossing",
+   "source_ref": "matheme-definition-catuskoti-crossing",
+   "claim_status": "derived",
+   "relations": "returns-to A01, A18, Movement25; extends formal-neighbours comparison; root: question-assertion"
+  },
+  {
+   "scene_id": "def-immutable-subject",
+   "source_ref": "matheme-definition-immutable-subject",
+   "claim_status": "derived",
+   "relations": "returns-to A03, A18, Movement16; extends C01, A01, A/C conjugate root; core §IX assignments"
+  },
+  {
+   "scene_id": "proc-t1-geometry",
+   "source_ref": "matheme-process-t1-geometry",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication T1; returns-to Movement25, Matheme; A11 defines, A18 grounds, A13 grounds, A02 grounds, A16 extends"
+  },
+  {
+   "scene_id": "proc-phase-flip",
+   "source_ref": "matheme-process-phase-flip",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication §1/0; returns-to Movement24, Matheme; compares Spencer-Brown re-entry, Kauffman iterants; A02, A03, A18"
+  },
+  {
+   "scene_id": "proc-t0-onto-logic",
+   "source_ref": "matheme-process-t0-onto-logic",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication T0; returns-to Movement25, Matheme; A11, A12, A03, A02, A01, A23, A36"
+  },
+  {
+   "scene_id": "proc-spanda",
+   "source_ref": "matheme-process-spanda",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication §3′; returns-to Movement26, Matheme; A18, A11, A12, A15, A36; Spanda domain extends"
+  },
+  {
+   "scene_id": "proc-ratio-threshold",
+   "source_ref": "matheme-process-ratio-threshold",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication §3′; returns-to Movement26, extends Movement29; Scholtz grounds intervals; A15, A18, A17"
+  },
+  {
+   "scene_id": "proc-harmonics-symmetries",
+   "source_ref": "matheme-process-harmonics-symmetries",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication §4′; returns-to Movement25, Matheme; A18, A12, A02, A05"
+  },
+  {
+   "scene_id": "proc-ql-positions",
+   "source_ref": "matheme-process-ql-positions",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication §5′; returns-to Movement25, Matheme; A18, A03, A15, A02, A05, A06, A36"
+  },
+  {
+   "scene_id": "quilt-etymology",
+   "source_ref": "matheme-quilt-etymology",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 §0; returns-to A12, Movement18; extends psychology"
+  },
+  {
+   "scene_id": "quilt-psychology",
+   "source_ref": "matheme-quilt-psychology",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 §1; returns-to A21, Movement32; extends number; Jung Aion house context"
+  },
+  {
+   "scene_id": "quilt-number",
+   "source_ref": "matheme-quilt-number",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 §2; returns-to A18, Movement26, Movement29; extends topology"
+  },
+  {
+   "scene_id": "quilt-topology",
+   "source_ref": "matheme-quilt-topology",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 §3; returns-to A17, Movement29; Hatcher reference; extends metaphysics"
+  },
+  {
+   "scene_id": "quilt-metaphysics",
+   "source_ref": "matheme-quilt-metaphysics",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 §4; returns-to A18, A36, recognition; Spandakārikā house; immutable-subject extends"
+  },
+  {
+   "scene_id": "quilt-recognition",
+   "source_ref": "matheme-quilt-recognition",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 §5; returns-to A18, A36; extends formal-neighbours/godel, computation/operational-parity; hands to music"
+  },
+  {
+   "scene_id": "quilt-enantiodromic-return",
+   "source_ref": "matheme-quilt-enantiodromic-return",
+   "claim_status": "argued",
+   "relations": "sources: Binary Explication File 3 Night; returns-to A36, self-identity, recognition; extends music"
+  },
+  {
+   "scene_id": "music-foundational-ratios",
+   "source_ref": "matheme-music-foundational-ratios",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4, musical v3, core spine §I; returns-to A17, Movement29; A16 extends"
+  },
+  {
+   "scene_id": "music-chromatic-substrates",
+   "source_ref": "matheme-music-chromatic-substrates",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4; returns-to foundational-ratios, Movement29; A15, A06"
+  },
+  {
+   "scene_id": "music-pairing-grammar",
+   "source_ref": "matheme-music-pairing-grammar",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4; returns-to A15, Movement29; the-slash grounds"
+  },
+  {
+   "scene_id": "music-lens-anchors",
+   "source_ref": "matheme-music-lens-anchors",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4, musical v3 §I-3; returns-to A15, Movement29; AM/IS grounds; A17 qualifies"
+  },
+  {
+   "scene_id": "music-diatonic-cf-grammar",
+   "source_ref": "matheme-music-diatonic-cf-grammar",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4, musical v3 §I-4; returns-to A15, Movement29; A17 qualifies"
+  },
+  {
+   "scene_id": "music-field",
+   "source_ref": "matheme-music-field",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4, musical v3 §II-4.8; returns-to A15, Movement29; A17 extends"
+  },
+  {
+   "scene_id": "music-observer-instrument",
+   "source_ref": "matheme-music-observer-instrument",
+   "claim_status": "derived",
+   "relations": "sources: Binary Explication File 4, musical v3; returns-to A06, Movement29; A17 grounds"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "authored token glyphs throughout (QL notation: 0/1, 1/0, −/−, ?/!, −/+, X/x, AM/IS, ∞/dx, Ø, 4+2, 5→0, 9/8, 16/9, (0/1)/(1/0), T² = ℝ²/ℤ², π₁ ≅ ℤ×ℤ, 531441/524288 …)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "concentric mandala plate (ql-eight-determinations) per ql-expression-grammar.md §III",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "crossed-zero recognition sequence as entity step sequence (ql-crossed-zero)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "tetraktys dot diagram (har-tetraktys-triangle, four rows 1·2·3·4)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "fundamental square + torus ring plates (quilt-topology, top-torus-cover-winding)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "matheme/roz-matheme-four-files.cover.png",
+ "status": "authored",
+ "notes": [
+  "28 scenes at reading pace; the etymology VALUE→SOLVE circuit, the X=x six views, the number evolution, the torus quilt, the Śaiva six turns, the gathered cross-register table, and the Night-pass Name/Power sequences all run as step sequences; music scenes stage the two chromatic substrates, the pairing families, the twelve lens anchors, the CF selection, the 84/144 fields and the V–I observer loop. Scene bodies carry bare tokens (backtick marks dropped as an essay-surface convention; see logics binding). ",
+  "Per-scene moves (2026-10-06 enrichment): the four files are one derivation reread four times, so every scene's sequence walks its file's own chain with objectState marking the turns — blue at inverse/contrast steps, gold at the earned arrival (which also swells the glyph ~6-8%). def-the-matheme: \"I see x\" walks to 4+2 = 5→0 under a gentle linear morph; the sentence is the unit. def-minus-over-minus: vortex pointer, the slash's two offices separated then joined. def-copula: = → ≠ → the expansion → 4+2 = 6. def-harmonics-and-recount: the recount chain with 3:3 crossing marked. def-six-determinations: the mandala table under mild attract forces, parent repel and return attract. def-catuskoti-crossing: the tetralemma walked as a six-step sequence (IS, IS-NOT, BOTH, NEITHER, SILENCE gold), corners forced apart by repel/attract — turbulence LFO is the held tension. def-immutable-subject: the three pairs laminated through z. proc-t1-geometry: THE 3D SCENE — the phase wheel with 00/01/10/11 lifted alternately ±z around the centre (bevel volume, perspective): AND/OR arranged around a clock the slash turns. proc-phase-flip: F/R(F) alternate 180° objectState rotations under a negative thetaRate morph — the flip as operation. proc-t0-onto-logic: the four parents gathered under one slow morph clock. proc-spanda: the equation sequence through T₀/T₁ to the standing unity. proc-ratio-threshold: the cymatic ladder (240/320/360/480) under an ascending resonanceDrive with a ±8 Hz LFO — the never-settling tick. proc-harmonics-symmetries: forward folds attract, complementary folds repel. proc-ql-positions: the crosswalk ring at low pointer strength. quilt-etymology: VALUE→SOLVE six-stage chain. quilt-psychology: X/x chain under a 'beat' morph with equal rates — X and x as near-twins. quilt-number: sums to the perfect count, red at the ±0 gate, gold at the modular return. quilt-topology: the winding sequence displaces position (lift ends displaced — the retained displacement), toroidal morph gentle. quilt-metaphysics: the tattvic ladder walked. quilt-recognition: the proof gathered under implode. quilt-enantiodromic-return: Name and Power runs tint alternately (truth/play crossing), 'beat' law with opposed rate signs. music-foundational-ratios: pingpong resonanceDrive over the ratio circuit, ±12 Hz LFO. music-chromatic-substrates: the two whole-tone sets repel (kept distinct), shove marks the comma's refusal. music-pairing-grammar: the three pairings attract mildly. music-lens-anchors: the lens ring under vortex. music-diatonic-cf-grammar: the seven degrees in a gentle attract line at 320 Hz. music-field: the 84/144 test sequence proves the correspondence by exhaustion (gold at '48 none'). music-observer-instrument: the slowest scene (16 s), pingpong sweep and triangle excitation LFO — listening as return.",
+  "Craft: pointer profiles by meaning across the 28 scenes — attract/pulse for derivations read forward, attract/implode where the relation gathers (t0 parents, recognition, ratios, number), vortex for the slash and winding scenes (minus-over-minus, phase-flip, t1 wheel, quilt-topology, lens anchors), repel where offices or positions must stay distinct (catuṣkoṭi corners, chromatic sets, shove at the comma), near-still low strengths for the contemplative plates (six-determinations 0.9, crosswalk 0.95, observer 0.7). Automation lanes: dispersion breathing on def-the-matheme/proc-spanda/quilt-metaphysics/music-field, turbulence on the catuṣkoṭi crossing, circulation on quilt-topology, frequency LFOs on the two ratio ladders, triangle excitation on the observer. Durations 12/14/16 s and transitions 1.5/2.2/2.8 s differ across the journey. Claim-status bands ride every kicker unchanged; withholdings preserved (the crossed-zero full sequence still waits for its §4 scene; the comma stays exact).",
+  "What the third dimension means (proc-t1-geometry): T1's geometry is a clock of phases around a ground — the scene lifts the four ordered phases 00/01/10/11 alternately above and below the centre's plane (±0.25 z) inside a bevel-volume ring under perspective. Depth is the AND/OR fact: opposite phases stand on opposite sides of the ground, adjacent phases share a side, and the vortex pointer turns the wheel — the geometry of space-time as a phase arrangement the slash generates, not a picture of it."
+ ],
+ "description": "Binary Explication four-file circuit: definition, process, quilt, music — 28 addressable matheme scenes from \"I see x\" to the musical-epistemic return.",
+ "scene_count": 28,
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-matheme-l1",
+  "lane": "wave1/matheme",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "#0 0/1": "ground — the 0/1 threshold, empty of object; the centre of the plate.",
+  "#0′…#5′: Night-pass addresses": "the inverse-phase addresses — the same six run through the Night pass; the enantiodromic return.",
+  "#1 ?/!": "definition — assertion bearing its unsettled question; the north station.",
+  "#2 −/+": "dynamis — the poles one movement; the east station.",
+  "#3 X/x": "pattern — specification without exhaustion; the west station.",
+  "#4 AM/IS": "context — knower, means, known one appearing-act; the south station.",
+  "#5 ∞/dx": "realisation — exactness never possession; the enclosing ring.",
+  "(0/1)/(1/0)": "sym-ballein — the two orientations of one relation held under the slash.",
+  "(0/1)/(1/0) · (1/0)/(0/1)": "both orders of the sym expression — the phase-flip written as paired parents.",
+  "(0/Ø)/(1/X)": "subject-side and object-side recognition in one held field.",
+  "(16/9)(9/8) = 2/1": "the completion relation — the doubled fourth needing its remainder to reach the octave.",
+  "(3+1)+2": "the contextual recount — three determinations within their completing whole, plus the two.",
+  "(4+2)+2": "the eight-turn count — the sixfold body plus the frame pair.",
+  "(9/8)⁶/2 = (3/2)¹²/2⁷ = 531441/524288": "the two remainders meet — six pure tones over the octave and twelve fifths over seven give the same comma.",
+  "(X=x)=X/x": "the Jungian closing form — specification through the equation, restored to the notation.",
+  "(n,n′): the pulse": "the pairing grammar pulse — position and face crossing as one beat.",
+  "0": "the centre point of the T1 wheel — the ground the phases leave and return to.",
+  "0 / Ø": "the subject-side pair — the zero and its crossing, held without fusion.",
+  "0 IS AND/OR IS-NOT 1": "the catuṣkoṭi written in the logical register — the slash AND/OR inside the tetralemma.",
+  "0 · 1 · /": "the marks of the sentence — the seen, the act, the slash that holds them.",
+  "0 · Value": "recognition station zero — value before measure.",
+  "0/0 = %": "the onto-logic parent — the collapsed slash read as the percent operation.",
+  "0/1": "ground/mark — the earned notation of the relation.",
+  "0/1 = / ≠ 1/0": "the display phase-flip — the same unit read from both ends, kept distinct.",
+  "0/1 = 0": "the defined parent — division of ground by mark yielding the additive zero.",
+  "00": "the phase (0,0) — both poles at rest; a T1 phase of the wheel.",
+  "01": "the phase (0,1) — the first ordered pair around the wheel.",
+  "0=(0/0)": "the Spanda opening — zero written as the collapsed slash it carries.",
+  "0q=0: every q · 0q=1: none": "the onto-logic quantifier fact — the two zero-parents disagree on the quantifier they bear.",
+  "1": "the rim of the T1 wheel — the determinate boundary the phases return to.",
+  "1 / X": "the object-side pair — the one and its specification.",
+  "1 · Measure": "recognition station one — the counted.",
+  "1+1=2": "the first sum — number building from the unit.",
+  "1+1=2 · 1+2=3 · 1+2+3=6 · 0-gate · 6≡0": "the number quilt chain — sums to the perfect count, the zero gate, the modular return.",
+  "1+2+3=6": "the divisor-sum arrival — six earned through its proper parts.",
+  "1+2=3": "the second sum — the triangle beginning.",
+  "1/0": "the obverse — the break the returning slash meets.",
+  "1/0 = ?/!": "the undefined parent read as definition — the question borne by the uncounted.",
+  "1/0+0/1": "the two orientations summed — one operation before the standing unity.",
+  "1/1 = 100%": "the standing unity — the whole relation counted.",
+  "10": "the phase (1,0) — the reversed pair; order made visible.",
+  "100% ⇝ 64+36 → 16/9 → 4+2": "the process-file account — the unity turned through the base ratio to the sixfold.",
+  "11": "the phase (1,1) — self-relation, the fourth phase.",
+  "12 fit: bass in the parent scale": "the correspondence half — clusters whose bass belongs to the parent mode.",
+  "16/9": "the doubled fourth — the totality-ratio falling short of the octave.",
+  "16/9 = 2⁴/3²": "the ratio through prime factors — the 4+2 body explicit.",
+  "2 · Ratio": "recognition station two — the related counted.",
+  "2/1": "the octave — the return the chain completes.",
+  "240": "the reference frequency — the constructed base of the ladder.",
+  "3 terms · 3 marks": "the 3:3 reading — three perspectives answered by three marks.",
+  "3 · Equation": "recognition station three — the relation asserted.",
+  "3/2": "the fifth — a foundational ratio of the circuit.",
+  "320": "the fourth above the reference — (4/3)·240.",
+  "360": "the fifth above — (3/2)·240.",
+  "3:3 = 3:1": "the compressed cross-reading — three perspectives, one recognition; also as three to one.",
+  "3:3 — also 3:1": "the subject-account ratio — the comparison that generates (4/3, 2/3).",
+  "3²+4²=5² · area 6 · perim 12": "the 3–4–5 measures — squared lengths beside area and perimeter, distinct quantities.",
+  "4 · Product": "recognition station four — the determination borne.",
+  "4+2": "the generative count — explicate four, implicate two.",
+  "4+2 = 5→0": "the count turning into the return-switch — five steps to the ground.",
+  "4+2 = 6": "the copula arrival — identity through difference earning the sixfold.",
+  "4/3": "the fourth — a foundational ratio; also the diatonic tetrad span.",
+  "4/3 · 9/8 · 4/3 = 2": "the diatonic tetraktys — fourth, tone, fourth reaching the octave.",
+  "48 none: the correspondence is exact": "the other half — no cluster outside the parent scale fits; the bijection proven by exhaustion.",
+  "480": "the octave above the reference — the ladder completed.",
+  "5 · Solve": "recognition station five — the variable released.",
+  "60 outside: 12 fit, 48 none": "the field test — every outside cluster classified, none silently absorbed.",
+  "64/36": "the base ratio — the doubled count before reduction.",
+  "6≡0 (mod 6)": "the modular return — six congruent to zero, a quotient operation.",
+  "8 inner + 4 framing = 12": "the lens architecture — eight inner addresses framed by four outer.",
+  "9 · 8 · 7": "the pairing counts — the three grammars and their narrowing yields.",
+  "=": "the copula — identity asserted; the act the derivation performs.",
+  "= (4/3)²": "the ratio reread — the doubled fourth as a composed square.",
+  "= =/≠ ≠": "the copula expanded — identity and difference applied to themselves.",
+  "= → ≠": "the first translation — identity differing; the operator changed, named.",
+  "=/≠": "the copula pair — identity and difference one operation.",
+  "A {(0,1),(2,3),(4,5)}": "pairing A — adjacent positions; one of the three grammars.",
+  "AND holds": "the conjunction office — the slash keeping co-presence.",
+  "AND/OR": "the logical register — conjunction that does not erase disjunction.",
+  "Anuttara": "the highest — Paramaśiva as ground; the tattvic ladder opens.",
+  "Anuttara → Pratyabhijñā": "the quilt spine — from the ground to recognition; the whole ladder in one line.",
+  "A·P": "the B degree — Name given way, Power borne; the CF selection.",
+  "B {(0,5),(1,4),(2,3)}": "pairing B — complements; the second grammar.",
+  "BOTH": "the third catuṣkoṭi corner — predication held together, not fused.",
+  "Becoming {2,3}": "the Becoming fold — poles one movement, sharing Text-Texture.",
+  "Being · Becoming · Knowing": "the forward folds — the three groupings the derivation walks.",
+  "Being {0,1}": "the Being fold — ground and definition joined.",
+  "B·P": "the C degree — the diatonic selection continues.",
+  "C {(1,2),(3,4),(5,0)}": "pairing C — the third grammar; nine, eight, seven between them.",
+  "CF5 → CF1": "the modal re-grounding — B returning to next-C through position, face and register.",
+  "CQT": "the constant-Q transform — one listener the instrument answers through.",
+  "Constitution {1,4}": "the complementary fold — definition and context held.",
+  "C·N": "the C degree — Name face; the diatonic selection begins.",
+  "D: (i′,j) · (i,j′) · (i′,j′)": "pairing D — the crossed forms; the pulse grammar.",
+  "Decision": "the Power face at position three — sacrifice answered by decision.",
+  "D↔G♯": "the fifths-substrate Name — the same position in the other map.",
+  "EQUATION": "the etymological stage — relation asserted; VALUE matured.",
+  "Essence {0,5}": "the complementary fold — ground and realisation held.",
+  "E↔F": "the semitone crossing inside one position — the diatonic seam.",
+  "E·N": "the E degree — Name face.",
+  "F": "the phase map — the object the flip acts on.",
+  "FFT": "the Fourier listener — spectra before pitches.",
+  "F·P": "the F degree — the crossing degree bearing Power.",
+  "G·P": "the G degree — Power face.",
+  "I see x": "the sentence that performs the unit — act, seen, slash.",
+  "IS": "the first catuṣkoṭi corner — affirmation as an operation.",
+  "IS-NOT": "the second corner — negation as an operation, not a mood.",
+  "Image": "the Name face at position five — work answered by image.",
+  "Knowing {4,5}": "the Knowing fold — context and realisation joined.",
+  "L0·C": "lens zero anchored at C — the first modal ground.",
+  "L1·D": "lens one at D — Dorian ground.",
+  "L2·E": "lens two at E — Phrygian ground.",
+  "L3·F♯": "lens three at F♯ — Lydian ground.",
+  "L4·G♯": "lens four at G♯ — Mixolydian ground.",
+  "L5·A♯": "lens five at A♯ — the outermost lens anchor.",
+  "Logos": "the Name face at position three — word borne as account.",
+  "Love": "the Power face at position four — decision answered by love.",
+  "MEASURE": "the etymological stage — value counted; the unit gained.",
+  "Maria: 4/3 · inverse 3/4": "the Jungian quarticity — the fourth and its inverse as the psychological ratio.",
+  "Mind": "the Name face at position one — measure borne as mind.",
+  "NEITHER": "the fourth corner — both predicates refused; the slash still holding.",
+  "Need": "the Power face at position one — mind answered by need.",
+  "OR selects": "the disjunction office — the cut that picks.",
+  "PRODUCT": "the etymological stage — equations borne; determination accumulated.",
+  "Paramaśiva / Anuttara": "the tattvic ground — the ladder opens in the Kashmiri exposition.",
+  "Play": "the Power face at position zero — truth answered by play.",
+  "Pratyabhijñā": "recognition — the ladder closing; the means disclosed as means.",
+  "R(F)": "the phase-flipped map — the same relations, inverse phase.",
+  "R(k,ε)=(5−k,1−ε) · R²=id": "the mirror-return — complementary position and face; an involution.",
+  "RATIO": "the etymological stage — measures related; proportion gained.",
+  "S={0,2,4,5,7,9,11} · 2,2,1,2,2,2,1": "the C-major selection and its semitone pattern — the CF grammar stated.",
+  "SILENCE · #5": "the tetralemma envelope — realisation enclosing the four corners, not a fifth answer.",
+  "SOLVE": "the etymological stage — the variable released; the derivation complete.",
+  "Sacrifice": "the Power face at position two — word answered by sacrifice.",
+  "Sadvidyā / Māyā": "the tattvic middle — determinacy and its field.",
+  "Sadāśiva / Īśvara": "the tattvic second third — the pole pair distinct in emphasis.",
+  "Son": "the Name face at position four — product borne as son.",
+  "Text-Texture {2,3}": "the complementary fold — pattern and dynamism woven.",
+  "Truth": "the Name face at position zero — the position where the ladder begins.",
+  "T₀": "the first Spanda transformation — zero re-entering over the ground/mark relation.",
+  "T₁": "the second transformation — the obverse phase over zero.",
+  "VALUE": "the etymological ground — worth before number.",
+  "V_in 84 ⊔ V_out 60 · Φ bijective": "the field split — inner and outside clusters, and the correspondence claimed.",
+  "WT₀ 0,2,4,6,8,10": "the even whole-tone set — the chromatic Name orbit.",
+  "WT₁ 1,3,5,7,9,11": "the odd whole-tone set — the chromatic Power orbit.",
+  "Word": "the Name face at position two — ratio borne as word.",
+  "Work": "the Power face at position five — image answered by work.",
+  "X": "the variable as specifiable — the upper-case pole of the notation.",
+  "X · x · X/x · X=x · X=(x) · (X=x)=X/x": "the recognition spine — the Jungian forms in their locked order.",
+  "X/x": "specification without exhaustion — one notation, two cases.",
+  "X=(x)": "the equation reflected — specification enclosing itself.",
+  "X=x": "the Jungian equation — the variable genuinely determined.",
+  "aware of seeing": "the recursion entered — the act turning on itself; the slash earned.",
+  "buddhi · ahaṃkāra · manas": "the antaḥkaraṇa — mediating apparatus within the whole relation.",
+  "chroma": "the pitch-class listener — register folded away.",
+  "class (2,1)": "the winding class — the homotopy label the lift records.",
+  "count 1,2,3,0,4,5": "the consolidated crosswalk order — the process-file counting of the six.",
+  "cymatic": "the plate listener — the pattern read where it sounds.",
+  "each parent bears 4+2": "the onto-logic invariant — every T1 parent carries the sixfold.",
+  "kañcukas + Puruṣa": "the contraction — the factors and the experient they situate.",
+  "leimma 256/243": "the diatonic remainder — the semitone the grammar leaves.",
+  "lift ends (2,1)": "the retained displacement — twice round one way, once the other; the integer the address loses.",
+  "sum = product": "the hinge — 1+2+3 and 1×2×3 converging on six.",
+  "t↦(2t,t) closed": "the quilt winding — the closed loop whose lift keeps the integer.",
+  "u = log₂(f/f₀) · ℝ/ℤ": "the logarithmic coordinate — the class quotient of pitch.",
+  "x": "the value borne — the lower-case pole; genuine without exhausting.",
+  "{0,4,7} — C·E·G": "the heard triad named — C major from the spectrogram.",
+  "{2,3}: shared": "the shared pair — Text-Texture common to forward and complementary folds.",
+  "{7,11,2} — G·B·D": "the heard triad as classes — G major; the listener returns a nameable relation.",
+  "|M| = 12×7 = 84": "the modal configurations — twelve transpositions, seven grounds.",
+  "|V| = 12×12 = 144": "the cluster space — twelve upper clusters over twelve basses.",
+  "±0 bifurcation": "the operator gate — zero additive beside zero absorbing.",
+  "×9/8": "the remainder applied — the whole-tone that completes the octave.",
+  "Ø · X · Ø/X · 0 — none absolutised": "the enantiodromic guard — every returning figure kept in its office.",
+  "Ø/X": "the medium recognised as medium — field-availability.",
+  "Ø/X · (0/Ø)/(1/X)": "the crossed forms carried — mediation into the held field.",
+  "āṇava · śākta · śāmbhava": "the three upāya-s — the means of recognition named in their order.",
+  "Śiva–Śakti": "the pole pair — the first differentiation the ladder performs.",
+  "κ = 531441/524288": "the Pythagorean comma — the exact mismatch the field keeps.",
+  "ν = 12·log₂(f/f_C) · p = round(ν) mod 12": "the instrument law — from frequency to pitch class and back.",
+  "χ = 1−2+1 = 0 · π₁ ≅ ℤ×ℤ": "the algebraic summary — zero Euler characteristic, two commuting generators.",
+  "…": "the flip continues — R alternating without end; passage as open operation.",
+  "−/−": "the bare relation — the parent operation before any count.",
+  "≠": "difference asserted — the copula other face.",
+  "D·N": "the D degree — Name face; the diatonic selection carries it."
+ }
+}

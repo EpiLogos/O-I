@@ -1,0 +1,172 @@
+{
+ "artifact": "matheme/roz-matheme-logics.journey.json",
+ "family": "matheme",
+ "worker": "E4",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-matheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "matheme-dia-syn-dia",
+    "path": "submission-package/essay/symbolon/matheme/dia-syn/dia.md",
+    "sha256": "c24c28d4d5d8124375270b6902e56d65d447e2292ccd4f31add4a297c8c8e470"
+   },
+   {
+    "record_id": "matheme-dia-syn-syn",
+    "path": "submission-package/essay/symbolon/matheme/dia-syn/syn.md",
+    "sha256": "c2129a70488233c7a68a9f7152fdbd93b15b4606400baafcb64ca6e478479d24"
+   },
+   {
+    "record_id": "matheme-dia-syn-chronic",
+    "path": "submission-package/essay/symbolon/matheme/dia-syn/chronic.md",
+    "sha256": "79464c4b8a37d53438ac4f01a38d269cdde506af0eb6866a094d6dc8f9f13d84"
+   },
+   {
+    "record_id": "matheme-mono-poly-mono",
+    "path": "submission-package/essay/symbolon/matheme/mono-poly/mono.md",
+    "sha256": "6e3685da959c21ae9ee07f0a421e8ec5aa11b75a9a8ed83ac1080a7c9bbdeedb"
+   },
+   {
+    "record_id": "matheme-mono-poly-poly",
+    "path": "submission-package/essay/symbolon/matheme/mono-poly/poly.md",
+    "sha256": "ae28c505e9945e082990776e100aec9c354391de2f3117edc455a7bbf9a893cf"
+   },
+   {
+    "record_id": "matheme-mono-poly-translations",
+    "path": "submission-package/essay/symbolon/matheme/mono-poly/translations.md",
+    "sha256": "131427ef6103dc00786930b999aeac5f7b690b4b3e6d7cb122d4172893ae5917"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "dia",
+   "source_ref": "matheme-dia-syn-dia",
+   "claim_status": "argued",
+   "relations": "returns-to A13, C50; Sheffer stroke distinct; chronic keeps temporal readings"
+  },
+  {
+   "scene_id": "syn",
+   "source_ref": "matheme-dia-syn-syn",
+   "claim_status": "argued",
+   "relations": "returns-to A13, A12, C50; binary-of-binary states construction; translations states conversions"
+  },
+  {
+   "scene_id": "chronic",
+   "source_ref": "matheme-dia-syn-chronic",
+   "claim_status": "argued",
+   "relations": "returns-to A13, C50, X/x; Symbolon Dynamics sources landscape/trajectory"
+  },
+  {
+   "scene_id": "mono",
+   "source_ref": "matheme-mono-poly-mono",
+   "claim_status": "argued",
+   "relations": "returns-to A12, C50, root mono-poly; A11 defines offices"
+  },
+  {
+   "scene_id": "poly",
+   "source_ref": "matheme-mono-poly-poly",
+   "claim_status": "argued",
+   "relations": "returns-to A12, C50, Syn; eight-determinations table; chromatic substrates"
+  },
+  {
+   "scene_id": "translations",
+   "source_ref": "matheme-mono-poly-translations",
+   "claim_status": "argued",
+   "relations": "returns-to A12, A18, Spanda equations; von Neumann singleton; CRT bijection"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "authored token glyphs throughout (QL notation: 0/1, 1/0, −/−, ?/!, −/+, X/x, AM/IS, ∞/dx, Ø, 4+2, 5→0, 9/8, 16/9, (0/1)/(1/0), T² = ℝ²/ℤ², π₁ ≅ ℤ×ℤ, 531441/524288 …)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "concentric mandala plate (ql-eight-determinations) per ql-expression-grammar.md §III",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "crossed-zero recognition sequence as entity step sequence (ql-crossed-zero)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "tetraktys dot diagram (har-tetraktys-triangle, four rows 1·2·3·4)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "fundamental square + torus ring plates (quilt-topology, top-torus-cover-winding)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "matheme/roz-matheme-logics.cover.png",
+ "status": "authored",
+ "notes": [
+  "dia stages the locked operator changes (−1)+(+1)=0, (−1)−(+1)=−2, (+1)−(−1)=+2 against the retained polarity (−1)/(+1); syn holds the (0/1)/(1/0) seam; mono carries BOTH chains (short definition/quilt chain and full process/music chain) so their difference stays an operation, not a typo. Scene bodies carry bare tokens: the corpus backtick convention is an essay-surface rendering rule; inside the Expression the raw backticks render literally and were dropped (notation itself unchanged). ",
+  "Per-scene moves (2026-10-06 enrichment): dia — the four-step sequence performs both logics as operations: polar retention holds ink with a repel objectState force, the collapse pulls the poles to centre and shrinks (attract force, blue), the appropriations shove the glyph left then right (blue, gold); shove click is dia felt from the touch surface; relational-orbital keeps the poles related. syn — THE 3D SCENE: source, composition and count ride three z-planes (laminate layout, round volume, perspective) — composing while source, inverse reading and affected context each keep their plane; the pairs sequence tints through composed/not-summed; implode click is syn's gathering. chronic — both halving chains step their objectState size down 8→…→0 in lockstep, gold at the limit, blue on the negative side: the asymptote shown as shrinking operations; quiet pointer (0.9). mono — the full-circuit glyph runs the chain, names the loss (red step) and returns gold: the inverse phase is the difference between the chains. poly — the repeated glyphs carry repel forces (the offices must not collapse); the count caption derives 'one count, three constructions'. translations — the coordinate mapping sequence names its operator at each step (componentwise, then the scalar as another operation, gold).",
+  "Craft: pointer profiles by meaning — shove for dia's appropriation, implode for syn's gathering, near-still pulse for the chronic asymptote, plain pulse for mono/poly/translations, repel for poly's kept-distinct offices. Automation: turbulence LFO on dia (the cut's edge), dispersion LFOs on chronic and translations. Durations 12/14 s, transitions 1.5/2.0/2.2 s differ. Claim-status bands (ARGUED) ride the kickers unchanged. Gödel-discipline observed: no metaphysical movement beyond what the dia/syn records carry.",
+  "What the third dimension means (syn): the record argues composing while source, inverse reading and affected context are each retained — the scene gives them three z-planes under perspective: the full sym expression at z 0, the four ordered relations in front (z +0.3), the generative count behind (z −0.3). Depth is the retained relation: collapse to one plane would be dia's failure, fused into one flat claim."
+ ],
+ "description": "The two logics: dia/syn (cut and gathering, locked expressions / = −/− → (−1)/(+1) → (−1)+/−(+1), (0/1)/(1/0)) and mono/poly (one field through many notations).",
+ "scene_count": 6,
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-matheme-l1",
+  "lane": "wave1/matheme",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "(+1)−(−1) = +2 — from the other pole": "subtraction run from the opposite pole appropriates the span with the opposite sign — the same operation, the other appropriation.",
+  "(-1)+(+1) = 0 — cancels": "the collapsed operation: addition cancels the poles to zero — the cut forgetting the field that produced them.",
+  "(-1)/(+1)": "the polar cut — zero the axis of tension and connection, both poles retained under the slash.",
+  "(-1)/(+1) — polarity retained": "dia first operation — the poles held in relation, nothing cancelled.",
+  "(-1)−(+1) = −2 — appropriates": "the second collapse — subtraction appropriates the span as −2; the excluded pole absorbed.",
+  "(0/1)/(1/0)": "sym-ballein — the two orientations of one relation under the slash AND/OR.",
+  "(4/2)/(3/3) = 2": "scalar division of summed ratios — a different operator that must keep its own name.",
+  "(4/2)/(3/3) = 2 is another operation": "the translation boundary — naming the operator prevents misreading the scalar for the componentwise.",
+  "(4:2)/(3:3) ↦ (4/3, 2/3)": "the declared QL componentwise comparison — ratios carried component by component.",
+  "/ = −/−": "the bare relation — the parent operation before any count; frame, never content.",
+  "0": "the fixed point of f(x) = x/2 — the synchronic limit the halving sequence approaches.",
+  "0/1 = 4+2 = 5→0 = 0/1": "the short chain of definition and quilt — one earned circuit without the inverse phase.",
+  "0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1": "the full circuit of process and music — the inverse phase kept as a distinct complete operation.",
+  "0/1 ⇄ 1/0": "the mono-poly exchange — one field holding both orientations without merging them.",
+  "00 · 01 · 10 · 11": "the four ordered relations of a two — syn composes them; order matters, nothing cancels.",
+  "1": "a halving stage — the diachronic cut counting down; each value a genuine determinate step.",
+  "1/2": "the half after one — the asymptote approached, never reached in the sequence.",
+  "1={∅} exact · linker: synthesis": "the exact set-theoretic neighbour beside the authored linker — the proof boundary named.",
+  "2": "a halving stage — four becoming two; the rule applied again.",
+  "2+2² · 1+2+3 · 6 classes": "one count under three constructions — poly keeps the offices distinct under one numeral.",
+  "2+2²=6 = 4+2": "the generative count — syn-gathered pairs equalling the native four-plus-two.",
+  "2^(2/12) — tempered": "the tempered whole tone — a selected identification with its own exactness.",
+  "4": "a halving stage — eight becoming four; the derivation shown as operations.",
+  "64/36 = 16/9": "the exact translation — the base ratio and its reduced double, one equality.",
+  "8": "the opening value of the halving sequence — the diachronic cut before any passage.",
+  "9/8 — exact ratio": "the pure remainder — the live tick as an exact construction.",
+  "?/! @ #1 — qualitative": "definition at the first station — the same glyph in its qualitative office.",
+  "?/! @ #3 — processual": "pattern at the third station — the same glyph in its processual office; repeated sign, changed office.",
+  "componentwise — each component carried": "the operator named — translation preserves the pair rather than dividing sums.",
+  "composed, not summed": "the syn guard — the pairs are held together, their relation retained.",
+  "f(x) = x/2": "the rule of passage — one operator generating the whole halving chain.",
+  "normalising to the short chain loses the operation": "the monoisation failure named — reading one chain into every file erases the inverse phase.",
+  "one count, three constructions": "the poly lesson — the numeral recurs, the constructions stay distinct.",
+  "the four ordered relations": "what the pairs are — relations, not tokens; syn holds them as one field.",
+  "the full circuit keeps the inverse phase": "why the long chain exists — the process/music files carry the passage the short chain does not.",
+  "→ 0": "the limit marker — the sequence tends, arrives nowhere; the zero stays occupied.",
+  "−1": "the negative halving stage — the same rule below zero; synchronic and diachronic independent.",
+  "−1/2": "the negative asymptote — approaching zero from below.",
+  "−2": "the appropriated span of the third step — what subtraction seized from the cut.",
+  "−4": "the opening value of the negative halving chain — passage mirrored."
+ }
+}

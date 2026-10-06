@@ -1,0 +1,123 @@
+{
+ "artifact": "episteme/roz-lenses-aphorism.journey.json",
+ "family": "episteme-lenses-aphorism",
+ "worker": "E3",
+ "date": "2026-09-17",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "family-concept"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
+  "records": [
+   {
+    "record_id": "aphorism-investigation-and-faith",
+    "path": "submission-package/essay/symbolon/episteme/aphorisms/investigation-and-faith.md",
+    "sha256": "3fe65c872193db2d5cd72e646804a4d3b08a37b0aac05aa81c89edf5b57c2958",
+    "sha256_census_receipt": "3fe65c872193db2d5cd72e646804a4d3b08a37b0aac05aa81c89edf5b57c2958",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "lens-baudrillard",
+    "path": "submission-package/essay/symbolon/episteme/lenses/baudrillard.md",
+    "sha256": "a234c72ed556ef0c5336142f13e7db6b40b42807d98f39862180d0c95e2cf9bd",
+    "sha256_census_receipt": "a234c72ed556ef0c5336142f13e7db6b40b42807d98f39862180d0c95e2cf9bd",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "lens-foucault",
+    "path": "submission-package/essay/symbolon/episteme/lenses/foucault.md",
+    "sha256": "ad9eca38ab8e9ce85907303022457d708b1feea0eb2e94ac4eea730e2b3b8fbb",
+    "sha256_census_receipt": "ad9eca38ab8e9ce85907303022457d708b1feea0eb2e94ac4eea730e2b3b8fbb",
+    "hash_note": "matches current bytes"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "journey": {
+  "id": "roz-lenses-aphorism",
+  "name": "Return of Zero — Lenses and the Aphorism",
+  "scenes": 3,
+  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+ },
+ "scenes": [
+  {
+   "scene_id": "lens-baudrillard",
+   "source_ref": "lens-baudrillard",
+   "source_path": "submission-package/essay/symbolon/episteme/lenses/baudrillard.md",
+   "sha256": "a234c72ed556ef0c5336142f13e7db6b40b42807d98f39862180d0c95e2cf9bd",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Paraphrased selected Baudrillard passages; Argued from native account/source relations; Offered comparative extensions"
+   },
+   "form": "two overlapping rings (source discipline / native operation) + refraction disc"
+  },
+  {
+   "scene_id": "lens-foucault",
+   "source_ref": "lens-foucault",
+   "source_path": "submission-package/essay/symbolon/episteme/lenses/foucault.md",
+   "sha256": "ad9eca38ab8e9ce85907303022457d708b1feea0eb2e94ac4eea730e2b3b8fbb",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Argued from"
+   },
+   "form": "two overlapping rings (source discipline / native operation) + refraction disc"
+  },
+  {
+   "scene_id": "aphorism-investigation-and-faith",
+   "source_ref": "aphorism-investigation-and-faith",
+   "source_path": "submission-package/essay/symbolon/episteme/aphorisms/investigation-and-faith.md",
+   "sha256": "3fe65c872193db2d5cd72e646804a4d3b08a37b0aac05aa81c89edf5b57c2958",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "returns": "A03 → C04 / C48; carried by the Symbol / Account / Trust whole-field (per the record's #5→0)",
+    "complete_form_verbatim_in_body": "The approachable limit is the basis of investigation; the absolute limit is the basis of faith; the limit of investigation is the limit of determination; the limit of faith is never to be determined."
+   },
+   "form": "two limit bars + ring of investigation + rust core (faith continuing through)"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "lens and limit formations (engine-native shapes)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "episteme/roz-lenses-aphorism.cover.png",
+ "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 3 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
+ "status": "reviewed",
+ "notes": [
+  "The aphorism scene carries the complete four-line form verbatim in its body (the record's #0), followed by the record's own #1 commentary. The rust core disc is the family Offered-accent colour reused as presentation, not a status claim about this Argued record.",
+  "Enrichment moves 2026-10-06 (records re-read — baudrillard.md and foucault.md were DELETED from the vault before fc59a719 by 722ae3da; they exist only at the basis revision dbf3b17, the binding's own bound revision; the aphorism record is live at fc59a719 under submission-package/essay/symbolon/episteme/aphorisms/):",
+  "lens-baudrillard: the simulation loop walks the overlap disc verbatim (a profile affects access → access changes conduct → recorded conduct appears to confirm the profile), rusting as the loop closes; vortex click (the loop's circulation); loop drift automation.",
+  "lens-foucault: the three sites of authorised speech walk verbatim (what can appear as a case → who can speak about it → what can be done to the person it describes); repel/shove (authority operates on its object); body compressed to ≤70 words, no claim changed.",
+  "aphorism-investigation-and-faith: THE 3D SCENE — the complete four-line aphorism walks verbatim, alternating between the approachable depth (z +0.3, blue, investigation) and the absolute depth (z −0.4 and deepening to −0.55, violet, faith); depth means exactly the aphorism's distinction: investigation's limit stays near the surface and is determinable; faith's limit recedes and is never to be determined. Near-still contemplation field with a slow breathe; body keeps the complete aphorism intact and trims the prose to ≤70 words.",
+  "Beats: durations 13/13/16, transitions 1.7–2.6; 3 automation lanes; Single formation layouts throughout."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-episteme-l2",
+  "lane": "enrich/expressions-20261006",
+  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "aphorism re-read at fc59a719; lens-baudrillard and lens-foucault were removed from the vault before fc59a719 (deleted in 722ae3da) and were re-read at dbf3b17, the binding's bound revision — the underlying source files remain at fc59a719 | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
+ },
+ "glyph_rationales": {
+  "a profile affects access": "first turn of the simulation loop (Baudrillard lens record: the profile acts within its object's world)",
+  "access changes conduct": "second turn — the account's operational authority",
+  "recorded conduct appears to confirm the profile": "third turn — the loop closes; Account does not replace source remains the lens's test",
+  "what can appear as a case": "first site of authorised speech (Foucault lens record: knowledge acquires an operative object)",
+  "who can speak about it": "second site — the authorised circuit",
+  "what can be done to the person it describes": "third site — the object made actionable",
+  "The approachable limit is the basis of investigation": "first line of Taylor's ratified four-line aphorism (record's complete aphorism, verbatim order)",
+  "the absolute limit is the basis of faith": "second line of the aphorism",
+  "the limit of investigation is the limit of determination": "third line of the aphorism",
+  "the limit of faith is never to be determined": "fourth line of the aphorism"
+ }
+}

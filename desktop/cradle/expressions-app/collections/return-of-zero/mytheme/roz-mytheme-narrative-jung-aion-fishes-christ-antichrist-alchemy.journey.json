@@ -10,11 +10,11 @@
       "id": "m-ai-0-shadow",
       "name": "Ego, shadow, and the image of perfection",
       "character": "The ego as centre of reference meets the shadow; the Christ-image gives wholeness a human face; Antichrist belongs to the ensuing drama as the excluded contrary made historically active.",
-      "duration": 12,
+      "duration": 13,
       "transition": 1.5,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.04,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,13 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.45,
+          "circulation": -0.2,
+          "dispersion": 0.09,
+          "turbulence": 0.15
+        }
       },
       "entities": [
         {
@@ -107,16 +117,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st511",
+                "id": "e468-sq1",
                 "text": "",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#3a3540",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e468-sq2",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4d48",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -149,16 +199,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st512",
+                "id": "e469-sq1",
                 "text": "",
                 "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e469-sq2",
+                "text": "privatio boni",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e469-sq3",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7a52",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -191,16 +304,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st513",
+                "id": "e470-sq1",
                 "text": "☹",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e470-sq2",
+                "text": "☹",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#a05038",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -221,29 +374,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The ego first appears as the centre of reference for conscious contents, rooted in bodily and psychic conditions exceeding what it knows of itself. The shadow requires moral effort because its traits belong to the person who repudiates them; projection makes an inwardly active factor seem a property conclusively encountered outside, and the world gives back the rejected face. The anima/animus drama deepens the problem of relation — the demand that another person embody an image prevents that person from being met; Jung's gendered scheme",
+          "body": "The ego appears as centre of reference for conscious contents. The shadow requires moral effort: projection returns the rejected face, and isolation seems to confirm a hostile world. The Christ-image gives wholeness a human face, but an exclusively luminous figure does not include all the opposites; against privatio boni evil's efficacy stays in view, and the excluded contrary acquires a compensatory historical figure.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "stays in his historical account. The approach to the Self carries a double danger: overwhelm by the larger whole, or appropriation of it as one's own magnitude. Christ enters as a culturally effective symbol of the Self — the heavenly man, the second Adam — yet the perfection of the image produces the difficulty: an exclusively luminous figure does not include all the opposites. Antichrist belongs to the ensuing drama: the contrary excluded from the representation of totality remains active and acquires a compensatory historical figure.\n\nOccurrences: the shadow and projection (#1, recalled at the Shadow Quaternio #4); the double inflation danger (#1); the privatio boni argument (#1); the compensatory Antichrist (#1, #2).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the shadow and projection (#1, recalled at the Shadow Quaternio #4); the double inflation danger (#1); the privatio boni argument (#1); the compensatory Antichrist (#1, #2).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -272,12 +425,12 @@
       "id": "m-ai-1-fishes",
       "name": "The fishes give the age its temporal image",
       "character": "Pisces lets the double figure acquire duration; the precessional spring-point; the Pistis Sophia child-double embracing; the overlapping ram and fish; Leviathan becoming food.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.8,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.12,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -285,7 +438,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.35,
+        "volumeEnabled": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0a0d14"
       },
       "field": {
         "background": "#f6f1e6",
@@ -296,7 +456,13 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.4,
+          "circulation": 0.35,
+          "zConfinement": 0.7,
+          "dispersion": 0.07
+        }
       },
       "entities": [
         {
@@ -306,7 +472,7 @@
           "position": {
             "x": 0,
             "y": -0.17,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.368,
@@ -348,7 +514,7 @@
           "position": {
             "x": 0.55,
             "y": 0.45,
-            "z": 0
+            "z": -0.5
           },
           "size": {
             "x": 0.22,
@@ -390,7 +556,7 @@
           "position": {
             "x": -0.55,
             "y": -0.3,
-            "z": 0
+            "z": 0.4
           },
           "size": {
             "x": 0.5,
@@ -411,16 +577,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st516",
+                "id": "e473-sq1",
                 "text": "◑◕",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e473-sq2",
+                "text": "◑◕",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e473-sq3",
+                "text": "◕",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -432,7 +661,7 @@
           "position": {
             "x": 0.5,
             "y": -0.4,
-            "z": 0
+            "z": -0.25
           },
           "size": {
             "x": 0.5,
@@ -453,16 +682,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st517",
+                "id": "e474-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#3a3540",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e474-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.4
+                  },
+                  "rotation": 45,
+                  "tint": "#5a3038",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e474-sq3",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -474,7 +766,7 @@
           "position": {
             "x": -0.5,
             "y": -0.25,
-            "z": 0
+            "z": 0.2
           },
           "size": {
             "x": 0.089,
@@ -525,29 +817,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Jung opens the fish inquiry by noting that Christian interpretation gives Christ and the devil several shared animal symbols: a symbol can carry more than one valuation. The Christian fish has its baptismal, eucharistic and epigraphic settings; astrology is proposed as a second source of its activation. Pisces lets the double figure acquire duration: planetary conjunctions, messianic calculations, medieval expectations and the precessional movement of the spring-point — Jung's own notes sometimes correct his authorities' astronomy, and an inherited forecast is not an independently confirmed law. The Pistis Sophia narrative gives doubling a reunion",
+          "body": "Christian interpretation gives Christ and the devil shared animal symbols. Pisces lets the double figure acquire duration; the precessional calculations remain Jung's interpretive chronology. The Pistis Sophia double — bound, released, embraced, one — keeps reunion distinct from antagonism. Epiphanius's rite is a pagan rite used as testimony. Leviathan splits against itself and ends as food for the devout — terror, opposition and nourishment as successive offices.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "form: the child-double bound to a bed, released on the fathers' return, embraced, one — its office distinct from Christ/Antichrist antagonism. The sixteenth century sharpens the pressure: schism and the conquest of Nature cross the earlier aspiration; Nostradamus's letter makes expectation itself a historical actor. Epiphanius's Alexandrian rite — the image carried up, circled, returned below — is a pagan rite Jung uses as testimony. The apocalyptic Lamb resists a single label; Leviathan's traditions split monster against monster until the formidable creature becomes food for the devout — terror, opposition and nourishment as successive offices.\n\nOccurrences: the shared animal symbols (#2); the precessional calculations (#2, historicised at #5→0); the embracing double (#2); Leviathan's conversion into meal (#2, distinct from the authored Meal whole).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the shared animal symbols (#2); the precessional calculations (#2, historicised at #5→0); the embracing double (#2); Leviathan's conversion into meal (#2, distinct from the authored Meal whole).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -570,17 +862,33 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-aeon",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.05,
+          "phase": 0.2,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ai-2-alchemy",
       "name": "The fish is caught, worked, and made to transform",
       "character": "The round creature heated to radiance; the eyewash; the Echeneis reversal — the magnet that attracts the attracting power; Mercurius as substance and philosophy; science born as the mother recedes.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -589,7 +897,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -600,7 +912,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.5,
+          "circulation": 0.25,
+          "dispersion": 0.08
+        }
       },
       "entities": [
         {
@@ -631,16 +948,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st519",
+                "id": "e476-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.32,
+                    "y": 0.32
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e476-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.32,
+                    "y": 0.32
+                  },
+                  "rotation": 0,
+                  "tint": "#a05a2b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e476-sq3",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.36
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -715,16 +1095,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st521",
+                "id": "e478-sq1",
                 "text": "🧲",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e478-sq2",
+                "text": "magnet",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -829,29 +1249,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Alchemy alters the position of the human participant: the image becomes something to find and work upon, and the relation between worker and transforming substance becomes part of the transformation. Within the Turba tradition as Jung reads it, a round sea creature without bones or outer covering is heated slowly and treated with sea water until it shines; the preparation becomes an eyewash through which the practitioner can understand the art — the substance's alteration returns as an alteration in the capacity to see. Jung's jellyfish identification is an interpretation; a sixteenth-century adept reads an actual fish. The stone within the fish leads through Saturn, lead and the bright",
+          "body": "Alchemy alters the participant's position: the image becomes something to find and work upon. A round sea creature without bones is heated with sea water until it shines; the preparation becomes an eyewash — the substance's alteration returning as an alteration in the capacity to see. The Echeneis that halts ships is met by a magnet taught to attract the fish. Mercurius names substance and philosophy.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "mercurial substance concealed within darkness, toward the lapis; the filius philosophorum mediates the relation to the redeemer. The Carcassonne revelation's two fishes yoked beneath the earth keep their distinct narrative office from the Christian pair. The Echeneis brings the reversal into focus: the small fish that halts ships is now attracted by a magnet that can be taught — Mercurius naming substance and philosophy together. The aftermath changes the scale: the alchemical epoch gives birth to science and recedes as an outlived mother; by the eighteenth-century division of faith and knowledge, the investigating psyche disappears from the account of objective knowledge while making it possible.\n\nOccurrences: the heated creature and eyewash (#3); the Echeneis reversal and the taught magnet (#3); the two yoked fishes kept distinct (#3); the scientific aftermath and the forgotten condition (#3, #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the heated creature and eyewash (#3); the Echeneis reversal and the taught magnet (#3); the two yoked fishes kept distinct (#3); the scientific aftermath and the forgotten condition (#3, #5→0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -880,11 +1300,11 @@
       "id": "m-ai-3-quaternio",
       "name": "The quaternio — Anthropos, Shadow, Physis, lapis",
       "character": "A→B→C→D with lower-case transformations; the connected diamonds; the Shadow Quaternio declared a modern reconstruction; solve et coagula as the ring's movement.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -893,7 +1313,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -904,7 +1328,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.5,
+          "circulation": 0.4,
+          "dispersion": 0.07
+        }
       },
       "entities": [
         {
@@ -935,16 +1364,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st524",
+                "id": "e481-sq1",
                 "text": "A",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e481-sq2",
+                "text": "a",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.18,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e481-sq3",
+                "text": "A",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1103,16 +1595,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st528",
+                "id": "e485-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e485-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "rotation": 45,
+                  "tint": "#5a4d78",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e485-sq3",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.44
+                  },
+                  "rotation": 90,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1175,35 +1730,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The Gnostic return reaches back before the era's images of attraction: the Naassene water of doctrine, the Peratic serpent-Son conveying signs down and carrying their awakened substance up, Monoïmos's instruction to investigate the one who speaks of \"my\" spirit. The concluding quaternio makes the historical interpretation answerable: Jung explicitly acknowledges that his inserted Shadow Quaternio is a modern reconstruction absent from the Gnostic texts, supplied because a purely upward orientation no longer describes the modern situation — the disappointment of the expected return, increased self-consciousness, the",
+          "body": "The Gnostic return reaches back before the era's images of attraction: the Naassene water of doctrine, the Peratic serpent-Son, Monoïmos's investigation. The four major states are Anthropos A, Shadow B, Physis/serpent C, lapis D, with lower-case transformations; at p.259 the connected diamonds show each whole unfolding into four and passing onward. Jung declares the Shadow Quaternio a modern reconstruction; the return changes an unconscious totality into a conscious one.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "chthonic serpent, the approach to Nature. The four major states are Anthropos A, Shadow B, Physis/serpent C, lapis D, with lower-case transformations; at p.259 the connected diamonds show each whole unfolding into four and passing onward. The ring returns through differentiation and integration — solve et coagula, the circular opus — changing an unconscious totality into a conscious one; the nuclear comparison stays explicitly hypothetical. The conclusion returns to the clinician's first encounter: the shadow includes healthy instincts and creative capacities; declaring all things good leaves suffering untouched.\n\nOccurrences: the declared modern reconstruction of the Shadow (#4, keeping the project's Offered reading honest); the connected diamonds (p.259); the conclusion's responsibility (#1, #4).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the declared modern reconstruction of the Shadow (#4, keeping the project's Offered reading honest); the connected diamonds (p.259); the conclusion's responsibility (#1, #4).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1226,11 +1781,11 @@
       "id": "m-ai-5-return",
       "name": "The age becomes visible as an age",
       "character": "Historical de-monopolisation: the inherited image exposed as background; generative vs historical succession; the register decision placing Christ/Antichrist at the occupied slash; the unresolved seams named.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1239,7 +1794,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -1250,7 +1809,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.4,
+          "circulation": 0.25,
+          "dispersion": 0.07
+        }
       },
       "entities": [
         {
@@ -1323,16 +1887,102 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st531",
+                "id": "e488-sq1",
                 "text": "⇉",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e488-sq2",
+                "text": "generative",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e488-sq3",
+                "text": "historical",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e488-sq4",
+                "text": "⇉",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1437,29 +2087,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The existing project operation is historical de-monopolisation: an age inherits a governing image; the image becomes an apparently immediate background of judgment; its exclusions remain active; contrary images and transforming practices expose the history within that background. An age can then become visible as an age, and its inherited measure revisable. The whole compares A19's complex as local arbitration regime while keeping the substrates distinct — a complex, a theological image, a Protected Account and a civilisation's symbolic frame carry different evidential burdens. A21 receives the difference between returning unchanged and returning able to receive what had only been",
+          "body": "The project operation is historical de-monopolisation: an age inherits a governing image; the image becomes an apparently immediate background of judgment; its exclusions remain active. Generative and historical succession stay distinct. Christ/Antichrist is held at the occupied slash after the native derivation; the exact symbolic appointments stay human-amplified: no. Every later index must return to this complete whole and preserve its particular action.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "projected. Neumann supplies the shared ground without becoming evidence for the historical details; Gebser's non-chronological Origin stays distinct from Jung's aeonic history. The success/succession seam keeps generative and historical succession alive — alchemy's forgotten motherhood articulating the latter. Q27's register decision places Christ/Antichrist at the occupied slash after the native derivation; Antichrist naming and Aquarian eschatology belong to the plate register, not public historical proof. The exact symbolic appointments to QL remain human-amplified: no; the whole-before-fragments commitment stands as design law, and every later index must return to this complete whole.\n\nOccurrences: the governing image's background operation (#1–#4, #5→0); the Shadow Quaternio's declared modernity (#4, #5→0); the sixteen recovered passage locations as the house's standing (#5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the governing image's background operation (#1–#4, #5→0); the Shadow Quaternio's declared modernity (#4, #5→0); the sixteen recovered passage locations as the house's standing (#5→0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -1485,5 +2135,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T00:00:00.000Z"
 }

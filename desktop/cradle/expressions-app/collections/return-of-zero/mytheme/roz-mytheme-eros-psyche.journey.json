@@ -10,8 +10,8 @@
       "id": "m-psy-0-oracle",
       "name": "Worship displaced; the bridal exposure; Zephyr",
       "character": "Honours that belong to Venus gather around a mortal; the oracle prescribes a bridal exposure; the terror delivers her into an unexpected refuge.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -23,10 +23,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.2,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#202830",
         "palette": [
           "#1f2a33",
           "#3c6e71",
@@ -34,7 +38,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.2
+        }
       },
       "entities": [
         {
@@ -65,18 +74,89 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st189",
+                "id": "st-e174-1",
                 "text": "Psyche",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e174-2",
+                "text": "Psyche",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.0,
+                  "y": -0.5,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#8b95a3",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e174-3",
+                "text": "Psyche",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.2,
+                  "y": -0.15,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -191,18 +271,93 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st192",
+                "id": "st-e177-1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.6,
+                  "y": -0.38,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e177-2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.0,
+                  "y": -0.52,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e177-3",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.24,
+                  "y": -0.18,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -282,10 +437,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Apollo's Milesian oracle: her husband will be a winged, serpentine terror; the wedding procession takes the form of a funeral. Psyche tells her parents they should have mourned when the people's worship raised her against Venus. She goes to the appointed height — and Zephyr receives the exposed girl and carries her gently down to a grassy valley.\n\nOccurrences: the abandoned shrines (#0); the oracle's terror (#0); the funeral-like procession (#0); Zephyr's carrying (#0, recalled at the sisters' leaps #2).",
+          "body": "Apollo's Milesian oracle: her husband will be a winged, serpentine terror; the wedding procession takes the form of a funeral. Psyche tells her parents they should have mourned when the people's worship raised her against Venus. She goes to the appointed height — and Zephyr receives the exposed girl and carries her gently down to a grassy valley.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the abandoned shrines (#0); the oracle's terror (#0); the funeral-like procession (#0); Zephyr's carrying (#0, recalled at the sisters' leaps #2).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -315,7 +483,7 @@
       "name": "The palace of invisible service",
       "character": "Everything arrives without a visible giver; the unseen husband comes at night, his face concealed; the prohibition stands.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -327,10 +495,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#171a26",
         "palette": [
           "#1f2a33",
           "#c9a227",
@@ -338,7 +510,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.38,
+          "circulation": 0.16,
+          "dispersion": 0.04,
+          "pointerStrength": 0.35
+        }
       },
       "entities": [
         {
@@ -411,18 +588,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st195",
+                "id": "st-e180-1",
                 "text": "⌂",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e180-2",
+                "text": "⌂",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -495,18 +712,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st197",
+                "id": "st-e182-1",
                 "text": "⚠",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e182-2",
+                "text": "⚠⚠",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -530,7 +787,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The palace in the valley seems built by divine hands: precious floors give their own light, riches lie unguarded, voices welcome and serve though no servant is seen. At night a husband comes to her bed, his face unseen; fear gives way to union. He warns that her sisters will come and that responding brings danger. Her grief moves him to permit a visit; the prohibition on seeing him remains. The sisters arrive, measure her fortune against their own marriages — one",
+          "body": "The palace in the valley seems built by divine hands: precious floors give their own light, riches lie unguarded, voices welcome and serve though no servant is seen. At night a husband comes to her bed, his face unseen; fear gives way to union. He warns that her sisters will come and that responding brings danger; her grief moves him to permit a visit — the prohibition remains.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -544,16 +801,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "complains of an elderly husband, the other of an invalid — conceal her good fortune, and plan her ruin. He warns again: the child will be divine if she keeps the secret, mortal if she betrays it. Further visits follow; her incompatible accounts of her husband — young hunter, greying merchant — let the sisters infer a divine husband, and they supply the serpent story: he fattens her to devour mother and child. The remedy they prescribe: a sharpened blade and a covered lamp.\n\nOccurrences: the invisible service (#1); the night husband and prohibition (#1, #2); the incompatible accounts (#1); the blade and lamp (#1, #2).",
+          "body": "The sisters arrive, measure her fortune against their own marriages, conceal her good fortune and plan her ruin. He warns again: the child will be divine if she keeps the secret, mortal if she betrays it. Her incompatible accounts — young hunter, greying merchant — let them infer a divine husband; they supply the serpent story and prescribe a sharpened blade and a covered lamp.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the invisible service (#1); the night husband and prohibition (#1, #2); the incompatible accounts (#1); the blade and lamp (#1, #2).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -570,14 +840,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-service",
+          "target": "field.params.dispersion",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.03,
+          "max": 0.03,
+          "rate": 0.18,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-psy-2-lamp",
       "name": "The lamp: truth seen, wound dealt",
       "character": "Seeing discovers something true — the husband is Cupid; the effort to settle the relation arrives with a blade; a drop of hot oil ends the concealment.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -589,10 +875,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.85,
+        "pointerClickRadius": 0.4
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#141216",
         "palette": [
           "#1f2a33",
           "#c9a227",
@@ -600,7 +890,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.24,
+          "dispersion": 0.08,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -633,24 +928,22 @@
           "sequence": {
             "enabled": true,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st199",
+                "id": "st-e183-1",
                 "text": "",
-                "shape": "disc",
-                "hold": 2.4,
+                "shape": "text",
+                "hold": 2.8,
                 "transition": 1.3,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.184,
-                    "y": 0.258
+                    "x": 0.2,
+                    "y": 0.2
                   },
                   "rotation": 0,
-                  "tint": "#3c6e71",
-                  "tintWeight": 1,
+                  "tint": "#252720",
+                  "tintWeight": 0.8,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -660,19 +953,19 @@
                 }
               },
               {
-                "id": "st200",
+                "id": "st-e183-2",
                 "text": "☀",
                 "shape": "text",
-                "hold": 2.6,
+                "hold": 3.2,
                 "transition": 1.3,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.209,
-                    "y": 0.209
+                    "x": 0.26,
+                    "y": 0.26
                   },
                   "rotation": 0,
-                  "tint": "#c9a227",
+                  "tint": "#e0b54a",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -683,19 +976,23 @@
                 }
               },
               {
-                "id": "st201",
-                "text": "",
-                "shape": "disc",
-                "hold": 2.4,
+                "id": "st-e183-3",
+                "text": "•",
+                "shape": "text",
+                "hold": 3.4,
                 "transition": 1.3,
-                "position": null,
+                "position": {
+                  "x": 0.3,
+                  "y": 0.15,
+                  "z": 0.0
+                },
                 "objectState": {
                   "size": {
-                    "x": 0.184,
-                    "y": 0.258
+                    "x": 0.1,
+                    "y": 0.1
                   },
                   "rotation": 0,
-                  "tint": "#3c6e71",
+                  "tint": "#c2452e",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -705,7 +1002,9 @@
                   }
                 }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -736,18 +1035,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st202",
+                "id": "st-e184-1",
                 "text": "Cupid",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.3,
+                  "y": 0.15,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e184-2",
+                "text": "Cupid",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.5,
+                  "y": 0.5,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#8b95a3",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -897,7 +1244,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Psyche takes both instruments to the bed, fearing the supposed beast and loving the husband she has known. When the lamp opens the darkness she sees Cupid; the blade loses its object and for a moment threatens her before falling from her hand. She studies his bow and arrows, pricks her thumb on a point, and falls more deeply in love with Love. A drop of hot oil falls from the lamp onto his right shoulder — the narrator gives the lamp a desire of its own. He wakes in pain and",
+          "body": "Psyche takes both instruments to the bed, fearing the supposed beast and loving the husband she has known. When the lamp opens the darkness she sees Cupid; the blade loses its object and for a moment threatens her before falling from her hand. She pricks her thumb on an arrow point and falls more deeply in love with Love.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -911,10 +1258,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "flies; she clings to his leg until she falls. From a cypress he speaks: he disobeyed Venus, wounded himself with his own arrow, made Psyche his wife — and names the sisters' coming punishment. She throws herself into a river, which returns her to the bank where Pan with Echo counsels her to appeal to Cupid rather than die. Her next act brings the sisters to the rock, where neither is caught; the tale gives no warrant for cleansing her conduct into an uninterrupted moral ascent.\n\nOccurrences: the blade and the covered lamp (#1–#2); the arrow-prick (#2); the oil and the waking (#2); Pan and Echo's counsel (#2); the sisters' deaths (#2).",
+          "body": "A drop of oil falls on his right shoulder — the narrator gives the lamp a desire; he wakes and flies; she clings until she falls. From a cypress: he disobeyed Venus, wounded himself with his own arrow, made Psyche his wife — and names the sisters' punishment. Pan with Echo counsels appeal, not death. Her next act brings the sisters to the rock, neither caught — no moral ascent.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the blade and the covered lamp (#1–#2); the arrow-prick (#2); the oil and the waking (#2); Pan and Echo's counsel (#2); the sisters' deaths (#2).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -937,14 +1297,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-lamp",
+          "target": "field.params.pointerStrength",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": 0.3,
+          "max": 0.7,
+          "rate": 0.3,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-psy-3-labours",
       "name": "The four labours — help distributed across the world",
       "character": "Ants sort the seeds; the reed times the fleece; the eagle fetches the water; refusal and help are differentiated. Venus refuses credit twice.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -956,10 +1332,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#1a1710",
         "palette": [
           "#1f2a33",
           "#c9a227",
@@ -967,7 +1347,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.42,
+          "circulation": 0.2,
+          "dispersion": 0.06,
+          "pointerStrength": 0.45
+        }
       },
       "entities": [
         {
@@ -998,18 +1383,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st206",
+                "id": "st-e188-1",
                 "text": "🐜",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.18,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e188-2",
+                "text": "🐜🐜",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1040,18 +1465,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st207",
+                "id": "st-e189-1",
                 "text": "✂",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c99a3c",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e189-2",
+                "text": "☾",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1215,16 +1680,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "golden-fleeced sheep; a reed speaks — wait for the declining sun and river breeze, gather what they have left on the branches. Task three: water from the terrible height feeding Styx and Cocytus; she stands motionless before the dragons until Jupiter's eagle, remembering Cupid's help, takes the vessel and announces Venus's commission. The completed tasks bring further demands; under the same roof, access to Cupid stays denied.\n\nOccurrences: the refused shelters (#3); the seed heap and ants (#3); the reed's timing (#3); the eagle and the crystal vessel (#3); the refused credits (#3).",
+          "body": "golden-fleeced sheep; a reed speaks — wait for the declining sun and river breeze, gather what they have left on the branches. Task three: water from the terrible height feeding Styx and Cocytus; she stands motionless before the dragons until Jupiter's eagle, remembering Cupid's help, takes the vessel and announces Venus's commission. The completed tasks bring further demands; under the same roof, access to Cupid stays denied.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the refused shelters (#3); the seed heap and ants (#3); the reed's timing (#3); the eagle and the crystal vessel (#3); the refused credits (#3).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1241,14 +1719,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-labour",
+          "target": "field.params.speed",
+          "type": "lfo",
+          "wave": "triangle",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.26,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-psy-4-descent",
       "name": "The descent, the box, and the waking",
       "character": "The tower describes the route suicide would foreclose: two cakes, two coins, four refusals; the box opened after the return — infernal sleep — and the waking by arrow-prick, not kiss.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1260,10 +1754,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.75,
+        "pointerClickRadius": 0.45
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#120f1c",
         "palette": [
           "#10141f",
           "#c9a227",
@@ -1271,7 +1769,12 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.35,
+          "circulation": 0.12,
+          "dispersion": 0.05,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -1344,18 +1847,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st212",
+                "id": "st-e194-1",
                 "text": "◦◦ ¤¤",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e194-2",
+                "text": "◦ ¤",
+                "shape": "text",
+                "hold": 4.0,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#8b7a45",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1386,18 +1929,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st213",
+                "id": "st-e195-1",
                 "text": "☠",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e195-2",
+                "text": "☠",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.3,
+                  "y": -0.1,
+                  "z": 0.0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1547,7 +2134,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Venus sends Psyche to Proserpina for a little beauty, claiming to have spent hers nursing Cupid. Psyche understands the journey as a death sentence and climbs a tower to jump — but the tower addresses her: death would take her below without the means of coming back. The route: two honeyed cakes and two coins in her mouth; the lame driver refused; Charon's fee taken from her mouth by his own hand; the floating dead man left; the weaving women refused — each appeal a trap set by Venus. One cake quiets the three-headed dog; she",
+          "body": "Venus sends Psyche to Proserpina for beauty, claiming hers spent on Cupid. Psyche reads death and climbs a tower to jump — but the tower addresses her: death would take her below without the means of return. The route: two cakes, two coins; the driver refused; Charon's fee taken by his own hand; the floating dead left; the weavers refused — each appeal a trap. One cake quiets the dog.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1561,16 +2148,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "declines the seat and rich food, sits on the ground, asks plain bread, receives the closed box, pays the dog and Charon with the reserved second portions. The reserves have made the round trip possible. Then she reasons that divine beauty would help her please Cupid and opens the box: it contains infernal sleep, which pours over her limbs and leaves her like a corpse. Cupid, healed, wipes the sleep back into the box and wakes her with a harmless prick of his arrow — his rebuke concerns the curiosity that endangered her again.\n\nOccurrences: the tower's route and refusals (#4); the cakes and coins as reserves for return (#4); the opened box (#4); the arrow-prick waking (#4, against modern-kiss substitutions).",
+          "body": "She declines the seat and rich food, receives the closed box, pays the dog and Charon with the reserved second portions — the reserves made the round trip. She opens the box for beauty: infernal sleep pours out and leaves her like a corpse. Cupid, healed, wipes the sleep back into the box and wakes her with a harmless prick of his arrow — the rebuke: curiosity endangering her again.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the tower's route and refusals (#4); the cakes and coins as reserves for return (#4); the opened box (#4); the arrow-prick waking (#4, against modern-kiss substitutions).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1593,23 +2193,30 @@
       "id": "m-psy-5-marriage",
       "name": "Marriage without merger — and the possession idiom retained",
       "character": "Jupiter's settlement, the divine banquet, Voluptas born — union through traversed tension, with Apuleius's legal possession formula left in view.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 16,
+      "transition": 2.0,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.35,
+        "zoom": 0.95,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3,
+        "depthOcclusion": true,
+        "depthTintColor": "#120a1c",
+        "volumeEnabled": true
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#1c1526",
         "palette": [
           "#1f2a33",
           "#c9a227",
@@ -1617,7 +2224,13 @@
           "#e8e2d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.24,
+          "dispersion": 0.07,
+          "zConfinement": 0.85,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -1669,7 +2282,7 @@
           "position": {
             "x": -0.45,
             "y": -0.25,
-            "z": 0
+            "z": -0.1
           },
           "size": {
             "x": 0.089,
@@ -1732,18 +2345,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st219",
+                "id": "st-e201-1",
                 "text": "♪",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e201-2",
+                "text": "♪♪",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1753,7 +2406,7 @@
           "position": {
             "x": 0.55,
             "y": -0.4,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.44,
@@ -1795,7 +2448,7 @@
           "position": {
             "x": -0.5,
             "y": -0.4,
-            "z": 0
+            "z": 0.1
           },
           "size": {
             "x": 0.5,
@@ -1837,7 +2490,7 @@
           "position": {
             "x": 0,
             "y": -0.42,
-            "z": 0
+            "z": 0.35
           },
           "size": {
             "x": 0.22,
@@ -1893,7 +2546,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Cupid appeals to Jupiter, who recalls the trouble Cupid's arrows have caused him and asks repayment when another beautiful girl appears — the settlement carries a continuing appetite within it. Jupiter makes Psyche immortal and establishes the marriage under civil law. Mercury brings her to heaven; at the banquet Cupid holds her in his lap; Vulcan cooks, the Hours scatter flowers, the Graces distribute perfume, the Muses sing, Apollo plays — the household that pursued and humiliated Psyche now celebrates her marriage, with Venus's changed",
+          "body": "Cupid appeals to Jupiter, who recalls the trouble Cupid's arrows have caused him and asks repayment when another beauty appears — the settlement carries a continuing appetite within it. Jupiter makes Psyche immortal and establishes the marriage under civil law. At the banquet Cupid holds her in his lap; the household that pursued and humiliated Psyche now celebrates, with Venus's changed participation in the dance and no confession narrated.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1907,16 +2560,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "participation shown in the feast and no confession narrated. The closing formula says she duly enters marriage under Cupid's hand. At full term a daughter is born, Voluptas — the author's admitted crossing toward the bliss of traversed tension (human-amplified: yes, no lexical descent claimed); the pregnancy precedes the ordeals, so the birth cannot serve as evidence that ordeals mechanically produce love. Union without merger is the author's philosophical articulation; a claim that Apuleius teaches anti-possession doctrine would misstate the source.\n\nDeclared cross-story: returns-to Movement 33 as the admitted supplementary plate — the Ares–Aphrodite–Harmonia office stays with that movement and A13; distinct from Psyche's ordeals. ↳ Occurrences: the banquet (#5→0); Voluptas (#5→0); the manum formula (#5→0).",
+          "body": "The closing formula says she duly enters marriage under Cupid's hand. At full term a daughter is born, Voluptas — the admitted crossing toward the bliss of traversed tension (human-amplified: yes, no lexical descent claimed); the pregnancy precedes the ordeals, so the birth cannot evidence that ordeals mechanically produce love. Union without merger is the author's articulation; a claim that Apuleius teaches anti-possession doctrine would misstate the source.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Declared cross-story: returns-to Movement 33 as the admitted supplementary plate — the Ares–Aphrodite–Harmonia office stays with that movement and A13; distinct from Psyche's ordeals. ↳ Occurrences: the banquet (#5→0); Voluptas (#5→0); the manum formula (#5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1933,8 +2599,24 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-feast",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.2,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

@@ -32,8 +32,10 @@
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.5,
+          "circulation": 0.5,
+          "pointerStrength": 0.08
         }
       },
       "entities": [
@@ -107,15 +109,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-root-relation",
+                "id": "st-wr-1",
                 "text": "0/1",
                 "shape": "text",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null
+              },
+              {
+                "id": "st-wr-2",
+                "text": "1/0",
+                "shape": "text",
                 "hold": 3,
-                "transition": 1,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.72,
+                    "y": 0.85
+                  },
+                  "rotation": 180,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-wr-3",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.4,
                 "position": null
               }
             ]
@@ -143,8 +176,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -171,16 +204,16 @@
           "kicker": "SYMBOLON · REGISTER PARĀ · symbolon-root · DERIVED",
           "title": "The whole form of The Return of Zero",
           "italic": "0/1 — and the mark returns as 1/0",
-          "body": "Symbolon is the whole form of The Return of Zero. Its root relation is `0/1`: the non-objectifiable ground and the determinate mark held through the slash that differentiates them. Read in the obverse direction, `1/0`, the mark returns toward the condition it cannot possess. The equality `0/1 = 1/0` names the two orientations of one relation.\nSymbolon is the self-nesting 3+1 the essay traverses: it holds Matheme, Mytheme and Episteme — paśyantī, madhyamā, vaikharī — without becoming a fourth bucket beside them. The next three scenes hold each register's presence within this whole; the fifth holds them together; the sixth returns them.\nSource of record: submission-package/essay/symbolon/README.md @ dbf3b17",
+          "body": "Symbolon is the whole form of The Return of Zero. Its root relation is `0/1`; read obversely, `1/0`, the mark returns toward the condition it cannot possess. The equality `0/1 = 1/0` names two orientations of one relation. Symbolon is the self-nesting 3+1: it holds Matheme, Mytheme and Episteme without becoming a fourth bucket. The next scenes hold each register; the whole returns them.\nSource of record: submission-package/essay/symbolon/README.md @ fc59a719",
           "x": 0.035,
           "y": 0.055,
           "width": 270,
-          "size": 30,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -202,7 +235,11 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "vignette",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       }
     },
     {
@@ -220,19 +257,21 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#121518",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 48000,
+          "size": 2.6,
           "opacity": 0.9,
-          "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "contrast": 0.96,
+          "dispersion": 0.03,
+          "speed": 0.45,
+          "circulation": 0.3,
+          "pointerStrength": 0.45
         }
       },
       "entities": [
@@ -254,7 +293,7 @@
           "text": "",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.55,
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -306,15 +345,69 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-matheme-presence",
+                "id": "st-hm-1",
                 "text": "0/1 = 4+2 = 5→0 = 1/0",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null
+              },
+              {
+                "id": "st-hm-2",
+                "text": "4+2",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.2,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-hm-3",
+                "text": "5→0",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.2,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-hm-4",
+                "text": "0/1 = 4+2 = 5→0 = 1/0",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.4,
                 "position": null
               }
             ]
@@ -328,7 +421,7 @@
           "kicker": "HELD REGISTER · MATHEME · PAŚYANTĪ",
           "title": "Matheme",
           "italic": "the visionary operative logic",
-          "body": "Matheme makes the relation transmissible through notation, derivation, construction and formal comparison — and is its own subject: the full equation `0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1`. Paśyantī: the visionary speech-moment of the one Vāk descent, more primordial than the mytheme.\nThis scene holds the register's presence and office inside Symbolon. The register's own records are carried by the Matheme Expression; they are referenced here, not restaged.\nSource of record: submission-package/essay/symbolon/README.md @ dbf3b17",
+          "body": "Matheme makes the relation transmissible through notation, derivation, construction and formal comparison — and is its own subject: the full equation `0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1`. Paśyantī: the visionary speech-moment of the one Vāk descent. This scene holds the register's presence and office; its records are carried by the Matheme Expression, referenced not restaged.\nSource of record: submission-package/essay/symbolon/README.md @ fc59a719",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -337,7 +430,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -359,7 +452,13 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.4,
+        "relationalEnabled": true,
+        "relationalMode": "orbital"
       }
     },
     {
@@ -367,7 +466,7 @@
       "name": "Mytheme — madhyamā",
       "character": "The ring persists; a formed image is held within it, warm and patterned.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -377,19 +476,24 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#151310",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 56000,
+          "size": 2.9,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.06,
+          "speed": 0.5,
+          "circulation": 0.6,
+          "frequency": 396,
+          "dominance": 0.2,
+          "excitation": 0.7,
+          "pointerStrength": 0.5
         }
       },
       "entities": [
@@ -463,15 +567,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mytheme-presence",
+                "id": "st-hmy-1",
                 "text": "",
                 "shape": "cymatic",
                 "hold": 3,
-                "transition": 1,
+                "transition": 1.6,
+                "position": null
+              },
+              {
+                "id": "st-hmy-2",
+                "text": "",
+                "shape": "yantra",
+                "hold": 2.6,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.8,
+                    "y": 0.8
+                  },
+                  "rotation": 0,
+                  "tint": "#c9ad7a",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-hmy-3",
+                "text": "",
+                "shape": "cymatic",
+                "hold": 3,
+                "transition": 1.6,
                 "position": null
               }
             ]
@@ -488,7 +623,7 @@
           "kicker": "HELD REGISTER · MYTHEME · MADHYAMĀ",
           "title": "Mytheme",
           "italic": "the formed image",
-          "body": "Mytheme lets the relation become lived and memorable through myth, narrative, poetry, media, art, music and composed plates. Its images perform operations; they do not stand as decorative equivalents of equations. Madhyamā: the formed visual and narrative operations built through the matheme's logic.\nThe register's whole stories are carried by the Mytheme Expression; held here as presence, referenced not restaged.\nSource of record: submission-package/essay/symbolon/README.md @ dbf3b17",
+          "body": "Mytheme lets the relation become lived and memorable through myth, narrative, poetry, media, art, music and composed plates. Its images perform operations; they do not stand as decorative equivalents of equations. Madhyamā: the formed visual and narrative operations built through the matheme's logic. The register's whole stories are carried by the Mytheme Expression; held here as presence, referenced not restaged.\nSource of record: submission-package/essay/symbolon/README.md @ fc59a719",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -497,13 +632,13 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
         "carryTint": true,
         "carryStation": false,
-        "frequencyDriver": "manual"
+        "frequencyDriver": "automation"
       },
       "morph": {
         "thetaRate": 0.08,
@@ -519,7 +654,12 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.45,
+        "autoSweep": true
       }
     },
     {
@@ -537,19 +677,21 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#131512",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 52000,
+          "size": 2.5,
           "opacity": 0.9,
-          "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "contrast": 0.95,
+          "dispersion": 0.025,
+          "speed": 0.4,
+          "circulation": 0.2,
+          "pointerStrength": 0.9
         }
       },
       "entities": [
@@ -616,9 +758,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.4,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -645,7 +787,7 @@
           "kicker": "HELD REGISTER · EPISTEME · VAIKHARĪ",
           "title": "Episteme",
           "italic": "the inspected utterance",
-          "body": "Episteme carries instituted knowledge: canonical source houses, histories, etymologies, MEF lenses, argument maps, comparative dossiers, evidential figures, concept nodes and dialogue records. It shows what the work inherits, disputes, derives from and offers in its own name. Vaikharī: the spoken-and-inspected surface of the one descent.\nThe register's records are carried by the Episteme Expression; held here as presence, referenced not restaged.\nSource of record: submission-package/essay/symbolon/README.md @ dbf3b17",
+          "body": "Episteme carries instituted knowledge: canonical source houses, histories, etymologies, MEF lenses, argument maps, comparative dossiers, evidential figures, concept nodes and dialogue records. It shows what the work inherits, disputes, derives from and offers in its own name. Vaikharī: the spoken-and-inspected surface of the one descent. Its records are carried by the Episteme Expression; held here as presence, referenced not restaged.\nSource of record: submission-package/essay/symbolon/README.md @ fc59a719",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -654,7 +796,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -676,25 +818,31 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.4,
+        "collisionEnabled": true,
+        "collisionMode": "obstacle"
       }
     },
     {
       "id": "whole-held",
       "name": "Three presences, one whole",
       "character": "Matheme above, Mytheme below-left, Episteme below-right; the slash between them; no fusion.",
-      "duration": 13,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.45,
+        "pitch": 0.2,
         "zoom": 1,
         "panX": 0,
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#0b0d11",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
@@ -705,8 +853,12 @@
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.5,
+          "circulation": 0.4,
+          "depth": 0.7,
+          "zConfinement": 1.3,
+          "pointerStrength": 0.7
         }
       },
       "entities": [
@@ -780,16 +932,101 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-holding-slash",
+                "id": "st-wh-m",
                 "text": "/",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": {
+                  "x": 0,
+                  "y": 0.58,
+                  "z": -0.55
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#9fb4c8",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-wh-my",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": {
+                  "x": -0.5,
+                  "y": -0.3,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#c9ad7a",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-wh-e",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.5,
+                  "y": -0.3,
+                  "z": 0.55
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#9aa89b",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-wh-c",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                }
               }
             ]
           }
@@ -801,7 +1038,7 @@
           "position": {
             "x": 0,
             "y": 0.58,
-            "z": 0
+            "z": -0.55
           },
           "size": {
             "x": 0.34,
@@ -888,7 +1125,7 @@
           "position": {
             "x": 0.5,
             "y": -0.3,
-            "z": 0
+            "z": 0.55
           },
           "size": {
             "x": 0.36,
@@ -931,7 +1168,7 @@
           "kicker": "THE WHOLE HOLDS · WITHOUT FUSION",
           "title": "Three presences, one whole",
           "italic": "parā holds paśyantī, madhyamā, vaikharī",
-          "body": "The registers are held within Symbolon as distinct offices of one descent of speech: Matheme the operative logic, Mytheme the formed image, Episteme the inspected utterance. Held — not collapsed into one another, and not set beside the whole as a fourth sibling. The slash stays active between them: distinction remains the form of belonging.\nEvery depth retains its point of departure and its route of return: what opens into a register can come back to the exact relation from which it opened. Four reading movements cross the whole — linear, radial, transverse, toroidal.\nSource of record: submission-package/essay/symbolon/README.md @ dbf3b17",
+          "body": "The registers are held within Symbolon as distinct offices of one descent: Matheme the operative logic, Mytheme the formed image, Episteme the inspected utterance. Held — not collapsed, and not set beside the whole as a fourth sibling. The slash stays active between them: distinction remains the form of belonging. Every depth retains its route of return; four reading movements cross the whole.\nSource of record: submission-package/essay/symbolon/README.md @ fc59a719",
           "x": 0.035,
           "y": 0.055,
           "width": 270,
@@ -940,7 +1177,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -962,7 +1199,16 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "vignette",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.8,
+        "pointerClickRadius": 0.45,
+        "volumeEnabled": true,
+        "volumeProfile": "dome",
+        "depthPerspective": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0a0c11"
       }
     },
     {
@@ -970,7 +1216,7 @@
       "name": "0/1 = 1/0 — the registers return",
       "character": "The orientation reverses: the return at centre, the first orientation at the rim.",
       "duration": 13,
-      "transition": 1.5,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -991,8 +1237,10 @@
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.06,
+          "speed": 0.45,
+          "circulation": -0.5,
+          "pointerStrength": 0.35
         }
       },
       "entities": [
@@ -1066,15 +1314,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-return-relation",
+                "id": "st-wret-1",
                 "text": "1/0",
                 "shape": "text",
                 "hold": 3,
-                "transition": 1,
+                "transition": 1.5,
+                "position": null
+              },
+              {
+                "id": "st-wret-2",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.72,
+                    "y": 0.85
+                  },
+                  "rotation": 180,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-wret-3",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.5,
                 "position": null
               }
             ]
@@ -1102,8 +1381,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -1130,16 +1409,16 @@
           "kicker": "RETURN · SYMBOLON · PARĀ",
           "title": "0/1 = 1/0",
           "italic": "two orientations of one relation",
-          "body": "The held registers return to the whole without fusion. The equality `0/1 = 1/0` keeps both orientations active: the whole gives the registers their room, and what the registers articulate returns as the whole's own self-knowledge. Symbolon remains parā — the whole unsayable form — because nothing held in it is diminished into a part of it.\nTraversal continues in the companion Expression: the eight roots in spine order, the four heads, the spine-index (roz-symbolon-spine).\nSource of record: submission-package/essay/symbolon/README.md @ dbf3b17",
+          "body": "The held registers return to the whole without fusion. The equality `0/1 = 1/0` keeps both orientations active: the whole gives the registers their room, and what they articulate returns as the whole's self-knowledge. Symbolon remains parā because nothing held in it is diminished into a part of it. Traversal continues in the companion Expression, the twelvefold spine.\nSource of record: submission-package/essay/symbolon/README.md @ fc59a719",
           "x": 0.035,
           "y": 0.055,
           "width": 270,
-          "size": 30,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1156,14 +1435,35 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "return-pulse",
+          "enabled": true,
+          "target": "field.speed",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.3,
+          "max": 0.6,
+          "rate": 0.09,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 13,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "vignette",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "implode",
+        "pointerClickStrength": 1.5,
+        "pointerClickRadius": 0.5
       }
     }
   ],
-  "updatedAt": "2026-09-17T01:40:05Z"
+  "updatedAt": "2026-10-06T00:00:00Z"
 }

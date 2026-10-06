@@ -10,20 +10,24 @@
       "id": "m-ant-0-sky",
       "name": "The sky exceeds the hand which makes it readable",
       "character": "A small material arrangement can place celestial relations before someone whose life has to proceed among them.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
         "pitch": 0,
-        "zoom": 1,
+        "zoom": 0.85,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.15,
+        "pointerClickRadius": 0.25
       },
       "field": {
         "background": "#10141f",
@@ -34,7 +38,12 @@
           "#4a5d7e"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": 0.12,
+          "dispersion": 0.05,
+          "pointerStrength": 0.15
+        }
       },
       "entities": [
         {
@@ -55,7 +64,7 @@
           "text": "",
           "share": 2,
           "tint": "#4a5d7e",
-          "tintWeight": 1,
+          "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "none",
@@ -181,7 +190,7 @@
           "text": "",
           "share": 1.4,
           "tint": "#c9a227",
-          "tintWeight": 1,
+          "tintWeight": 0.75,
           "locked": false,
           "force": {
             "kind": "none",
@@ -223,7 +232,7 @@
           "text": "◉",
           "share": 1,
           "tint": "#10141f",
-          "tintWeight": 1,
+          "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "none",
@@ -282,7 +291,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "possessing them; craft can give the hand a determinate relation to their movements. Freeth and colleagues' 2006 abstract places the Greek device around the end of the second century BCE, with lunar phases, a luni-solar calendar and eclipse prediction among its reported functions; Antikythera is the find-place of the shipwreck. No ancient owner, commission or act of consultation is invented.\n\nOccurrences: Sun, Moon, calendar, eclipse indications (#0); the smallness productive of use (#0); the shipwreck find-place (#0).",
+          "body": "possessing them; craft can give the hand a determinate relation to their movements. Freeth and colleagues' 2006 abstract places the Greek device around the end of the second century BCE, with lunar phases, a luni-solar calendar and eclipse prediction among its reported functions; Antikythera is the shipwreck find-place. No ancient owner, commission or act of consultation is invented.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -308,14 +317,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-sky",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.05,
+          "max": 0.05,
+          "rate": 0.05,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ant-1-gearing",
       "name": "Gearing gives differentiated movement a transmissible body",
       "character": "Motion, mark and interpretation perform different work; a wheel can turn correctly while its indication is misread.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1.1,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -327,7 +352,12 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 1.1,
+        "pointerClickRadius": 0.35,
+        "morphEnabled": true
       },
       "field": {
         "background": "#161a20",
@@ -338,7 +368,12 @@
           "#7d8a8f"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.6,
+          "circulation": 0.25,
+          "dispersion": 0.07,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -440,7 +475,7 @@
           },
           "rotation": 0,
           "shape": "text",
-          "text": "Ἡλίου",
+          "text": "·",
           "share": 1,
           "tint": "#d9d2c2",
           "tintWeight": 1,
@@ -453,16 +488,60 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st111",
-                "text": "Ἡλίου",
+                "id": "st-e105-1",
+                "text": "·",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#d9d2c2",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e105-2",
+                "text": "☉",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.2,
+                "position": {
+                  "x": 0.3,
+                  "y": -0.3,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -485,7 +564,7 @@
           "text": "?",
           "share": 1,
           "tint": "#c9a227",
-          "tintWeight": 1,
+          "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "none",
@@ -544,7 +623,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "completeness of one part cannot compensate — a wheel can turn correctly while its indication is misread; an inscription can remain legible when the motion it describes is missing. The observer remains an active term: a display answers a question only through a reading, and the reader stands within the heavens whose relations the device helps disclose.\n\nOccurrences: gears, scale, inscription (#1); the misread indication (#1); the reader within the read world (#1).",
+          "body": "completeness of one part cannot compensate — a wheel can turn correctly while its indication is misread; an inscription can remain legible when its motion is missing. The observer remains an active term: a display answers a question only through a reading, and the reader stands within the heavens the device helps disclose.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -553,7 +632,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -562,22 +641,38 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.45,
+        "phiRate": 0.12,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-gear",
+          "target": "field.params.speed",
+          "type": "lfo",
+          "wave": "triangle",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.15,
+          "max": 0.15,
+          "rate": 0.35,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ant-2-cycles",
       "name": "Coordinated cycles keep their differences",
       "character": "Calendrical recurrence and eclipse recurrence answer different questions; the Metonic and Saros operations stay distinct; attunement includes the possibility of discrepancy.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -589,7 +684,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#161a20",
@@ -600,7 +699,12 @@
           "#3c6e71"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.2,
+          "dispersion": 0.06,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -631,18 +735,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st113",
-                "text": "",
+                "id": "st-e107-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.522,
+                    "y": 0.522
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e107-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.56
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -673,18 +817,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st114",
-                "text": "",
+                "id": "st-e108-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.62
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e108-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.575,
+                    "y": 0.575
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -806,7 +990,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "reader who recognises what an indication does and where its warrant ends can use the instrument more exactly. The obligation sharpens when the image models knowledge itself: if an answer excludes the circumstance under which it was obtained, greater confidence in its execution can make the exclusion harder to perceive. A16 receives the differential field in which the situated dial coordinates heterogeneous positions.\n\nOccurrences: calendar and eclipse indications (#0, #2); the Metonic/Saros distinction (#2); the residual (#2); the excluded circumstance warning (#2).",
+          "body": "reader who recognises what an indication does and where its warrant ends can use the instrument more exactly. The obligation sharpens when the image models knowledge itself: if an answer excludes the circumstance of its obtaining, greater confidence in execution can make the exclusion harder to perceive. A16 receives the differential field coordinating heterogeneous positions.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -815,7 +999,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -832,26 +1016,49 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-metonic",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.12,
+          "max": 0.12,
+          "rate": 0.19,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ant-3-wreck",
       "name": "The damaged instrument makes answerability unavoidable",
       "character": "From fragment toward arrangement: the 2021 nine-output proposal keeps its stated limit — lost evidence prevents claiming a replica of the original.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.4,
+        "zoom": 0.9,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 1.3,
+        "pointerClickRadius": 0.3,
+        "depthOcclusion": true,
+        "depthTintColor": "#1a1408",
+        "volumeEnabled": true
       },
       "field": {
         "background": "#0d1017",
@@ -862,7 +1069,13 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.35,
+          "circulation": 0.1,
+          "dispersion": 0.08,
+          "zConfinement": 0.8,
+          "pointerStrength": 0.45
+        }
       },
       "entities": [
         {
@@ -871,16 +1084,16 @@
           "kind": "formation",
           "position": {
             "x": 0,
-            "y": -0.32,
-            "z": 0
+            "y": -0.28,
+            "z": -0.45
           },
           "size": {
-            "x": 0.307,
-            "y": 0.399
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "82",
+          "shape": "disc",
+          "text": "·",
           "share": 1.8,
           "tint": "#c9a227",
           "tintWeight": 1,
@@ -899,39 +1112,16 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "st118",
-                "text": "82",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.4,
+                "id": "st-e111-1",
+                "text": "·",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 1.6,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.246,
-                    "y": 0.123
-                  },
-                  "rotation": 0,
-                  "tint": "#5a6258",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st119",
-                "text": "",
-                "shape": "yantra",
-                "hold": 2.6,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.614,
-                    "y": 0.614
+                    "x": 0.34,
+                    "y": 0.34
                   },
                   "rotation": 0,
                   "tint": "#c9a227",
@@ -945,19 +1135,42 @@
                 }
               },
               {
-                "id": "st120",
-                "text": "82",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.4,
+                "id": "st-e111-2",
+                "text": "·",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 1.6,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.246,
-                    "y": 0.123
+                    "x": 0.34,
+                    "y": 0.34
                   },
                   "rotation": 0,
-                  "tint": "#5a6258",
+                  "tint": "#7a6a30",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e111-3",
+                "text": "·",
+                "shape": "disc",
+                "hold": 3.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -975,9 +1188,9 @@
           "name": "nine outputs — Moon, Nodes, Mercury, Venus, Sun, Mars, Jupiter, Saturn, Date (2021 proposal)",
           "kind": "formation",
           "position": {
-            "x": 0.66,
-            "y": 0.52,
-            "z": 0
+            "x": 0.6,
+            "y": 0.46,
+            "z": 0.35
           },
           "size": {
             "x": 0.26,
@@ -1017,9 +1230,9 @@
           "name": "the stated limit — \"not a replica of the original\"",
           "kind": "formation",
           "position": {
-            "x": 0.66,
-            "y": -0.44,
-            "z": 0
+            "x": 0.02,
+            "y": 0.05,
+            "z": -0.15
           },
           "size": {
             "x": 0.4,
@@ -1040,18 +1253,89 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st122",
-                "text": "",
+                "id": "st-e113-1",
+                "text": "·",
                 "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#5a6258",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e113-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.6,
+                "position": {
+                  "x": 0.02,
+                  "y": 0.05,
+                  "z": 0.15
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.62
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e113-3",
+                "text": "·",
+                "shape": "square",
+                "hold": 3.8,
+                "transition": 1.6,
+                "position": {
+                  "x": 0.02,
+                  "y": 0.05,
+                  "z": -0.15
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#5a6258",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1075,7 +1359,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Modern investigators encounter an achieved work through surviving parts; the relation runs from fragment toward the arrangement which could have given it office. Absent parts are consequential: filling their places is reasoning whose warrant must stay distinguishable from the evidence that prompted it. The 2021 study proposes a front display of nine outputs — Moon, Nodes, Mercury, Venus, Sun, Mars, Jupiter, Saturn, Date — carried by",
+          "body": "Modern investigators encounter an achieved work through surviving parts; the relation runs from fragment toward the arrangement which could have given it office. Absent parts are consequential: filling their places is reasoning whose warrant must stay distinguishable from the evidence. The 2021 study proposes a front display of nine outputs — Moon, Nodes, Mercury, Venus, Sun, Mars, Jupiter, Saturn, Date —",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1089,7 +1373,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "nested tubes and arms; and its conclusion retains the decisive limit: lost evidence prevents the authors from claiming a replica of the original. The 2006 recovery is not retrospectively credited with every later feature; the model is not an intact recovered machine. The aftermath belongs to the whole image: what was made becomes a damaged inheritance; what is recovered becomes a model; the model changes the questions that can next be asked.\n\nOccurrences: the wreck and surviving fragments (#0, #3); the nine-output proposal (#3); the no-replica limit (#3); the reverse direction of reconstruction (#3).",
+          "body": "carried by nested tubes and arms; its conclusion retains the decisive limit: lost evidence prevents claiming a replica of the original. The 2006 recovery is not credited with every later feature; the model is not an intact recovered machine. The aftermath belongs to the whole image: what was made becomes a damaged inheritance; what is recovered becomes a model; the model changes the next questions.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -1122,7 +1406,7 @@
       "name": "The shared archetypal return — source, mark, recognition",
       "character": "The made instrument is a determinate expression whose intelligibility continues to depend on what it differentiates; the reader's return through the expression makes that dependence available again.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1134,7 +1418,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.4
       },
       "field": {
         "background": "#161a20",
@@ -1145,7 +1433,12 @@
           "#4b3f63"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.5,
+          "circulation": 0.3,
+          "dispersion": 0.07,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -1208,7 +1501,7 @@
           "text": "",
           "share": 1,
           "tint": "#4b3f63",
-          "tintWeight": 0.6,
+          "tintWeight": 0.7,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1302,18 +1595,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st126",
-                "text": "∷",
+                "id": "st-e117-1",
+                "text": "X/x",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.68,
+                  "y": 0.55,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e117-2",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.18,
+                  "y": -0.56,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#d9d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1337,7 +1678,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The Neumann whole grounds the shared source–mark–recognition relation in which this attunement image participates; the source house supplies the psychic account of emerging differentiation, and Frank's protected encounter develops the mark, its field and their renewed relation. The native field gives the independent language: parent −/−; 0/1; ?/!; −/+; X/x; AM/IS; ∞/dx; returning 1/0 — not eight machine components. The local",
+          "body": "The Neumann whole grounds the shared source–mark–recognition relation; the source house supplies the psychic account, and Frank's protected encounter develops the mark, its field and their renewed relation. The native field gives the independent language: parent −/−; 0/1; ?/!; −/+; X/x; AM/IS; ∞/dx; returning 1/0 — not eight machine components. The local",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1351,7 +1692,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "pressure belongs to the last two movements: a dial gives an exact indication while the reader remains situated; the return preserves exactness while reopening the horizon. Symbolon Dynamics sources the image–interpreter–field recursion: an encounter with an instrument can reorganise what its reader asks of representation. The mechanism does not need a psyche for the symbolic operation to be alive in that alteration of relation.\n\nOccurrences: the made instrument as mark (#0–#1, #4); the reader's return (#2, #4); the unchanged heavens as condition (#0, #4).",
+          "body": "pressure belongs to the last two movements: a dial gives an exact indication while the reader remains situated; the return preserves exactness while reopening the horizon. Symbolon Dynamics sources the image–interpreter–field recursion: an encounter with an instrument can reorganise what its reader asks of representation. The mechanism needs no psyche for that symbolic operation to live.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -1383,8 +1724,8 @@
       "id": "m-ant-5-return",
       "name": "The instrument returns to making",
       "character": "Heidegger's technē/poiēsis passages and Diotima; Aristophanes' symbolon as the essay's Argued coordination; A32's threshold; Agentworld; Movement 45.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1396,7 +1737,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.7,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#161a20",
@@ -1407,7 +1752,12 @@
           "#2b6b6b"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.55,
+          "circulation": 0.25,
+          "dispersion": 0.09,
+          "pointerStrength": 0.5
+        }
       },
       "entities": [
         {
@@ -1553,8 +1903,8 @@
           "shape": "square",
           "text": "",
           "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.5,
+          "tint": "#e0b54a",
+          "tintWeight": 0.85,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1599,7 +1949,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Heidegger's technē and poiēsis passages place craft within knowing and bringing-forth; his Diotima citation at Symposium 205b gives that route its text. The essay's pairing with Aristophanes' symbolon in the same banquet is its own Argued coordination: emission makes a determinate thing available; return keeps its relation to what exceeds it active. Taylor argues that retained source, disclosed measure, reversible coordination and the sovereign commons can give return an architectural body: the instrument must expose the terms under which its disclosure has force, and encountered resistance must be able",
+          "body": "Heidegger's technē and poiēsis place craft within knowing and bringing-forth; his Diotima citation at Symposium 205b gives the route its text. The pairing with Aristophanes' symbolon is the essay's Argued coordination: emission makes a determinate thing available; return keeps its relation to what exceeds it active. Taylor argues retained source, disclosed measure, reversible coordination and sovereign commons give return architectural body: the instrument must expose its terms; resistance reaches them.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1613,7 +1963,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "to reach those terms. A32 receives its exact return — the moving mirror adds an instrument that can initiate disclosure of its own conditions before asking the human to conform; causal influence is its necessary middle, not the completed vocation. Bratton's brief poses common procedural grammar with divergent world-models; attunement answers with participants able to locate and contest a source, criterion or permission. A completed reading can end in use, in a renewed question, or in setting the instrument down; its fidelity survives all three when source and person remain available beyond the answer.\n\nOccurrences: the coordinating mechanism and judging reader (#0–#5→0); the heavens beyond the dial (#0, #5→0); the exposed terms as the constructive demand (#5→0).",
+          "body": "A32 receives its exact return — the moving mirror initiates disclosure of its conditions before asking conformity; causal influence is its necessary middle, not the completed vocation. Bratton's brief poses common grammar with divergent world-models; attunement answers with participants able to contest a source, criterion or permission. A reading can end in use, a renewed question, or setting the instrument down; fidelity survives when source and person remain beyond it.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -1622,7 +1972,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1642,5 +1992,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }
