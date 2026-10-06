@@ -274,7 +274,8 @@ const posArgs = args.filter((a) => !a.startsWith("--"));
 const defaultCollections = [join(REPO, "desktop/cradle/expressions-app/collections/return-of-zero")];
 const pcd = process.env.OI_PCD_S_PRODUCTS_ROOT ?? join(REPO, "../Point-Cloud-Demo/production/s-products");
 if (existsSync(pcd)) defaultCollections.push(resolve(pcd));
-const collections = [...collectionArgs, ...posArgs, ...defaultCollections].filter((d) => existsSync(d));
+const explicit = [...collectionArgs, ...posArgs].filter((d) => existsSync(d));
+const collections = explicit.length ? explicit : defaultCollections.filter((d) => existsSync(d));
 
 const entries = [];
 const skipped = [];
