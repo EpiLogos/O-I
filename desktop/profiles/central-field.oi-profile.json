@@ -1,0 +1,24 @@
+{
+  "created_at_unix_ms": 1791319119455,
+  "description": "Sparse desired state for the minimal Central installation: the reader and expressive praxis enabled by default. Machine-local services (Kev, Redis) are provisioned and elected on first run through aikit; model login and API keys stay inside Pi/Prime setup. Nothing here installs a product or applies on import.",
+  "desired": [
+    {
+      "scope": {
+        "scope_kind": "machine",
+        "scope_ref": null
+      },
+      "setting_ref": "ai-kit:resolution:skill-sets.default",
+      "value": [
+        "epi-logos-reader"
+      ]
+    }
+  ],
+  "native_profiles": [],
+  "profile_ref": "central-field",
+  "provenance": {
+    "authored_by": "human"
+  },
+  "revised_at_unix_ms": 1791319119727,
+  "schema": "oi.profile/v1",
+  "title": "Central field — minimal (Central, Actuation, AIKit, QL-MEF; Epi-Logos world)"
+}
