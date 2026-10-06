@@ -106,8 +106,7 @@ fn owner_unreachable(output: &std::process::Output) -> bool {
         String::from_utf8_lossy(&output.stdout)
     );
     text.contains("encounter.runtime")
-        && (text.contains("No such file or directory")
-            || text.contains("Connection refused"))
+        && (text.contains("No such file or directory") || text.contains("Connection refused"))
 }
 
 #[derive(Clone, Debug)]
