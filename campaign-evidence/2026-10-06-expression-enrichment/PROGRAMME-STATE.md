@@ -44,6 +44,9 @@
 **Running tally: 27 of 135 fully through the office** (wave 1: 10, episteme: 8, essay+rooms: 9). Outstanding: mytheme 25 (9 done, 16 under two workers), S-products 83 (critic running).
 **Integrator note (commit-boundary races):** three shared-index sweeps recorded — (1) dossiers files inside the episteme lenses-aphorism commit 6b088a7b6, (2) the essay+rooms critic's log inside a mytheme commit 4a595f914, (3) one essay amend split back. All content verified intact at HEAD; the PR descriptions must carry this so review knows the commit boundaries are noisy, not the content.
 
+**S-products: COMPLETE through the office — 83/83 PASS, zero rejections** (deep-checked per product against pinned records; former-cap five verified meaning-chosen; renders verified). One non-blocking hygiene finding routed back to the lane: 64 orphan glyph_rationales keys across 48 bindings (template residue incl. a literal 'unused' key in 26) — binding-only cleanup in flight.
+**Running tally: 110 of 135 fully through the office.** Outstanding: mytheme 25 (21 floor-clean, family critics after continuation-B lands), the S-products hygiene cleanup, then convergence.
+
 ## Convergence additions from wave-2 critic findings (parent decisions)
 
 1. **Binding provenance normalisation (at convergence, scripted):** bindings now carry `source_revision.commit: fc59a719` while `source_revision.records[]` keeps dbf3b17-era paths/hashes (the enrichment does not re-bind). To make the records resolvable at the recorded revision without a re-bind, the normalisation sets `source_revision.commit` back to dbf3b17 (where every recorded hash is true) and records the reading revision as `enrichment.read_revision: fc59a719` (plus each lane's existing enrichment notes about moved/deleted records). The critic's `resolved_path` alternative stays open to the owner.
