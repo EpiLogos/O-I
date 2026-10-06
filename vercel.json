@@ -1,0 +1,53 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bash site/vercel-build.sh",
+  "outputDirectory": "site/dist",
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/section-rooms",
+      "destination": "/essay/section-rooms/",
+      "permanent": true
+    },
+    {
+      "source": "/section-rooms/:path*",
+      "destination": "/essay/section-rooms/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/symbolon",
+      "destination": "/essay/symbolon/",
+      "permanent": true
+    },
+    {
+      "source": "/symbolon/:path*",
+      "destination": "/essay/symbolon/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/manuscript",
+      "destination": "/essay/THE-RETURN-OF-ZERO",
+      "permanent": true
+    },
+    {
+      "source": "/explore",
+      "destination": "/essay/?view=library",
+      "permanent": false
+    },
+    {
+      "source": "/explore.html",
+      "destination": "/essay/?view=library",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/essay",
+      "destination": "/essay/"
+    },
+    {
+      "source": "/essay/:path*",
+      "destination": "/essay/"
+    }
+  ]
+}
