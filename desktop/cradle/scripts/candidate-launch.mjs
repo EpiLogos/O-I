@@ -3,7 +3,6 @@
 // kernel on an ISOLATED candidate profile, so the person's everyday installation, workspaces and layouts are not touched.
 //
 //   node scripts/candidate-launch.mjs [--mode web|tauri] [--profile NAME] [--site-root DIR] [--ground DIR] [--oi PATH]
-//                                      [--worlds-root DIR] [--aikit PATH] [--companion-project NAME] [--no-companion]
 //                                      [--bridge-port N] [--vite-port N] [--edition-port N] [--no-open]
 //
 //   web    (default) the Cradle served by vite, the kernel as the loopback walk bridge — dev tooling that fronts the same
@@ -13,9 +12,6 @@
 // Isolation: OI_HOME and the WebKit/browser store are per profile (~/.oi-candidates/<profile>/), so layouts, acts and
 // settings never mix with the everyday app. The Central ground defaults to the real one (read/write as the person's
 // own world; AIKit sessions started by the companion land in their real AIKit home — say --ground to point elsewhere).
-// The companion is isolated too: <profile>/aikit-home holds its own `epi-prime-ql` row (the new Prime launcher with the explicit QL extension and a
-// coherent faculty config), Redis-prepared NOW context electing the live Kev, and a Redis service on a candidate port (scripts/candidate-companion.mjs;
-// idempotent; the everyday AIKit home and rows are not touched). The model key comes only from this process's environment (ZAI_API_KEY for glm-5.3-flash).
 // The essay edition is served from --site-root (a built site root: essay/static/fieldIndex.json) and handed to the
 // Cradle as VITE_ESSAY_EDITION; the Epi-Logos lens (footer) then reads the real published essay.
 import {spawn, spawnSync} from "node:child_process";
@@ -25,7 +21,6 @@ import {homedir} from "node:os";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import {serveEdition} from "../walk/lib/field-edition-server.mjs";
-import {provisionCompanion} from "./candidate-companion.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const cradle = resolve(here, "..");
@@ -41,10 +36,9 @@ mkdirSync(home, {recursive: true});
 const siteRoot = resolve(arg("site-root", process.env.FIELD_SITE_ROOT ?? join(repo, "site/dist")));
 const ground = resolve(arg("ground", process.env.OI_CENTRAL_ROOT ?? join(homedir(), "Central")));
 const oi = arg("oi", process.env.OI_CANDIDATE_BIN ?? process.env.OI_BIN ?? "oi");
-const worldsRoot = arg("worlds-root", process.env.OI_WORLDS_ROOT);
 const bridgePort = Number(arg("bridge-port", 4311)), vitePort = Number(arg("vite-port", mode === "tauri" ? 1421 : 1431)), editionPort = Number(arg("edition-port", 4717));
 
-if (!worldsRoot && !existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) { console.error(`candidate: --site-root must name a built site root (essay/static/fieldIndex.json); got ${siteRoot}`); process.exit(2); }
+if (!existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) { console.error(`candidate: --site-root must name a built site root (essay/static/fieldIndex.json); got ${siteRoot}`); process.exit(2); }
 if (!existsSync(ground)) { console.error(`candidate: the Central ground ${ground} does not exist`); process.exit(2); }
 
 // A stable 32-hex id gives the native shell its own persistent WebKit store for this profile.
@@ -53,31 +47,15 @@ if (!existsSync(storeFile)) writeFileSync(storeFile, createHash("sha256").update
 const storeId = readFileSync(storeFile, "utf8").trim();
 
 const children = [];
-let companion = null;
-const stop = () => { for (const c of children) { try { c.kill(); } catch { /* gone */ } } try { companion?.stop(); } catch { /* best effort */ } process.exit(0); };
+const stop = () => { for (const c of children) { try { c.kill(); } catch { /* gone */ } } process.exit(0); };
 process.on("SIGINT", stop); process.on("SIGTERM", stop);
 const waitHttp = async (url, label) => { for (let i = 0; i < 240; i++) { try { if ((await fetch(url)).ok) return; } catch { /* not yet */ } await new Promise(r => setTimeout(r, 250)); } throw new Error(`${label} did not answer at ${url}`); };
 
-// With --worlds-root the Epi lens reads the INSTALLED World through the kernel (WorldResolve + the __world route): no edition
-// server and no edition address. Without it the essay edition is served from --site-root and handed over as VITE_ESSAY_EDITION.
-let editionUrl;
-if (worldsRoot) console.log(`candidate: essay World    installed under ${resolve(worldsRoot)} (kernel WorldResolve; no edition server)`);
-else { const edition = await serveEdition(siteRoot, editionPort); editionUrl = `http://127.0.0.1:${edition.port}/essay/`; console.log(`candidate: essay edition   ${editionUrl}   (from ${siteRoot})`); }
+const edition = await serveEdition(siteRoot, editionPort);
+const editionUrl = `http://127.0.0.1:${edition.port}/essay/`;
+console.log(`candidate: essay edition   ${editionUrl}   (from ${siteRoot})`);
 
-// The desktop's expression socket defaults to a path keyed by HOME alone, which the everyday app also uses; the
-// profile gets its own so the two can run side by side.
-const env = {...process.env, OI_HOME: home, OI_CENTRAL_ROOT: ground, OI_BIN: oi, ...(editionUrl ? {VITE_ESSAY_EDITION: editionUrl} : {}), ...(worldsRoot ? {OI_WORLDS_ROOT: resolve(worldsRoot)} : {}), OI_EXPRESSION_SOCKET: join(profileDir, "expression.sock")};
-if (!flag("no-companion")) {
-  if (!worldsRoot) console.log("candidate: companion   skipped (it prepares context from the installed World: pass --worlds-root)");
-  else {
-    try {
-      companion = await provisionCompanion({profileDir, ground, worldsRoot: resolve(worldsRoot), oi, project: arg("companion-project", "O-I"), env: process.env, overrides: arg("aikit") ? {aikit: resolve(arg("aikit"))} : {}});
-      Object.assign(env, companion.env);
-      if (companion.summary.kev.state !== "answering") console.log(`candidate: companion   Kev is ${companion.summary.kev.state}; start it with:  ${companion.summary.kev.start}`);
-      if (/ABSENT/.test(companion.summary.credentials.ZAI_API_KEY)) console.log("candidate: companion   ZAI_API_KEY is not set in this environment: Prime/Pi cannot reach glm-5.3-flash until it is (launch from a shell that exports it)");
-    } catch (error) { console.error(`candidate: companion NOT provisioned: ${error.message}`); process.exit(2); }
-  }
-}
+const env = {...process.env, OI_HOME: home, OI_CENTRAL_ROOT: ground, OI_BIN: oi, VITE_ESSAY_EDITION: editionUrl};
 if (mode === "web") {
   const bridgeBin = process.env.FIELD_BRIDGE_BIN ?? join(cradle, "kernel/target/debug/walk-bridge");
   if (!existsSync(bridgeBin)) { console.error(`candidate: no walk bridge at ${bridgeBin} — build it: (cd desktop/cradle/kernel && cargo build --bin walk-bridge)`); process.exit(2); }
