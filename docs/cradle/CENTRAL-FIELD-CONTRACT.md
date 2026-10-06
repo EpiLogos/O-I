@@ -58,10 +58,10 @@ them in the table below on first run. Candidate: movement of `THE-RETURN-OF-ZERO
 | Slot | Value (fill on first run) |
 |---|---|
 | main passage | `THE-RETURN-OF-ZERO` at movement M16 (`?m=16`, `section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero`) — the site's own reader test locus |
-| selected relation | |
-| tangent | |
-| Expression + scene | `roz-room-02-return-of-zero` (matches `^section-rooms/02-return-of-zero/`); scene fill on first run |
-| companion prepared-turn basis | |
+| selected relation | `section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity` ("Dimensional Reframing at Zero and Infinity"), ref `central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md`; selected by a graph-node click (no navigation, generation 3→4) — walk `walk/scenarios/field-first-encounter.mjs` |
+| tangent | the same page, opened by double-click as an italic preview; replaced by the next tangent (M16 itself, via its connections), kept by double-click, a third opened beside it (M15 · The Empty Set Generates One); promoted → main, `Alt+←` back to the manuscript at M16 |
+| Expression + scene | `roz-room-02-return-of-zero` (ref `expression:roz-room-02-return-of-zero`), scene `movement-15` (§1 · #2 — The Empty Set Generates One), then `movement-16` via the contents; opened from Library → Here as an Expression tab; played by the published renderer (`expression.html`, embed) in the tab |
+| companion prepared-turn basis | **not joined yet.** `src/field/fieldHost.ts` publishes `fieldContextReading()` (primary, tangent, selected, constellation, scene, generation) and `fieldContextLines()`; the SituationFrame / prepared-context items do not read it yet |
 
 ## 3 — File claims (exclusive; the lead serializes git)
 
@@ -79,3 +79,25 @@ Source basis: `site/` on main `ca603fb4e` (#600), built edition `site/.public-ed
 `python3 tests/essay-reader-controls.py` (root and `/O-I` bases; desktop + phone): **229/229 checks passed**, exit 0,
 including 135 Expressions in the gallery and the "Here" narrowing. This is the behavioural reference the native
 candidate is compared against (UX1–UX10); it is not a statement about the native candidate.
+
+## 5 — Requests to lead (from Sonnet B, 6 Oct 2026)
+
+1. **`HostedMountProps.onView(view)`** in `contributions/contracts.ts`. A hosted surface has no way to write its binding's `view`;
+   the field persists `view.field` through a window event `oi:field-persist {binding_id, field}` that `CradleFrame` now answers
+   (additive effect beside `oi:host-workspace-mode`, calls `workspace.surfaceView`). Replace the event with the prop when you can.
+2. **Registry regeneration.** I ran `oi contribution compile-registry` for core, factory, automations **and field** and wrote
+   `contributions/generated.ts` and `registered-kinds.mjs` (delta is exactly the one `oi.surface/field` entry; baseline
+   regeneration without it reproduced the committed files byte-for-byte). The command to keep:
+   `oi contribution compile-registry --root desktop/cradle/src/contributions <core|factory|automations|field>/contribution.json… > generated.ts`
+   (and `--metadata … > registered-kinds.mjs`). Add `field/contribution.json` to the list in `docs/cradle/HOSTED-CONTRIBUTIONS.md`.
+3. **Agent route.** `src/field/fieldHost.ts` registers every mounted field and runs one typed `FieldOp` through `fieldOperate`
+   (window event `oi:field-operate {op, binding_id?, reply?}`). The kernel/native host-relay admission
+   (`kernel/src/native_expression.rs` or the `oi:*` route) still has to forward an admitted `field.operate` to that event.
+4. **Prepared turn.** To join the companion, `context/situation.ts` (`SituationFrame`) should carry `field: FieldContextReading`
+   and the turn builder should record `field.generation`. I did not touch `context/*` (outside my claim).
+5. **Base default centre.** `CradleFrame` opens the field (tab strip unpinned, left navigator `collapsed`) when a workspace
+   first stands in Base with an empty tree (`fieldDefaulted` effect after `enterModeRef`). The existing `rest` walk assumes Rest
+   at that moment and needs a start that opts out; I did not run or change it.
+6. **Walk registry.** `walk/scenarios/field-first-encounter.mjs` and `field-site-parity.mjs` are standalone (they boot the
+   prebuilt `kernel/target/debug/walk-bridge`, a static edition server and Chrome themselves); register them in `walk/run.mjs`
+   if you want them in `npm run walk`.

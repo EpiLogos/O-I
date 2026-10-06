@@ -509,7 +509,7 @@ function SurfaceBodyImpl({
   // CradleFrame.centreConversation down, so there is no second direct arm here.
   if (isRetainedCentreKind(binding.kind) || binding.hosted) {
     if (binding.kind === MODE_CURATION[treeMode].centreKind) return null;
-    return <ModeCentreBody binding={binding} subject={subject} conversation={conversation} host={host}/>;
+    return <ModeCentreBody binding={binding} subject={subject} conversation={conversation} host={host} onView={view=>onView(binding.id,view)}/>;
   }
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;

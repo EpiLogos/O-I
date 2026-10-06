@@ -14,11 +14,7 @@
 import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import type {SurfaceBinding} from "../surface/types";
 import {useEpiLens} from "../workspace/lens";
-import {useKernel} from "../kernel/KernelProvider";
-import {viaTransport} from "../expression/world";
-import {createWorldSync, type DescribedRef, type WorldSync} from "./worldSync";
 import "./field.css";
-import "./vendor/katex/katex.css";   // the edition's maths, bundled: no CDN fetch (scripts/vendor-katex.mjs)
 import {FieldIcons, Icon} from "./icons";
 import {locusRef} from "./filterModel";
 import {type FieldEncounter, type FieldEffect, type FieldFilter, type FieldRef} from "./model";
@@ -27,13 +23,10 @@ import {useFieldController, type FieldBindingView} from "./useFieldController";
 import {useFieldSource} from "./useFieldSource";
 import {type FieldExpression, type FieldExpressionIndex, type FieldReading, type FieldSource} from "./source";
 import {Explorer} from "./Explorer";
-import {FieldUtility} from "./Utility";
-import {gatherToTechne} from "./constellation";
-import type {HostedHostContext} from "../contributions/contracts";
 import {SearchBar, SearchResults, useFieldSearch} from "./Search";
 import {Tabs} from "./Tabs";
 import {Article, type Following} from "./Article";
-import {Connections, Contents, GraphPane, type ContentEntry, type ContentTarget} from "./Right";
+import {Connections, Contents, GraphPane, type ContentEntry} from "./Right";
 import {Crumbs, ExpressionFrame, Library, Lightbox, Rail, type LibraryState} from "./Center";
 import type {GraphHandle} from "./graphView";
 
@@ -47,13 +40,11 @@ function useHostTheme(root: React.RefObject<HTMLElement>): "light" | "dark" {
       setTheme(t === "dark" || t === "light" ? t : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     };
     read();
-    // The host sets `data-theme` on the document body (or an ancestor of the pane) and may add it LATER (light → dark): the observer is
-    // on every place it can appear, not only on an element that already carried it when the field mounted.
-    const mo = new MutationObserver(read);
     const owner = root.current?.closest<HTMLElement>("[data-theme]");
-    for (const el of new Set<HTMLElement | null | undefined>([owner, document.body, document.documentElement])) if (el) mo.observe(el, {attributes: true, attributeFilter: ["data-theme"]});
+    const mo = owner ? new MutationObserver(read) : null;
+    if (owner && mo) mo.observe(owner, {attributes: true, attributeFilter: ["data-theme"]});
     const mq = matchMedia("(prefers-color-scheme: dark)"); mq.addEventListener("change", read);
-    return () => { mo.disconnect(); mq.removeEventListener("change", read); };
+    return () => { mo?.disconnect(); mq.removeEventListener("change", read); };
   }, [root]);
   return theme;
 }
@@ -68,14 +59,13 @@ function useWidth(el: React.RefObject<HTMLElement>): number {
   return w;
 }
 
-const NO_REFS: readonly FieldRef[] = [];
 const visitedKey = (world: string) => `oi-cradle.field.visited.${world}`;
 function loadVisited(world: string): Set<string> {
   try { const v = JSON.parse(window.localStorage.getItem(visitedKey(world)) ?? "[]"); return new Set(Array.isArray(v) ? v.filter(x => typeof x === "string") : []); } catch { return new Set(); }
 }
 
 /* ───────── the surface ───────── */
-export function FieldSurface({binding, onView, host: hostOps}: {binding: SurfaceBinding; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void; host?: HostedHostContext}) {
+export function FieldSurface({binding, onView}: {binding: SurfaceBinding; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void}) {
   const lens = useEpiLens();
   const s = useFieldSource(lens.on);
   const host = useRef<HTMLDivElement>(null);
@@ -84,21 +74,20 @@ export function FieldSurface({binding, onView, host: hostOps}: {binding: Surface
       <div className="field-host" ref={host}>
         <div className="field-root page no-field" data-theme="light" data-left="open" data-view="essay">
           <FieldIcons/>
-          <div className="center" style={{padding: "3rem 2rem 0", overflow: "auto"}}>
+          <div className="center" style={{padding: "3rem 2rem", overflow: "auto"}}>
             <p className="ahead__eyebrow"><span>{lens.on ? "Epi-Logos" : "Central"}</span><span>{s.status === "loading" ? "Opening" : "Not connected"}</span></p>
             <h1 className="ahead__title">{s.status === "loading" ? "Opening the field…" : s.title}</h1>
             {s.status === "unavailable" ? <p className="ahead__deck" role="status">{s.reason}</p> : null}
             {s.status === "unavailable" && s.setup ? s.setup : null}
-            <div style={{marginTop: "auto", paddingTop: 24}}><FieldUtility host={hostOps} orientation="bar"/></div>
           </div>
         </div>
       </div>
     );
   }
-  return <FieldLoaded key={s.source.world_ref} binding={binding} source={s.source} index={s.index} onView={onView} hostOps={hostOps}/>;
+  return <FieldLoaded key={s.source.world_ref} binding={binding} source={s.source} index={s.index} onView={onView}/>;
 }
 
-function FieldLoaded({binding, source, index, onView, hostOps}: {binding: SurfaceBinding; source: FieldSource; index: CorpusIndex; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void; hostOps?: HostedHostContext}) {
+function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding; source: FieldSource; index: CorpusIndex; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void}) {
   const world = source.world_ref;
   const themeRef = useRef<"light" | "dark">("light");
   const host = useRef<HTMLDivElement>(null), rootEl = useRef<HTMLDivElement>(null), scroller = useRef<HTMLDivElement>(null), progress = useRef<HTMLElement>(null);
@@ -130,54 +119,11 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   }, [source]);
   const viewRef = useRef(binding.view); viewRef.current = binding.view;
   const persist = useCallback((value: FieldBindingView) => { onView?.({...(viewRef.current ?? {}), field: value}); }, [onView]);
-  // ── the shared world seam (worldSync.ts): selection and tangents ARE the kernel's selection and portal operations ──
-  const kernel = useKernel();
-  const syncRef = useRef<WorldSync | null>(null);
-  const quietUntil = useRef(0), inflight = useRef(0);
   const ctl = useFieldController({
     bindingId: binding.id, world_ref: world, index, stored: binding.view?.field, persist, onEffect,
-    onChange: (prev, next, op, meta) => {
-      const sync = syncRef.current; if (!sync || meta.remote) return;
-      inflight.current++;
-      void sync.mirror(prev, next, op, meta.origin).finally(() => { inflight.current--; quietUntil.current = performance.now() + 700; });
-    },
     describe: ref => { const n = index.node(ref); if (n) return {title: n.title, revision: n.revision}; const e = expressionsRef.current.get(ref); return e ? {title: e.title} : undefined; },
   });
   const {state, view, apply, patchView} = ctl;
-  const describeRef = useCallback((ref: FieldRef): DescribedRef | undefined => {
-    const n = index.node(ref);
-    if (n) return {title: n.title, revision: n.revision, owner: "Central", kind: "source", page: true};   // a corpus page is a Central source ref; its owner is never the field
-    const e = expressionsRef.current.get(ref);
-    return e ? {title: e.title, owner: "Expressions", kind: "expression", page: false} : undefined;
-  }, [index]);
-  const transportKey = JSON.stringify(kernel.transport);
-  useEffect(() => {
-    if (kernel.transport.kind === "unavailable") { syncRef.current = null; return; }
-    const sync = createWorldSync(viaTransport(kernel.transport), {binding: binding.id, actor: `field:${binding.id}`, describe: describeRef});
-    syncRef.current = sync;
-    let disposed = false, pulling = false;
-    // restored tangents are (re)registered with the kernel: portal records do not outlive a restart
-    const st = ctl.stateRef.current;
-    if (st.tabs.length || st.selected) void sync.mirror({...st, tabs: [], selected: undefined}, st, {op: "focus", tab: st.focus});
-    const pull = async () => {
-      if (disposed || pulling || inflight.current > 0 || performance.now() < quietUntil.current) return;
-      pulling = true;
-      try {
-        const {ops, adopt} = await sync.inbound(ctl.stateRef.current);
-        if (disposed || inflight.current > 0) return;
-        for (const op of ops) ctl.apply(op, {remote: true});                // projections of the kernel's records: never echoed back
-        sync.bind(ctl.stateRef.current, adopt);
-      } catch { /* the kernel is momentarily unreachable: the field keeps what it shows */ }
-      finally { pulling = false; }
-    };
-    void pull();
-    const timer = window.setInterval(pull, 1500);
-    (window as unknown as {__oiFieldPull?: () => Promise<void>}).__oiFieldPull = pull;
-    return () => { disposed = true; window.clearInterval(timer); if (syncRef.current === sync) syncRef.current = null; };
-  }, [transportKey, binding.id, describeRef]);                                // eslint-disable-line react-hooks/exhaustive-deps
-  // the kernel's own events (a selection_set elsewhere moves the one global focus) are the prompt to read again
-  const kfocus = JSON.stringify(kernel.snapshot.focus), ksurfaces = Object.keys(kernel.snapshot.surfaces).length;
-  useEffect(() => { const t = window.setTimeout(() => (window as unknown as {__oiFieldPull?: () => Promise<void>}).__oiFieldPull?.(), 120); return () => window.clearTimeout(t); }, [kfocus, ksurfaces]);
   const filter = view.filter;
   const setFilter = useCallback((f: FieldFilter) => patchView(v => ({...v, filter: f})), [patchView]);
 
@@ -293,11 +239,8 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   }, []);
   const lastSpanRef = useRef<string | null>(null);
   const lastWidth = useRef(0);
-  // the reader's position is only derived from the scroll once the page in view has been put where the encounter says (a page
-  // that has just loaded sits at its top; that is not where the reader is)
-  const settledFor = useRef<string | null>(null);
   const onScroll = useCallback(() => {
-    const sc = scroller.current; if (!sc || settling.current || !sc.clientHeight || library || inViewIsExpression || settledFor.current !== viewKey) return;
+    const sc = scroller.current; if (!sc || settling.current || !sc.clientHeight || library || inViewIsExpression) return;
     lastTop.current = sc.scrollTop; tops.current.set(viewKey, sc.scrollTop);
     const max = sc.scrollHeight - sc.clientHeight;
     if (progress.current) progress.current.style.transform = `scaleX(${max > 0 ? sc.scrollTop / max : 0})`;
@@ -340,29 +283,27 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   const onReading = useCallback((reading: FieldReading, pane: HTMLElement | null) => {
     if (!pane || pane.hidden) return;
     readingRef.current = {reading, pane};
-    settledFor.current = null;
     const sp = index.sequenceAt(reading.ref);
     const entries: ContentEntry[] = [];
     if (sp && !sp.at) {
       let room = "";
       for (const it of sp.sequence.items) {
-        if (it.section.id !== room) { room = it.section.id; entries.push({key: "r" + room, level: 2, label: it.section.label, mark: it.section.coord, to: {span: it.span}}); }
-        entries.push({key: it.span, level: 3, label: it.label, mark: it.coord, to: {span: it.span}});
+        if (it.section.id !== room) { room = it.section.id; entries.push({key: "r" + room, level: 2, label: it.section.label, mark: it.section.coord, go: () => scrollToSpan(it.span, true)}); }
+        entries.push({key: it.span, level: 3, label: it.label, mark: it.coord, go: () => scrollToSpan(it.span, true)});
       }
     } else {
-      for (const h of pane.querySelectorAll<HTMLElement>("article h2, article h3")) entries.push({key: h.id || (h.textContent ?? ""), level: h.tagName === "H2" ? 2 : 3, label: (h.textContent ?? "").trim(), to: {id: h.id}});
+      for (const h of pane.querySelectorAll<HTMLElement>("article h2, article h3")) entries.push({key: h.id || (h.textContent ?? ""), level: h.tagName === "H2" ? 2 : 3, label: (h.textContent ?? "").trim(), go: () => scrollToId(h.id, true)});
     }
     setContents(entries);
     requestAnimationFrame(() => {
-      const sc = scroller.current; if (!sc) return;                 // unmounted while the frame was pending
       measure(); settling.current = true;
-      const saved = tops.current.get(viewKey);
+      const sc = scroller.current!, saved = tops.current.get(viewKey);
       const span = (stateRefSpan() ?? undefined);
       if (saved != null) { sc.scrollTop = saved; pin.current = null; }
       else if (sp && !sp.at && span && anchors.current.some(a => a.span === span)) scrollToSpan(span, false);
       else if (span && !sp && scrollToId(span, false)) { /* jumped to a heading */ }
       else sc.scrollTop = 0;
-      settling.current = false; lastTop.current = sc.scrollTop; settledFor.current = viewKey;
+      settling.current = false; lastTop.current = sc.scrollTop;
       lastSpanRef.current = sp && !sp.at ? (anchors.current.find(a => a.top <= sc.scrollTop + 90) ?.span ?? span ?? null) : null;
       onScroll();
     });
@@ -373,15 +314,12 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   // contents for an Expression: its scenes
   const expressionContents: ContentEntry[] | null = useMemo(() => {
     if (!tab || tab.kind !== "expression" || !xEntry) return null;
-    return xEntry.scenes.map((sc, k) => ({key: sc.id, level: 3 as const, label: sc.name, mark: String(k + 1).padStart(2, "0"), here: sc.id === (tab.scene ?? xEntry.scenes[0]?.id), to: {scene: sc.id}}));
-  }, [tab, xEntry]);
+    return xEntry.scenes.map((sc, k) => ({key: sc.id, level: 3 as const, label: sc.name, mark: String(k + 1).padStart(2, "0"), here: sc.id === (tab.scene ?? xEntry.scenes[0]?.id), go: () => {
+      frames.current.get(tab.id)?.contentWindow?.postMessage({type: "oi-scene", scene: sc.id}, "*");
+      apply({op: "set-scene", scene_id: sc.id});
+    }}));
+  }, [tab, xEntry, apply]);
   const frames = useRef<Map<string, HTMLIFrameElement | null>>(new Map());
-  /** Where a contents row goes: looked up when it is clicked, so no row holds a page, a pane or a render's scope. */
-  const goContent = (to: ContentTarget) => {
-    if ("span" in to) scrollToSpan(to.span, true);
-    else if ("id" in to) scrollToId(to.id, true);
-    else if (tab) { frames.current.get(tab.id)?.contentWindow?.postMessage({type: "oi-scene", scene: to.scene}, "*"); apply({op: "set-scene", scene_id: to.scene}); }
-  };
   const pageContents = useMemo(() => contents?.map(c => (seqPlace && !seqPlace.at && c.level === 3 ? {...c, here: c.key === spanHere} : c)) ?? null, [contents, seqPlace, spanHere]);
 
   // the tab came into view or went out of it: save where it was (the scroller is shared) and re-settle on arrival
@@ -390,7 +328,7 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
     if (prevKey.current !== viewKey) {
       const sc = scroller.current; if (sc && sc.clientHeight && !library) tops.current.set(prevKey.current, lastTop.current);
       prevKey.current = viewKey;
-      requestAnimationFrame(() => { const sc2 = scroller.current; if (!sc2) return; const t = tops.current.get(viewKey); settling.current = true; sc2.scrollTop = t ?? 0; settling.current = false; lastTop.current = sc2.scrollTop; measure(); settledFor.current = viewKey; });
+      requestAnimationFrame(() => { const sc2 = scroller.current; if (!sc2) return; const t = tops.current.get(viewKey); settling.current = true; sc2.scrollTop = t ?? 0; settling.current = false; lastTop.current = sc2.scrollTop; measure(); });
     }
   }, [viewKey, library, measure]);
   // back from the Library: the page is where it was left
@@ -411,8 +349,6 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
     else if (e.key === "1") setEmphasis("essay"); else if (e.key === "2") setEmphasis("split"); else if (e.key === "3") setEmphasis("field"); else if (e.key === "4") setEmphasis("library");
     else if (e.key.toLowerCase() === "l") toggleLibrary();
     else if (e.key === "[") patchView({left: leftOpen ? "closed" : "open"});
-    else if (tab && e.key.toLowerCase() === "k" && tab.preview) apply({op: "keep", tab: tab.id});          // keep the tangent in view
-    else if (tab && e.key.toLowerCase() === "p") apply({op: "promote", tab: tab.id});                      // open it as the main page (↗)
   };
   useEffect(() => {
     const on = (e: KeyboardEvent) => keysRef.current(e);
@@ -470,7 +406,6 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
             <div className="rail-left">
               <button className="ibtn" type="button" aria-label="Open the explorer" onClick={() => patchView({left: "open"})}><Icon name="tree" size={18}/></button>
               <button className="ibtn" type="button" aria-label="Search" onClick={focusSearch}><Icon name="search" size={18}/></button>
-              {!narrow && !leftOpen ? <FieldUtility host={hostOps} orientation="rail"/> : null}
             </div>
             <div className="left-inner">
               <div className="page-title">
@@ -487,7 +422,6 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
                   openMain={ref => followMain(ref)}/>
                 {searching ? <SearchResults s={search} index={index} onHover={ref => setHover(ref)} onOpen={(ref, e) => (e.metaKey || e.ctrlKey || e.shiftKey ? followMain(ref) : followTangent(ref))}/> : null}
               </div>
-              {narrow || leftOpen ? <FieldUtility host={hostOps} orientation="bar"/> : null}
               <p className="left-foot">{index.nodes.length.toLocaleString("en-US")} pages{index.footnote ? <><br/>{index.footnote}</> : null}</p>
             </div>
           </aside>
@@ -539,20 +473,10 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
               }}/>
             <div className="right-inner">
               <GraphPane index={index} focus={locus} selected={here ?? undefined} filter={filter} setFilter={setFilter} hits={search.hitSet} visited={visited}
-                select={ref => apply({op: "select", ref}, {origin: "graph"})} openTangent={ref => followTangent(ref)} openMain={ref => followMain(ref)} openExpression={ref => openExpression(ref)}
-                gathered={state.constellation?.refs ?? NO_REFS} defaultTitle={`Gathered at ${index.node(locus ?? "")?.label ?? "the field"}`}
-                gather={ref => { const cur = state.constellation?.refs ?? []; const next = cur.includes(ref) ? cur.filter(r => r !== ref) : [...cur, ref]; apply(next.length ? {op: "enter-constellation", refs: next} : {op: "leave-constellation"}); }}
-                leaveConstellation={() => apply({op: "leave-constellation"})}
-                openInTechne={async (title, question) => {
-                  try {
-                    await gatherToTechne({transport: kernel.transport, apply: kernel.apply, source, refs: [...(ctl.stateRef.current.constellation?.refs ?? [])], title, question,
-                      projects: kernel.snapshot.navigator?.root?.work.projects ?? [], returnTo: {place: {ref: ctl.stateRef.current.primary.ref, title: index.node(ctl.stateRef.current.primary.ref)?.title ?? "the field"}}});
-                    return undefined;
-                  } catch (e) { return e instanceof Error ? e.message : String(e); }
-                }}
+                select={ref => apply({op: "select", ref})} openTangent={ref => followTangent(ref)} openMain={ref => followMain(ref)} openExpression={ref => openExpression(ref)}
                 hover={ref => setHover(ref, "graph")} collapse={() => patchView({right: "closed"})} onGraph={g => { graph.current = g; }} layoutKey={layoutKey}/>
               <div className="right-scroll">
-                <Contents entries={inViewIsExpression ? expressionContents : pageContents} go={goContent}/>
+                <Contents entries={inViewIsExpression ? expressionContents : pageContents}/>
                 <Connections index={index} focus={locus} filter={filter} setFilter={setFilter} spanLabel={seqPlace && !seqPlace.at && spanHere ? spanHere : null}
                   onOpen={(ref, e) => (e.metaKey || e.ctrlKey || e.shiftKey ? followMain(ref) : followTangent(ref))} onHover={ref => setHover(ref)}/>
               </div>

@@ -972,6 +972,24 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // so no encounter-tab relocation happens here.
   };
   const enterModeRef=useRef(enterMode);enterModeRef.current=enterMode;
+  // BASE'S DEFAULT CENTRE is the field (src/field, the contribution oi.surface/field): the first time a workspace
+  // stands in Base with nothing open, the field opens as its only surface — in a pane whose own tab strip is folded
+  // to the reveal edge (the field carries its own page-over-page tabs; the pane strip is not a second stack) and the
+  // left navigator stood down (the field carries its own explorer; the companion on the right stays summonable). A
+  // restored arrangement stands untouched; closing the field returns to rest and does not reopen it.
+  const fieldDefaulted=useRef(new Set<string>());
+  useEffect(()=>{
+    const id=workspace.current.id;
+    if(fieldDefaulted.current.has(id)||(stateRef.current.mode??"base")!=="base")return;
+    if(stateRef.current.root){fieldDefaulted.current.add(id);return;}
+    if(!hostedSurfaceFor({kind:"field"}))return;
+    fieldDefaulted.current.add(id);
+    setState(s=>{
+      if(s.root)return s;
+      const next=openBinding(s,withHostedDescriptor({id:crypto.randomUUID(),kind:"field",title:hostedSurfaceFor({kind:"field"})?.descriptor.title??"Field"}));
+      return next.root?.type==="group"?{...next,agencyDepth:"collapsed" as const,root:{...next.root,tabPresentation:"unpinned" as const}}:next;
+    });
+  },[workspace.current.id,state.root]);
   // The hosted application's deep cut can ask for the lived cut back: the
   // request lands in the shell's OWN mode pipeline — one mode system.
   useEffect(() => {
@@ -2023,7 +2041,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         return (
           <CanvasStage key={`mode-stage-${stageMode}`} data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
-            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} conversation={centreConversation} host={hostOperations} onHostedState={engineCallbackFor(binding.id)}/>}
+            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} conversation={centreConversation} host={hostOperations} onView={view=>workspace.surfaceView(workspace.current.id,binding.id,view)} onHostedState={engineCallbackFor(binding.id)}/>}
           </CanvasStage>
         );
       })}

@@ -26,12 +26,6 @@ export interface GraphPaneProps {
   openExpression(ref: FieldRef): void;
   hover(ref: FieldRef | null): void;
   collapse(): void;
-  /** the gathered constellation (the encounter's), and the verbs on it */
-  gathered: readonly FieldRef[];
-  gather(ref: FieldRef): void;
-  leaveConstellation(): void;
-  openInTechne(title: string, question: string): Promise<string | undefined>;
-  defaultTitle: string;
   onGraph?(h: GraphHandle | null): void;
   /** how the surface is arranged: a layout change re-measures the graph */
   layoutKey: string;
@@ -55,24 +49,20 @@ export function GraphPane(p: GraphPaneProps) {
       openMain: ref => latest.current.openMain(ref),
       openExpression: ref => latest.current.openExpression(ref),
       hover: ref => latest.current.hover(ref),
-      gather: ref => latest.current.gather(ref),
     });
     handle.current = g; latest.current.onGraph?.(g);
-    g.setGathered(latest.current.gathered); g.setFocus(latest.current.focus); g.setSelected(latest.current.selected ?? null); g.setHits(latest.current.hits);
+    g.setFocus(latest.current.focus); g.setSelected(latest.current.selected ?? null); g.setHits(latest.current.hits);
     return () => { g.destroy(); handle.current = null; latest.current.onGraph?.(null); };
   }, [p.index]);                                                       // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { handle.current?.setFocus(p.focus); }, [p.focus]);
   useEffect(() => { handle.current?.setSelected(p.selected ?? null); }, [p.selected, p.focus]);
   useEffect(() => { handle.current?.setHits(p.hits); }, [p.hits]);
-  useEffect(() => { handle.current?.setGathered(p.gathered); }, [p.gathered]);
   useEffect(() => { handle.current?.refresh(); }, [p.filter]);
   useEffect(() => { const t = setTimeout(() => handle.current?.resize(), 60); return () => clearTimeout(t); }, [p.layoutKey]);
   useEffect(() => {
     if (!menu) return;
     const away = (e: PointerEvent) => { const t = e.target as Element; if (!t.closest(".gmenu") && !t.closest("[data-filter-btn]")) setMenu(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setMenu(false); document.querySelector<HTMLElement>("[data-filter-btn]")?.focus(); } };
-    document.addEventListener("pointerdown", away); document.addEventListener("keydown", esc, true);
-    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc, true); };
+    document.addEventListener("pointerdown", away); return () => document.removeEventListener("pointerdown", away);
   }, [menu]);
 
   const nb = p.focus ? neighbourhood(p.index, p.focus, p.filter) : null;
@@ -92,7 +82,6 @@ export function GraphPane(p: GraphPaneProps) {
         <svg className="graph-svg" ref={svg} role="img" aria-label="Local graph: the page you are reading and what it links to"/>
         <div className="gcard" ref={card} hidden/>
       </div>
-      {p.gathered.length ? <ConstellationBar index={p.index} refs={p.gathered} gather={p.gather} leave={p.leaveConstellation} openInTechne={p.openInTechne} defaultTitle={p.defaultTitle}/> : null}
     </section>
   );
 }
@@ -162,17 +151,14 @@ export function Connections({index, focus, filter, setFilter, spanLabel, onOpen,
 }
 
 /* ───────── contents ───────── */
-/** A contents row is DATA (where it goes), never a closure: a closure built while reading a page captures that render's whole
- *  scope (and, through `previous`, every earlier one), which kept every page the reader ever left alive (found by heap snapshot). */
-export type ContentTarget = {span: string} | {id: string} | {scene: string};
-export interface ContentEntry { key: string; level: 1 | 2 | 3; label: string; mark?: string; here?: boolean; to: ContentTarget }
-export function Contents({entries, go}: {entries: ContentEntry[] | null; go: (to: ContentTarget) => void}) {
+export interface ContentEntry { key: string; level: 1 | 2 | 3; label: string; mark?: string; here?: boolean; go: () => void }
+export function Contents({entries}: {entries: ContentEntry[] | null}) {
   return (
     <section className="toc">
       <h3>On this page</h3>
       <div>
         {entries == null ? null : entries.length
-          ? entries.map(e => <a key={e.key} className={`l${e.level}${e.here ? " is-here" : ""}`} href="#" onClick={ev => { ev.preventDefault(); go(e.to); }}>{e.mark ? <b>{e.mark}</b> : null}{e.label}</a>)
+          ? entries.map(e => <a key={e.key} className={`l${e.level}${e.here ? " is-here" : ""}`} href="#" onClick={ev => { ev.preventDefault(); e.go(); }}>{e.mark ? <b>{e.mark}</b> : null}{e.label}</a>)
           : <p className="toc__none">This page has no sections.</p>}
       </div>
     </section>
@@ -180,26 +166,3 @@ export function Contents({entries, go}: {entries: ContentEntry[] | null; go: (to
 }
 
 export type ExpressionScenes = FieldExpression["scenes"];
-
-/* ───────── the gathered constellation ───────── */
-function ConstellationBar({index, refs, gather, leave, openInTechne, defaultTitle}: {index: CorpusIndex; refs: readonly FieldRef[]; gather(ref: FieldRef): void; leave(): void; openInTechne(title: string, question: string): Promise<string | undefined>; defaultTitle: string}) {
-  const [form, setForm] = useState(false), [title, setTitle] = useState(""), [question, setQuestion] = useState("What do these pages hold together?");
-  const [busy, setBusy] = useState(false), [error, setError] = useState<string>();
-  const go = async () => { setBusy(true); setError(undefined); const refusal = await openInTechne(title.trim() || defaultTitle, question); setBusy(false); if (refusal) setError(refusal); else setForm(false); };
-  return (
-    <div className="gcons" role="group" aria-label="Gathered constellation">
-      <div className="gcons__head"><b>Constellation</b><span>{refs.length} gathered</span><span className="top__spacer"/>
-        <button type="button" className="linkbtn" onClick={() => setForm(f => !f)} aria-expanded={form}>Open in Technè</button>
-        <button type="button" className="linkbtn" onClick={leave}>Leave</button></div>
-      <ul className="gcons__list">{refs.map(r => <li key={r}><span>{index.node(r)?.label ?? r}</span><button type="button" aria-label={`Take ${index.node(r)?.label ?? r} out`} onClick={() => gather(r)}><Icon name="x" size={10}/></button></li>)}</ul>
-      {form ? (
-        <form className="gcons__form" onSubmit={e => { e.preventDefault(); void go(); }}>
-          <input aria-label="Constellation title" placeholder={defaultTitle} value={title} disabled={busy} onChange={e => setTitle(e.target.value)}/>
-          <input aria-label="Constellation question" value={question} disabled={busy} onChange={e => setQuestion(e.target.value)}/>
-          {error ? <p className="gcons__err" role="alert">{error}</p> : null}
-          <button type="submit" className="linkbtn" disabled={busy || !question.trim()}>{busy ? "Creating…" : "Create it in the Wiki and open Technè"}</button>
-        </form>
-      ) : null}
-    </div>
-  );
-}

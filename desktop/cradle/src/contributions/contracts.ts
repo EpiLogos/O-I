@@ -40,6 +40,8 @@ export interface HostedMountProps {
    * session observer and the choose pair. */
   conversation?: ReactNode;
   host?: HostedHostContext;
+  /** The surface's own presentation state, written back onto its binding (`view`) by the host: restored with the layout, never a source. */
+  onView?: (view: NonNullable<SurfaceBinding["view"]>) => void;
   onHostedState?: (state: HostedAppState) => void;
 }
 
