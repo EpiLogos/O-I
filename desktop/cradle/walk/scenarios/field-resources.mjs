@@ -13,11 +13,13 @@
 //   FIELD_SITE_ROOT=<site root> [FIELD_CYCLES=30] node walk/scenarios/field-resources.mjs
 import {execFileSync} from "node:child_process";
 import {existsSync, readFileSync, writeFileSync} from "node:fs";
+import {cpus, loadavg} from "node:os";
 import {join} from "node:path";
 import {artifacts, bootField, toggleEpi, writeReceipt} from "../lib/field-walk.mjs";
 
 const CYCLES = Number(process.env.FIELD_CYCLES ?? 30);
-const checks = [], record = {cycles: CYCLES};
+const checks = [], skipped = [], record = {cycles: CYCLES};
+const skip = label => { skipped.push(label); console.log(`SKIP — ${label}`); };
 const check = (ok, label, detail) => { checks.push({ok: !!ok, label, ...(detail !== undefined ? {detail} : {})}); console.log(`${ok ? "PASS" : "FAIL"} — ${label}${detail !== undefined ? " · " + JSON.stringify(detail).slice(0, 300) : ""}`); };
 const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.ceil(p * s.length) - 1)] : null; };
 
@@ -50,6 +52,13 @@ const sample = async ({gc = false} = {}) => {
   return {heapMB: +(m.JSHeapUsedSize / 1048576).toFixed(2), nodes: m.Nodes, listeners: m.JSEventListeners, documents: m.Documents, frames: page.frames().length, iframes: dom.iframes, liveNodes: dom.live, rssMB: await (async () => { const k = await rssKb(); return k == null ? null : +(k / 1024).toFixed(0); })()};
 };
 const latencies = [];     // {kind, ms, cycle}
+// Latency is a property of the machine as much as of the field: with the machine busy (a build, another agent's walk) every
+// transition is slower. The 1-minute load average and core count are recorded at the start, at every checkpoint and at the end;
+// if the load exceeded half the cores at any of them the latency budget is NOT EVALUATED (and says so), while the structural
+// checks (DOM, listeners, heap, RSS, frames) are always evaluated. A real regression still fails on a quiet machine.
+const CORES = cpus().length, LOAD_LIMIT = 0.5 * CORES;
+const loads = [{at: "start", load1: +loadavg()[0].toFixed(2)}];
+const noteLoad = at => loads.push({at, load1: +loadavg()[0].toFixed(2)});
 const timed = async (kind, cycle, action, cond, arg) => {
   await page.evaluate(() => { window.__in = null; });
   await action();
@@ -136,10 +145,16 @@ try {
     for (let k = 0; k < 6 && await page.locator(".ftab").count() > 1; k++) { await page.locator(".ftab").last().locator("[data-close]").click({force: true}).catch(() => {}); await settle(150); }
     if ((await enc()).primary.ref !== main) { await page.keyboard.press("Alt+ArrowLeft"); await settle(500); }
     if (c === 1 || c % 10 === 0 || c === CYCLES) { await settle(600); const s = await sample({gc: true}); record.settled.push({cycle: c, ...s}); console.log(`settled@${c}`, JSON.stringify(s)); }
+    noteLoad(`cycle ${c}`);
     if (c % 5 === 0) console.log(`cycle ${c}/${CYCLES} done`);
   }
   record.peak = peak;
 
+  noteLoad("end");
+  const peakLoad = Math.max(...loads.map(l => l.load1));
+  const loaded = peakLoad > LOAD_LIMIT;
+  record.machine = {cores: CORES, load_limit: LOAD_LIMIT, peak_load1: peakLoad, start_load1: loads[0].load1, end_load1: loads.at(-1).load1, samples: loads.length, loaded};
+  console.log("machine", JSON.stringify(record.machine));
   // ---- latency summary --------------------------------------------------------------------------------------------------
   const kinds = [...new Set(latencies.map(l => l.kind))];
   record.latency = Object.fromEntries(kinds.map(k => { const v = latencies.filter(l => l.kind === k && l.ms != null).map(l => l.ms); return [k, {n: v.length, p50: pct(v, 0.5), p95: pct(v, 0.95), max: Math.max(...v), first: v[0], last: v[v.length - 1]}]; }));
@@ -158,7 +173,7 @@ try {
   if (existsSync(budgetFile)) budget = JSON.parse(readFileSync(budgetFile, "utf8"));
   else {
     established = true;
-    budget = {established_at: new Date().toISOString(), basis: "first run; observed values with allowances, set before any tuning",
+    budget = {established_at: new Date().toISOString(), basis: "first run; observed values with allowances, set before any tuning", established_under_load: loaded ? {peak_load1: peakLoad, cores: CORES, warning: "the machine was loaded: these latencies are inflated; re-establish on a quiet machine"} : null,
       latency_p95_ms: Object.fromEntries(kinds.map(k => [k, Math.ceil(record.latency[k].p95 * 1.5)])),
       settled_drift_allowed: {nodes_pct: 10, listeners_pct: 10, heapMB_pct: 25, rssMB_pct: 30, iframes: 0, frames: 0}};
     writeFileSync(budgetFile, JSON.stringify(budget, null, 2) + "\n");
@@ -183,15 +198,18 @@ try {
   check(!leak.nodes && !leak.listeners, "settled DOM nodes and event listeners stay within the allowance of the warmed state (cycle 1)", {nodes: [warmed.nodes, end.nodes], listeners: [warmed.listeners, end.listeners]});
   check(!leak.heap, "settled JS heap stays within the allowance of the warmed state", {warmed: warmed.heapMB, end: end.heapMB});
   check(!leak.rss, "settled process-tree RSS stays within the allowance of the warmed state", {warmed: warmed.rssMB, end: end.rssMB});
-  if (!established) for (const k of kinds) check(record.latency[k].p95 <= budget.latency_p95_ms[k], `latency budget: ${k} p95 ${record.latency[k].p95} ms <= ${budget.latency_p95_ms[k]} ms`);
+  if (!established) for (const k of kinds) {
+    if (loaded) skip(`latency budget: ${k} p95 ${record.latency[k].p95} ms vs ${budget.latency_p95_ms[k]} ms — not evaluated: machine loaded (1-min load ${peakLoad} > ${LOAD_LIMIT} = half of ${CORES} cores)`);
+    else check(record.latency[k].p95 <= budget.latency_p95_ms[k], `latency budget: ${k} p95 ${record.latency[k].p95} ms <= ${budget.latency_p95_ms[k]} ms (quiet machine: load ${peakLoad} <= ${LOAD_LIMIT})`);
+  }
 } catch (error) {
   failed = true; check(false, "the walk ran to its end", String(error?.stack ?? error).split("\n").slice(0, 6).join(" | "));
 } finally {
   const errs = f.errors.filter(m => !/Failed to load resource|favicon/.test(m));
   check(errs.length === 0, "no page or console errors", errs.slice(0, 4));
   const passed = checks.filter(c => c.ok).length;
-  writeReceipt(process.env.FIELD_DIAG === "1" ? "field-resources.diag.json" : "field-resources.json", {scenario: "field-resources", at: new Date().toISOString(), record, passed: passed === checks.length && !failed, counts: {passed, total: checks.length}, checks});
-  console.log(`\n${passed}/${checks.length} checks passed`);
+  writeReceipt(process.env.FIELD_DIAG === "1" ? "field-resources.diag.json" : "field-resources.json", {scenario: "field-resources", at: new Date().toISOString(), record, passed: passed === checks.length && !failed, counts: {passed, total: checks.length, skipped: skipped.length}, checks, skipped});
+  console.log(`\n${passed}/${checks.length} checks passed${skipped.length ? `, ${skipped.length} not evaluated (machine loaded)` : ""}`);
   await f.dispose();
   process.exit(passed === checks.length && !failed ? 0 : 1);
 }

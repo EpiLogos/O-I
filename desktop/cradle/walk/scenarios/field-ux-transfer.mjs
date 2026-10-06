@@ -18,20 +18,47 @@ const settle = ms => page.waitForTimeout(ms);
 const enc = async () => JSON.parse(await page.locator(".field-root").getAttribute("data-encounter"));
 const title = () => page.evaluate(() => document.querySelector(".article.fpane:not([hidden]) .ahead__title")?.textContent ?? null);
 const search = page.getByRole("searchbox", {name: "Search"});
-const openMainBySearch = async q => { await search.fill(q); await settle(400); await search.press("Shift+Enter"); await settle(1500); await search.fill(""); await page.keyboard.press("Escape"); };
+// The hit order changes while the full text arrives, so the walk does not trust "the first hit": it walks the hit list (ArrowDown) to
+// the one whose ref or title matches, then opens that as the MAIN page (Shift+Enter).
+const openMainBySearch = async (q, want = null) => {
+  await search.fill(q); await settle(900);
+  for (let k = 0; k < 12; k++) {
+    const hit = await page.evaluate(() => { const li = document.querySelector(".hit.is-active"); return li ? {ref: li.dataset.hov ?? "", title: li.querySelector(".hit__t")?.textContent ?? ""} : null; });
+    if (!want || (hit && (want.test(hit.ref) || want.test(hit.title)))) break;
+    await page.keyboard.press("ArrowDown"); await settle(120);
+  }
+  await search.press("Shift+Enter"); await settle(1500); await search.fill(""); await page.keyboard.press("Escape");
+};
+const MANUSCRIPT = /THE-RETURN-OF-ZERO\.md$/;
 const sameSet = (a, b) => a.length === b.length && a.every(x => b.includes(x));
 const graphRefs = () => page.evaluate(() => [...document.querySelectorAll(".graph-svg .gn[data-ref]")].filter(g => !g.classList.contains("gn--focus")).map(g => g.dataset.ref).sort());
 const connRefs = () => page.evaluate(() => [...document.querySelectorAll(".conn__g li[data-ref]")].map(l => l.dataset.ref).sort());
-const settleGraph = async () => { await settle(1600); };
+const settleGraph = async () => { await settle(300); await graphReady(1); };
+// the graph is drawn by a live simulation: before anything is read off it or dragged, wait until it has nodes AND has stopped moving
+const posNow = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll(".graph-svg .gn[data-ref]")].map(g => { const m = /translate\(([-\d.]+)[ ,]([-\d.]+)\)/.exec(g.getAttribute("transform") ?? ""); return [g.dataset.ref, m ? [Number(m[1]), Number(m[2])] : [0, 0]]; })));
+const graphReady = async (min = 6, ms = 30000) => {
+  const end = Date.now() + ms; let prev = null;
+  while (Date.now() < end) {
+    const cur = await posNow(), refs = Object.keys(cur);
+    if (refs.length >= min && refs.every(r => r && r !== "undefined")) {
+      if (prev && refs.length === Object.keys(prev).length && refs.every(r => prev[r] && Math.hypot(cur[r][0] - prev[r][0], cur[r][1] - prev[r][1]) < 0.5)) return refs.length;
+      prev = cur;
+    } else prev = null;
+    await settle(350);
+  }
+  throw new Error(`the graph did not settle with at least ${min} nodes within ${ms} ms`);
+};
+const relsNow = async n => { const end = Date.now() + 30000; for (;;) { const r = await page.evaluate(() => [...document.querySelectorAll(".conn__g li[data-ref]")].map(l => l.dataset.ref).filter(x => x && /\/arguments\//.test(decodeURIComponent(x)) && !/README/.test(decodeURIComponent(x)))); if (r.length >= n) return r.slice(0, n); if (Date.now() > end) throw new Error(`only ${r.length} argument relations were offered (wanted ${n})`); await settle(300); } };
 const closeTabs = async () => { for (let k = 0; k < 8 && await page.locator(".ftab").count() > 1; k++) { await page.locator(".ftab").last().locator("[data-close]").click({force: true}).catch(() => {}); await settle(200); } };
 let failed = false;
 try {
   await page.waitForSelector(".article.fpane:not([hidden]) .ahead__title", {timeout: 60000});
-  await openMainBySearch("The Return of Zero");
+  await openMainBySearch("The Return of Zero", MANUSCRIPT);
   await page.locator(".mrail__t[data-span='M16']").click({force: true});
   await page.waitForFunction(() => document.querySelector(".field-root")?.getAttribute("data-encounter")?.includes('"span":"M16"'), null, {timeout: 30000}); await settle(1500);
 
   /* ───── UX4 — one filter, one neighbourhood ───── */
+  await graphReady();
   const g0 = await graphRefs(), c0 = await connRefs();
   check(g0.length >= 6 && sameSet(g0, c0), "UX4 graph and connections list show the same neighbourhood (same refs)", {graph: g0.length, connections: c0.length});
   const btn = page.locator("[data-filter-btn]");
@@ -65,7 +92,7 @@ try {
   await page.keyboard.press("Escape"); await settle(200);
 
   /* ───── UX5 — breadcrumbs and the pager ───── */
-  await openMainBySearch("Dimensional Reframing");
+  await openMainBySearch("Dimensional Reframing", /^Dimensional Reframing|dimensional-reframing-at-zero-and-infinity\.md$/);
   const crumbs = await page.evaluate(() => [...document.querySelectorAll(".breadcrumb-container .cr")].map(c => ({label: c.querySelector(".cr__l")?.textContent ?? "", tag: c.querySelector(".cr__l")?.tagName, sib: !!c.querySelector(".cr__s"), cur: c.classList.contains("cr--cur")})));
   record.crumbs = crumbs;
   check(crumbs.length >= 4 && crumbs.every(c => !/[\/]|\.md$/.test(c.label)), "UX5 breadcrumbs are structural labels, not slugs or paths", crumbs.map(c => c.label));
@@ -96,7 +123,7 @@ try {
   check((await enc()).primary.ref !== here0 && await page.locator(".cpop").count() === 0, "UX5 pointer: a sibling in the menu turns the main page to it");
   await page.keyboard.press("Alt+ArrowLeft"); await settle(1200);
   // a folder crumb opens what is in it
-  await openMainBySearch("Awareness becomes articulate");
+  await openMainBySearch("Awareness becomes articulate", MANUSCRIPT);
   const folder = page.locator(".breadcrumb-container button.cr__f").first();
   if (await folder.count()) {
     await folder.click(); await settle(300);
@@ -104,7 +131,7 @@ try {
     await page.keyboard.press("Escape");
   } else check(false, "UX5 a folder crumb exists on the manuscript page");
   // the pager
-  await openMainBySearch("The Integral Threshold");
+  await openMainBySearch("The Integral Threshold", /^The Integral Threshold/);
   const room0 = (await enc()).primary.ref, t0 = await title();
   check(await page.locator(".pager__next").count() === 1, "UX5 a room page has a pager with a next link", {title: t0});
   await page.locator(".pager__next").click(); await settle(1800);
@@ -119,8 +146,9 @@ try {
   check((await enc()).primary.ref === room0, "UX5 keyboard: Enter on prev returns");
 
   /* ───── UX7 — Expression marks, chips, the Library 'Here' ───── */
-  await openMainBySearch("The Return of Zero");
+  await openMainBySearch("The Return of Zero", MANUSCRIPT);
   await page.locator(".mrail__t[data-span='M16']").click({force: true}); await settle(1500);
+  await graphReady();
   const marks = await page.evaluate(() => ({
     chips: [...document.querySelectorAll(".article.fpane:not([hidden]) .ahead__x .xchip")].map(c => c.dataset.x),
     tree: document.querySelectorAll(".tree-host .tn__x").length,
@@ -169,10 +197,12 @@ try {
 
   /* ───── UX2 — keep and promote by keyboard (product bindings) ───── */
   await closeTabs();
-  await openMainBySearch("The Return of Zero");
+  await openMainBySearch("The Return of Zero", MANUSCRIPT);
   await page.locator(".mrail__t[data-span='M16']").click({force: true}); await settle(1200);
   const mainRef = (await enc()).primary.ref;
-  const rels = await page.evaluate(() => [...document.querySelectorAll(".conn__g li[data-ref]")].map(l => l.dataset.ref).filter(r => /\/arguments\//.test(decodeURIComponent(r)) && !/README/.test(decodeURIComponent(r))).slice(0, 3));
+  await graphReady();
+  const rels = await relsNow(2);      // M16 offers two argument relations (the first-encounter walk finds the same two)
+  check(rels.length === 2 && rels.every(r => !!r), "UX2/UX3 setup: two argument relations are offered and the graph has settled", rels.map(r => r.split("/").at(-1)));
   const node = r => page.locator(`.graph-svg .gn[data-ref="${r}"] circle.hit`).first();
   const dbl = async r => { const b = await node(r).boundingBox(); await page.mouse.dblclick(b.x + b.width / 2, b.y + b.height / 2); await settle(1300); };
   await dbl(rels[0]);
@@ -203,9 +233,12 @@ try {
   /* ───── UX3 — dragging a node ───── */
   for (let k = 0; k < 6 && await page.locator(".ftab").count() > 1; k++) { await page.locator(".ftab").last().locator("[data-close]").click({force: true}).catch(() => {}); await settle(150); }
   await page.locator(".graph-svg").focus(); await page.keyboard.press("Escape"); await settle(800);
-  const pos = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll(".graph-svg .gn[data-ref]")].map(g => { const m = /translate\(([-\d.]+)[ ,]([-\d.]+)\)/.exec(g.getAttribute("transform") ?? ""); return [g.dataset.ref, m ? [Number(m[1]), Number(m[2])] : [0, 0]]; })));
+  const pos = posNow;
   const dist = (a, b, r) => Math.hypot(a[r][0] - b[r][0], a[r][1] - b[r][1]);
-  const dragRef = rels[2] ?? rels[0];
+  await graphReady();
+  const live = await posNow(), mainNow = (await enc()).primary.ref;
+  const dragRef = Object.keys(live).find(r => r !== mainNow && !!r && r !== "undefined" && rels.includes(r)) ?? Object.keys(live).find(r => !!r && r !== "undefined");
+  check(!!dragRef && dragRef !== "undefined", "UX3 setup: a real node ref is chosen to drag from the settled graph", dragRef?.split("/").at(-1));
   const before = await pos(), e0 = await enc(), tabs0 = (await enc()).tabs.length;
   const bb = await node(dragRef).boundingBox(); const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
   await page.mouse.move(cx, cy); await page.mouse.down(); await page.mouse.move(cx + 20, cy + 15, {steps: 4}); await page.mouse.move(cx + 70, cy + 50, {steps: 8}); await settle(250);
