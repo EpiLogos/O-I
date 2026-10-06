@@ -181,5 +181,52 @@ not converge.
   dbf3b17) never states it. Return to `zcode:enrich-arguments-l1` for attribution fix or
   removal; re-enters at the objective pass.
 
+---
+
+## Re-check 2026-10-06 — roz-a-prime-conjugates after fix 85dd944e4 (a26p only)
+
+Scope: the authoring lane applied smallest-fix option (a) from the rejection above —
+commit `85dd944e4`, binding only (1 file, 6 insertions / 6 deletions; the journey JSON is
+untouched, so the render evidence and all objective checks from the first pass stand).
+
+What I verified against the record text at fc59a719
+(`section-rooms/arguments/A26-Objective-Internality-Mind-as-Worldhood.md`, its conjugate
+root `conjugate/AC.md`, and `conjugate/A21-prime-Individuation-with-Recognition.md`):
+
+- **a26p craft note** now states the staging plainly: the scene stages *the other face's*
+  recognition sequence, "which belongs to A26 (stated verbatim in the A26 record citing the
+  shared A/C root, conjugate/AC.md; A26′ itself carries only 1/0 as formal notation)" and
+  reaches a26p "through the declared A26↔A26′ other-face relation, not as A26′s own
+  notation." Unambiguous, and true per the records: the chain is in A26 (line 56) and in
+  AC.md (:79 Ø, :83 Ø/X, :85 (0/Ø)/(1/X)); A26′ carries only `1/0` (verified again in the
+  first pass at both revisions).
+- **Rationales re-attributed**: `Ø` now cites "A26, the declared other face, whose
+  recognition sequence a26p stages"; the `Ø/X`, `(0/Ø)/(1/X)` and `1 ↺ 0/1` rationales
+  locate the sequence "in the A26 record and the shared A/C root it cites". The attribution
+  chain now traces to records that state the sequence. The sign-of content is unchanged and
+  was never the defect.
+- **The shared `X` key** now carries both senses in their owners' terms: A21′ ("the
+  pre-individual capacity the achieved x opens toward" — faithful to A21′:31,37, where
+  "The QL crossing becomes exact as X/x" and "x → X → x") and A26's recognition sequence
+  ("the instrument identified as such"). This also repairs a latent second defect the
+  re-check surfaced: the old `X` entry attributed to A26′ while serving a21p, whose record
+  is A21′'s — the lane's fix note is accurate.
+- **Objective gate re-run**: linter PASS 1/1 for the conjugates collection; glyph coverage
+  still 112/112 with zero missing; journey identity untouched.
+
+One nit recorded, not blocking: the three re-attributed rationales spell the possessive
+`A26′s` (A26 + U+2032 PRIME + s). Since the prime is this vault's conjugate-id marker
+(`A26′` is the *other* record), the string can be misparsed as A26′'s possessive on first
+read; the intended possessive of A26 would be `A26's`. The clause that follows ("stated in
+the A26 record and the shared A/C root it cites") and the a26p note two fields away make the
+actual attribution impossible to misread in context, so this is a clarity suggestion for the
+author's next binding touch, not a fidelity failure.
+
+## Re-check verdict
+
+- `roz-a-prime-conjugates` — **PASS** (a26p re-check after 85dd944e4). The staged sequence
+  is now honestly declared as the other face's, the rationales trace to A26/AC, and the
+  shared `X` key serves both records in their own terms.
+
 Critic capture artefacts: `/tmp/expression-enrich/critic-w1b/` (a14p t0/t6.5/t10, a36p t0/t3,
 patched `snap-critic.mjs`); committed sheets under `renders/arguments/`.
