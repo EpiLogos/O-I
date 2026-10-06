@@ -1,0 +1,18 @@
+{
+  "schema": "oi.native-source-contribution/v1",
+  "contribution_ref": "oi.contribution/field",
+  "owner": "oi",
+  "revision": 1,
+  "entry": "descriptor.tsx",
+  "entry_sha256": "a262a65cf77676745bb1228b80042cb486b133090ec7fc89d09f8a881a8e21da",
+  "surfaces": [
+    {
+      "descriptor_ref": "oi.surface/field",
+      "kind": "field",
+      "title": "Field",
+      "mount_export": "FieldHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    }
+  ]
+}

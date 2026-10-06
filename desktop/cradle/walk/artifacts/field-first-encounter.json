@@ -1,0 +1,410 @@
+{
+  "scenario": "field-first-encounter",
+  "at": "2026-10-06T18:22:38.683Z",
+  "passed": true,
+  "counts": {
+    "passed": 37,
+    "total": 37
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "Base's default centre is the field (one field-root, no Rest page)"
+    },
+    {
+      "ok": true,
+      "label": "the workbench's own tab strip does not stack above the field's tabs"
+    },
+    {
+      "ok": true,
+      "label": "the main passage is the manuscript at M16",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+        "span": "M16",
+        "title": "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.",
+        "topHit": "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality."
+      }
+    },
+    {
+      "ok": true,
+      "label": "the main page carries its source revision",
+      "detail": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6"
+    },
+    {
+      "ok": true,
+      "label": "the main page is a native source ref, not a slug",
+      "detail": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md"
+    },
+    {
+      "ok": true,
+      "label": "the footer names the reading position (M16)",
+      "detail": "M16"
+    },
+    {
+      "ok": true,
+      "label": "the graph is centred on the movement under the reader (one locus)",
+      "detail": [
+        "M16 · The Crossed Zero"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the contents mark M16 (one locus)",
+      "detail": [
+        "M16The Crossed Zero"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the reading rail marks M16",
+      "detail": "M16"
+    },
+    {
+      "ok": true,
+      "label": "the connections list offers a relation into the arguments",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+        "label": "Dimensional Reframing at Zero and Infinity"
+      }
+    },
+    {
+      "ok": true,
+      "label": "click on a graph node SELECTS it (encounter.selected)",
+      "detail": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md"
+    },
+    {
+      "ok": true,
+      "label": "selecting opened no tab and navigated nowhere",
+      "detail": {
+        "tabs": 1,
+        "focus": "primary"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the main page and position are untouched by selection"
+    },
+    {
+      "ok": true,
+      "label": "the selection card is showing"
+    },
+    {
+      "ok": true,
+      "label": "selection advanced the generation exactly once",
+      "detail": {
+        "before": 3,
+        "after": 4
+      }
+    },
+    {
+      "ok": true,
+      "label": "the relation opened as an italic preview tab, in view",
+      "detail": [
+        {
+          "label": "The Return of Zero",
+          "preview": false,
+          "selected": false,
+          "x": false
+        },
+        {
+          "label": "Dimensional Reframing at Zero and Infinity",
+          "preview": true,
+          "selected": true,
+          "x": false
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "main passage unchanged at M16; tangent is the relation",
+      "detail": {
+        "tangent": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the main tab is still there, not in view"
+    },
+    {
+      "ok": true,
+      "label": "the next tangent replaced the preview in place (still two tabs)",
+      "detail": [
+        "The Return of Zero",
+        "M16 · The Crossed Zero"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "double-click KEEPS the tangent (no longer italic)",
+      "detail": [
+        {
+          "label": "The Return of Zero",
+          "preview": false,
+          "selected": false,
+          "x": false
+        },
+        {
+          "label": "M16 · The Crossed Zero",
+          "preview": false,
+          "selected": true,
+          "x": false
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a new tangent opens BESIDE the kept one",
+      "detail": [
+        [
+          "The Return of Zero",
+          false
+        ],
+        [
+          "M16 · The Crossed Zero",
+          false
+        ],
+        [
+          "M15 · The Empty Set Generates One",
+          true
+        ]
+      ]
+    },
+    {
+      "ok": true,
+      "label": "return to the main passage: same page, still at M16",
+      "detail": {
+        "focus": "primary",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the reading position survived the tangents (M16)",
+      "detail": "M16"
+    },
+    {
+      "ok": true,
+      "label": "promote made the tangent the MAIN page and left the old page on the trail",
+      "detail": {
+        "title": "The Empty Set Generates One",
+        "trail": 2
+      }
+    },
+    {
+      "ok": true,
+      "label": "back returns to the previous main page (the manuscript) at M16",
+      "detail": {
+        "span": "M16",
+        "trail": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "…and the reader is at M16 again (position restored from the trail)"
+    },
+    {
+      "ok": true,
+      "label": "Library → Here offers the room's Expression (about the page in view)",
+      "detail": [
+        "expression:roz-room-02-return-of-zero",
+        "expression:roz-symbolon-spine",
+        "expression:roz-matheme-ql-spanda",
+        "expression:roz-matheme-four-files",
+        "expression:roz-histories"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the Expression opened as a tab (a preview of its own kind)",
+      "detail": {
+        "ref": "expression:roz-room-02-return-of-zero",
+        "scene": "movement-15",
+        "sceneName": "§1 · #2 — The Empty Set Generates One",
+        "frame": "http://127.0.0.1:54683/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+        "tabs": [
+          {
+            "label": "The Return of Zero",
+            "preview": false,
+            "selected": false,
+            "x": false
+          },
+          {
+            "label": "M16 · The Crossed Zero",
+            "preview": false,
+            "selected": false,
+            "x": false
+          },
+          {
+            "label": "Room 3 of 8 · §1 — The Return of Zero",
+            "preview": true,
+            "selected": true,
+            "x": true
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "opening it left the Library: the centre is the thing opened",
+      "detail": "essay"
+    },
+    {
+      "ok": true,
+      "label": "the encounter holds the Expression and its scene",
+      "detail": {
+        "expression_ref": "expression:roz-room-02-return-of-zero",
+        "scene_id": "movement-15"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the real Expression renderer is playing in the frame",
+      "detail": {
+        "url": "http://127.0.0.1:54683/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+        "textLength": 812
+      }
+    },
+    {
+      "ok": true,
+      "label": "the contents are its scenes",
+      "detail": [
+        "01§1 · #0 — A Sign Migrates Between Worlds",
+        "02§1 · #1 — Śūnya Becomes Operational",
+        "03§1 · #2 — The Empty Set Generates One"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the graph follows the pages the Expression is about",
+      "detail": [
+        "§1 · Canonical alignment"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "choosing a scene from the contents changes the scene (set-scene)",
+      "detail": {
+        "from": "movement-15",
+        "to": "movement-16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "return: the main passage at M16, the Expression's frame released",
+      "detail": {
+        "focus": "primary"
+      }
+    },
+    {
+      "ok": true,
+      "label": "leaving the Expression stops it (no frame left running)"
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ],
+  "record": {
+    "main": {
+      "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+      "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+      "span": "M16",
+      "title": "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.",
+      "topHit": "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality."
+    },
+    "relation": {
+      "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+      "label": "Dimensional Reframing at Zero and Infinity"
+    },
+    "selectedRelation": "graph node click",
+    "tangent": {
+      "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+      "revision": "sha256:9bbbb543d7c9b9982a81111a4aa377477b5ce71a3ec18f43ecf773b55b7a6a92",
+      "title": "Dimensional Reframing at Zero and Infinity",
+      "eyebrow": [
+        "Argument"
+      ]
+    },
+    "promote": {
+      "to": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+      "title": "The Empty Set Generates One",
+      "trail": 2
+    },
+    "libraryHere": {
+      "label": "Here · 5",
+      "cards": [
+        "expression:roz-room-02-return-of-zero",
+        "expression:roz-symbolon-spine",
+        "expression:roz-matheme-ql-spanda",
+        "expression:roz-matheme-four-files",
+        "expression:roz-histories"
+      ]
+    },
+    "expression": {
+      "ref": "expression:roz-room-02-return-of-zero",
+      "scene": "movement-15",
+      "sceneName": "§1 · #2 — The Empty Set Generates One",
+      "frame": "http://127.0.0.1:54683/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+      "tabs": [
+        {
+          "label": "The Return of Zero",
+          "preview": false,
+          "selected": false,
+          "x": false
+        },
+        {
+          "label": "M16 · The Crossed Zero",
+          "preview": false,
+          "selected": false,
+          "x": false
+        },
+        {
+          "label": "Room 3 of 8 · §1 — The Return of Zero",
+          "preview": true,
+          "selected": true,
+          "x": true
+        }
+      ]
+    },
+    "finalEncounter": {
+      "schema": "oi.field-encounter/v1",
+      "world_ref": "project:Antykathera-Essay-Work",
+      "primary": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+        "span": "M16"
+      },
+      "tabs": [
+        {
+          "id": "t1",
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+          "revision": "sha256:6172aee9bd0e4f202e7f937c0731a0a635733aee797a3f71eb9dfd8ef043f8a2",
+          "kind": "page",
+          "preview": false
+        },
+        {
+          "id": "t2",
+          "ref": "expression:roz-room-02-return-of-zero",
+          "kind": "expression",
+          "scene": "movement-16",
+          "preview": true
+        }
+      ],
+      "focus": "primary",
+      "emphasis": "essay",
+      "trail": [
+        {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/README.md",
+          "revision": "sha256:0a5ae420341894b8c819351f68bf5ea57b46a7de0dca0780f93143148d3eaceb"
+        }
+      ],
+      "generation": 17,
+      "scene": {
+        "expression_ref": "expression:roz-room-02-return-of-zero",
+        "scene_id": "movement-16"
+      }
+    }
+  }
+}
