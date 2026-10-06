@@ -12,6 +12,21 @@ const MAX_SCOPE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_RECORDS: usize = 256;
 const MAX_REVISION: u64 = crate::expression::MAX_REVISION;
 const SCHEMA: &str = "oi.expression-recovery/v1";
+// Opt-in hosted-proof timings only. The bridge supplies a diagnostic ID;
+// no request field, owner result, admission law or default execution changes.
+thread_local! {
+    static DIAGNOSTIC_TRACE: std::cell::Cell<Option<u64>> = const { std::cell::Cell::new(None) };
+}
+pub fn with_diagnostic_trace<T>(id: u64, run: impl FnOnce() -> T) -> T {
+    struct Restore(Option<u64>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            DIAGNOSTIC_TRACE.with(|trace| trace.set(self.0));
+        }
+    }
+    let _restore = Restore(DIAGNOSTIC_TRACE.with(|trace| trace.replace(Some(id))));
+    run()
+}
 
 /// Recovery has its own filesystem lock and compare-and-set revisions. It
 /// does not access Kernel memory or emit semantic events, so hosts execute
