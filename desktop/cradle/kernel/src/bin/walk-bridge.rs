@@ -79,8 +79,14 @@ fn main() {
                 );
                 let outcome = handle(&kernel, &request);
                 eprintln!("[bridge] -> answered {} {}", request.method, request.path);
-                respond(&mut stream, outcome);
-                if !request.keep_alive {
+                // The renderer polls /events every 250 ms; each poll is
+                // answered on its own connection so no request lands on a
+                // keep-alive connection the peer has already given up on
+                // (WebKit masks that race as a CORS failure — the
+                // 2026-10-06 cradle CI flake).
+                let events_poll = request.path.starts_with("/events");
+                respond(&mut stream, outcome, !events_poll);
+                if !request.keep_alive || events_poll {
                     return;
                 }
             }
@@ -513,7 +519,7 @@ fn content_type_for(mime_hint: Option<&str>, path: &str) -> String {
     oi_cradle_kernel::files::material_content_type(mime_hint, path)
 }
 
-fn respond(stream: &mut TcpStream, response: BridgeResponse) {
+fn respond(stream: &mut TcpStream, response: BridgeResponse, keep_alive: bool) {
     let (status, content_type, body): (u16, String, Vec<u8>) = match response {
         BridgeResponse::Json { status, body } => (
             status,
@@ -535,11 +541,12 @@ fn respond(stream: &mut TcpStream, response: BridgeResponse) {
         404 => "Not Found",
         _ => "Internal Server Error",
     };
+    let connection = if keep_alive { "keep-alive" } else { "close" };
     let headers = format!(
         "HTTP/1.1 {status} {reason}\r\nAccess-Control-Allow-Origin: *\r\n\
          Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n\
          Access-Control-Allow-Headers: content-type\r\n\
-         Content-Type: {content_type}\r\nCache-Control: no-store\r\nContent-Length: {}\r\nConnection: keep-alive\r\n\r\n",
+         Content-Type: {content_type}\r\nCache-Control: no-store\r\nContent-Length: {}\r\nConnection: {connection}\r\n\r\n",
         body.len()
     );
     let _ = stream.write_all(headers.as_bytes());
