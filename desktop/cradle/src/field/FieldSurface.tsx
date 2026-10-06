@@ -18,6 +18,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {viaTransport} from "../expression/world";
 import {createWorldSync, type DescribedRef, type WorldSync} from "./worldSync";
 import "./field.css";
+import "./vendor/katex/katex.css";   // the edition's maths, bundled: no CDN fetch (scripts/vendor-katex.mjs)
 import {FieldIcons, Icon} from "./icons";
 import {locusRef} from "./filterModel";
 import {type FieldEncounter, type FieldEffect, type FieldFilter, type FieldRef} from "./model";
@@ -27,6 +28,7 @@ import {useFieldSource} from "./useFieldSource";
 import {type FieldExpression, type FieldExpressionIndex, type FieldReading, type FieldSource} from "./source";
 import {Explorer} from "./Explorer";
 import {FieldUtility} from "./Utility";
+import {gatherToTechne} from "./constellation";
 import type {HostedHostContext} from "../contributions/contracts";
 import {SearchBar, SearchResults, useFieldSearch} from "./Search";
 import {Tabs} from "./Tabs";
@@ -64,6 +66,7 @@ function useWidth(el: React.RefObject<HTMLElement>): number {
   return w;
 }
 
+const NO_REFS: readonly FieldRef[] = [];
 const visitedKey = (world: string) => `oi-cradle.field.visited.${world}`;
 function loadVisited(world: string): Set<string> {
   try { const v = JSON.parse(window.localStorage.getItem(visitedKey(world)) ?? "[]"); return new Set(Array.isArray(v) ? v.filter(x => typeof x === "string") : []); } catch { return new Set(); }
@@ -288,8 +291,11 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   }, []);
   const lastSpanRef = useRef<string | null>(null);
   const lastWidth = useRef(0);
+  // the reader's position is only derived from the scroll once the page in view has been put where the encounter says (a page
+  // that has just loaded sits at its top; that is not where the reader is)
+  const settledFor = useRef<string | null>(null);
   const onScroll = useCallback(() => {
-    const sc = scroller.current; if (!sc || settling.current || !sc.clientHeight || library || inViewIsExpression) return;
+    const sc = scroller.current; if (!sc || settling.current || !sc.clientHeight || library || inViewIsExpression || settledFor.current !== viewKey) return;
     lastTop.current = sc.scrollTop; tops.current.set(viewKey, sc.scrollTop);
     const max = sc.scrollHeight - sc.clientHeight;
     if (progress.current) progress.current.style.transform = `scaleX(${max > 0 ? sc.scrollTop / max : 0})`;
@@ -332,6 +338,7 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   const onReading = useCallback((reading: FieldReading, pane: HTMLElement | null) => {
     if (!pane || pane.hidden) return;
     readingRef.current = {reading, pane};
+    settledFor.current = null;
     const sp = index.sequenceAt(reading.ref);
     const entries: ContentEntry[] = [];
     if (sp && !sp.at) {
@@ -353,7 +360,7 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
       else if (sp && !sp.at && span && anchors.current.some(a => a.span === span)) scrollToSpan(span, false);
       else if (span && !sp && scrollToId(span, false)) { /* jumped to a heading */ }
       else sc.scrollTop = 0;
-      settling.current = false; lastTop.current = sc.scrollTop;
+      settling.current = false; lastTop.current = sc.scrollTop; settledFor.current = viewKey;
       lastSpanRef.current = sp && !sp.at ? (anchors.current.find(a => a.top <= sc.scrollTop + 90) ?.span ?? span ?? null) : null;
       onScroll();
     });
@@ -378,7 +385,7 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
     if (prevKey.current !== viewKey) {
       const sc = scroller.current; if (sc && sc.clientHeight && !library) tops.current.set(prevKey.current, lastTop.current);
       prevKey.current = viewKey;
-      requestAnimationFrame(() => { const sc2 = scroller.current; if (!sc2) return; const t = tops.current.get(viewKey); settling.current = true; sc2.scrollTop = t ?? 0; settling.current = false; lastTop.current = sc2.scrollTop; measure(); });
+      requestAnimationFrame(() => { const sc2 = scroller.current; if (!sc2) return; const t = tops.current.get(viewKey); settling.current = true; sc2.scrollTop = t ?? 0; settling.current = false; lastTop.current = sc2.scrollTop; measure(); settledFor.current = viewKey; });
     }
   }, [viewKey, library, measure]);
   // back from the Library: the page is where it was left
@@ -526,6 +533,16 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
             <div className="right-inner">
               <GraphPane index={index} focus={locus} selected={here ?? undefined} filter={filter} setFilter={setFilter} hits={search.hitSet} visited={visited}
                 select={ref => apply({op: "select", ref}, {origin: "graph"})} openTangent={ref => followTangent(ref)} openMain={ref => followMain(ref)} openExpression={ref => openExpression(ref)}
+                gathered={state.constellation?.refs ?? NO_REFS} defaultTitle={`Gathered at ${index.node(locus ?? "")?.label ?? "the field"}`}
+                gather={ref => { const cur = state.constellation?.refs ?? []; const next = cur.includes(ref) ? cur.filter(r => r !== ref) : [...cur, ref]; apply(next.length ? {op: "enter-constellation", refs: next} : {op: "leave-constellation"}); }}
+                leaveConstellation={() => apply({op: "leave-constellation"})}
+                openInTechne={async (title, question) => {
+                  try {
+                    await gatherToTechne({transport: kernel.transport, apply: kernel.apply, source, refs: [...(ctl.stateRef.current.constellation?.refs ?? [])], title, question,
+                      projects: kernel.snapshot.navigator?.root?.work.projects ?? [], returnTo: {place: {ref: ctl.stateRef.current.primary.ref, title: index.node(ctl.stateRef.current.primary.ref)?.title ?? "the field"}}});
+                    return undefined;
+                  } catch (e) { return e instanceof Error ? e.message : String(e); }
+                }}
                 hover={ref => setHover(ref, "graph")} collapse={() => patchView({right: "closed"})} onGraph={g => { graph.current = g; }} layoutKey={layoutKey}/>
               <div className="right-scroll">
                 <Contents entries={inViewIsExpression ? expressionContents : pageContents}/>

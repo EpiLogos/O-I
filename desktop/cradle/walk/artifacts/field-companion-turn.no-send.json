@@ -1,0 +1,62 @@
+{
+  "scenario": "field-companion-turn",
+  "at": "2026-10-06T20:00:20.314Z",
+  "real_turn": false,
+  "record": {},
+  "passed": true,
+  "counts": {
+    "passed": 7,
+    "total": 7,
+    "skipped": 1
+  },
+  "skipped": [
+    "the real turn and the in-flight/next-turn basis checks — SKIP: real-model turns are opt-in (set OI_WALK_REAL_PROVIDER=1 to authorise plan-quota spend); no model was prompted"
+  ],
+  "checks": [
+    {
+      "ok": true,
+      "label": "the owner opened the pinned provider route (the kernel's encounter op, as the panel does)",
+      "detail": "encounter_reading"
+    },
+    {
+      "ok": true,
+      "label": "the companion is bound to a real AIKit session and its provider is connected"
+    },
+    {
+      "ok": true,
+      "label": "the companion stays bound and connected while the field changes world"
+    },
+    {
+      "ok": true,
+      "label": "the field stands at M16 with a tangent open and a different page selected",
+      "detail": {
+        "gen": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "AIKit holds the field item at the generation the field stands on",
+      "detail": {
+        "items": 1,
+        "gen": 7,
+        "live": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "it names primary @ revision · M16, the tangent and the selected page",
+      "detail": [
+        "field generation 7 · essay",
+        "main: Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality. (central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md) @ sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6 · at M16",
+        "tangent (page, preview): Dimensional Reframing at Zero and Infinity (central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md)",
+        "selected: §1 · #3 — The Crossed Zero (central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md)",
+        ""
+      ]
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

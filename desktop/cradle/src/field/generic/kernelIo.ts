@@ -6,6 +6,7 @@ import type {GenericIo} from "./genericSource";
 export function kernelIo(transport: KernelTransportStatus): GenericIo {
   const locations = new Map<string, CentralLocation>();   // path → the owner's own location, as disclosed by its listing
   return {
+    location: path => locations.get(path),
     async list(path) {
       const dir = await listFiles(transport, path);
       locations.set(path, dir.location);

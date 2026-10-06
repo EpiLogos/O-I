@@ -23,10 +23,12 @@ export function readOnce(source: FieldSource, ref: FieldRef, revision?: string):
 }
 
 const sheets = new Set<string>();
+/** Stylesheets the field carries itself (bundled, offline): a page that links one from a CDN is not asked to fetch it. */
+const BUNDLED_SHEET = /\/katex(\.min)?\.css(\?|$)/;
 function useStylesheets(urls: string[] | undefined) {
   useEffect(() => {
     for (const href of urls ?? []) {
-      if (sheets.has(href)) continue; sheets.add(href);
+      if (sheets.has(href) || BUNDLED_SHEET.test(href)) continue; sheets.add(href);
       const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.fieldSheet = "1"; document.head.appendChild(l);
     }
   }, [urls]);

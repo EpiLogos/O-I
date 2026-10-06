@@ -17,6 +17,7 @@ const MS = "THE-RETURN-OF-ZERO";
 
 const f = await bootField({epi: true});
 const {page} = f;
+const outside = new Set(); page.on("request", r => { const u = new URL(r.url()); if (!/^(127\.0\.0\.1|localhost)$/.test(u.hostname) && /^https?:$/.test(u.protocol)) outside.add(u.host); });
 const enc = async () => JSON.parse(await page.locator(".field-root").getAttribute("data-encounter"));
 const view = () => page.evaluate(() => ({
   tabs: [...document.querySelectorAll(".ftab")].map(t => ({label: t.querySelector(".ftab__t")?.textContent, preview: t.classList.contains("ftab--preview"), selected: t.getAttribute("aria-selected") === "true", x: t.classList.contains("ftab--x")})),
@@ -171,10 +172,15 @@ try {
   check(e10.focus === "primary" && e10.primary.ref === e5.primary.ref && e10.primary.span === "M16", "return: the main passage at M16, the Expression's frame released", {focus: e10.focus});
   check(await page.locator("iframe.xframe").count() === 0, "leaving the Expression stops it (no frame left running)");
   record.finalEncounter = e10;
+  // maths: the page is read with a movement that carries it, and its fonts are the bundled ones
+  await page.locator(".mrail__t[data-span='M26']").click({force: true}); await settle(2500);
+  const kfonts = await page.evaluate(() => ({katex: !!document.querySelector(".article.fpane:not([hidden]) .katex"), loaded: [...document.fonts].filter(f => /KaTeX/.test(f.family) && f.status === "loaded").length}));
+  check(kfonts.katex && kfonts.loaded > 0, "maths renders with KaTeX's bundled fonts (no CDN stylesheet)", kfonts);
 } catch (error) {
   failed = true; check(false, "the walk ran to its end", String(error?.stack ?? error).split("\n").slice(0, 4).join(" | "));
   await page.screenshot({path: shotPath("field-failure.png")}).catch(() => {});
 } finally {
+  check(outside.size === 0, "no request left the machine: no CDN, no font service", [...outside]);
   const errs = f.errors.filter(m => !/Failed to load resource|favicon/.test(m));
   check(errs.length === 0, "no page or console errors", errs.slice(0, 4));
   const passed = checks.filter(c => c.ok).length;

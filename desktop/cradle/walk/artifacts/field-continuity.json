@@ -1,0 +1,439 @@
+{
+  "scenario": "field-continuity",
+  "at": "2026-10-06T20:06:08.311Z",
+  "passed": true,
+  "counts": {
+    "passed": 23,
+    "total": 23
+  },
+  "record": {
+    "before": {
+      "encounter": {
+        "world": "project:Antykathera-Essay-Work",
+        "primary": {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+          "span": "M16"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+            "kind": "page",
+            "preview": false
+          },
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+            "kind": "page",
+            "preview": true
+          },
+          {
+            "ref": "expression:roz-room-02-return-of-zero",
+            "kind": "expression",
+            "preview": true,
+            "scene": "movement-15"
+          }
+        ],
+        "focus": -1,
+        "selected": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "scene": {
+          "expression_ref": "expression:roz-room-02-return-of-zero",
+          "scene_id": "movement-15"
+        },
+        "emphasis": "split",
+        "trail": 1,
+        "generation": 14
+      },
+      "view": {
+        "tabs": [
+          {
+            "label": "The Return of Zero",
+            "preview": false,
+            "selected": true
+          },
+          {
+            "label": "Dimensional Reframing at Zero and Infinity",
+            "preview": false,
+            "selected": false
+          },
+          {
+            "label": "M15 · The Empty Set Generates One",
+            "preview": true,
+            "selected": false
+          },
+          {
+            "label": "Room 3 of 8 · §1 — The Return of Zero",
+            "preview": true,
+            "selected": false
+          }
+        ],
+        "pos": "M16",
+        "view": "split",
+        "frame": null
+      },
+      "pin": {
+        "mode": "pin",
+        "pinned": true
+      }
+    }
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the encounter to restore: main at M16, a kept tab, a preview, an Expression at a scene, a selection, split emphasis",
+      "detail": {
+        "world": "project:Antykathera-Essay-Work",
+        "primary": {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+          "span": "M16"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+            "kind": "page",
+            "preview": false
+          },
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+            "kind": "page",
+            "preview": true
+          },
+          {
+            "ref": "expression:roz-room-02-return-of-zero",
+            "kind": "expression",
+            "preview": true,
+            "scene": "movement-15"
+          }
+        ],
+        "focus": -1,
+        "selected": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "scene": {
+          "expression_ref": "expression:roz-room-02-return-of-zero",
+          "scene_id": "movement-15"
+        },
+        "emphasis": "split",
+        "trail": 1,
+        "generation": 14
+      }
+    },
+    {
+      "ok": true,
+      "label": "the pin is held",
+      "detail": {
+        "mode": "pin",
+        "pinned": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "reload: main, tabs (kept/preview/Expression), focus, selected, scene, emphasis, trail and generation all restored",
+      "detail": {
+        "world": "project:Antykathera-Essay-Work",
+        "primary": {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+          "span": "M16"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+            "kind": "page",
+            "preview": false
+          },
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+            "kind": "page",
+            "preview": true
+          },
+          {
+            "ref": "expression:roz-room-02-return-of-zero",
+            "kind": "expression",
+            "preview": true,
+            "scene": "movement-15"
+          }
+        ],
+        "focus": -1,
+        "selected": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "scene": {
+          "expression_ref": "expression:roz-room-02-return-of-zero",
+          "scene_id": "movement-15"
+        },
+        "emphasis": "split",
+        "trail": 1,
+        "generation": 14
+      }
+    },
+    {
+      "ok": true,
+      "label": "reload: the tab strip reads the same",
+      "detail": [
+        {
+          "label": "The Return of Zero",
+          "preview": false,
+          "selected": true
+        },
+        {
+          "label": "Dimensional Reframing at Zero and Infinity",
+          "preview": false,
+          "selected": false
+        },
+        {
+          "label": "M15 · The Empty Set Generates One",
+          "preview": true,
+          "selected": false
+        },
+        {
+          "label": "Room 3 of 8 · §1 — The Return of Zero",
+          "preview": true,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "reload: the emphasis is applied (data-view split)"
+    },
+    {
+      "ok": true,
+      "label": "reload: the reading position is M16",
+      "detail": "M16"
+    },
+    {
+      "ok": true,
+      "label": "reload: M16 is where the reader is looking (anchor within 24px of the top)",
+      "detail": 24
+    },
+    {
+      "ok": true,
+      "label": "reload: the Expression returns at its scene",
+      "detail": "http://127.0.0.1:49736/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+    },
+    {
+      "ok": true,
+      "label": "reload: the explicit pin is still pinned, at its generation",
+      "detail": {
+        "pin2": {
+          "mode": "pin",
+          "pinned": true
+        },
+        "pinned": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: main, tabs (kept/preview/Expression), focus, selected, scene, emphasis, trail and generation all restored",
+      "detail": {
+        "world": "project:Antykathera-Essay-Work",
+        "primary": {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+          "span": "M16"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+            "kind": "page",
+            "preview": false
+          },
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+            "kind": "page",
+            "preview": true
+          },
+          {
+            "ref": "expression:roz-room-02-return-of-zero",
+            "kind": "expression",
+            "preview": true,
+            "scene": "movement-15"
+          }
+        ],
+        "focus": -1,
+        "selected": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "scene": {
+          "expression_ref": "expression:roz-room-02-return-of-zero",
+          "scene_id": "movement-15"
+        },
+        "emphasis": "split",
+        "trail": 1,
+        "generation": 16
+      }
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: the tab strip reads the same",
+      "detail": [
+        {
+          "label": "The Return of Zero",
+          "preview": false,
+          "selected": true
+        },
+        {
+          "label": "Dimensional Reframing at Zero and Infinity",
+          "preview": false,
+          "selected": false
+        },
+        {
+          "label": "M15 · The Empty Set Generates One",
+          "preview": true,
+          "selected": false
+        },
+        {
+          "label": "Room 3 of 8 · §1 — The Return of Zero",
+          "preview": true,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: the emphasis is applied (data-view split)"
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: the reading position is M16",
+      "detail": "M16"
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: M16 is where the reader is looking (anchor within 24px of the top)",
+      "detail": 24
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: the Expression returns at its scene",
+      "detail": "http://127.0.0.1:49736/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+    },
+    {
+      "ok": true,
+      "label": "close and reopen: the explicit pin is still pinned, at its generation",
+      "detail": {
+        "pin2": {
+          "mode": "pin",
+          "pinned": true
+        },
+        "pinned": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Epi off: the generic corpus starts its own encounter, none of the essay's",
+      "detail": {
+        "world": "project:field-walk",
+        "tabs": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "…and a tangent opened there"
+    },
+    {
+      "ok": true,
+      "label": "Epi on again: the essay's encounter is exactly as it was left",
+      "detail": {
+        "world": "project:Antykathera-Essay-Work",
+        "primary": {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+          "span": "M16"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+            "kind": "page",
+            "preview": false
+          },
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+            "kind": "page",
+            "preview": true
+          },
+          {
+            "ref": "expression:roz-room-02-return-of-zero",
+            "kind": "expression",
+            "preview": true,
+            "scene": "movement-15"
+          }
+        ],
+        "focus": -1,
+        "selected": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "scene": {
+          "expression_ref": "expression:roz-room-02-return-of-zero",
+          "scene_id": "movement-15"
+        },
+        "emphasis": "split",
+        "trail": 1,
+        "generation": 18
+      }
+    },
+    {
+      "ok": true,
+      "label": "Epi off again: the corpus's own encounter is exactly as it was left",
+      "detail": {
+        "world": "project:field-walk",
+        "primary": {
+          "ref": "central:source:project:field-walk:README.md",
+          "revision": "central.content-fnv1a64/v1:275:0363b1de7b05dee2"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:field-walk:notes/alpha.md",
+            "kind": "page",
+            "preview": true
+          }
+        ],
+        "focus": 0,
+        "emphasis": "essay",
+        "trail": 0,
+        "generation": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Base → Expressions → Base: the encounter is untouched",
+      "detail": {
+        "world": "project:Antykathera-Essay-Work",
+        "primary": {
+          "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "revision": "sha256:8abc2cc4f0783a670b3b1edb1c932f502146f34effc9e93800344d8d65db78c6",
+          "span": "M16"
+        },
+        "tabs": [
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+            "kind": "page",
+            "preview": false
+          },
+          {
+            "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+            "kind": "page",
+            "preview": true
+          },
+          {
+            "ref": "expression:roz-room-02-return-of-zero",
+            "kind": "expression",
+            "preview": true,
+            "scene": "movement-15"
+          }
+        ],
+        "focus": -1,
+        "selected": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "scene": {
+          "expression_ref": "expression:roz-room-02-return-of-zero",
+          "scene_id": "movement-15"
+        },
+        "emphasis": "split",
+        "trail": 1,
+        "generation": 18
+      }
+    },
+    {
+      "ok": true,
+      "label": "…with its tabs"
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

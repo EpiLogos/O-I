@@ -114,6 +114,8 @@ export interface FieldExpression {
 }
 export interface FieldExpressionIndex { entries: FieldExpression[]; collections: { id: string; label: string; count: number; detail?: string }[] }
 
+export interface NativeSourceFacts { project: string; location: import("../kernel/location").CentralLocation; revision: string; content: string; title: string }
+
 export interface FieldStanding { state: "available" | "partial" | "unavailable"; reason: string; owner: string }
 
 export class FieldStaleRevision extends Error {
@@ -145,6 +147,10 @@ export interface FieldSource {
   searchText?(): Promise<ReadonlyMap<FieldRef, string>>;
   /** A cover image for an Expression card, if the source has one. */
   coverUrl?(entry: FieldExpression): string | undefined;
+  /** The page as a native Central source a constellation can cite: where it lives (the owner's own location), its revision
+   * and text, and the Project whose Wiki would hold the constellation. Undefined when the page is not such a source — a
+   * published edition's pages, for example, are read but not cited from here. */
+  nativeSource?(ref: FieldRef): Promise<NativeSourceFacts | undefined>;
   /** A renderer (an Expression frame) asked to open something by the corpus's own name for it. */
   resolveToken?(token: string): FieldRef | undefined;
   /** Native identity → how the host opens the exact source (editor, history). */

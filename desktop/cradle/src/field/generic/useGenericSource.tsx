@@ -20,9 +20,12 @@ export function useGenericFieldSource(active: boolean): FieldSourceState {
   const projects = kernel.snapshot.navigator?.root?.work.projects ?? [];
   const name = scopeProject(scope) ?? chosen;
   const project = projects.find(p => p.name === name);
+  // the world is `project:{id}` — the Project's own id, which Central discloses as its wiki space (`central:wiki:project:{id}`);
+  // a Project that discloses none is addressed by its directory name, as the ground grammar says
+  const idOf = (p: typeof project) => /^central:wiki:project:(.+)$/.exec(p?.projectcentral?.agent_wiki?.wiki?.space_ref ?? "")?.[1] ?? p?.name;
   const transportKey = JSON.stringify(kernel.transport);
   const source = useMemo(() => (active && project ? createGenericFieldSource({
-    world: `project:${project.name}`, root: project.path, label: project.name, io: kernelIo(kernel.transport),
+    world: `project:${idOf(project)}`, root: project.path, label: project.name, project: project.name, io: kernelIo(kernel.transport),
   }) : null), [active, project?.name, project?.path, transportKey]);        // eslint-disable-line react-hooks/exhaustive-deps
   const [state, setState] = useState<FieldSourceState>({status: "loading"});
   useEffect(() => {

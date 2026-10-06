@@ -90,8 +90,18 @@ export async function withdrawFieldContext(transport: KernelTransportStatus, pro
 export type FieldContextMode = "off" | "follow" | "pin";
 const KEY = "oi-cradle.field.context.mode";
 const read = (): FieldContextMode => { try { const v = typeof window !== "undefined" ? window.localStorage.getItem(KEY) : null; return v === "follow" || v === "pin" ? v : v === "1" ? "follow" : "off"; } catch { return "off"; } };
+const PIN_KEY = "oi-cradle.field.context.pin";
+/** The pinned reading survives a restart with the choice (the owner's prepared item is durable on its own side; this is what the
+ * keeper re-prepares from). A stored reading that does not parse is dropped, and the pin with it. */
+const readPin = (): FieldContextReading | undefined => {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(PIN_KEY) ?? "null");
+    return v && v.schema === "oi.field-context/v1" && typeof v.binding_id === "string" && Number.isSafeInteger(v.generation) && v.primary && typeof v.primary.ref === "string" && Array.isArray(v.roles) ? v as FieldContextReading : undefined;
+  } catch { return undefined; }
+};
 let mode: FieldContextMode = read();
-let pinnedReading: FieldContextReading | undefined;
+let pinnedReading: FieldContextReading | undefined = mode === "pin" ? readPin() : undefined;
+if (mode === "pin" && !pinnedReading) mode = "off";
 const modeListeners = new Set<() => void>();
 export const fieldContextMode = () => mode;
 export const fieldContextPinned = () => pinnedReading;
@@ -99,7 +109,7 @@ export function setFieldContextMode(next: FieldContextMode) {
   mode = next;
   pinnedReading = next === "pin" ? currentFieldContext() : undefined;
   if (next === "pin" && !pinnedReading) mode = "off";
-  try { window.localStorage.setItem(KEY, mode); } catch { /* per-viewer convenience */ }
+  try { window.localStorage.setItem(KEY, mode); if (pinnedReading) window.localStorage.setItem(PIN_KEY, JSON.stringify(pinnedReading)); else window.localStorage.removeItem(PIN_KEY); } catch { /* per-viewer convenience */ }
   for (const l of [...modeListeners]) l();
 }
 export const subscribeFieldContextMode = (l: () => void) => { modeListeners.add(l); return () => { modeListeners.delete(l); }; };

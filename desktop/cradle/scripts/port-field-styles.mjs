@@ -94,6 +94,19 @@ const root = `
 .field-host .field-root.field-root .graph-head { padding-right: max(6px, calc(var(--window-cutout-right, 0px) + 4px)); }
 .field-host .field-root.field-root[data-right='closed'] .rail-right { padding-top: 46px; }
 .field-host .field-root.field-root .field-back { flex: none; margin-left: 4px; }
+/* the gathered constellation (field/Right.tsx, graphView.ts) */
+.field-host .field-root.field-root .gn.is-gathered circle.n { fill-opacity: 1; stroke: var(--gold-hi); stroke-width: 2.2; }
+.field-host .field-root.field-root .gcard__act button.is-g { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.field-host .field-root.field-root .gcons { flex: none; padding: 8px 12px 10px 18px; border-top: 1px solid var(--rule); background: var(--field-bg); }
+.field-host .field-root.field-root .gcons__head { display: flex; align-items: center; gap: 10px; font-size: 0.7rem; color: var(--muted); }
+.field-host .field-root.field-root .gcons__head b { font-size: 0.64rem; letter-spacing: var(--track); text-transform: uppercase; color: var(--gold); }
+.field-host .field-root.field-root .gcons__list { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; padding: 0; list-style: none; max-height: 64px; overflow: auto; }
+.field-host .field-root.field-root .gcons__list li { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 4px 2px 8px; border: 1px solid var(--gold); border-radius: 99px; font-size: 0.7rem; }
+.field-host .field-root.field-root .gcons__list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 16ch; }
+.field-host .field-root.field-root .gcons__list li button { display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; color: var(--faint); }
+.field-host .field-root.field-root .gcons__form { display: grid; gap: 6px; margin-top: 8px; }
+.field-host .field-root.field-root .gcons__form input { height: 28px; padding: 0 9px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); color: var(--ink); font: 500 0.78rem var(--ui); }
+.field-host .field-root.field-root .gcons__err { margin: 0; font-size: 0.72rem; color: var(--c-mytheme); }
 /* the utility bar: scope · modes · companion · settings (field/Utility.tsx) */
 .field-host .field-root.field-root .futil { position: relative; display: flex; align-items: center; gap: 2px; }
 .field-host .field-root.field-root .futil--bar { flex: none; padding: 6px 8px; border-top: 1px solid var(--rule); }
