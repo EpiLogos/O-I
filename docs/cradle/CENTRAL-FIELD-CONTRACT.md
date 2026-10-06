@@ -57,10 +57,10 @@ them in the table below on first run. Candidate: movement of `THE-RETURN-OF-ZERO
 
 | Slot | Value (fill on first run) |
 |---|---|
-| main passage | |
+| main passage | `THE-RETURN-OF-ZERO` at movement M16 (`?m=16`, `section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero`) — the site's own reader test locus |
 | selected relation | |
 | tangent | |
-| Expression + scene | |
+| Expression + scene | `roz-room-02-return-of-zero` (matches `^section-rooms/02-return-of-zero/`); scene fill on first run |
 | companion prepared-turn basis | |
 
 ## 3 — File claims (exclusive; the lead serializes git)
@@ -72,3 +72,10 @@ them in the table below on first run. Candidate: movement of `THE-RETURN-OF-ZERO
 | Sonnet A (#132/#78/#595) | `Work/Actuation` seat `env-1/actuation` (`feat/central-field-actuation`), `env-1/ai-kit` (`feat/central-field-ai-kit`), `desktop/cradle/package-bundle.sh`, `cli/src/{composition,configuration/profile,desktop_install}.rs` | `src/**` |
 
 Anyone needing a file outside their claim asks the lead; nobody commits or pushes — the lead does.
+
+## 4 — Site reference baseline (recorded 6 Oct 2026, lead)
+
+Source basis: `site/` on main `ca603fb4e` (#600), built edition `site/.public-edition/essay` snapshotted to a scratch copy.
+`python3 tests/essay-reader-controls.py` (root and `/O-I` bases; desktop + phone): **229/229 checks passed**, exit 0,
+including 135 Expressions in the gallery and the "Here" narrowing. This is the behavioural reference the native
+candidate is compared against (UX1–UX10); it is not a statement about the native candidate.
