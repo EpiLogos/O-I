@@ -89,6 +89,7 @@ button { font: inherit; color: inherit; }
 @keyframes xp-text-in { from { opacity: 0; } to { opacity: 1; } }
 
 .xp-scenebody { margin: 0 0 22px; }
+.xp-scenebody .xp-sb-italic { font-style: italic; font-size: 17px; line-height: 1.35; }
 .xp-scenebody p { margin: 0 0 10px; font-family: var(--xp-serif); font-size: 15px; line-height: 1.6; color: var(--xp-fg); white-space: pre-line; overflow-wrap: break-word; }
 
 /* scene list */

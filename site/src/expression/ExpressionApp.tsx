@@ -170,9 +170,10 @@ function Stage({ journey, scene, playing, onPlaying, onWidth }: { journey: Journ
   const [touched, setTouched] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
   const [stageWidth, setStageWidth] = useState(900);
+  const [stageHeight, setStageHeight] = useState(600);
   useEffect(() => {
     const node = frame.current; if (!node) return;
-    const measure = () => { const w = Math.round(node.getBoundingClientRect().width) || 900; setStageWidth(w); onWidth(w); };
+    const measure = () => { const r = node.getBoundingClientRect(); const w = Math.round(r.width) || 900; setStageWidth(w); setStageHeight(Math.round(r.height) || 600); onWidth(w); };
     measure();
     const watch = new ResizeObserver(measure); watch.observe(node);
     return () => watch.disconnect();
@@ -252,7 +253,7 @@ function Stage({ journey, scene, playing, onPlaying, onWidth }: { journey: Journ
           onPointerLeave={() => { if (!touching.current) field.current?.pointerOff(); }}
           onKeyDown={onKeyDown}
         />
-        <TextLayer scene={scene} width={stageWidth} />
+        <TextLayer scene={scene} width={stageWidth} height={stageHeight} />
         {!ready && !error && <div className="xp-loading" role="status"><span />Opening the field…</div>}
         {error && (
           <div className="xp-fielderror" role="alert">
@@ -290,25 +291,29 @@ const color = (value: string | undefined) => (/^#[0-9a-f]{6}$/i.test(value ?? ''
 const COMPACT = 640;
 const visibleText = (scene: Scene) => (scene.text ?? []).filter((item) => item && item.visible !== false && (item.kicker || item.title || item.italic || item.body));
 const paragraphsOf = (item: TextItem) => (item.body ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-function TextLayer({ scene, width }: { scene: Scene; width: number }) {
+function TextLayer({ scene, width, height }: { scene: Scene; width: number; height: number }) {
   const items = visibleText(scene);
   if (!items.length) return null;
   const compact = width < COMPACT;
   const ink = color(scene.field?.palette?.[0]);
-  const narrow = width < 520;
+  const scale = Math.min(1, Math.max(width, 320) / 1100, Math.max(height, 240) / 680);
+  const edge = 10;
   return (
     <div className="xp-text" data-testid="editorial" role="group" aria-label="Scene text" style={ink ? ({ ['--xp-ink' as string]: ink } as React.CSSProperties) : undefined}>
       {items.map((item, i) => {
-        const w = Math.round(Math.min(item.width ?? 320, width * (narrow ? 0.78 : width < 900 ? 0.5 : 0.42)));
-        const size = Math.round(clamp((item.size ?? 34) * Math.min(1, Math.max(width, 320) / 1100), 18, item.size ?? 34));
+        const w = Math.max(120, Math.round(Math.min(item.width ?? 320, width * (compact ? 0.8 : width < 900 ? 0.5 : 0.42))));
+        const size = Math.round(clamp((item.size ?? 34) * scale, 17, item.size ?? 34));
         const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
-        const x = clamp(item.x ?? 0.06, 0, 0.96), y = clamp(item.y ?? 0.08, 0, 0.94);
+        const at = clamp(item.x ?? 0.06, 0, 0.96) * width;
+        // the block's own edge stays inside the stage whatever its authored anchor
+        const left = align === 'left' ? clamp(at, edge, Math.max(edge, width - edge - w)) : align === 'center' ? clamp(at - w / 2, edge, Math.max(edge, width - edge - w)) : clamp(at - w, edge, Math.max(edge, width - edge - w));
+        const y = clamp(item.y ?? 0.08, 0, 0.94);
         const paragraphs = compact ? [] : paragraphsOf(item);
         return (
-          <article key={item.id || i} className="xp-item" style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: w, textAlign: align, transform: align === 'center' ? 'translateX(-50%)' : align === 'right' ? 'translateX(-100%)' : undefined }}>
+          <article key={item.id || i} className="xp-item" style={{ left, top: `${y * 100}%`, width: w, textAlign: align }}>
             {item.kicker && <p className="xp-kicker">{item.kicker}</p>}
             {item.title && <h2 className="xp-title" style={{ fontSize: size }}>{item.title}</h2>}
-            {item.italic && <p className="xp-italic" style={{ fontSize: Math.round(size * 0.9) }}>{item.italic}</p>}
+            {!compact && item.italic && <p className="xp-italic" style={{ fontSize: Math.round(size * 0.9) }}>{item.italic}</p>}
             {paragraphs.map((p, j) => <p key={j} className="xp-body">{p}</p>)}
           </article>
         );
@@ -319,9 +324,9 @@ function TextLayer({ scene, width }: { scene: Scene; width: number }) {
 
 /* On a narrow stage the long paragraphs would sit on the glyphs; they move to the column under the field, unchanged. */
 function SceneBody({ scene }: { scene: Scene }) {
-  const blocks = visibleText(scene).flatMap((item) => paragraphsOf(item));
+  const blocks = visibleText(scene).flatMap((item) => [...(item.italic ? [{ italic: true, text: item.italic }] : []), ...paragraphsOf(item).map((text) => ({ italic: false, text }))]);
   if (!blocks.length) return null;
-  return <div className="xp-scenebody" data-testid="scene-body">{blocks.map((p, i) => <p key={i}>{p}</p>)}</div>;
+  return <div className="xp-scenebody" data-testid="scene-body">{blocks.map((block, i) => <p key={i} className={block.italic ? 'xp-sb-italic' : undefined}>{block.text}</p>)}</div>;
 }
 
 function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: string; onSelect: (id: string) => void }) {
