@@ -1,5 +1,8 @@
 # Programme state — Expression enrichment 2026-10
 
+**LANDED TO REVIEW (2026-10-06, post-crash continuation):** O-I PR #603 (`enrich/expressions-convergence` — RoZ 52 members + linter + evidence, gates render 72/72 · essay 20/20 · expressions 4/4) and Point-Cloud-Demo PR #20 (`enrich/s-products-20261006` — S-products 83 members). Defects filed at PCD #6 (comment 6023200620). The NOW clearing is closed; day 2026-10-06 closed. Seats env-1/o-i (this lane) and env-2/point-cloud-demo (S-products lane) stay claimed until the PRs land; release after merge.
+**Follow-up after merge (owner or successor):** move `.github/workflows/site.yml` PCD pin (line ~42) to the merged PCD commit; the tarot-score ride-along awaits its own PR at branch `enrich/tarot-score-312-landing`.
+
 **Owner brief:** 2026-10-06 (committed at Point-Cloud-Demo lane site/essay-live-library-retired-20261006, and driving this programme).
 **NOW clearing:** `central:now:control:root:664e4c586f97ea62f3fe955be0a277d5bb6527231108d74ba66a26e9971f4dab` (task `control:task:expression-enrichment-2026-10-06`).
 **Lane branch (O-I):** `enrich/expressions-20261006` at `~/Central/worktrees/env-1/o-i` (seat env-1/o-i, lead actor `zcode:expression-enrichment-20261006`, zone site/tests; content lanes attach as co-workers with their own family regions).
