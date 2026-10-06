@@ -259,9 +259,9 @@ def interactions(browser):
         essay = page.locator('.sn__reading a[href="./essay/"]')
         expect(essay).to_have_attribute('aria-label', READING_LINKS[0]['accessibleName'])
         page.screenshot(path=str(OUT / 'header-desktop.png'))
-        # The Library keeps its own address even without a home entrance.
-        page.evaluate("location.hash = '/library?published=1'")
-        expect(page.locator('.native-public-library')).to_be_visible()
+        # The site-edition Library keeps its own address even without a home entrance.
+        page.evaluate("location.hash = '/library'")
+        expect(page.locator('.oi-library')).to_be_visible()
         assert not page.evaluate("document.documentElement.classList.contains('lenis')")
         page.go_back()
         expect(page.locator('main')).to_have_attribute('data-page', 'home')

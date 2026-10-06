@@ -2,7 +2,7 @@
 """Real browser / real native GPU checks. No mocked renderer and no H verdict.
 Run from site/ with the production preview on port 4173. Test-only Playwright.
 """
-import json, os, traceback
+import json, os, re, traceback
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect, Error as PlaywrightError
 BASE=os.environ.get('LIBRARY_BASE_URL','http://127.0.0.1:4173/')
@@ -45,10 +45,14 @@ with sync_playwright() as p:
         expect(page.locator('.sec__reading a[href="./essay/"]')).to_have_count(1)
         page.screenshot(path=str(OUT/'home.png'),full_page=True)
         expect(page.locator('a[href^="#/library"]')).to_have_count(0)
-        page.goto(BASE+'#/library?published=1')
-        expect(page.locator('.native-public-library')).to_be_visible()
-        # The site-edition reader has its own exact route; public corpus
-        # navigation does not substitute these separately published editions.
+        # The retired Return-of-Zero shelf addresses continue into the essay
+        # field's Library view (own page: the main page's request log is asserted below).
+        for old in ('#/library?published=1','#/library?published=1&ref=source%3Aexample','#/library?ref=source%3Aexample'):
+            legacy=ctx.new_page();legacy.goto(BASE+old)
+            legacy.wait_for_url(re.compile(r'/essay/\?view=library$'),timeout=30000);legacy.close()
+        legacy=ctx.new_page();legacy.goto(BASE+'explore.html?ref=source%3Aexample')
+        legacy.wait_for_url(re.compile(r'/essay/\?view=library$'),timeout=30000);legacy.close()
+        # The site-edition reader keeps its own exact route.
         page.goto(url());expect(page.locator('.oi-library')).to_be_visible()
     check('retained-home-to-library',home,page)
     def gallery():

@@ -1,7 +1,7 @@
 """Regression of returned browser/visual failures; actual public build + GPU."""
 from io import BytesIO
 from pathlib import Path
-import json, os
+import json, os, re
 from PIL import Image
 from playwright.sync_api import sync_playwright, expect
 BASE=os.environ.get('LIBRARY_BASE_URL','http://127.0.0.1:4173/')
@@ -41,10 +41,10 @@ with sync_playwright() as p:
  expect(page.locator('.sn__reading a[href="./essay/"]')).to_be_visible()
  expect(page.locator('.sec__reading a[href="./essay/"]')).to_have_count(1)
  expect(page.locator('a[href^="#/library"]')).to_have_count(0)
+ # The retired publication shelf's address continues into the essay field's Library view.
  page.goto(BASE+'#/library?published=1')
- expect(page.locator('.native-public-library')).to_be_visible()
- assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
- checks=['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named','Original hero and landing expose the full essay; the published Library keeps its own address']
+ page.wait_for_url(re.compile(r'/essay/\?view=library$'),timeout=30000)
+ checks=['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named','Original hero and landing expose the full essay; the retired shelf address continues into the essay field Library']
  (OUT/'regressions.json').write_text(json.dumps({'passed':len(checks),'failed':0,'checks':checks,'standing':'Controlled browser/pixel evidence, not owner visual acceptance'},indent=2))
  browser.close()
 print('PASS 4 returned-reality regressions')

@@ -319,6 +319,7 @@ export function renderPage(
               <Footer {...componentData} />
             </main>
             <aside class="right sidebar" id="right" aria-label="The field">
+              <div class="rsz" id="rsz" role="separator" aria-orientation="vertical" aria-label="Resize the field panel (drag, or arrow keys; double-click to reset)" tabindex="0"></div>
               <div class="right-inner">
                 {right.map((BodyComponent) => (
                   <BodyComponent {...componentData} />
@@ -332,7 +333,6 @@ export function renderPage(
           </Body>
           <nav class="bottombar" aria-label="Panels">
             <button type="button" data-view="essay" aria-pressed="true"><svg width="18" height="18" aria-hidden="true"><use href="#i-essay" /></svg><span>Essay</span></button>
-            <button type="button" data-view="split" aria-pressed="false"><svg width="18" height="18" aria-hidden="true"><use href="#i-split" /></svg><span>Split</span></button>
             <button type="button" data-view="field" aria-pressed="false"><svg width="18" height="18" aria-hidden="true"><use href="#i-field" /></svg><span>Field</span></button>
             <button type="button" data-view="library" aria-pressed="false"><svg width="18" height="18" aria-hidden="true"><use href="#i-library" /></svg><span>Library</span></button>
             <button type="button" data-act="search"><svg width="18" height="18" aria-hidden="true"><use href="#i-search" /></svg><span>Search</span></button>

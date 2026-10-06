@@ -74,11 +74,8 @@ export const FieldHead = (() => {
     <header class="center-head">
       <button class="ibtn head-browse" data-act="browse-drawer" type="button" aria-label="Browse the essay"><Icon name="tree" size={18} /></button>
       <div class="tabs" id="tabs" role="tablist" aria-label="Open pages"></div>
-      <div class="seg viewseg" role="group" aria-label="View">
-        <button type="button" data-view="essay" aria-pressed="true" title="Essay (1)"><Icon name="essay" size={15} /><span>Essay</span></button>
-        <button type="button" data-view="split" aria-pressed="false" title="Essay and field side by side (2)"><Icon name="split" size={15} /><span>Split</span></button>
-        <button type="button" data-view="field" aria-pressed="false" title="Field (3)"><Icon name="field" size={15} /><span>Field</span></button>
-        <button type="button" data-view="library" aria-pressed="false" title="Library: the Expressions (4)"><Icon name="library" size={15} /><span>Library</span></button>
+      <div class="seg viewseg" role="group" aria-label="Library">
+        <button type="button" data-view="library" aria-pressed="false" title="Library: the Expressions (L)"><Icon name="library" size={15} /><span>Library</span></button>
       </div>
       <button class="ibtn" data-act="theme" type="button" aria-label="Toggle light / dark">
         <span class="t-sun"><Icon name="sun" size={17} /></span>

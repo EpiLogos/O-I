@@ -141,11 +141,13 @@ def render_and_controls(browser, index):
     wait_frames(page)
     check('real member renders: canvas data-rendered=true and data-frames>0', frames(page) > 0, f'frames={frames(page)}')
     check('field is live: frames keep advancing while playing', advances(page, frames(page)))
-    check('header shows the expression title and collection', page.text_content('.xp-head h1') == entry['title'] and entry['group'] in page.text_content('.xp-crumb'), page.text_content('.xp-crumb'))
-    check('standalone mode has the slim bar linking back to the essay and to O:I home',
+    check('one slim head shows the expression title, with no collection crumb above it', page.text_content('.xp-head h1') == entry['title'] and not page.query_selector('.xp-crumb') and not page.query_selector('.xp-bar'))
+    check('standalone head links back to the essay and to O:I home',
           page.get_attribute('.xp-back', 'href') == './essay/' and page.get_attribute('.xp-mark', 'href') == './')
+    check('no metadata block below the expression: no "About" summary, no scene character subtitles',
+          not page.query_selector('.xp-about') and not page.query_selector('.xp-scene-char') and 'About this Expression' not in page.inner_text('.xp-side'))
     buttons = page.locator('.xp-scenes button')
-    check('scene list shows 5 scenes with name and character', buttons.count() == 5 == len(entry['scenes'])
+    check('scene list shows 5 scenes by name', buttons.count() == 5 == len(entry['scenes'])
           and all(entry['scenes'][i]['name'] in buttons.nth(i).inner_text() for i in range(5)))
     check('first scene is current, "Scene 1 of 5"', page.get_attribute('.xp-scenes button >> nth=0', 'aria-current') == 'step' and page.inner_text('[data-testid=count]') == 'Scene 1 of 5')
     first_title = page.inner_text('.xp-text h2')
@@ -185,7 +187,7 @@ def render_and_controls(browser, index):
 
     # the editorial text is plain text: nothing injected as markup
     check('editorial text is rendered as text (no injected elements from journey strings)',
-          page.evaluate("document.querySelectorAll('.xp-text :not(section):not(p):not(h2):not(h3)').length") == 0)
+          page.evaluate("document.querySelectorAll('.xp-text :not(article):not(p):not(h2)').length") == 0)
 
     # camera: buttons and keyboard move the camera; canvas keeps rendering
     f0 = frames(page)
@@ -196,6 +198,7 @@ def render_and_controls(browser, index):
     page.mouse.down(); page.mouse.move(box['x'] + box['width'] / 2 + 60, box['y'] + box['height'] / 2 + 20, steps=6); page.mouse.up()
     page.mouse.wheel(0, -200)
     check('camera controls (buttons, keyboard, drag, wheel) leave the field rendering', advances(page, f0) and not page.query_selector('.xp-fielderror'))
+    interaction(page, box)
 
     # pause / play
     page.click('[data-control=play]')
@@ -231,6 +234,33 @@ def render_and_controls(browser, index):
     page.wait_for_function(f"new URLSearchParams(location.search).get('scene') === '{entry['scenes'][0]['id']}'")
     check('an unknown ?scene= falls back to the first scene, says so, and corrects the address', page.inner_text('[data-testid=count]') == 'Scene 1 of 5' and 'not in this Expression' in page.inner_text('.xp-side'))
     page.context.close()
+
+
+def interaction(page, box):
+    """Pointer interaction is part of the Expression format: touch is the default mode, orbit is the camera."""
+    cx, cy = box['x'] + box['width'] / 2, box['y'] + box['height'] / 2
+    ds = lambda k: page.evaluate(f"document.querySelector('canvas').dataset.{k} || ''")
+    check('the field opens in touch mode (pointer interaction), with the mode control pressed', ds('mode') == 'touch' and page.get_attribute('[data-control=mode]', 'aria-pressed') == 'true')
+    page.mouse.move(cx - 80, cy - 40); page.mouse.move(cx, cy, steps=8)
+    page.wait_for_function("document.querySelector('canvas').dataset.pointer === 'on'")
+    check('moving over the field makes the pointer active in the engine (scene pointer mode applies)', ds('pointer') == 'on')
+    check('the hint names what this scene\'s pointer does, and is gone after the first touch', not page.query_selector('[data-testid=hint]'))
+    b0 = int(ds('bursts') or 0)
+    page.mouse.down(); page.mouse.up()
+    check('pressing sends the scene\'s click effect (pointer-effect command)', int(ds('bursts') or 0) == b0 + 1, f"bursts {b0}->{ds('bursts')}")
+    yaw0 = page.evaluate("0")
+    page.focus('canvas'); b1 = int(ds('bursts') or 0); page.keyboard.press('Space')
+    check('space pulses from the last pointer position (keyboard access to the interaction)', int(ds('bursts') or 0) == b1 + 1)
+    page.mouse.move(box['x'] - 20, box['y'] - 20)
+    page.wait_for_function("document.querySelector('canvas').dataset.pointer === 'off'")
+    check('leaving the field releases the pointer', ds('pointer') == 'off')
+    page.click('[data-control=mode]')
+    check('switching to orbit mode changes the canvas mode and the control state', ds('mode') == 'orbit' and page.get_attribute('[data-control=mode]', 'aria-pressed') == 'false')
+    b2 = int(ds('bursts') or 0); fr = frames(page)
+    page.mouse.move(cx, cy); page.mouse.down(); page.mouse.move(cx + 50, cy + 10, steps=5); page.mouse.up()
+    check('in orbit mode dragging turns the camera and fires no pointer effect', int(ds('bursts') or 0) == b2 and ds('pointer') in ('off', '') and advances(page, fr))
+    page.click('[data-control=mode]')
+    check('and back to touch mode', ds('mode') == 'touch')
 
 
 def reduced_motion(browser):
@@ -295,8 +325,8 @@ def embed_and_layouts(browser):
     for (w, h) in [(460, 640), (1400, 900)]:
         page = make_page(browser, w, h)
         page.goto(url(embed=1, theme='light'), wait_until='load'); wait_frames(page)
-        m = page.evaluate("({sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, bw: document.body.scrollWidth, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, bar: !!document.querySelector('.xp-bar'), mark: !!document.querySelector('.xp-mark'), c: document.querySelector('canvas').getBoundingClientRect().toJSON(), side: document.querySelector('.xp-side').getBoundingClientRect().toJSON(), root: document.querySelector('.xp').getBoundingClientRect().toJSON(), over: [...document.querySelectorAll('.xp *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.className || e.tagName).slice(0, 5)})")
-        check(f'embed {w}x{h}: no site header or monogram', not m['bar'] and not m['mark'])
+        m = page.evaluate("({sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, bw: document.body.scrollWidth, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, bar: !!document.querySelector('.xp-bar'), nav: !!document.querySelector('.xp-nav'), title: getComputedStyle(document.querySelector('.xp-head h1')).display !== 'none', mark: !!document.querySelector('.xp-mark'), c: document.querySelector('canvas').getBoundingClientRect().toJSON(), side: document.querySelector('.xp-side').getBoundingClientRect().toJSON(), root: document.querySelector('.xp').getBoundingClientRect().toJSON(), over: [...document.querySelectorAll('.xp *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.className || e.tagName).slice(0, 5)})")
+        check(f'embed {w}x{h}: no site header or monogram, and no title row above the field', not m['bar'] and not m['mark'] and not m['nav'] and not m['title'])
         check(f'embed {w}x{h}: no horizontal overflow', m['sw'] <= m['cw'] and m['bw'] <= m['cw'] and not m['over'], str(m['over']))
         check(f'embed {w}x{h}: the page fills the frame without scrolling the page itself', abs(m['root']['height'] - h) <= 1 and m['sh'] <= m['ch'], f"root {m['root']['height']:.0f} of {h}")
         check(f'embed {w}x{h}: the field is big enough to read and the text column is reachable', m['c']['width'] >= 300 and m['c']['height'] >= 180 and m['side']['height'] >= 120, f"canvas {m['c']['width']:.0f}x{m['c']['height']:.0f}, text {m['side']['width']:.0f}x{m['side']['height']:.0f}")
@@ -322,7 +352,8 @@ def themes(browser):
     dark = bg(page)
     check('?theme=light is the paper ground and ?theme=dark is the black ground', light == PAPER and dark == BLACK, f'{light} / {dark}')
     page.screenshot(path=str(OUT / 'standalone-dark.png'))
-    check('dark theme sets readable text (light ink on black)', page.evaluate("getComputedStyle(document.querySelector('.xp-text .xp-title')).color") == 'rgb(244, 242, 236)')
+    check('the scene text is set in the scene\'s own ink, legible against the scene ground (not the page theme)', page.evaluate("(() => { const t = getComputedStyle(document.querySelector('.xp-text .xp-title')).color, g = getComputedStyle(document.querySelector('.xp-field')).backgroundColor; return t !== g && t !== 'rgba(0, 0, 0, 0)'; })()"))
+    check('the scene text sits inside the stage, over the field (not in the side column)', page.evaluate("(() => { const t = document.querySelector('.xp-text .xp-item').getBoundingClientRect(), f = document.querySelector('.xp-field').getBoundingClientRect(); return t.left >= f.left - 1 && t.top >= f.top - 1 && !document.querySelector('.xp-side .xp-text'); })()"))
     page.context.close()
 
     page = make_page(browser, color_scheme='dark')
@@ -359,11 +390,11 @@ def themes(browser):
             break
         page.wait_for_timeout(500)
     check('inside a real iframe (460x640) the page renders the field', frame is not None and frame.evaluate("Number(document.querySelector('canvas').dataset.frames) > 0"))
-    check('iframe: light ground, no header, no horizontal overflow', frame.evaluate("getComputedStyle(document.body).backgroundColor") == PAPER and frame.evaluate("!document.querySelector('.xp-bar') && document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
+    check('iframe: light ground, no header, no horizontal overflow', frame.evaluate("getComputedStyle(document.body).backgroundColor") == PAPER and frame.evaluate("!document.querySelector('.xp-nav') && document.documentElement.scrollWidth <= document.documentElement.clientWidth"))
     page.evaluate("document.getElementById('embedded').contentWindow.postMessage({type: 'oi-theme', theme: 'dark'}, location.origin)")
     frame.wait_for_function(f"getComputedStyle(document.body).backgroundColor === '{BLACK}'")
     check("the parent window's oi-theme message switches the embedded page live", True)
-    check('iframe links to the essay target the top window', frame.evaluate("[...document.querySelectorAll('.xp-essay a')].every(a => a.target === '_top')"))
+    check('iframe carries no "In the essay" block (the essay tab around it already is the context)', frame.evaluate("document.querySelectorAll('.xp-essay').length") == 0)
     page.screenshot(path=str(OUT / 'iframe-460x640-dark.png'))
     page.context.close()
 

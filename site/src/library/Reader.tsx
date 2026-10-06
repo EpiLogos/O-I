@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { exactScene, routeHref, safeUrl, type Edition, type Route, type Reading, type NativeScene } from './model.mjs';
-import { canonicalHref } from './publication-model.mjs';
+import { canonicalHref } from './canonical-href.mjs';
 import type { Camera } from './native-player.mjs';
 import { Icon, SourceText, Tool } from './ui';
 const NativeStage=lazy(()=>import('./NativeStage').then(m=>({default:m.NativeStage})));
