@@ -1,0 +1,221 @@
+{
+ "artifact": "matheme/roz-matheme-ql-spanda.journey.json",
+ "family": "matheme",
+ "worker": "E4",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-matheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "fc59a719",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "matheme-primordial-symbolon",
+    "path": "submission-package/essay/symbolon/matheme/ql/primordial-symbolon.md",
+    "sha256": "e19164edd3b98ec15b070e3f35e0cc9f0f45840e1c38427700849474beb36e91"
+   },
+   {
+    "record_id": "matheme-two-ones",
+    "path": "submission-package/essay/symbolon/matheme/ql/two-ones.md",
+    "sha256": "b7f86cd44b011dea7d957ebaf84f1d00262a4d7b17b873240af8a7ee9b3d77dd"
+   },
+   {
+    "record_id": "matheme-slash-and-or",
+    "path": "submission-package/essay/symbolon/matheme/ql/slash-and-or.md",
+    "sha256": "208ceeca0ecc488db19f0cd3129e259a843c8c7a21b7ce6d8e54a8084f1414f4"
+   },
+   {
+    "record_id": "matheme-eight-determinations",
+    "path": "submission-package/essay/symbolon/matheme/ql/eight-determinations.md",
+    "sha256": "d9ec2f1c06eebce1ad5b8168f76fe13b3918ecf222f96721b40ea0a7de0c5ab6"
+   },
+   {
+    "record_id": "matheme-binary-and-binary-of-binary",
+    "path": "submission-package/essay/symbolon/matheme/ql/binary-and-binary-of-binary.md",
+    "sha256": "63d1c09b84eda489ad7e123258c140d05160849525e8766b632da21ac7660dff"
+   },
+   {
+    "record_id": "matheme-crossed-zero-re-entry",
+    "path": "submission-package/essay/symbolon/matheme/ql/crossed-zero-re-entry.md",
+    "sha256": "c042ada9dfbcf2e93e60d35f4aa66dfd4a0bf979d1bcb8b57d3092668ce56013"
+   },
+   {
+    "record_id": "matheme-x-x",
+    "path": "submission-package/essay/symbolon/matheme/ql/x-x.md",
+    "sha256": "9376d8928693aa0e95b9f250d159c421d002276d96609668049d487dcf159ef9"
+   },
+   {
+    "record_id": "matheme-complex-orientation",
+    "path": "submission-package/essay/symbolon/matheme/ql/complex-orientation.md",
+    "sha256": "18a2d56e6de29f44bbd99533cd1e8756d6745e269754d5a94921a430daedec7c"
+   },
+   {
+    "record_id": "matheme-spanda-equations",
+    "path": "submission-package/essay/symbolon/matheme/spanda/spanda-equations.md",
+    "sha256": "3793af502c7aea110674c2c6b554ed9db06c6b06be467e4d64e37e5de98030eb"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "ql-primordial-symbolon",
+   "source_ref": "matheme-primordial-symbolon",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-two-ones",
+   "source_ref": "matheme-two-ones",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-slash-and-or",
+   "source_ref": "matheme-slash-and-or",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-eight-determinations",
+   "source_ref": "matheme-eight-determinations",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-binary-of-binary",
+   "source_ref": "matheme-binary-and-binary-of-binary",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-crossed-zero",
+   "source_ref": "matheme-crossed-zero-re-entry",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-x-x",
+   "source_ref": "matheme-x-x",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "ql-complex-orientation",
+   "source_ref": "matheme-complex-orientation",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "spanda-equations",
+   "source_ref": "matheme-spanda-equations",
+   "claim_status": "derived",
+   "relations": "sources: core spine §I, Binary Explication Process §3′, musical v3, Scholtz; returns-to Movement26, extends Movement29; A11, A12, A18, A05, A15, A36"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "authored token glyphs throughout (QL notation: 0/1, 1/0, −/−, ?/!, −/+, X/x, AM/IS, ∞/dx, Ø, 4+2, 5→0, 9/8, 16/9, (0/1)/(1/0), T² = ℝ²/ℤ², π₁ ≅ ℤ×ℤ, 531441/524288 …)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "concentric mandala plate (ql-eight-determinations) per ql-expression-grammar.md §III",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "crossed-zero recognition sequence as entity step sequence (ql-crossed-zero)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "tetraktys dot diagram (har-tetraktys-triangle, four rows 1·2·3·4)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "fundamental square + torus ring plates (quilt-topology, top-torus-cover-winding)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "matheme/roz-matheme-ql-spanda.cover.png",
+ "status": "authored",
+ "notes": [
+  "Load-bearing plates: ql-eight-determinations is the canonical concentric mandala (centre 0/1; N ?/!, E −/+, W X/x, S AM/IS per the theorem degree table N 0°/E 90°/W 270°/S 180°; ring = #0/#5 envelope; −/− opens above centre, 1/0 at the rim; the mandala as the torus flat projection is carried in the body text as derived warrant). ql-crossed-zero runs the full recognition sequence 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↷ 0/1 as a step sequence. spanda-equations runs both Spanda equations as parallel step sequences (shortened stage tokens; the full equations are carried verbatim in the scene body). The defined/undefined seam of ordinary arithmetic is kept visible on every scene that touches 1/0. Craft: sequenced glyphs need wide entity boxes — the engine rasterises sequenced step text fit-to-box, so narrow boxes shrank equations to mush; boxes sized to the natural string width (this was the main capture-revision loop). Draft captures at reduced count are too sparse to judge thin equation glyphs; all review captures were taken at the authored 62000. ",
+  "Per-scene moves (2026-10-06 enrichment): ql-primordial-symbolon — the 0/1 main runs the five-step derivation with objectState: the obverse face tints blue, the two full sym forms shrink to one field, and the recognition 0/1 = 1/0 arrives gold under an implode click (the return-switch gathers). ql-two-ones — the ordinal ladder grows in size at each successor (∅ → {∅} → {0,1} → S(n) → n as predecessors): succession shown as inclusion; One and All carry matching attract forces. ql-slash-and-or — the main steps to the full sym expression while OR/select carry repel forces and AND/retain attract forces: the two logical offices felt from the touch surface; vortex pointer is the cut itself. ql-eight-determinations — THE 3D PLATE: stations distributed in z around the centre, ∞/dx lifted to z 0.4, volume+dome+perspective; the east station's two-step sequence performs the 01→10 phase-flip as a 180° objectState rotation; low pointer strength keeps it contemplative. ql-binary-of-binary — 0 and 1 attract as generators while the four ordered pairs repel as distinct outcomes; the count caption derives ('2 poles + 4 ordered pairs' → 'six — derived, not imported'), never celebrates. ql-crossed-zero — the locked sequence 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 → 0/1 with objectState operations: the crossing rotates ±45°, the field pair contracts, the return arrives gold; repel pointer with click off — the zero-space cannot be filled from the touch surface. ql-x-x — the worked example moves position between solutions and the restored X/x returns gold: the value is genuine, the variable not used up. ql-complex-orientation — the five steps orbit the ring positions with 90° rotation increments and end gold at 4+3i: rotation as operation, modulus kept (|z|²=25 on the invariant band); vortex click whirls with it. spanda-equations — both equation sequences keep their derivation order; arrival steps (1/1 = 100%, 4+2 · 4:2) tint gold, the ÷4 → 16/9 step swells; implode click gathers the two readings into one sixfold.",
+  "Craft: pointer profiles by meaning — implode where the relation gathers (symbolon recognition, binary count, Spanda), vortex where the record cuts or turns (slash, complex rotation), repel/off at the crossed zero (the zero-space stays unfilled), low-strength attract on the contemplative mandala plate, plain pulse for the two-ones ladder. Automation: dispersion LFOs carry the breathing on symbolon/binary/spanda; turbulence LFOs carry the cut's edge on slash-and-or and crossed-zero; circulation LFO on complex-orientation is the orbit. Durations 12/14 s and transitions 1.5/2.0/2.2 s differ across the journey. All claim-status bands ride the kickers unchanged (E0 grammar).",
+  "What the third dimension means (ql-eight-determinations): the mandala is the torus's flat projection — a derived warrant from the QL-unit record — so the scene lifts the plate into the body it is a projection of: the four stations alternate ±z across the east–west phase-flip axis, the ∞/dx horizon ring floats above the plane at z 0.4, and perspective + round volume make the plate legible as projection rather than picture. The 180° rotation on the east station is the 01→10 flip performed in the axis of depth."
+ ],
+ "description": "The native QL derivation and both Spanda equations: 0/1 ↔ 1/0, 2+2² = 4+2 = 6, the crossed-zero recognition sequence, the concentric mandala plate.",
+ "scene_count": 9,
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-matheme-l1",
+  "lane": "wave1/matheme",
+  "basis_commit": "dbf3b17"
+ },
+ "glyph_rationales": {
+  "#5 ∞/dx": "realisation as the enclosing horizon — exactness never becoming possession; the ring of the plate.",
+  "(0/1)/(1/0)": "the full sym-ballein expression — one relation under the slash AND/OR, both orientations held.",
+  "(0/Ø)/(1/X)": "subject-side and object-side recognition in one field — cancelling identical-looking symbols would erase the relations.",
+  "(1/0)/(0/1)": "the sym expression run from the other end — the same whole, opposite traversal order.",
+  "(16/9)(9/8) = 2": "the remainder completes the return — the totality-ratio needing its whole-tone to reach the octave.",
+  "/": "the differentiating activity itself — division and ratio, AND and OR, the act that makes both positions legible.",
+  "0": "the meta-sign for the non-objectifiable condition — ground, subject-pole, the uncounted; never one more object.",
+  "0 = One": "the native assignment — the unobjectifiable condition as the One from which counting departs.",
+  "0/1": "the ground/mark relation — the earned notation for implication distinguished from what it distinguishes.",
+  "0/1 = 0 · 1/0 undefined": "the defined/undefined seam — retained as formal seam, never used to weaken the matheme.",
+  "0/1 = 1/0": "the QL assertion — two orientations of one relation, the recognition the whole derivation earns.",
+  "00": "ordered pair (0,0) — one of the four ways two digits can relate; first term of 2².",
+  "01": "ordered pair (0,1) — the second ordered relation; order matters, so 01 and 10 are distinct.",
+  "0=(0/0)": "the first Spanda equation opens — zero written as the collapsed slash, the ratio it carries before division.",
+  "1": "whatever has become determinate enough to name, count, model or govern — the mark.",
+  "1 = All": "the native assignment — the determinate whole that counting reaches.",
+  "1 = {∅}": "the von Neumann one — the singleton whose element is the empty set; not empty itself.",
+  "1/0": "the obverse orientation — the break the returning slash meets as 1/0; the inverse phase.",
+  "1/0+0/1": "the two orientations summed as one operation before the standing unity.",
+  "1/1 = 100%": "the standing unity — the whole relation counted, both readings held as one accounting.",
+  "10": "ordered pair (1,0) — the reversed relation; its difference from 01 is the slash order made visible.",
+  "100%": "the second Spanda equation opens from the same standing unity — the accounting in percent dress.",
+  "11": "ordered pair (1,1) — self-relation, the fourth way the two can relate.",
+  "2 = {0,1}": "the von Neumann two — the set of its predecessors; succession as inclusion.",
+  "2 poles + 4 ordered pairs": "the derivation spoken: what a two amounts to once it includes itself.",
+  "2+2²=6=4+2": "the generative count — two poles plus the four ways their relation can be related; not a sacred import.",
+  "2⁶+6²=64+36": "the doubled count — the base ratio 64/36 earned by two symmetric powers.",
+  "3−4i": "the third quarter-turn — same modulus, orientation carried through the rotation group.",
+  "4+2 · 4:2": "the count and the ratio reading of the sixfold — additive body and comparative form.",
+  "4+3i": "the point stated before any transformation — object, then operation, then retained relation.",
+  "64/36": "the base ratio — explicate 64 over implicate 36, before reduction.",
+  "?/!": "definition — every assertion bearing its unsettled question; the first station.",
+  "AM/IS": "context — knower, means and known one appearing-act; the fourth station.",
+  "AND": "the slash logical register, conjunction side — selection that does not erase co-presence.",
+  "OR": "the slash logical register, disjunction side — the cut that selects and excludes.",
+  "S(n)=n∪{n}": "the successor operation — each ordinal containing all its predecessors; the ladder built by one rule.",
+  "T₀: 0/(0/1)": "the first transformation of the Spanda bridge — zero re-entering over the ground/mark relation.",
+  "T₁: (1/0)/0": "the second transformation — the obverse phase over zero; the inverse passage.",
+  "X": "mediation — the same discrimination articulating a world; the crossing that specifies.",
+  "X/x": "specification without exhaustion — an actual value genuine without being the last value the variable can take.",
+  "X/x restored": "the variable after its values — specification survives each determinate solution.",
+  "n={0,…,n−1}": "the ordinal as the set of its predecessors — the counted one holding what its counting distinguished.",
+  "occlusion · mediation · recognition": "the sequence offices named — what each stage of the crossed zero does.",
+  "phase-flip 01→10": "the east–west diameter operation — the count phase-flips as the mandala turns.",
+  "retain": "the AND office felt from the touch surface — conjunction keeps the field of co-presence.",
+  "select": "the OR office felt from the touch surface — the cut that picks and excludes.",
+  "six — derived, not imported": "the guard on the count — six is earned by the derivation, never celebrated as sacred.",
+  "x+2=5 ⇒ x=3": "the first determinate solution — a genuine value the variable bears.",
+  "x+2=7 ⇒ x=5": "a second solution — the variable moves on; neither value exhausts it.",
+  "|z|² = 16+9 = 25": "the retained relation through rotation — the modulus invariant while orientation turns.",
+  "Ø": "the crossed zero — representation crossing a zero-space it cannot fill; occlusion, fusion risk named.",
+  "Ø/X": "the medium recognised as medium — field-availability, no second observer behind the first.",
+  "÷4 → 16/9": "the reduction — the base ratio brought to the doubled fourth.",
+  "−/+": "dynamis — the poles remaining one movement; the east station.",
+  "−/−": "the bare relation and parent operation — where the whole count begins, frame before content.",
+  "−3+4i": "the second quarter-turn — rotation by i, the same point re-oriented.",
+  "−4−3i": "the third quarter-turn — half the circle; the orientation carried exactly.",
+  "0 = ∅": "the empty set — the floor of the ordinals; zero floored, not abolished."
+ }
+}
