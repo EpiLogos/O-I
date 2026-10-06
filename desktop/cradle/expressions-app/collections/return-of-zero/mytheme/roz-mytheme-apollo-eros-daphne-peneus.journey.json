@@ -11,10 +11,10 @@
       "name": "Python, the games, and the boast",
       "character": "The violent achievement joins its public commemoration before the laurel exists; the victor then disputes a boy's right to the bow.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.04,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,13 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.5,
+          "circulation": 0.2,
+          "dispersion": 0.09,
+          "turbulence": 0.15
+        }
       },
       "entities": [
         {
@@ -149,16 +159,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st161",
+                "id": "e149-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#8a9a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e149-sq2",
+                "text": "no laurel yet",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e149-sq3",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#8a9a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -184,9 +257,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.25,
+            "radius": 0.35,
             "spin": 0
           },
           "station": null,
@@ -226,7 +299,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "After the flood the earth brings forth living forms; its fertility also produces Python, a terror to the restored peoples. Apollo kills him with a bow previously used against deer and goats, almost exhausting his quiver, and institutes the Pythian games so time cannot erase the deed — oak leaves for victors, laurel not yet existing. Still proud, Apollo sees Cupid bending his bow and disputes the boy's right to it: his own arrows subdued the monstrous serpent; Cupid should be content to kindle love with a torch. Cupid answers: Apollo's arrows strike other creatures; his can strike Apollo. Ovid names Cupid's anger as the cause of what follows.",
+          "body": "The recovering earth produces what it had not wished to make: Python, a terror across the mountainside. Apollo kills it with a bow used before on deer and goats, and founds the Pythian games so time cannot erase the deed — victors crowned with oak, laurel not yet existing. Proud, he sees Cupid with his bow and claims the weapon's martial office; Cupid answers that his arrows can strike Apollo.",
           "x": 0.04,
           "y": 0.55,
           "width": 620,
@@ -272,11 +345,11 @@
       "id": "m-ovid-1-arrows",
       "name": "Two contrary arrows; Daphne's wish granted",
       "character": "The golden arrow pierces Apollo to the marrow; the leaden arrow drives love from Daphne — and before that blow the record carries her woodland life and her father's granted request.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -285,7 +358,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -296,7 +373,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.55,
+          "circulation": -0.3,
+          "dispersion": 0.08
+        }
       },
       "entities": [
         {
@@ -327,16 +409,64 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st163",
+                "id": "e151-sq1",
                 "text": "→",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.3,
+                  "y": 0.15,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.18,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e151-sq2",
+                "text": "→",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.05,
+                  "y": 0.05,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -369,16 +499,64 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st164",
+                "id": "e152-sq1",
                 "text": "→",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.3,
+                  "y": 0.2,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.18,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e152-sq2",
+                "text": "→",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.08,
+                  "y": 0.1,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#5a6268",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -495,16 +673,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st167",
+                "id": "e155-sq1",
                 "text": "",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#4b6b8a",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e155-sq2",
+                "text": "granted",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#8ab0c9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -525,29 +743,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "From Parnassus Cupid takes two arrows with contrary effects: one golden and sharply pointed, exciting love; one leaden and blunt, driving love away. He strikes Daphne with the latter and pierces Apollo to the marrow. The poem then gives Daphne a life this desire will interrupt: secluded woodland, hunted spoils, the example of unmarried Phoebe; many suitors refused. Peneus",
+          "body": "Cupid takes two arrows with contrary effects: one golden and pointed, exciting love; one leaden and blunt, driving it away. He strikes Daphne with the latter and pierces Apollo to the marrow with the former. Daphne's woodland life is established — suitors refused, Phoebe her model — and she asks Peneus for perpetual virginity. He yields. Reducing her to the arrow's negative charge would discard her activity and her address.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "reminds her she owes him a son-in-law; she puts her arms around his neck and asks for perpetual virginity, invoking Diana's granted precedent. Peneus yields. The order matters: her wishes are established before Apollo projects marriage onto her, and reducing her to the arrow's negative charge would discard her activity, her preferred world and her address to her father.\n\nOccurrences: the two arrows and their strokes (#1); Phoebe/Diana as model and precedent (#1); Peneus' yielded permission (#1, recalled at #3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the two arrows and their strokes (#1); Phoebe/Diana as model and precedent (#1); Peneus' yielded permission (#1, recalled at #3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -576,12 +794,12 @@
       "id": "m-ovid-2-pursuit",
       "name": "The pursuit: speech fails, speed decides",
       "character": "The god who assigned Cupid the torch now burns within that office; his healing cannot cure its master; the hound and hare specify their different aims.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.8,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.12,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -589,7 +807,14 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.55,
+        "pointerClickRadius": 0.35,
+        "volumeEnabled": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0d120c"
       },
       "field": {
         "background": "#f6f1e6",
@@ -601,8 +826,12 @@
         ],
         "material": "round",
         "params": {
-          "speed": 0.85,
-          "dispersion": 0.1
+          "speed": 0.65,
+          "dispersion": 0.12,
+          "pointerStrength": 0.55,
+          "circulation": -0.2,
+          "zConfinement": 0.65,
+          "turbulence": 0.2
         }
       },
       "entities": [
@@ -613,7 +842,7 @@
           "position": {
             "x": -0.4,
             "y": -0.09,
-            "z": 0
+            "z": 0.45
           },
           "size": {
             "x": 0.425,
@@ -655,7 +884,7 @@
           "position": {
             "x": 0.42,
             "y": 0.05,
-            "z": 0
+            "z": 0.05
           },
           "size": {
             "x": 0.5,
@@ -676,16 +905,91 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st169",
+                "id": "e157-sq1",
                 "text": "Daphne",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.2,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.3,
+                  "y": 0.0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#8a9a52",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e157-sq2",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.1,
+                  "y": 0.12,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#a5b078",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e157-sq3",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.45,
+                  "y": -0.08,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.11
+                  },
+                  "rotation": 0,
+                  "tint": "#c9b892",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -697,7 +1001,7 @@
           "position": {
             "x": 0,
             "y": 0.04,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.125,
@@ -739,7 +1043,7 @@
           "position": {
             "x": -0.05,
             "y": -0.5,
-            "z": 0
+            "z": -0.45
           },
           "size": {
             "x": 0.22,
@@ -781,7 +1085,7 @@
           "position": {
             "x": 0.66,
             "y": -0.42,
-            "z": 0
+            "z": -0.2
           },
           "size": {
             "x": 0.3,
@@ -832,29 +1136,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Apollo sees Daphne, desires marriage, hopes — and his own prophetic powers mislead him about that hope. Ovid's fire similes: stubble after harvest, a hedge set alight by a traveller's torch. His attention makes a beloved image from features — hair imagined better arranged, what is hidden imagined more beautiful still. She runs. He calls that he is no enemy: lambs flee wolves, deer lions, doves eagles; he fears she will fall or be scratched; she should",
+          "body": "Apollo sees Daphne, desires marriage, hopes — his own prophecy misleads him. She runs; he calls that he is no enemy and proposes she run more slowly so he can pursue more slowly — the pace changes, the pursuit stays. He offers his identity, Delphi to Patara, and concedes his healing cannot cure its master. The hound seeks prey; the hare seeks safety.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "run more slowly so he can pursue more slowly. He offers his identity — Delphi, Claros, Tenedos, Patara; Jupiter's son; prophecy, song, accurate archery, healing herbs — and meets the limit that another arrow has wounded him more surely than his art can cure. She leaves the speech unfinished; even her flight increases her attraction. The hound and hare simile: he runs on hope, she on fear; his breath reaches her hair, denying her exhausted body its rest.\n\nOccurrences: the burning similes (#2); the imagined arranged hair (#2); the slower-pursuit proposal (#2, compared at A31); the failed self-cure (#2); breath at her hair and neck (#2).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the burning similes (#2); the imagined arranged hair (#2); the slower-pursuit proposal (#2, compared at A31); the failed self-cure (#2); breath at her hair and neck (#2).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -877,17 +1181,33 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-chase",
+          "target": "field.params.speed",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.12,
+          "max": 0.12,
+          "rate": 0.25,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ovid-3-tree",
       "name": "The transformation — and the wood that shrank",
       "character": "Bark encloses, hair becomes foliage, feet fasten into roots; the heart still beats under the fresh bark. Miller at 1.556: \"But even the wood shrank from his kisses.\"",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -896,7 +1216,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -907,7 +1231,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.5,
+          "speed": 0.3,
+          "circulation": 0.15,
+          "dispersion": 0.04
+        }
       },
       "entities": [
         {
@@ -944,7 +1273,7 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "st174",
+                "id": "e161-sq1",
                 "text": "Daphne",
                 "shape": "text",
                 "hold": 2.4,
@@ -952,11 +1281,11 @@
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.307,
-                    "y": 0.111
+                    "x": 0.3,
+                    "y": 0.13
                   },
                   "rotation": 0,
-                  "tint": "#3f5a36",
+                  "tint": "#8a9a52",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -967,42 +1296,42 @@
                 }
               },
               {
-                "id": "st175",
-                "text": "",
-                "shape": "triangle",
+                "id": "e161-sq2",
+                "text": "bark→branches",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#6a5a3a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e161-sq3",
+                "text": "laurel",
+                "shape": "text",
                 "hold": 2.8,
                 "transition": 1.6,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.307,
-                    "y": 0.614
+                    "x": 0.3,
+                    "y": 0.13
                   },
                   "rotation": 0,
-                  "tint": "#3f5a36",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st176",
-                "text": "Daphne",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.307,
-                    "y": 0.111
-                  },
-                  "rotation": 0,
-                  "tint": "#3f5a36",
+                  "tint": "#4b6b3a",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -1043,16 +1372,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st177",
+                "id": "e162-sq1",
                 "text": "♡",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 1.6,
+                "transition": 0.9,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e162-sq2",
+                "text": "♡",
+                "shape": "text",
+                "hold": 1.4,
+                "transition": 0.9,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.17,
+                    "y": 0.17
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a3a",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e162-sq3",
+                "text": "♡",
+                "shape": "text",
+                "hold": 1.6,
+                "transition": 0.9,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1199,29 +1591,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Her strength spent, Daphne sees Peneus's waters and calls on her father: destroy the beauty through which she has pleased too much. Transformation answers bodily: heaviness seizes her limbs; bark encloses her soft body; hair becomes foliage; arms become branches; feet that had just run so quickly fasten into sluggish roots; a crown of leaves takes the",
+          "body": "Her strength spent, Daphne sees Peneus's waters and calls on her father: destroy the beauty that has pleased too much. Transformation answers bodily — bark encloses her, a leaf-crown replaces her head, her radiance remaining. Apollo feels a heart beating under the fresh bark and kisses the tree; even the wood shrank from his kisses. The transformation frustrates the pursuit at the cost of her former mode of life.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "place of her head, her radiance remaining in the changed form. Apollo still loves her: his hand against the trunk feels a heart beating under the fresh bark; he embraces the branches as limbs and kisses the tree. Miller's sentence is exact at 1.556: \"But even the wood shrank from his kisses.\" The changed form still gives resistance a bodily expression.\n\nOccurrences: the addressed appeal to Peneus (#1, #3); bark, foliage, branches, roots, leaf-crown (#3); the beating heart (#3); the shrinking wood (#3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the addressed appeal to Peneus (#1, #3); bark, foliage, branches, roots, leaf-crown (#3); the beating heart (#3); the shrinking wood (#3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -1251,10 +1643,10 @@
       "name": "The laurel's public office",
       "character": "\"Since Daphne cannot be his bride, she will be his tree.\" Laurel joins hair, lyre, quiver, triumphs, and Augustus's doorposts; the branches incline and the summit seems to nod in assent.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1263,7 +1655,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -1274,7 +1670,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.45,
+          "circulation": 0.3,
+          "dispersion": 0.06
+        }
       },
       "entities": [
         {
@@ -1305,16 +1706,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st181",
+                "id": "e166-sq1",
                 "text": "",
                 "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#4b6b3a",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e166-sq2",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.36
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1431,16 +1872,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st184",
+                "id": "e169-sq1",
                 "text": "↘",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#5a6268",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e169-sq2",
+                "text": "↘",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1461,35 +1942,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Apollo declares what the tree will become for him: since Daphne cannot be his bride, she will be his tree. Laurel will belong to his hair, lyre and quiver; it will accompany Roman generals through triumph, guard Augustus's doorposts flanking the civic oak, and keep perpetual green in correspondence with his unshorn youth. The offices he named during the chase acquire a permanent emblem from",
+          "body": "Apollo declares what the tree will become: since Daphne cannot be his bride, she will be his tree — laurel for his hair, lyre and quiver. Laurel will accompany triumphs and the Capitol's processions and guard Augustus's doorposts. Ovid ends with the laurel inclining its branches, its summit seeming to nod in assent — following the recoil, neither moment cancelling the other.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "the body that escaped them. Ovid ends with a further movement: the laurel inclines its new branches, its leafy summit seeming to nod like a head in assent. This follows the recoil; neither moment cancels the other — the final seeming assent belongs to the narrator's presentation of a changed body's motion, and it gives the ending a difficulty that disappears only if the last lines are cut away.\n\nOccurrences: the bride/tree declaration (#4); lyre, quiver, triumphs, Capitol, doorposts (#4); the nod after the recoil (#3, #4).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the bride/tree declaration (#4); lyre, quiver, triumphs, Capitol, doorposts (#4); the nod after the recoil (#3, #4).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1512,11 +1993,11 @@
       "id": "m-ovid-5-return",
       "name": "Appropriation after withdrawal",
       "character": "The image remains powerful where the hoped-for encounter failed. A20: cultural efficacy cannot by itself establish the image's fidelity to what it represents.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1525,7 +2006,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.2,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -1536,7 +2021,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.2,
+          "speed": 0.35,
+          "circulation": 0.2,
+          "dispersion": 0.06
+        }
       },
       "entities": [
         {
@@ -1609,16 +2099,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st186",
+                "id": "e171-sq1",
                 "text": "♡",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.18,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a3a",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e171-sq2",
+                "text": "♡",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1651,16 +2181,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st187",
+                "id": "e172-sq1",
                 "text": "A20",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e172-sq2",
+                "text": "valuation→possession",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.11
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e172-sq3",
+                "text": "A20",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1723,35 +2316,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The authored interpretation begins from the complete sequence: Apollo figures measure, illumination, delineation and communicable form, and his pursuit shows those capacities gathered around an image which begins to dictate the terms on which its living source is admitted (human-amplified: yes, from the ratified whole seam). Cupid's retaliation exposes the archer as susceptible to a power he dismissed; the opposed charges are the fallen accounting of two ones in Draft 3's authored reading (human-amplified: yes), without identifying this retaliatory Cupid with the full native",
+          "body": "The authored interpretation: Apollo figures competent distinction become possession — his pursuit gathers measure, illumination and form around an image that begins to dictate terms to its living source. Appropriation can persist after withdrawal: the changed form becomes his tree and public honour while the telling keeps heart, recoil and seeming nod. A20 carries the seam; A27 — another can appear in my world without becoming mine to complete.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "office of Eros. The laurel's afterlife figures the exact further operation: appropriation after withdrawal (human-amplified: yes). \"Withdrawal\" names the loss of availability in the form pursued — it does not deny the heart, recoil or seeming nod; \"appropriation\" names the judgment of the transition into emblem. A20 receives: cultural efficacy cannot establish the image's fidelity; A27: another can appear in my world without becoming mine to complete. Reading the honoured leaf with pursuit, exhaustion, heart and recoil retains the sign's costs (A35 comparison, human-amplified: no).\n\nDeclared cross-story: Daphne ↔ the Apollo/Dionysus bracket (movement 35 keeps its own philosophical relation; no resolution is imported); laurel's honours vs the narrative origin (A29 comparison, human-amplified: no). ↳ Occurrences: heart and recoil inside the public sign (#3–#5→0); the emblem's Roman future (#4, #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: heart and recoil inside the public sign (#3–#5→0); the emblem's Roman future (#4, #5→0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1771,5 +2364,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T00:00:00.000Z"
 }
