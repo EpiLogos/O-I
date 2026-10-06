@@ -6,7 +6,7 @@
 import {useEffect, useMemo, useState, type ReactNode} from "react";
 import type {CorpusIndex} from "./corpusIndex";
 import type {FieldSource} from "./source";
-import {createEssayFieldSource, rememberEssayEdition, resolveEssayEdition} from "./epi/essaySource";
+import {createEssayFieldSource, rememberEssayEdition, resolveEssayEditionAsync, type EssayEdition} from "./epi/essaySource";
 import {useGenericFieldSource} from "./generic/useGenericSource";
 
 export type FieldSourceState =
@@ -27,14 +27,32 @@ function EditionSetup() {
   );
 }
 
+type EditionAnswer = { status: "pending" } | { status: "edition"; edition: EssayEdition } | { status: "unavailable"; reason: string; state: string };
+
 export function useFieldSource(epi: boolean): FieldSourceState {
-  const edition = epi ? resolveEssayEdition() : undefined;
+  // The edition is a configured one (override, saved address, build setting) or, failing those, the installed World package asked of the kernel.
+  const [answer, setAnswer] = useState<EditionAnswer>({status: "pending"});
+  useEffect(() => {
+    if (!epi) return;
+    let live = true;
+    setAnswer({status: "pending"});
+    resolveEssayEditionAsync().then(
+      resolved => live && setAnswer("unavailable" in resolved ? {status: "unavailable", reason: resolved.unavailable, state: resolved.state} : {status: "edition", edition: resolved}),
+      error => live && setAnswer({status: "unavailable", reason: error instanceof Error ? error.message : String(error), state: "unreachable"}));
+    return () => { live = false; };
+  }, [epi]);
+  const edition = answer.status === "edition" ? answer.edition : undefined;
   const essay = useMemo(() => (edition ? createEssayFieldSource(edition) : null), [edition?.baseUrl]);   // eslint-disable-line react-hooks/exhaustive-deps
   const generic = useGenericFieldSource(!epi);
   const [state, setState] = useState<FieldSourceState>({status: "loading"});
   useEffect(() => {
     if (!epi) return;
-    if (!essay) { setState({status: "unavailable", title: "No essay edition is linked", reason: "The Epi-Logos world reads the published essay edition. None is configured for this app yet — nothing is assumed.", setup: <EditionSetup/>}); return; }
+    if (answer.status === "pending") { setState({status: "loading"}); return; }
+    if (!essay) {
+      const absent = answer.status === "unavailable" ? answer : { reason: "The Epi-Logos world reads the published essay edition. None is configured for this app yet — nothing is assumed." };
+      setState({status: "unavailable", title: "No essay edition is linked", reason: absent.reason, setup: <EditionSetup/>});
+      return;
+    }
     let live = true;
     setState({status: "loading"});
     essay.standing().then(async standing => {
@@ -44,6 +62,6 @@ export function useFieldSource(epi: boolean): FieldSourceState {
       if (live) setState({status: "ready", source: essay, index});
     }, error => live && setState({status: "unavailable", title: "The essay edition could not be read", reason: error instanceof Error ? error.message : String(error), setup: <EditionSetup/>}));
     return () => { live = false; };
-  }, [epi, essay]);
+  }, [epi, essay, answer.status]);
   return epi ? state : generic;
 }

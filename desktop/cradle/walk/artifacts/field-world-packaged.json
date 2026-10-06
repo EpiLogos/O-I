@@ -1,0 +1,101 @@
+{
+  "scenario": "field-world-packaged",
+  "spec_ref": "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §5 (the TypeScript contract for the Epi adapter)",
+  "grade": "B",
+  "at": "2026-10-06T22:34:52.472Z",
+  "worlds_root": "/private/tmp/claude-501/-Users-admin-Central/2514abd5-9547-470b-8a8f-6b465a1f2645/scratchpad/worlds-root6",
+  "installed": {
+    "world_requests": 6,
+    "sample": [
+      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/quartz-source.json",
+      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/expressions/index.json",
+      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/static/fieldIndex.json",
+      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/index.html",
+      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/THE-RETURN-OF-ZERO.html",
+      "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/static/contentIndex.json"
+    ],
+    "primary": {
+      "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+      "revision": "sha256:4e74af22751f4ebd33ff5a02ae1e64ffb793f5926c804bd171a629636f9ceca6",
+      "span": "M16"
+    }
+  },
+  "absent": {
+    "reason": "The Return-of-Zero World is absent: no World epi-logos/confronting-the-limit is installed under /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-worlds-empty-BTwhqY"
+  },
+  "passed": true,
+  "counts": {
+    "passed": 10,
+    "total": 10
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "no edition address is configured anywhere in the page (no override, nothing saved)",
+      "detail": {
+        "edition_override": null,
+        "saved": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "the field stands at M16 of the essay, addressed by the World's native refs",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "every edition request went to the bridge's /world/ route and was served",
+      "detail": {
+        "requests": 6,
+        "statuses": [
+          200
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "the structure index and a page were read through it",
+      "detail": [
+        "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/quartz-source.json",
+        "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/expressions/index.json",
+        "/world/epi-logos%2Fconfronting-the-limit/8d7429bc99dada27/edition/static/fieldIndex.json"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "nothing was requested from any other host (no edition server exists)",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "the passage's text is on screen",
+      "detail": {
+        "chars": 1606707
+      }
+    },
+    {
+      "ok": true,
+      "label": "the kernel was asked (world_resolve) over the bridge",
+      "detail": {
+        "op_requests": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "an empty worlds root: the field names the absence and its reason (no fallback host)",
+      "detail": "The Return-of-Zero World is absent: no World epi-logos/confronting-the-limit is installed under /var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-worlds-empty-BTwhqY"
+    },
+    {
+      "ok": true,
+      "label": "no edition file was requested when none is installed"
+    }
+  ]
+}
