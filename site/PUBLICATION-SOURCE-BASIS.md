@@ -1,5 +1,10 @@
 # Selected source and publication boundary — 2026-09-19
 
+> **Retired 2026-10-06 — superseded by the essay field's Expression layer (`site/ESSAY-FIELD-LAYOUT-2026-10-05.md`).**
+> The Return-of-Zero publication shelf this document describes (`build-return-of-zero-publications.mjs`,
+> `build-publications.mjs`, `verify-public-edition.mjs`, `PublicLibrary.tsx`, the `#/library?published=1` route and its tests)
+> has been removed. The old addresses continue into the essay field's Library view (`./essay/?view=library`). Kept as history; do not follow its commands.
+
 Continuation of #65 / #220 / PR #400. This supplements, and does not overwrite,
 the historical site or native-owner receipts. No C0–C5, DAY/NOW or native matrix
 standing is promoted by a website build.

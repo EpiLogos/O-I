@@ -3,8 +3,6 @@ dist/
 evidence/
 public/data/library/
 .public-edition/
-.publication-staging/
-.public-excerpt-inputs/
 .essay-source/
 public/essay-shell/
 *.tsbuildinfo

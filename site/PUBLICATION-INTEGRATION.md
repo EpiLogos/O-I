@@ -1,5 +1,10 @@
 # Public Library receiving integration — 2026-09-20
 
+> **Retired 2026-10-06 — superseded by the essay field's Expression layer (`site/ESSAY-FIELD-LAYOUT-2026-10-05.md`).**
+> The Return-of-Zero publication shelf this document describes (`build-return-of-zero-publications.mjs`,
+> `build-publications.mjs`, `verify-public-edition.mjs`, `PublicLibrary.tsx`, the `#/library?published=1` route and its tests)
+> has been removed. The old addresses continue into the essay field's Library view (`./essay/?view=library`). Kept as history; do not follow its commands.
+
 Owner: O:I #65 / #220, W8 coordination #375; receiving PR #417 on
 `site/publication-receiver-20260920`. This updates the existing site Wayfinder,
 not the programme or native acceptance gates. The 19 September receipt remains

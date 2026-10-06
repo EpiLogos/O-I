@@ -18,12 +18,14 @@ The public entries are:
 ```text
 index.html          the home above (shell.html renders the same shell)
 essay/              the published essay field (Quartz build of the essay)
-library.html        read-only Expressions Library (explore.html is a copy of it)
+library.html        read-only site-edition Library: the O:I product and research accounts
+                    (explore.html is a copy of it; retired publication addresses — #/library?published=1,
+                    ?ref=… — continue into ./essay/?view=library)
 oi.html, products.html, shared-field.html, research.html, build.html
                     compatibility addresses; each opens its account inside the Library
 ```
 
-Explore remains a distinct application surface and is not authored by the public prose document below.
+Explore remains a distinct application surface and is not authored by the public prose document below. The Return-of-Zero Expressions live in the essay field's Library view (`./essay/?view=library`); the old publication shelf was retired on 2026-10-06.
 
 ## Human-editable public content
 
