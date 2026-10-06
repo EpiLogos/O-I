@@ -22,9 +22,7 @@ function sameState(a, b) {
 }
 
 const EVENT_OPERATIONS = ['m1-advance', 'replace-event'];
-const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal',
-  'score-resolve', 'score-state'];
-const SCORE_OPERATIONS = ['score-resolve', 'score-state'];
+const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal'];
 
 export class InstrumentSession {
   #context; #owner; #port; #field; #audio; #native; #instance; #sequence;
@@ -152,7 +150,7 @@ export class InstrumentSession {
       this.#native = withoutAudio(frame);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
-      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, score: reply.score };
+      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -253,25 +251,6 @@ export class InstrumentSession {
     try {
       const reply = await this.#exchange({ operation: 'influence' });
       need(!reply.refused, String(reply.error)); this.#influence = structuredClone(reply.influence); return reply.influence;
-    } finally { this.#busy = false; }
-  }
-
-  /** The selected subject's deterministic Tarot score reading (`ql.tarot-score/v1`),
-   * held by the scene owner: `score-resolve` resolves an admitted basis once and
-   * holds it, `score-state` answers the held score with its currentness — never a
-   * re-derivation. Both are reads: the field does not advance. A refusal is the
-   * score owner's own named basis admission ("no anchor basis…", a foreign
-   * subject); it comes back as named data and the session stands unchanged. */
-  async score(command) {
-    need(SCORE_OPERATIONS.includes(command?.operation), 'the Tarot score operations are score-resolve and score-state');
-    need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
-    try {
-      const reply = await this.#exchange(command);
-      if (reply.refused) return { refused: true, error: String(reply.error ?? 'native command refused') };
-      need(reply.score && typeof reply.score === 'object' && reply.score.schema === 'ql.tarot-score/v1',
-        'the score acknowledgement carries no ql.tarot-score/v1 reading');
-      return { refused: false, score: structuredClone(reply.score), current: reply.current === true,
-        resolved_event_ref: String(reply.resolved_event_ref ?? '') };
     } finally { this.#busy = false; }
   }
 
