@@ -43,7 +43,7 @@
 
 1. **Binding provenance normalisation (at convergence, scripted):** bindings now carry `source_revision.commit: fc59a719` while `source_revision.records[]` keeps dbf3b17-era paths/hashes (the enrichment does not re-bind). To make the records resolvable at the recorded revision without a re-bind, the normalisation sets `source_revision.commit` back to dbf3b17 (where every recorded hash is true) and records the reading revision as `enrichment.read_revision: fc59a719` (plus each lane's existing enrichment notes about moved/deleted records). The critic's `resolved_path` alternative stays open to the owner.
 2. **Linter rationale check tightened** (a61a36775): exact `glyph_rationales` keys or glyph-initial note lines; incidental prose mentions no longer satisfy. All enriched families pass on exact keys; the newly-failing are the not-yet-enriched members.
-3. Episteme verdicts: 6 PASS, 2 REJECT (concepts-2 standing-glyph rationales; etymologies arbitration claim-vs-carrier) — revision dispatched to the lane.
+3. Episteme: COMPLETE through the office — 8/8 PASS (the two rejects revised in 586dcfade and re-checked PASS in d66492688; the c48 `0/1` rationale verified as C48's own sentence at fc59a719 §0 line 15; the six arbitration relations staged verbatim with per-section rationales).
 
 ## Convergence (parent)
 
