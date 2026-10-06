@@ -81,6 +81,16 @@ export function fieldContextReading(entry: FieldHostEntry | undefined = activeFi
 }
 export type FieldContextReading = NonNullable<ReturnType<typeof fieldContextReading>>;
 
+/** The same reading, referentially stable while nothing changed (for `useSyncExternalStore` and memoised frames). */
+let cached: { key: string; value: FieldContextReading | undefined } = { key: "∅", value: undefined };
+export function currentFieldContext(): FieldContextReading | undefined {
+  const e = activeField();
+  if (!e) { if (cached.key !== "∅") cached = { key: "∅", value: undefined }; return cached.value; }
+  const s = e.state(), key = `${e.binding_id}#${s.generation}`;
+  if (cached.key !== key) cached = { key, value: fieldContextReading(e) };
+  return cached.value;
+}
+
 /** The same reading as the short lines a person sees under "Present" and an agent is handed — no prose of its own. */
 export function fieldContextLines(r: FieldContextReading): string[] {
   const t = (x: { ref: string; title?: string }) => (x.title ? `${x.title} (${x.ref})` : x.ref);

@@ -14,6 +14,9 @@
 import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import type {SurfaceBinding} from "../surface/types";
 import {useEpiLens} from "../workspace/lens";
+import {useKernel} from "../kernel/KernelProvider";
+import {viaTransport} from "../expression/world";
+import {createWorldSync, type DescribedRef, type WorldSync} from "./worldSync";
 import "./field.css";
 import {FieldIcons, Icon} from "./icons";
 import {locusRef} from "./filterModel";
@@ -119,11 +122,54 @@ function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding;
   }, [source]);
   const viewRef = useRef(binding.view); viewRef.current = binding.view;
   const persist = useCallback((value: FieldBindingView) => { onView?.({...(viewRef.current ?? {}), field: value}); }, [onView]);
+  // ── the shared world seam (worldSync.ts): selection and tangents ARE the kernel's selection and portal operations ──
+  const kernel = useKernel();
+  const syncRef = useRef<WorldSync | null>(null);
+  const quietUntil = useRef(0), inflight = useRef(0);
   const ctl = useFieldController({
     bindingId: binding.id, world_ref: world, index, stored: binding.view?.field, persist, onEffect,
+    onChange: (prev, next, op, meta) => {
+      const sync = syncRef.current; if (!sync || meta.remote) return;
+      inflight.current++;
+      void sync.mirror(prev, next, op, meta.origin).finally(() => { inflight.current--; quietUntil.current = performance.now() + 700; });
+    },
     describe: ref => { const n = index.node(ref); if (n) return {title: n.title, revision: n.revision}; const e = expressionsRef.current.get(ref); return e ? {title: e.title} : undefined; },
   });
   const {state, view, apply, patchView} = ctl;
+  const describeRef = useCallback((ref: FieldRef): DescribedRef | undefined => {
+    const n = index.node(ref);
+    if (n) return {title: n.title, revision: n.revision, owner: "Central", kind: "source", page: true};   // a corpus page is a Central source ref; its owner is never the field
+    const e = expressionsRef.current.get(ref);
+    return e ? {title: e.title, owner: "Expressions", kind: "expression", page: false} : undefined;
+  }, [index]);
+  const transportKey = JSON.stringify(kernel.transport);
+  useEffect(() => {
+    if (kernel.transport.kind === "unavailable") { syncRef.current = null; return; }
+    const sync = createWorldSync(viaTransport(kernel.transport), {binding: binding.id, actor: `field:${binding.id}`, describe: describeRef});
+    syncRef.current = sync;
+    let disposed = false, pulling = false;
+    // restored tangents are (re)registered with the kernel: portal records do not outlive a restart
+    const st = ctl.stateRef.current;
+    if (st.tabs.length || st.selected) void sync.mirror({...st, tabs: [], selected: undefined}, st, {op: "focus", tab: st.focus});
+    const pull = async () => {
+      if (disposed || pulling || inflight.current > 0 || performance.now() < quietUntil.current) return;
+      pulling = true;
+      try {
+        const {ops, adopt} = await sync.inbound(ctl.stateRef.current);
+        if (disposed || inflight.current > 0) return;
+        for (const op of ops) ctl.apply(op, {remote: true});                // projections of the kernel's records: never echoed back
+        sync.bind(ctl.stateRef.current, adopt);
+      } catch { /* the kernel is momentarily unreachable: the field keeps what it shows */ }
+      finally { pulling = false; }
+    };
+    void pull();
+    const timer = window.setInterval(pull, 1500);
+    (window as unknown as {__oiFieldPull?: () => Promise<void>}).__oiFieldPull = pull;
+    return () => { disposed = true; window.clearInterval(timer); if (syncRef.current === sync) syncRef.current = null; };
+  }, [transportKey, binding.id, describeRef]);                                // eslint-disable-line react-hooks/exhaustive-deps
+  // the kernel's own events (a selection_set elsewhere moves the one global focus) are the prompt to read again
+  const kfocus = JSON.stringify(kernel.snapshot.focus), ksurfaces = Object.keys(kernel.snapshot.surfaces).length;
+  useEffect(() => { const t = window.setTimeout(() => (window as unknown as {__oiFieldPull?: () => Promise<void>}).__oiFieldPull?.(), 120); return () => window.clearTimeout(t); }, [kfocus, ksurfaces]);
   const filter = view.filter;
   const setFilter = useCallback((f: FieldFilter) => patchView(v => ({...v, filter: f})), [patchView]);
 
@@ -473,7 +519,7 @@ function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding;
               }}/>
             <div className="right-inner">
               <GraphPane index={index} focus={locus} selected={here ?? undefined} filter={filter} setFilter={setFilter} hits={search.hitSet} visited={visited}
-                select={ref => apply({op: "select", ref})} openTangent={ref => followTangent(ref)} openMain={ref => followMain(ref)} openExpression={ref => openExpression(ref)}
+                select={ref => apply({op: "select", ref}, {origin: "graph"})} openTangent={ref => followTangent(ref)} openMain={ref => followMain(ref)} openExpression={ref => openExpression(ref)}
                 hover={ref => setHover(ref, "graph")} collapse={() => patchView({right: "closed"})} onGraph={g => { graph.current = g; }} layoutKey={layoutKey}/>
               <div className="right-scroll">
                 <Contents entries={inViewIsExpression ? expressionContents : pageContents}/>

@@ -10,7 +10,7 @@
       "workcell",
       "workcell-write-boundary"
     ],
-    "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-oHf6Wu/bin:/opt/homebrew/Cellar/node@24/24.16.0/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-o9cxGb/bin:/opt/homebrew/Cellar/node@24/24.16.0/bin:/usr/bin:/bin:/usr/sbin:/sbin"
   },
   "checks": [
     {

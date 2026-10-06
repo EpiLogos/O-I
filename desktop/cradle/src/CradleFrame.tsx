@@ -68,7 +68,8 @@ import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
  * bundles by the build gate above.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import { currentFieldContext, subscribeField } from "./field/fieldHost";
 // Technē summon seam (T2): the HUD's summon CustomEvents present the Library,
 // the gallery search and the current subject's verso through the existing
 // surfaces — see src/library/techneSummon.tsx (the parent reconciles the
@@ -983,6 +984,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(fieldDefaulted.current.has(id)||(stateRef.current.mode??"base")!=="base")return;
     if(stateRef.current.root){fieldDefaulted.current.add(id);return;}
     if(!hostedSurfaceFor({kind:"field"}))return;
+    // An explicit start that opts out (walks that exercise the other Base surfaces; a person who wants Rest):
+    // sessionStorage or localStorage "oi-cradle.field-default" = "off".
+    try{if(window.sessionStorage.getItem("oi-cradle.field-default")==="off"||window.localStorage.getItem("oi-cradle.field-default")==="off"){fieldDefaulted.current.add(id);return;}}catch{/* storage refused: the default stands */}
     fieldDefaulted.current.add(id);
     setState(s=>{
       if(s.root)return s;
@@ -1986,7 +1990,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         insertMenu={close=>contextInsertMenu(close)}
         stripTools={<ContextPreparationButton project={workspace.current.project} session={state.accompanying?.ref} tabs={contextSideTabs} onActivateTab={activateContextTab}/>}/>);})(),
   };
-  const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current}),[workspace.current,kernel.snapshot]);
+  const fieldNow=useSyncExternalStore(subscribeField,currentFieldContext,currentFieldContext);
+  const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current,field:fieldNow}),[workspace.current,kernel.snapshot,fieldNow]);
   const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}

@@ -80,6 +80,8 @@ const root = `
 .field-host { container: field / size; position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
 .field-host .field-root { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--ui); font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
 .field-host .field-root.page { height: 100%; }
+/* five neutral tones for a corpus with no registers of its own (the generic adapter): the same five colours, unnamed. */
+.field-host .field-root { --c-t0: var(--c-essay); --c-t1: var(--c-core); --c-t2: var(--c-matheme); --c-t3: var(--c-mytheme); --c-t4: var(--c-episteme); }
 /* Hosted in the desktop shell: the window's own controls float over the pane's top corners (shell.css sets the
    reserves on the shell and the corner cutout on the pane). The field keeps its heads clear of them — the one place
    the host's geometry reaches into the site's layout. */
