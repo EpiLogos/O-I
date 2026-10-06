@@ -951,9 +951,15 @@ impl Manager {
     }
 }
 
-/// Host operations a webview may relay. The K² determinant operations are
-/// the host's own; a supplied (non-K²) owner refuses them natively.
-const EXCHANGE_OPERATIONS: [&str; 9] = [
+/// Host operations a webview may relay: the K² determinant operations and
+/// the Ta-Onta procedural stage's five scoped operations (stage-state {},
+/// stage-evaluate {procedure}, stage-retire {procedure_ref}, stage-bind
+/// {procedure, max_evaluations?}, stage-unbind {procedure_ref} on the QL
+/// side). The K² determinant operations are the host's own; a supplied
+/// (non-K²) owner refuses them natively. The stage operations are
+/// scene-scoped on the QL side; admission here is by exact name only —
+/// each payload is validated again by the owner host.
+const EXCHANGE_OPERATIONS: [&str; 14] = [
     "read",
     "inspect",
     "advance",
@@ -963,6 +969,11 @@ const EXCHANGE_OPERATIONS: [&str; 9] = [
     "replace-event",
     "set-damping",
     "influence",
+    "stage-state",
+    "stage-evaluate",
+    "stage-retire",
+    "stage-bind",
+    "stage-unbind",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -2637,7 +2648,28 @@ for line in sys.stdin: time.sleep(60)
         for op in ["m1-advance", "replace-event", "influence"] {
             assert!(exchange_admits(&json!({"command":{"operation":op}})));
         }
-        for op in ["shutdown", "restart", "compose", "open", "", "M1-advance"] {
+        for op in [
+            "stage-state",
+            "stage-evaluate",
+            "stage-retire",
+            "stage-bind",
+            "stage-unbind",
+        ] {
+            assert!(
+                exchange_admits(&json!({"command":{"operation":op}})),
+                "{op}"
+            );
+        }
+        for op in [
+            "shutdown",
+            "restart",
+            "compose",
+            "open",
+            "",
+            "M1-advance",
+            "Stage-state",
+            "stage-eval",
+        ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),
                 "{op}"
