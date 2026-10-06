@@ -128,6 +128,14 @@ function checkJourney(journey, journeyPath) {
   // validity
   try { validateJourney(JSON.parse(JSON.stringify(journey))); } catch (e) { fail("valid", e.message); }
 
+  // renderability: the authoring/capture app refuses >10 formations / >8 pins per scene
+  // (field-studies-journeys app.ts ensureCapacity) even though the validator admits 32.
+  for (const s of scenes) {
+    const forms = (s.entities ?? []).filter((e) => e.kind === "formation").length;
+    const pins = (s.entities ?? []).filter((e) => e.kind === "pin").length;
+    if (forms > 10 || pins > 8) fail("renderable", `${s.id}: ${forms} formations / ${pins} pins — the authoring app refuses over 10/8`);
+  }
+
   // 1 — sequences
   const seqScenes = scenes.filter((s) => (s.entities ?? []).some((e) => e.sequence?.enabled && (() => { const gs = new Set((e.sequence.steps ?? []).map((t) => `${t.text}\u0000${t.shape}`)); return gs.size >= 2; })()));
   const morphSeq = scenes.some((s) => (s.entities ?? []).some((e) => e.sequence?.enabled && (e.sequence.steps ?? []).some((st) => st.objectState && (st.position || (st.objectState.size && (st.objectState.size.x !== undefined)) || st.objectState.tint !== undefined))));
