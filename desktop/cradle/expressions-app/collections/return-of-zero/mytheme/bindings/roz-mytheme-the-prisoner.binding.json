@@ -1,145 +1,147 @@
 {
-  "artifact": "mytheme/roz-mytheme-the-prisoner.journey.json",
-  "family": "mytheme",
-  "worker": "E6 (mytheme-wholes)",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "register-mytheme"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "records": [
-      {
-        "record_id": "mytheme-the-prisoner",
-        "path": "submission-package/essay/symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md",
-        "sha256": "27af157e16012248706554ae006ed0ffef1897578191b18348195334c1e40f60",
-        "sha256_receipt_stale": "1d3b11444a4a79bb778b93d17604e2d0d8f909c8872b2761ae9ff36374707c07"
-      }
-    ]
+ "artifact": "mytheme/roz-mytheme-the-prisoner.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-the-prisoner",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md",
+    "sha256": "27af157e16012248706554ae006ed0ffef1897578191b18348195334c1e40f60",
+    "sha256_receipt_stale": "1d3b11444a4a79bb778b93d17604e2d0d8f909c8872b2761ae9ff36374707c07"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-pri-0-arrival",
+   "phase": "#0 the resignation that becomes an address",
+   "relations": "\"Arrival\" paraphrase; q001 title exchange; anchor prisoner-resignation-arrival"
   },
-  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
-  "scenes": [
-    {
-      "scene_id": "m-pri-0-arrival",
-      "phase": "#0 the resignation that becomes an address",
-      "relations": "\"Arrival\" paraphrase; q001 title exchange; anchor prisoner-resignation-arrival"
-    },
-    {
-      "scene_id": "m-pri-1-world",
-      "phase": "#1 a whole world for obtaining one answer",
-      "relations": "\"Free for All\" paraphrase; ITVX listing order as declared extent; C25"
-    },
-    {
-      "scene_id": "m-pri-2-finale",
-      "phase": "#2 Degree Absolute; the masks; the escape",
-      "relations": "\"Once Upon a Time\" and \"Fall Out\" paraphrases; Barr studies; BFI qualification; anchor prisoner-degree-absolute-return"
-    },
-    {
-      "scene_id": "m-pri-3-count",
-      "phase": "#3 the asymmetric count",
-      "relations": "anchor prisoner-asymmetric-count; political-count carrier; A02, A01, A03, A13, C25; Syn matheme comparison"
-    },
-    {
-      "scene_id": "m-pri-5-return",
-      "phase": "#5→0 return without inheriting the hidden throne",
-      "relations": "anchor prisoner-return-without-throne; Q27 political return; A30/C42, C57, A32; M02, M20, M24, M26, M40, M46, M48"
-    }
-  ],
-  "occurrence_index": [
-    {
-      "figure": "Number Six",
-      "occurrence": "#0 assigned on arrival; #3 the person held within an assigned position"
-    },
-    {
-      "figure": "Number Two (changing bearers)",
-      "occurrence": "#0 first replacement inside \"Arrival\"; #1 the election; #2 resuscitated and freed"
-    },
-    {
-      "figure": "Number One (ape mask, own face)",
-      "occurrence": "#2 the unmasking within a continuing escape"
-    },
-    {
-      "figure": "Rover",
-      "occurrence": "#0 the guardian intercepting escape — no symbolic equation to a native determination"
-    },
-    {
-      "figure": "Number Fifty-Eight",
-      "occurrence": "#1 incomprehensible, then English, then authority"
-    },
-    {
-      "figure": "the Butler / Forty-Eight",
-      "occurrence": "#2 the divergence after escape"
-    },
-    {
-      "motif": "the automatic door in London",
-      "occurrence": "#2 and #5→0 the arrival altered without verdict"
-    },
-    {
-      "motif": "the title exchange",
-      "occurrence": "#0 (q001 exact wording); #3 the assignment act"
-    }
-  ],
-  "human_amplified": [
-    {
-      "relation": "Two's replaceable office / Six's imposed identity / One's withheld authority; 2→6 as political counterfeit of the sixfold; assigned predicate, hidden evaluator, protected account, contestable governance; finale's inward turn; E1/E2/E4 operations",
-      "flag": "yes"
-    },
-    {
-      "relation": "episode-specific equations of Rover, the embryo room, Fifty-Eight or the rocket with a native determination",
-      "flag": "no"
-    }
-  ],
-  "cross_story_relations": [
-    "Avatar-image-mask-idol figures the numbering relation in its mask scene; Fanon whole carries the Number Six comparison with its difference (human-amplified: no there)."
-  ],
-  "assets": [
-    {
-      "kind": "ascii",
-      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-      "provenance": "authored"
-    },
-    {
-      "kind": "diagram",
-      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "mytheme/roz-mytheme-the-prisoner.cover.png",
-  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
-  "status": "reviewed",
-  "notes": [
-    "Craft: the Village ring encloses the numeral 6 in scene 1; the finale scene keeps ape-mask and own-face as a two-layer disc so the inward turn stays visible without cancelling the apparatus. Telling boundary respected: written witnesses only; no unviewed ending invented; the fourteen-episode comma evidence reflected in the scene text. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-pri-0-arrival, m-pri-1-world (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
-    "#0 arrival — the ring (the Village) holds the assigned 6: the designation dims then is fixed bright (assignment as an act, not a state); the helicopter flies and becomes ↩ — brought back by remote control; Rover carries a repel field (the guardian that intercepts); slight gravity-down (the waking in the copied room); pointer repel/shove — exit denied, seizure on approach.",
-    "#1 world — ring layout: the assembly gathered around the Green Dome; Fifty-Eight becomes 2 — the staged assistant taking authority as incoming Two, the scene's own reversal staged as the sign's own replacement; a square-wave LFO hectors pointer strength (the tannoy cadence — the administered world speaks in announcements); pointer attract/pulse faint — the counterfeit gathering draws people in while controlling the routes by which answers matter.",
-    "#2 finale — the mask layers transform in place: red disc (outer mask) → square (the ape mask, the animal face) → pale disc (a face identical to his own); a steps-wave LFO replaces field turbulence (Degree Absolute's enacted stages of life); the embryo room and assembly dim so the unmasking carries the scene; vortex pointer with shove click — the interrogation reversed; duration 16, the longest beat — the week is held.",
-    "#3 count — THE 3D SCENE. z is the depth of the count's concealment: the visible administration nearest (2 at z +0.4, itself cycling bearer — position hop, tint to institutional red while the numeral persists), the assigned person at z 0, the withheld source of command deepest (1 at z −0.5), the Syn count 4+2 between — depth occlusion with a cold tint; the 1 stays dim (withheld); 6 carries a small repel field (denied authority over how his designation counts).",
-    "#5→0 return — line layout: the open road; the departure disc carries its own attract field at the frame's edge; the counting operation (⚖) stays centre-bright — release must reach the office of measure; pointer attract faint. ENDING QUALIFIES BEGINNING: #0 opened with a ring confining the 6 and an escape (🚁) that returned as ↩; #5→0 has no ring at all, the 6's walk-out is not staged as recovery but as divergence (⇗ with others, lines of road), and what remains centre-frame is the ⚖ — the office the escape cannot simply leave behind; the automatic door is kept as the London-door's recall, so the return re-reads the arrival without revoking it.",
-    "Human-amplified staging: the political-count carrier and Q27 return are the record's Argued amplifications — scene bodies carry the landings (A02/A03, M-returns) and the guard (no symbolic equation of Rover/embryo room/Fifty-Eight/rocket to native determinations; human-amplified: no). Mythemic verbs only: the series figures the counterfeit gathering and the asymmetric count — no QL notation credited to McGoohan/Markstein, no formal theorem claimed from the programme.",
-    "Automation: auto-tannoy (pointer strength, square wave — the Village speaks in announcements) and auto-degree (turbulence, steps — the regression's stages): mechanical-TV character. Durations 12–16, transitions 1.2–2.0; the finale held longest."
-  ],
-  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-mytheme-l2",
-    "lane": "mytheme"
+  {
+   "scene_id": "m-pri-1-world",
+   "phase": "#1 a whole world for obtaining one answer",
+   "relations": "\"Free for All\" paraphrase; ITVX listing order as declared extent; C25"
   },
-  "glyph_rationales": {
-    "1": "Number One: the withheld source of command — the question the count refuses to answer.",
-    "2": "Number Two: the office identified through changes of bearer — delegated authority continuing across replacements.",
-    "6": "Number Six: the assigned designation — a person held within an administered position, refusing to be a number (title exchange, q001).",
-    "17": "the seventeen-episode field: the declared extent of the work (ITVX listing order) whose premises stay located, not invented into one argument.",
-    "58": "Number Fifty-Eight: incomprehensible, then English, then authority — the staged assistant who becomes the incoming Two.",
-    "🚁": "the helicopter of \"Arrival\": the escape whose controls are taken over remotely and which brings its user back — the Village's reach into any route out.",
-    "↩": "brought back: the same escape reversed — the return the Village administers, before the road that is genuinely open at #5→0.",
-    "⑃": "the rocket countdown: Six's own act inside the masked assembly, freeing Two and Forty-Eight before the escape.",
-    "4+2": "the Syn count 2+2²=6=4+2: the count that includes the relation generating it, against which the Village's assignment is the appointed political counterfeit.",
-    "⇗": "the open road from the Village: escape with others and divergence after — no unviewed ending invented.",
-    "⚖": "the counting operation itself: who selected the number, who answers for the selection — release must reach the office of measure, not only its occupant.",
-    "M40": "the hidden evaluator: repeating the subject's score reproduces Two's deflection (return-to M40).",
-    "A32": "the reflective return: the reply must be able to revise image, measure and institution.",
-    "·": "the unnamed carrier — a formation whose sense is its shape alone (the Village ring, Rover's disc, the Green Dome, the embryo room, the mask layers); no glyph is pretended."
+  {
+   "scene_id": "m-pri-2-finale",
+   "phase": "#2 Degree Absolute; the masks; the escape",
+   "relations": "\"Once Upon a Time\" and \"Fall Out\" paraphrases; Barr studies; BFI qualification; anchor prisoner-degree-absolute-return"
+  },
+  {
+   "scene_id": "m-pri-3-count",
+   "phase": "#3 the asymmetric count",
+   "relations": "anchor prisoner-asymmetric-count; political-count carrier; A02, A01, A03, A13, C25; Syn matheme comparison"
+  },
+  {
+   "scene_id": "m-pri-5-return",
+   "phase": "#5→0 return without inheriting the hidden throne",
+   "relations": "anchor prisoner-return-without-throne; Q27 political return; A30/C42, C57, A32; M02, M20, M24, M26, M40, M46, M48"
   }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "Number Six",
+   "occurrence": "#0 assigned on arrival; #3 the person held within an assigned position"
+  },
+  {
+   "figure": "Number Two (changing bearers)",
+   "occurrence": "#0 first replacement inside \"Arrival\"; #1 the election; #2 resuscitated and freed"
+  },
+  {
+   "figure": "Number One (ape mask, own face)",
+   "occurrence": "#2 the unmasking within a continuing escape"
+  },
+  {
+   "figure": "Rover",
+   "occurrence": "#0 the guardian intercepting escape — no symbolic equation to a native determination"
+  },
+  {
+   "figure": "Number Fifty-Eight",
+   "occurrence": "#1 incomprehensible, then English, then authority"
+  },
+  {
+   "figure": "the Butler / Forty-Eight",
+   "occurrence": "#2 the divergence after escape"
+  },
+  {
+   "motif": "the automatic door in London",
+   "occurrence": "#2 and #5→0 the arrival altered without verdict"
+  },
+  {
+   "motif": "the title exchange",
+   "occurrence": "#0 (q001 exact wording); #3 the assignment act"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "Two's replaceable office / Six's imposed identity / One's withheld authority; 2→6 as political counterfeit of the sixfold; assigned predicate, hidden evaluator, protected account, contestable governance; finale's inward turn; E1/E2/E4 operations",
+   "flag": "yes"
+  },
+  {
+   "relation": "episode-specific equations of Rover, the embryo room, Fifty-Eight or the rocket with a native determination",
+   "flag": "no"
+  }
+ ],
+ "cross_story_relations": [
+  "Avatar-image-mask-idol figures the numbering relation in its mask scene; Fanon whole carries the Number Six comparison with its difference (human-amplified: no there)."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-the-prisoner.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: the Village ring encloses the numeral 6 in scene 1; the finale scene keeps ape-mask and own-face as a two-layer disc so the inward turn stays visible without cancelling the apparatus. Telling boundary respected: written witnesses only; no unviewed ending invented; the fourteen-episode comma evidence reflected in the scene text. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-pri-0-arrival, m-pri-1-world (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+  "#0 arrival — the ring (the Village) holds the assigned 6: the designation dims then is fixed bright (assignment as an act, not a state); the helicopter flies and becomes ↩ — brought back by remote control; Rover carries a repel field (the guardian that intercepts); slight gravity-down (the waking in the copied room); pointer repel/shove — exit denied, seizure on approach.",
+  "#1 world — ring layout: the assembly gathered around the Green Dome; Fifty-Eight becomes 2 — the staged assistant taking authority as incoming Two, the scene's own reversal staged as the sign's own replacement; a square-wave LFO hectors pointer strength (the tannoy cadence — the administered world speaks in announcements); pointer attract/pulse faint — the counterfeit gathering draws people in while controlling the routes by which answers matter.",
+  "#2 finale — the mask layers transform in place: red disc (outer mask) → square (the ape mask, the animal face) → pale disc (a face identical to his own); a steps-wave LFO replaces field turbulence (Degree Absolute's enacted stages of life); the embryo room and assembly dim so the unmasking carries the scene; vortex pointer with shove click — the interrogation reversed; duration 16, the longest beat — the week is held.",
+  "#3 count — THE 3D SCENE. z is the depth of the count's concealment: the visible administration nearest (2 at z +0.4, itself cycling bearer — position hop, tint to institutional red while the numeral persists), the assigned person at z 0, the withheld source of command deepest (1 at z −0.5), the Syn count 4+2 between — depth occlusion with a cold tint; the 1 stays dim (withheld); 6 carries a small repel field (denied authority over how his designation counts).",
+  "#5→0 return — line layout: the open road; the departure disc carries its own attract field at the frame's edge; the counting operation (⚖) stays centre-bright — release must reach the office of measure; pointer attract faint. ENDING QUALIFIES BEGINNING: #0 opened with a ring confining the 6 and an escape (🚁) that returned as ↩; #5→0 has no ring at all, the 6's walk-out is not staged as recovery but as divergence (⇗ with others, lines of road), and what remains centre-frame is the ⚖ — the office the escape cannot simply leave behind; the automatic door is kept as the London-door's recall, so the return re-reads the arrival without revoking it.",
+  "Human-amplified staging: the political-count carrier and Q27 return are the record's Argued amplifications — scene bodies carry the landings (A02/A03, M-returns) and the guard (no symbolic equation of Rover/embryo room/Fifty-Eight/rocket to native determinations; human-amplified: no). Mythemic verbs only: the series figures the counterfeit gathering and the asymmetric count — no QL notation credited to McGoohan/Markstein, no formal theorem claimed from the programme.",
+  "Automation: auto-tannoy (pointer strength, square wave — the Village speaks in announcements) and auto-degree (turbulence, steps — the regression's stages): mechanical-TV character. Durations 12–16, transitions 1.2–2.0; the finale held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l2",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "1": "Number One: the withheld source of command — the question the count refuses to answer.",
+  "2": "Number Two: the office identified through changes of bearer — delegated authority continuing across replacements.",
+  "6": "Number Six: the assigned designation — a person held within an administered position, refusing to be a number (title exchange, q001).",
+  "17": "the seventeen-episode field: the declared extent of the work (ITVX listing order) whose premises stay located, not invented into one argument.",
+  "58": "Number Fifty-Eight: incomprehensible, then English, then authority — the staged assistant who becomes the incoming Two.",
+  "🚁": "the helicopter of \"Arrival\": the escape whose controls are taken over remotely and which brings its user back — the Village's reach into any route out.",
+  "↩": "brought back: the same escape reversed — the return the Village administers, before the road that is genuinely open at #5→0.",
+  "⑃": "the rocket countdown: Six's own act inside the masked assembly, freeing Two and Forty-Eight before the escape.",
+  "4+2": "the Syn count 2+2²=6=4+2: the count that includes the relation generating it, against which the Village's assignment is the appointed political counterfeit.",
+  "⇗": "the open road from the Village: escape with others and divergence after — no unviewed ending invented.",
+  "⚖": "the counting operation itself: who selected the number, who answers for the selection — release must reach the office of measure, not only its occupant.",
+  "M40": "the hidden evaluator: repeating the subject's score reproduces Two's deflection (return-to M40).",
+  "A32": "the reflective return: the reply must be able to revise image, measure and institution.",
+  "·": "the unnamed carrier — a formation whose sense is its shape alone (the Village ring, Rover's disc, the Green Dome, the embryo room, the mask layers); no glyph is pretended."
+ }
 }

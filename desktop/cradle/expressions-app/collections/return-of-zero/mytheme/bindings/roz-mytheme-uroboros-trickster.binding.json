@@ -1,169 +1,171 @@
 {
-  "artifact": "mytheme/roz-mytheme-uroboros-trickster.journey.json",
-  "family": "mytheme",
-  "worker": "E6 (mytheme-wholes)",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "register-mytheme"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "records": [
-      {
-        "record_id": "mytheme-uroboros-trickster",
-        "path": "submission-package/essay/symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md",
-        "sha256": "2e7df838835c39575091e2849435ae179f61d210b329e61c4b05c8a9b2993a84"
-      }
-    ]
+ "artifact": "mytheme/roz-mytheme-uroboros-trickster.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-uroboros-trickster",
+    "path": "submission-package/essay/symbolon/mytheme/archetypal-ground/uroboros-trickster/WHOLE.md",
+    "sha256": "2e7df838835c39575091e2849435ae179f61d210b329e61c4b05c8a9b2993a84"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-urob-0-round",
+   "phase": "#0 the snake bends until its head meets its tail",
+   "relations": "anchor uroboros-whole; authored whole-image recovery; quilt §§3–6 toroidal correction"
   },
-  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
-  "scenes": [
-    {
-      "scene_id": "m-urob-0-round",
-      "phase": "#0 the snake bends until its head meets its tail",
-      "relations": "anchor uroboros-whole; authored whole-image recovery; quilt §§3–6 toroidal correction"
-    },
-    {
-      "scene_id": "m-urob-1-position",
-      "phase": "#1 position and opposition",
-      "relations": "A11, A12; the signed cancellation (-1)+(+1)=0 as terminated account; Neumann pp.27–35 sequence"
-    },
-    {
-      "scene_id": "m-urob-2-fork",
-      "phase": "#2 the metabolic fork",
-      "relations": "superposition (0/1)/(1/0); A03; meta-ballein/metabolism, samāveśa; C24, A27; the Eden hole-for-fork turn"
-    },
-    {
-      "scene_id": "m-urob-3-torus",
-      "phase": "#3 interposition — the toroidal winding",
-      "relations": "anchor uroboros-interposition; torus-cover matheme; A17, C52; A09/C14/C15 (Anuttara owns the opening; Māyā the measure)"
-    },
-    {
-      "scene_id": "m-urob-3b-energy",
-      "phase": "#3 discharge and confinement",
-      "relations": "Q27 energetics; ITER source house bounded instance; returns-to A17, A18"
-    },
-    {
-      "scene_id": "m-urob-4-variants",
-      "phase": "#4 the Neumann ground and its variants",
-      "relations": "anchor uroboros-source-variants; Neumann source house; Jung Aion; Gebser; the paśu correction at p.105"
-    },
-    {
-      "scene_id": "m-urob-5-return",
-      "phase": "#5→0 the snake returns with its hole intact",
-      "relations": "anchor uroboros-return; C21; Arbitration field; A26, A17, Draft 3, A36; Homologia/Analogia"
-    }
-  ],
-  "occurrence_index": [
-    {
-      "figure": "the trickster's circle/sphere costume",
-      "occurrence": "#0 the visible completion offering itself as the whole truth; #1 position's first office"
-    },
-    {
-      "figure": "the mouth",
-      "occurrence": "#0 the two consequences already present; #2 the operative opening of superposition"
-    },
-    {
-      "figure": "Saturn's blocked gut",
-      "occurrence": "#0, #2 detention preventing generation — no independent Cronus narrative reconstructed"
-    },
-    {
-      "figure": "the Eden-serpent",
-      "occurrence": "#2 the hole traded for the fork — Taylor's QL refraction, not a Genesis claim"
-    },
-    {
-      "figure": "the lifted path ending at (2,−1)",
-      "occurrence": "#3 homecoming with retained displacement"
-    },
-    {
-      "figure": "earthlight / tokamak",
-      "occurrence": "#3b unconfined discharge vs arranged containment"
-    },
-    {
-      "figure": "Prajāpati / horse-universe; En-Soph; world parents; self-rolling wheel",
-      "occurrence": "#4 the Neumann variants in their own offices"
-    },
-    {
-      "motif": "the intact hole",
-      "occurrence": "#0, #3, #5→0 constitutive of the form — the Māyā-not-the-hole distinction"
-    }
-  ],
-  "human_amplified": [
-    {
-      "relation": "toroidal whole, circle/sphere trickster, metabolic fork, Eden relation, complete eightfold recapitulation",
-      "flag": "yes (authored quilt)"
-    },
-    {
-      "relation": "discharge/confinement comparison (earthlight/tokamak)",
-      "flag": "yes — both images witness the native operation without proving it"
-    },
-    {
-      "relation": "historical source tasks (ouroboros artifacts, independent Eden/Saturn/Vedic tellings)",
-      "flag": "separate standing; not settled here"
-    }
-  ],
-  "cross_story_relations": [
-    "Torus ↔ uroboros carried with the Māyā-not-the-hole distinction and the paśu correction (shared with mytheme-neumann-images and mytheme-maya-eye-veil-frame-horizon).",
-    "The self-rolling wheel (Neumann whole) extends continuing formation from its p.18 office.",
-    "The travelling-jigsaw whole shares the γ(t)=[2t,−t] matheme home (torus-cover) with different whole offices."
-  ],
-  "assets": [
-    {
-      "kind": "ascii",
-      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-      "provenance": "authored"
-    },
-    {
-      "kind": "diagram",
-      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "mytheme/roz-mytheme-uroboros-trickster.cover.png",
-  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
-  "status": "reviewed",
-  "notes": [
-    "Craft: eightfold recapitulation mapped to scene sequence per the record's own structure (position/opposition/superposition/interposition), never as eight chronological snake phases — the binding keeps the record's warning. Torus scene shows the opening as a true hole (dark disc at ring centre) rather than a third generating loop, per the record's counted-objects warning. Energy scene kept as a separate bounded scene so the ITER instance is not universalised. E0 acceptance repair: title/field collision fixed on m-urob-0-round, m-urob-1-position, m-urob-3-torus, m-urob-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
-    "#0 round — head orbits to tail (the visible completion staged), then the disc becomes ◉ — the mouth the costume hides, revealed at the tail's position; the trickster's fill deepens (circle-to-sphere pretence); ? dimmed but present; pointer repel faint — the costume deflects.",
-    "#1 position — line layout: head and tail triangles opposed (tail rotated 180° — orientation staged); the cancelling equation itself becomes the polar axis (-1)/(+1) — the scene's own correction carried by its sign; pointer vortex — the round's turning seen.",
-    "#2 fork — the mouth · becomes ⑂ and moves to the fork's place (the Eden trade staged as the sign's own transformation); Saturn dims (detention); C24's disc carries an attract field (the mouth that takes every answer); pointer attract/implode — the swallowing.",
-    "#3 torus — THE 3D SCENE. z is the torus's through-depth: the torus ring at z 0, the retained opening deep at z −0.38 (the hole you look through, not at), the winding matheme carriers nearest (z +0.3–0.35); (2,−1) becomes [2t,−t] — the displaced lift stated as the path; vortex3d drives the winding; winding LFO on circulation; pointer vortex/vortex; duration 16 — the complete creature held.",
-    "#3b energy — ✦ flares (earthlight's unconfined discharge) against the tokamak's attract (arranged containment); ∓ keeps release and holding distinct; pointer attract/pulse.",
-    "#4 variants — ring layout: the comparanda in circulation; the self-rolling wheel ◯↻ turns half a turn (rotation in objectState — continuing formation); pointer vortex gentle.",
-    "#5→0 return — the round kept WITH its hole: the intact opening disc holds steady inside the ring (constitutive, not absent); the eightfold carrier bright; ∙ dims to near-still — rest; auto-rest breathes pointer strength. ENDING QUALIFIES BEGINNING: #0's ring wore a costume that hid the opening behind visible completion (the ? at the rim); #5→0 re-forms the same ring with the hole held visible inside it and no filled costume — wholeness keeping its opening; the ? is gone not because it was answered in words but because the structure now carries it (the eightfold −/−→1/0 in the field, C21's efficacy-in-relation, rest without demanded continuation).",
-    "Human-amplified staging (binding flags kept): the eightfold recapitulation and the Māyā-not-the-hole distinction yes — carried in the #5→0 body; the paśu correction shared with the Neumann whole; the declared cross-story (torus ↔ uroboros, Māyā-not-the-hole, paśu, self-rolling wheel) in binding relations. Mythemic verbs only: the image embodies the difference between renewal and detention; the matheme grounds the exact neighbour — no collapse of mytheme into topology or scripture into torus.",
-    "Automation: auto-wind (the winding), auto-rest (the release's breath). Durations 11–16, transitions 1.1–2.2: the torus held longest."
-  ],
-  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-mytheme-l2",
-    "lane": "mytheme"
+  {
+   "scene_id": "m-urob-1-position",
+   "phase": "#1 position and opposition",
+   "relations": "A11, A12; the signed cancellation (-1)+(+1)=0 as terminated account; Neumann pp.27–35 sequence"
   },
-  "glyph_rationales": {
-    "·": "the unnamed carrier — a formation whose sense is its shape alone (the round, the filled costume, the hole); no glyph is pretended.",
-    "?": "what the outline hides: mouth, depth, opening — the question the costume suppresses (#0).",
-    "◉": "the mouth — the operative opening the visible completion hides; the head's disc becomes the aperture when the costume is seen through (#0).",
-    "(-1)+(+1)=0": "the signed cancellation — the terminated account: completeness answering for the living whole (#1).",
-    "(-1)/(+1)": "the polar axis — division holding direction: the retained relation the cancellation replaced (A13; opposition restoring head and tail) (#1).",
-    "→": "assimilation — what enters changes the life that receives (#2).",
-    "♄": "Saturn — the blocked gut: reception become detention, intake disguising lost circulation (#2).",
-    "⑂": "the Eden-serpent's fork — the hole traded for the fork, good and evil severed from their discrimination (#2).",
-    "⊕": "world parents — day at #5, night at #0, four directions (Neumann p.108) (#4).",
-    "(2,−1)": "the lift's endpoint: γ(t)=[2t,−t] returns home on the base; its lift ends displaced — local closure retaining difference (#3).",
-    "[2t,−t]": "the winding path itself — the torus-cover matheme's own carrier (A17) (#3).",
-    "T²=ℝ²/ℤ²": "the exact topological neighbour: χ(T²)=0, π₁(T²)≅ℤ×ℤ — the matheme that grounds, without collapsing, the mythemic comparison (#3).",
-    "✦": "earthlight — the excluded ground's return as event: unconfined discharge (Q27; quilt-named image) (#3b).",
-    "⚡": "plasma held so activity can continue — confinement that need not be devouring closure (#3b).",
-    "∓": "Q27 energetics — release and holding doing different work (#3b).",
-    "प्र": "Prajāpati's self-offering; the horse/universe lead (p.29) (#4).",
-    "◯↻": "En-Soph; the self-rolling wheel — continuing formation (p.18) (#4).",
-    "☉☀": "Jung's Self/shadow horizon; Gebser's changed seeing (#4).",
-    "⋰/⋯": "C21 living symbol / idol — the image's efficacy stays in relation to what it cannot exhaust (#5→0).",
-    "−/−→1/0": "the eight determinations −/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0 — eight turns of one relation, not eight phases of a snake (#5→0).",
-    "∙": "rest — the next circuit need not be demanded (#5→0)."
+  {
+   "scene_id": "m-urob-2-fork",
+   "phase": "#2 the metabolic fork",
+   "relations": "superposition (0/1)/(1/0); A03; meta-ballein/metabolism, samāveśa; C24, A27; the Eden hole-for-fork turn"
+  },
+  {
+   "scene_id": "m-urob-3-torus",
+   "phase": "#3 interposition — the toroidal winding",
+   "relations": "anchor uroboros-interposition; torus-cover matheme; A17, C52; A09/C14/C15 (Anuttara owns the opening; Māyā the measure)"
+  },
+  {
+   "scene_id": "m-urob-3b-energy",
+   "phase": "#3 discharge and confinement",
+   "relations": "Q27 energetics; ITER source house bounded instance; returns-to A17, A18"
+  },
+  {
+   "scene_id": "m-urob-4-variants",
+   "phase": "#4 the Neumann ground and its variants",
+   "relations": "anchor uroboros-source-variants; Neumann source house; Jung Aion; Gebser; the paśu correction at p.105"
+  },
+  {
+   "scene_id": "m-urob-5-return",
+   "phase": "#5→0 the snake returns with its hole intact",
+   "relations": "anchor uroboros-return; C21; Arbitration field; A26, A17, Draft 3, A36; Homologia/Analogia"
   }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the trickster's circle/sphere costume",
+   "occurrence": "#0 the visible completion offering itself as the whole truth; #1 position's first office"
+  },
+  {
+   "figure": "the mouth",
+   "occurrence": "#0 the two consequences already present; #2 the operative opening of superposition"
+  },
+  {
+   "figure": "Saturn's blocked gut",
+   "occurrence": "#0, #2 detention preventing generation — no independent Cronus narrative reconstructed"
+  },
+  {
+   "figure": "the Eden-serpent",
+   "occurrence": "#2 the hole traded for the fork — Taylor's QL refraction, not a Genesis claim"
+  },
+  {
+   "figure": "the lifted path ending at (2,−1)",
+   "occurrence": "#3 homecoming with retained displacement"
+  },
+  {
+   "figure": "earthlight / tokamak",
+   "occurrence": "#3b unconfined discharge vs arranged containment"
+  },
+  {
+   "figure": "Prajāpati / horse-universe; En-Soph; world parents; self-rolling wheel",
+   "occurrence": "#4 the Neumann variants in their own offices"
+  },
+  {
+   "motif": "the intact hole",
+   "occurrence": "#0, #3, #5→0 constitutive of the form — the Māyā-not-the-hole distinction"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "toroidal whole, circle/sphere trickster, metabolic fork, Eden relation, complete eightfold recapitulation",
+   "flag": "yes (authored quilt)"
+  },
+  {
+   "relation": "discharge/confinement comparison (earthlight/tokamak)",
+   "flag": "yes — both images witness the native operation without proving it"
+  },
+  {
+   "relation": "historical source tasks (ouroboros artifacts, independent Eden/Saturn/Vedic tellings)",
+   "flag": "separate standing; not settled here"
+  }
+ ],
+ "cross_story_relations": [
+  "Torus ↔ uroboros carried with the Māyā-not-the-hole distinction and the paśu correction (shared with mytheme-neumann-images and mytheme-maya-eye-veil-frame-horizon).",
+  "The self-rolling wheel (Neumann whole) extends continuing formation from its p.18 office.",
+  "The travelling-jigsaw whole shares the γ(t)=[2t,−t] matheme home (torus-cover) with different whole offices."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-uroboros-trickster.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: eightfold recapitulation mapped to scene sequence per the record's own structure (position/opposition/superposition/interposition), never as eight chronological snake phases — the binding keeps the record's warning. Torus scene shows the opening as a true hole (dark disc at ring centre) rather than a third generating loop, per the record's counted-objects warning. Energy scene kept as a separate bounded scene so the ITER instance is not universalised. E0 acceptance repair: title/field collision fixed on m-urob-0-round, m-urob-1-position, m-urob-3-torus, m-urob-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+  "#0 round — head orbits to tail (the visible completion staged), then the disc becomes ◉ — the mouth the costume hides, revealed at the tail's position; the trickster's fill deepens (circle-to-sphere pretence); ? dimmed but present; pointer repel faint — the costume deflects.",
+  "#1 position — line layout: head and tail triangles opposed (tail rotated 180° — orientation staged); the cancelling equation itself becomes the polar axis (-1)/(+1) — the scene's own correction carried by its sign; pointer vortex — the round's turning seen.",
+  "#2 fork — the mouth · becomes ⑂ and moves to the fork's place (the Eden trade staged as the sign's own transformation); Saturn dims (detention); C24's disc carries an attract field (the mouth that takes every answer); pointer attract/implode — the swallowing.",
+  "#3 torus — THE 3D SCENE. z is the torus's through-depth: the torus ring at z 0, the retained opening deep at z −0.38 (the hole you look through, not at), the winding matheme carriers nearest (z +0.3–0.35); (2,−1) becomes [2t,−t] — the displaced lift stated as the path; vortex3d drives the winding; winding LFO on circulation; pointer vortex/vortex; duration 16 — the complete creature held.",
+  "#3b energy — ✦ flares (earthlight's unconfined discharge) against the tokamak's attract (arranged containment); ∓ keeps release and holding distinct; pointer attract/pulse.",
+  "#4 variants — ring layout: the comparanda in circulation; the self-rolling wheel ◯↻ turns half a turn (rotation in objectState — continuing formation); pointer vortex gentle.",
+  "#5→0 return — the round kept WITH its hole: the intact opening disc holds steady inside the ring (constitutive, not absent); the eightfold carrier bright; ∙ dims to near-still — rest; auto-rest breathes pointer strength. ENDING QUALIFIES BEGINNING: #0's ring wore a costume that hid the opening behind visible completion (the ? at the rim); #5→0 re-forms the same ring with the hole held visible inside it and no filled costume — wholeness keeping its opening; the ? is gone not because it was answered in words but because the structure now carries it (the eightfold −/−→1/0 in the field, C21's efficacy-in-relation, rest without demanded continuation).",
+  "Human-amplified staging (binding flags kept): the eightfold recapitulation and the Māyā-not-the-hole distinction yes — carried in the #5→0 body; the paśu correction shared with the Neumann whole; the declared cross-story (torus ↔ uroboros, Māyā-not-the-hole, paśu, self-rolling wheel) in binding relations. Mythemic verbs only: the image embodies the difference between renewal and detention; the matheme grounds the exact neighbour — no collapse of mytheme into topology or scripture into torus.",
+  "Automation: auto-wind (the winding), auto-rest (the release's breath). Durations 11–16, transitions 1.1–2.2: the torus held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l2",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "·": "the unnamed carrier — a formation whose sense is its shape alone (the round, the filled costume, the hole); no glyph is pretended.",
+  "?": "what the outline hides: mouth, depth, opening — the question the costume suppresses (#0).",
+  "◉": "the mouth — the operative opening the visible completion hides; the head's disc becomes the aperture when the costume is seen through (#0).",
+  "(-1)+(+1)=0": "the signed cancellation — the terminated account: completeness answering for the living whole (#1).",
+  "(-1)/(+1)": "the polar axis — division holding direction: the retained relation the cancellation replaced (A13; opposition restoring head and tail) (#1).",
+  "→": "assimilation — what enters changes the life that receives (#2).",
+  "♄": "Saturn — the blocked gut: reception become detention, intake disguising lost circulation (#2).",
+  "⑂": "the Eden-serpent's fork — the hole traded for the fork, good and evil severed from their discrimination (#2).",
+  "⊕": "world parents — day at #5, night at #0, four directions (Neumann p.108) (#4).",
+  "(2,−1)": "the lift's endpoint: γ(t)=[2t,−t] returns home on the base; its lift ends displaced — local closure retaining difference (#3).",
+  "[2t,−t]": "the winding path itself — the torus-cover matheme's own carrier (A17) (#3).",
+  "T²=ℝ²/ℤ²": "the exact topological neighbour: χ(T²)=0, π₁(T²)≅ℤ×ℤ — the matheme that grounds, without collapsing, the mythemic comparison (#3).",
+  "✦": "earthlight — the excluded ground's return as event: unconfined discharge (Q27; quilt-named image) (#3b).",
+  "⚡": "plasma held so activity can continue — confinement that need not be devouring closure (#3b).",
+  "∓": "Q27 energetics — release and holding doing different work (#3b).",
+  "प्र": "Prajāpati's self-offering; the horse/universe lead (p.29) (#4).",
+  "◯↻": "En-Soph; the self-rolling wheel — continuing formation (p.18) (#4).",
+  "☉☀": "Jung's Self/shadow horizon; Gebser's changed seeing (#4).",
+  "⋰/⋯": "C21 living symbol / idol — the image's efficacy stays in relation to what it cannot exhaust (#5→0).",
+  "−/−→1/0": "the eight determinations −/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0 — eight turns of one relation, not eight phases of a snake (#5→0).",
+  "∙": "rest — the next circuit need not be demanded (#5→0)."
+ }
 }

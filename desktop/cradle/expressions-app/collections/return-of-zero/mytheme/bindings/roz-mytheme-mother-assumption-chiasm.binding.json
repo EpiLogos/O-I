@@ -9,7 +9,7 @@
  ],
  "source_revision": {
   "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "fc59a719",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
   "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
   "records": [
    {
@@ -114,7 +114,9 @@
  "enrichment": {
   "date": "2026-10-06",
   "actor": "zcode:enrich-mytheme-l2",
-  "lane": "mytheme"
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
  },
  "glyph_rationales": {
   "☽": "Mary lifted — the cope's Assumption image; the crescent of that iconography as encountered figure, with the guard that no lunar or fertility symbolism is attributed to it (#0).",

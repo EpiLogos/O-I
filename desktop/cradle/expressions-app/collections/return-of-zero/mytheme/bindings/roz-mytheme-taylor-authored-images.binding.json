@@ -1,149 +1,151 @@
 {
-  "artifact": "mytheme/roz-mytheme-taylor-authored-images.journey.json",
-  "family": "mytheme",
-  "worker": "E6 (mytheme-wholes)",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "register-mytheme",
-    "family-frank-taylor"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "records": [
-      {
-        "record_id": "mytheme-taylor-authored-images",
-        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md",
-        "sha256": "405f33917088b7c2e698e08d3df1d414a526e80de21cafb38328f8c56bd3af8f"
-      }
-    ]
+ "artifact": "mytheme/roz-mytheme-taylor-authored-images.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme",
+  "family-frank-taylor"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-taylor-authored-images",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md",
+    "sha256": "405f33917088b7c2e698e08d3df1d414a526e80de21cafb38328f8c56bd3af8f"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-tay-0-poems",
+   "phase": "#0–#1 the earlier poems",
+   "relations": "FT-P01–P10 complete witnesses from the corpus"
   },
-  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
-  "scenes": [
-    {
-      "scene_id": "m-tay-0-poems",
-      "phase": "#0–#1 the earlier poems",
-      "relations": "FT-P01–P10 complete witnesses from the corpus"
-    },
-    {
-      "scene_id": "m-tay-1-roads",
-      "phase": "#2 two roads, six works",
-      "relations": "FT-P11–P16; the P3/P4 complementary lean (human-amplified: yes)"
-    },
-    {
-      "scene_id": "m-tay-3-prose",
-      "phase": "#4 the prose images",
-      "relations": "fish, cage/window, kaleidoscope, Necker cube, centres, broken token, erased dots; A01, C21, A06, A04, A22, A26, A23, A13"
-    },
-    {
-      "scene_id": "m-tay-4-blacksun",
-      "phase": "#4 the black sun and the radiating star",
-      "relations": "the adopted social-power unit; Work/Play inversion; four rings; A29, A24, A25, A32"
-    },
-    {
-      "scene_id": "m-tay-5-return",
-      "phase": "#5→0 keeping the opening in the form",
-      "relations": "anchor taylor-authored-images-return; A11, A01, A06, A27; recursive Bimba; the four alterity operators"
-    }
-  ],
-  "occurrence_index": [
-    {
-      "figure": "checkmate / another game",
-      "occurrence": "FT-P01; #5→0 the replayed opening"
-    },
-    {
-      "figure": "the husk",
-      "occurrence": "FT-P02 knowing fixed on its object"
-    },
-    {
-      "figure": "the fork rows 2→0 and 4+2",
-      "occurrence": "FT-P11; #1 the whole poem printed in two rows"
-    },
-    {
-      "figure": "the loop's fall (ring around the Rosie)",
-      "occurrence": "FT-P14; #5→0 the ending that changes perfection's meaning"
-    },
-    {
-      "figure": "the fish, the cage/window",
-      "occurrence": "#4 Draft 3's faithful definition"
-    },
-    {
-      "figure": "the broken token and the erased dots",
-      "occurrence": "#4 kept fracture vs erased reciprocity (A23, A13)"
-    },
-    {
-      "figure": "the black sun / radiating star; four rings",
-      "occurrence": "#4 the adopted capture/circulation unit; no allegations reproduced"
-    },
-    {
-      "figure": "God as Other; shadow; friend; alien/enemy",
-      "occurrence": "#5→0 the four operators returning-to A27"
-    },
-    {
-      "motif": "the returned shoe",
-      "occurrence": "FT-P23 the ending qualifying the work"
-    }
-  ],
-  "human_amplified": [
-    {
-      "relation": "the fish/definition, cage/window, kaleidoscope orbital operation, Necker contextual operation, nested-internality, fracture-as-recognition, two-dot/one-dot/no-dot, Bohr bounded complementarity, black sun capture/rings/false-accounting, four-office ecology, sequence corrections (FT-P19/21/22) and boots correction",
-      "flag": "yes"
-    },
-    {
-      "relation": "fixed mythic identity for FT-P18's brothers or FT-P22's figures; the Venus–Lucifer–Christ genealogy; any Blake quotation beyond the named allusion",
-      "flag": "no"
-    }
-  ],
-  "cross_story_relations": [
-    "Neumann shared structuration qualifies emergence/differentiation/renewed interplay; meal whole's devouring contrast recalls the black sun's capture without merging the units."
-  ],
-  "assets": [
-    {
-      "kind": "ascii",
-      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-      "provenance": "authored"
-    },
-    {
-      "kind": "diagram",
-      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "mytheme/roz-mytheme-taylor-authored-images.cover.png",
-  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
-  "status": "reviewed",
-  "notes": [
-    "Craft: five scenes carry 23 poems + 14 images by grouping per the record's own sections; the numerical poem is quoted in scene text exactly as printed rows. The raw site file's absence and the unmined vectors are named as remainers.",
-    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#0 poems — the replay authored as motion: attract pointer at 0.4 (the invitation that draws the other back), auto-play, a sine LFO on circulation — the game's coming and going; the pawn's sequence resets it ♟ → inverted → ♟ (the board set up again); FT-P04's one breath walks 0·1 → All→none → 0·1 (the Two Ones, then the release of the All's finality). Duration 12.\n#1 roads — THE 3D SCENE. z is the fork's divergence: the cancellation road receding (2→0 at z −0.4), the generation road near (4+2 at z +0.35), the P3 ring at middle depth playing itself apart through its rotation-and-shrink sequence — ring around the Rosie, falling down through the loop. Each road walks its own printed row; vortex + shove pointer (the fork refuses one road); depth perspective + occlusion. Duration 13.\n#2 prose — grid layout: six images in cells that hold their seams (adjacency without identity — the record's own caution against turning emblem, operator and diagnosis into one evidence); repel + pulse pointer (each image keeps its own conditions); the cage/window sequence ▣ → ☐ → ▣☐ (enclose, admit, both need the frame); the broken token drifts together and brightens (recognition through fit); the taijitu walks ∵∴ → ∴ → unmarked (two dots, one dot, the erasure). Duration 12.\n#3 black sun — attract + implode pointer at 0.6 (capture's intake); circulation −0.35 with auto-capture, a slow sine LFO — attention's drift toward a centre that does not answer; the four rings step inward Neptune → Jupiter → Mercury → corona (deepening red, shrinking); the radiating star's sequence ✷ dim → bright and larger (the alternative destination: outward as generative power). Duration 14 — the longest middle beat, capture takes time.\n#4 return — ring layout: the return held in the round; attract pointer at 0.3 (the way back stays open); the shoe's ring returns smaller and paled (fit, then returned); Bimba's sequence C38 → pratibimba → C38 (the office occupied, the wider relation kept). Duration 15, the longest beat — the return takes its time.\nENDING QUALIFIES BEGINNING: #0's checkmate that asks to be played again returns at #4 as the exact office of return — play beginning again, the six routes falling through their loop, the shoe fitting and being returned: each ending qualifying its work. The fork's two operations (#1: cancellation vs the 4+2 generation) return as the black sun's intake against the star's radiating circulation (#3): the same two fates of relation, first as arithmetic, then as social power; the pointer arcs from the player's invitation (0.4 attract) through the fork's shove and capture's implode to the return's gentle 0.3 — the way back to the particular words stays open.\nHuman-amplified staging: the kickers carry the flags exactly (#1's complementary lean, #3's adopted operations); the scene bodies state whose account where the record flags it. Mythemic verbs only: the poems and images demonstrate and perform their operations; no formal entailment, no independent arithmetic, history or calculus identity claimed.\nAutomation: auto-play (#0, field.params.circulation sine — the game's coming and going) and auto-capture (#3, field.params.circulation slow sine — attention's drift), both tied to the record's moves. Durations 12–15 and transitions 1.3–2.2: capture (14s) and return (15s) held longest."
-  ],
-  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-mytheme-l3",
-    "lane": "mytheme"
+  {
+   "scene_id": "m-tay-1-roads",
+   "phase": "#2 two roads, six works",
+   "relations": "FT-P11–P16; the P3/P4 complementary lean (human-amplified: yes)"
   },
-  "glyph_rationales": {
-    "♟": "checkmate — the game's apparent end that asks to be played again; the reset pawn is the replayed opening (FT-P01).",
-    "0·1": "FT-P04's one breath — the 0 is the One, the 1 is the All; the Two Ones held in different offices.",
-    "All→none": "FT-P04's own turn — 'the All is none, once and for all'; the All's claim to finality released.",
-    "2→0": "P0's first road — the poles resolved as opposed signed ones and cancelled (FT-P11).",
-    "2→(−1)+1=0": "P0's first printed row — the opposed signed ones summed to zero; the fate of relation under addition.",
-    "4+2": "P0's second road — the four ordered pairings with the generating two retained (FT-P11).",
-    "00 01 10 11": "the four ordered pairings generated from 0 and 1 before their retention as 4+2 (FT-P11's printed row).",
-    "2": "FT-P15's first sign — 'we forgot that one really is two'; humility as the prerequisite of precision.",
-    "…": "FT-P16's three pauses — 'so, to speak'; finding the limit made an act of language.",
-    "▣": "the cage — the frame that encloses what it claims to show, its bounds made the creature's world.",
-    "☐": "the window — the frame that keeps a definite edge while admitting light and air from beyond it (C21).",
-    "▣☐": "cage and window together — the difference requires the frame in both cases.",
-    "⧒⧓": "the broken token's halves — each referring past itself to the absent other; recognition through their fit (A23).",
-    "∵∴": "the two dots retained — each field of the taijitu keeping the other within it; the living whole (A13).",
-    "∴": "the one-dot orientation — a reading within the relation before the erasure that keeps form and loses reciprocity.",
-    "✷": "the radiating star — what reaches the centre becoming available outward as generative power.",
-    "→→": "the attention sequence — cynicism, exhaustion, blankness; the field readied for re-inscription.",
-    "G?": "God as Other — source, law or archetypal totality addressed as exceeding a finite mind's possession.",
-    "4": "the four operators of one alterity encounter — God, shadow, friend, alien/enemy; distinct offices, not character classes.",
-    "C38": "the recursive Bimba — a reference genuinely occupying a relative original's office within a wider relation.",
-    "pratibimba": "the reflected office — the reference remaining image inside the wider relation that holds it."
+  {
+   "scene_id": "m-tay-3-prose",
+   "phase": "#4 the prose images",
+   "relations": "fish, cage/window, kaleidoscope, Necker cube, centres, broken token, erased dots; A01, C21, A06, A04, A22, A26, A23, A13"
+  },
+  {
+   "scene_id": "m-tay-4-blacksun",
+   "phase": "#4 the black sun and the radiating star",
+   "relations": "the adopted social-power unit; Work/Play inversion; four rings; A29, A24, A25, A32"
+  },
+  {
+   "scene_id": "m-tay-5-return",
+   "phase": "#5→0 keeping the opening in the form",
+   "relations": "anchor taylor-authored-images-return; A11, A01, A06, A27; recursive Bimba; the four alterity operators"
   }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "checkmate / another game",
+   "occurrence": "FT-P01; #5→0 the replayed opening"
+  },
+  {
+   "figure": "the husk",
+   "occurrence": "FT-P02 knowing fixed on its object"
+  },
+  {
+   "figure": "the fork rows 2→0 and 4+2",
+   "occurrence": "FT-P11; #1 the whole poem printed in two rows"
+  },
+  {
+   "figure": "the loop's fall (ring around the Rosie)",
+   "occurrence": "FT-P14; #5→0 the ending that changes perfection's meaning"
+  },
+  {
+   "figure": "the fish, the cage/window",
+   "occurrence": "#4 Draft 3's faithful definition"
+  },
+  {
+   "figure": "the broken token and the erased dots",
+   "occurrence": "#4 kept fracture vs erased reciprocity (A23, A13)"
+  },
+  {
+   "figure": "the black sun / radiating star; four rings",
+   "occurrence": "#4 the adopted capture/circulation unit; no allegations reproduced"
+  },
+  {
+   "figure": "God as Other; shadow; friend; alien/enemy",
+   "occurrence": "#5→0 the four operators returning-to A27"
+  },
+  {
+   "motif": "the returned shoe",
+   "occurrence": "FT-P23 the ending qualifying the work"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "the fish/definition, cage/window, kaleidoscope orbital operation, Necker contextual operation, nested-internality, fracture-as-recognition, two-dot/one-dot/no-dot, Bohr bounded complementarity, black sun capture/rings/false-accounting, four-office ecology, sequence corrections (FT-P19/21/22) and boots correction",
+   "flag": "yes"
+  },
+  {
+   "relation": "fixed mythic identity for FT-P18's brothers or FT-P22's figures; the Venus–Lucifer–Christ genealogy; any Blake quotation beyond the named allusion",
+   "flag": "no"
+  }
+ ],
+ "cross_story_relations": [
+  "Neumann shared structuration qualifies emergence/differentiation/renewed interplay; meal whole's devouring contrast recalls the black sun's capture without merging the units."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-taylor-authored-images.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: five scenes carry 23 poems + 14 images by grouping per the record's own sections; the numerical poem is quoted in scene text exactly as printed rows. The raw site file's absence and the unmined vectors are named as remainers.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#0 poems — the replay authored as motion: attract pointer at 0.4 (the invitation that draws the other back), auto-play, a sine LFO on circulation — the game's coming and going; the pawn's sequence resets it ♟ → inverted → ♟ (the board set up again); FT-P04's one breath walks 0·1 → All→none → 0·1 (the Two Ones, then the release of the All's finality). Duration 12.\n#1 roads — THE 3D SCENE. z is the fork's divergence: the cancellation road receding (2→0 at z −0.4), the generation road near (4+2 at z +0.35), the P3 ring at middle depth playing itself apart through its rotation-and-shrink sequence — ring around the Rosie, falling down through the loop. Each road walks its own printed row; vortex + shove pointer (the fork refuses one road); depth perspective + occlusion. Duration 13.\n#2 prose — grid layout: six images in cells that hold their seams (adjacency without identity — the record's own caution against turning emblem, operator and diagnosis into one evidence); repel + pulse pointer (each image keeps its own conditions); the cage/window sequence ▣ → ☐ → ▣☐ (enclose, admit, both need the frame); the broken token drifts together and brightens (recognition through fit); the taijitu walks ∵∴ → ∴ → unmarked (two dots, one dot, the erasure). Duration 12.\n#3 black sun — attract + implode pointer at 0.6 (capture's intake); circulation −0.35 with auto-capture, a slow sine LFO — attention's drift toward a centre that does not answer; the four rings step inward Neptune → Jupiter → Mercury → corona (deepening red, shrinking); the radiating star's sequence ✷ dim → bright and larger (the alternative destination: outward as generative power). Duration 14 — the longest middle beat, capture takes time.\n#4 return — ring layout: the return held in the round; attract pointer at 0.3 (the way back stays open); the shoe's ring returns smaller and paled (fit, then returned); Bimba's sequence C38 → pratibimba → C38 (the office occupied, the wider relation kept). Duration 15, the longest beat — the return takes its time.\nENDING QUALIFIES BEGINNING: #0's checkmate that asks to be played again returns at #4 as the exact office of return — play beginning again, the six routes falling through their loop, the shoe fitting and being returned: each ending qualifying its work. The fork's two operations (#1: cancellation vs the 4+2 generation) return as the black sun's intake against the star's radiating circulation (#3): the same two fates of relation, first as arithmetic, then as social power; the pointer arcs from the player's invitation (0.4 attract) through the fork's shove and capture's implode to the return's gentle 0.3 — the way back to the particular words stays open.\nHuman-amplified staging: the kickers carry the flags exactly (#1's complementary lean, #3's adopted operations); the scene bodies state whose account where the record flags it. Mythemic verbs only: the poems and images demonstrate and perform their operations; no formal entailment, no independent arithmetic, history or calculus identity claimed.\nAutomation: auto-play (#0, field.params.circulation sine — the game's coming and going) and auto-capture (#3, field.params.circulation slow sine — attention's drift), both tied to the record's moves. Durations 12–15 and transitions 1.3–2.2: capture (14s) and return (15s) held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "♟": "checkmate — the game's apparent end that asks to be played again; the reset pawn is the replayed opening (FT-P01).",
+  "0·1": "FT-P04's one breath — the 0 is the One, the 1 is the All; the Two Ones held in different offices.",
+  "All→none": "FT-P04's own turn — 'the All is none, once and for all'; the All's claim to finality released.",
+  "2→0": "P0's first road — the poles resolved as opposed signed ones and cancelled (FT-P11).",
+  "2→(−1)+1=0": "P0's first printed row — the opposed signed ones summed to zero; the fate of relation under addition.",
+  "4+2": "P0's second road — the four ordered pairings with the generating two retained (FT-P11).",
+  "00 01 10 11": "the four ordered pairings generated from 0 and 1 before their retention as 4+2 (FT-P11's printed row).",
+  "2": "FT-P15's first sign — 'we forgot that one really is two'; humility as the prerequisite of precision.",
+  "…": "FT-P16's three pauses — 'so, to speak'; finding the limit made an act of language.",
+  "▣": "the cage — the frame that encloses what it claims to show, its bounds made the creature's world.",
+  "☐": "the window — the frame that keeps a definite edge while admitting light and air from beyond it (C21).",
+  "▣☐": "cage and window together — the difference requires the frame in both cases.",
+  "⧒⧓": "the broken token's halves — each referring past itself to the absent other; recognition through their fit (A23).",
+  "∵∴": "the two dots retained — each field of the taijitu keeping the other within it; the living whole (A13).",
+  "∴": "the one-dot orientation — a reading within the relation before the erasure that keeps form and loses reciprocity.",
+  "✷": "the radiating star — what reaches the centre becoming available outward as generative power.",
+  "→→": "the attention sequence — cynicism, exhaustion, blankness; the field readied for re-inscription.",
+  "G?": "God as Other — source, law or archetypal totality addressed as exceeding a finite mind's possession.",
+  "4": "the four operators of one alterity encounter — God, shadow, friend, alien/enemy; distinct offices, not character classes.",
+  "C38": "the recursive Bimba — a reference genuinely occupying a relative original's office within a wider relation.",
+  "pratibimba": "the reflected office — the reference remaining image inside the wider relation that holds it."
+ }
 }

@@ -1,209 +1,210 @@
 {
-  "artifact": "episteme/roz-dossiers.journey.json",
-  "family": "episteme-dossiers",
-  "worker": "E3",
-  "date": "2026-09-17",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "family-dossier"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
-    "records": [
-      {
-        "record_id": "dossier-formal-limit",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/formal-limit.md",
-        "sha256": "1c2aac9aa617d40ca8c7daf204366467770ab3d0459e0cd74f222bc0c896e139",
-        "sha256_census_receipt": "1c2aac9aa617d40ca8c7daf204366467770ab3d0459e0cd74f222bc0c896e139",
-        "hash_note": "matches current bytes"
-      },
-      {
-        "record_id": "dossier-bohm",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/bohm.md",
-        "sha256": "3094efc89557a1213873713790a21f3c2685e86e466846d08766e376b825a170",
-        "sha256_census_receipt": "71170770d756b5f7feee16d323f49242f88719fc6962bf14936069b50f9c0832",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "dossier-jung-pauli-psychoid",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/jung-pauli-psychoid.md",
-        "sha256": "5c3d693c8960fa6a8b542bdf1ab52aee1a90226fec41d5b6e9e08c584535269b",
-        "sha256_census_receipt": "5c3d693c8960fa6a8b542bdf1ab52aee1a90226fec41d5b6e9e08c584535269b",
-        "hash_note": "matches current bytes"
-      },
-      {
-        "record_id": "dossier-process",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/process.md",
-        "sha256": "d4f753c281b54280832acf712969f083fcbd96ca75ef1dde6dcc844a452b6442",
-        "sha256_census_receipt": "d4f753c281b54280832acf712969f083fcbd96ca75ef1dde6dcc844a452b6442",
-        "hash_note": "matches current bytes"
-      },
-      {
-        "record_id": "dossier-indian-philosophy",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/indian-philosophy.md",
-        "sha256": "11ed980efafaf9c70cddedeff06a869be5846e1d4e74794bb18a351c0113bf00",
-        "sha256_census_receipt": "11ed980efafaf9c70cddedeff06a869be5846e1d4e74794bb18a351c0113bf00",
-        "hash_note": "matches current bytes"
-      },
-      {
-        "record_id": "dossier-zero-reception",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/zero-reception.md",
-        "sha256": "0b575a5bbf767de1cadbb40822c05f6addc022a39eac3498b74ec8ee39eabeb5",
-        "sha256_census_receipt": "0b575a5bbf767de1cadbb40822c05f6addc022a39eac3498b74ec8ee39eabeb5",
-        "hash_note": "matches current bytes"
-      },
-      {
-        "record_id": "dossier-oi-technical-responsibility",
-        "path": "submission-package/essay/symbolon/episteme/dossiers/oi-technical-responsibility.md",
-        "sha256": "355d3208a6131c0f2c9edbc04c6643e1fac7d078c9183887d6ecc873500fb52a",
-        "sha256_census_receipt": "5924569cead2b4d3cc9bf9fc87ef8d1c33e4da7be47223dd40e0695a0aaa6da7",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      }
-    ]
+ "artifact": "episteme/roz-dossiers.journey.json",
+ "family": "episteme-dossiers",
+ "worker": "E3",
+ "date": "2026-09-17",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "family-dossier"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
+  "records": [
+   {
+    "record_id": "dossier-formal-limit",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/formal-limit.md",
+    "sha256": "1c2aac9aa617d40ca8c7daf204366467770ab3d0459e0cd74f222bc0c896e139",
+    "sha256_census_receipt": "1c2aac9aa617d40ca8c7daf204366467770ab3d0459e0cd74f222bc0c896e139",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "dossier-bohm",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/bohm.md",
+    "sha256": "3094efc89557a1213873713790a21f3c2685e86e466846d08766e376b825a170",
+    "sha256_census_receipt": "71170770d756b5f7feee16d323f49242f88719fc6962bf14936069b50f9c0832",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "dossier-jung-pauli-psychoid",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/jung-pauli-psychoid.md",
+    "sha256": "5c3d693c8960fa6a8b542bdf1ab52aee1a90226fec41d5b6e9e08c584535269b",
+    "sha256_census_receipt": "5c3d693c8960fa6a8b542bdf1ab52aee1a90226fec41d5b6e9e08c584535269b",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "dossier-process",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/process.md",
+    "sha256": "d4f753c281b54280832acf712969f083fcbd96ca75ef1dde6dcc844a452b6442",
+    "sha256_census_receipt": "d4f753c281b54280832acf712969f083fcbd96ca75ef1dde6dcc844a452b6442",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "dossier-indian-philosophy",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/indian-philosophy.md",
+    "sha256": "11ed980efafaf9c70cddedeff06a869be5846e1d4e74794bb18a351c0113bf00",
+    "sha256_census_receipt": "11ed980efafaf9c70cddedeff06a869be5846e1d4e74794bb18a351c0113bf00",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "dossier-zero-reception",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/zero-reception.md",
+    "sha256": "0b575a5bbf767de1cadbb40822c05f6addc022a39eac3498b74ec8ee39eabeb5",
+    "sha256_census_receipt": "0b575a5bbf767de1cadbb40822c05f6addc022a39eac3498b74ec8ee39eabeb5",
+    "hash_note": "matches current bytes"
+   },
+   {
+    "record_id": "dossier-oi-technical-responsibility",
+    "path": "submission-package/essay/symbolon/episteme/dossiers/oi-technical-responsibility.md",
+    "sha256": "355d3208a6131c0f2c9edbc04c6643e1fac7d078c9183887d6ecc873500fb52a",
+    "sha256_census_receipt": "5924569cead2b4d3cc9bf9fc87ef8d1c33e4da7be47223dd40e0695a0aaa6da7",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "journey": {
+  "id": "roz-dossiers",
+  "name": "Return of Zero — Episteme dossiers",
+  "scenes": 7,
+  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+ },
+ "scenes": [
+  {
+   "scene_id": "dossier-formal-limit",
+   "source_ref": "dossier-formal-limit",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/formal-limit.md",
+   "sha256": "1c2aac9aa617d40ca8c7daf204366467770ab3d0459e0cd74f222bc0c896e139",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued; specified formal consequences Derived under their stated assumptions",
+   "relations": {
+    "source_relation": "Paraphrased source-specific accounts; Argued from native derivation; comparative extensions explicitly distinguished"
+   },
+   "form": "evidential plate + three section cells"
   },
-  "pointcloud_revision": "f257de5",
-  "journey": {
-    "id": "roz-dossiers",
-    "name": "Return of Zero — Episteme dossiers",
-    "scenes": 7,
-    "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+  {
+   "scene_id": "dossier-bohm",
+   "source_ref": "dossier-bohm",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/bohm.md",
+   "sha256": "3094efc89557a1213873713790a21f3c2685e86e466846d08766e376b825a170",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Paraphrased primary carriers; Argued native coordination; Offered technical practice"
+   },
+   "form": "evidential plate + three section cells"
   },
-  "scenes": [
-    {
-      "scene_id": "dossier-formal-limit",
-      "source_ref": "dossier-formal-limit",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/formal-limit.md",
-      "sha256": "1c2aac9aa617d40ca8c7daf204366467770ab3d0459e0cd74f222bc0c896e139",
-      "hash_note": "matches current bytes",
-      "claim_status": "Argued; specified formal consequences Derived under their stated assumptions",
-      "relations": {
-        "source_relation": "Paraphrased source-specific accounts; Argued from native derivation; comparative extensions explicitly distinguished"
-      },
-      "form": "evidential plate + three section cells"
-    },
-    {
-      "scene_id": "dossier-bohm",
-      "source_ref": "dossier-bohm",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/bohm.md",
-      "sha256": "3094efc89557a1213873713790a21f3c2685e86e466846d08766e376b825a170",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "source_relation": "Paraphrased primary carriers; Argued native coordination; Offered technical practice"
-      },
-      "form": "evidential plate + three section cells"
-    },
-    {
-      "scene_id": "dossier-jung-pauli-psychoid",
-      "source_ref": "dossier-jung-pauli-psychoid",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/jung-pauli-psychoid.md",
-      "sha256": "5c3d693c8960fa6a8b542bdf1ab52aee1a90226fec41d5b6e9e08c584535269b",
-      "hash_note": "matches current bytes",
-      "claim_status": "Argued",
-      "relations": {
-        "source_relation": "Paraphrased correspondence and later scholarship; Argued authorial return"
-      },
-      "form": "evidential plate + three section cells"
-    },
-    {
-      "scene_id": "dossier-process",
-      "source_ref": "dossier-process",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/process.md",
-      "sha256": "d4f753c281b54280832acf712969f083fcbd96ca75ef1dde6dcc844a452b6442",
-      "hash_note": "matches current bytes",
-      "claim_status": "Argued",
-      "relations": {
-        "source_relation": "Paraphrased bounded source passages; Argued native coordination; Offered technical tests"
-      },
-      "form": "evidential plate + three section cells"
-    },
-    {
-      "scene_id": "dossier-indian-philosophy",
-      "source_ref": "dossier-indian-philosophy",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/indian-philosophy.md",
-      "sha256": "11ed980efafaf9c70cddedeff06a869be5846e1d4e74794bb18a351c0113bf00",
-      "hash_note": "matches current bytes",
-      "claim_status": "Argued",
-      "relations": {
-        "source_relation": "Paraphrased source-local material; Argued from native derivation and authorial encounters; Offered technical construction"
-      },
-      "form": "evidential plate + three section cells"
-    },
-    {
-      "scene_id": "dossier-zero-reception",
-      "source_ref": "dossier-zero-reception",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/zero-reception.md",
-      "sha256": "0b575a5bbf767de1cadbb40822c05f6addc022a39eac3498b74ec8ee39eabeb5",
-      "hash_note": "matches current bytes",
-      "claim_status": "Argued",
-      "relations": {
-        "source_relation": "Paraphrased selected witnesses; Argued comparison of receiving practices"
-      },
-      "form": "evidential plate + three section cells"
-    },
-    {
-      "scene_id": "dossier-oi-technical-responsibility",
-      "source_ref": "dossier-oi-technical-responsibility",
-      "source_path": "submission-package/essay/symbolon/episteme/dossiers/oi-technical-responsibility.md",
-      "sha256": "355d3208a6131c0f2c9edbc04c6643e1fac7d078c9183887d6ecc873500fb52a",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "source_relation": "Argued authorial technical responsibility; Paraphrased dated product contracts and bounded source witnesses; Offered engineering comparisons"
-      },
-      "form": "evidential plate + three section cells"
-    }
-  ],
-  "assets": [
-    {
-      "kind": "diagram",
-      "ref": "plate-and-cells formations (engine-native shapes)",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "episteme/roz-dossiers.cover.png",
-  "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 7 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
-  "status": "reviewed",
-  "notes": [
-    "dossier-formal-limit's compound claim_status is carried verbatim in its kicker and here. Its scene body holds the #0 governing finding; the dossier's two precise containing-field changes (Russell restriction, Cusa polygon comparison) stay in the record.",
-    "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/symbolon/episteme/dossiers/*.md):",
-    "Grammar: evidential plates — the governing plate sequences the record's OWN section findings verbatim (formal-limit, bohm, jung-pauli, process, zero-reception: 5 of 7 carry sequences); tints walk the finding's weight toward the record's §5→0.",
-    "dossier-bohm: THE 3D SCENE — enfoldment: the plate at z −0.4 beneath (the whole enfolded), c1 unfolded above at z +0.3, the walking findings descending z 0.25 → −0.15 (explication to the account's own means); depth means Bohm's own distinction — what unfolds above carries the enfolded whole beneath; depthPerspective+occlusion+tint authored.",
-    "Pointers carry dossier character: formal-limit repel (the limit holds), bohm attract (enfoldment gathers), jung-pauli vortex (coincidence's field, excitation pulse automation), process vortex (recurrent pattern, inheritance drift automation), indian-philosophy attract, zero-reception repel/shove (the exception presses), oi-technical-responsibility attract (answerability gathers).",
-    "Beats: durations 12–14s, transitions 1.7–2.3; 3 automation lanes; grid layouts on two plates.",
-    "Kickers untouched — dossier-formal-limit's long compound status stays byte-exact."
-  ],
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-episteme-l2",
-    "lane": "enrich/expressions-20261006",
-    "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-    "note": "records re-read at fc59a719 — dossiers live under submission-package/essay/symbolon/episteme/dossiers/*.md at that revision"
+  {
+   "scene_id": "dossier-jung-pauli-psychoid",
+   "source_ref": "dossier-jung-pauli-psychoid",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/jung-pauli-psychoid.md",
+   "sha256": "5c3d693c8960fa6a8b542bdf1ab52aee1a90226fec41d5b6e9e08c584535269b",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Paraphrased correspondence and later scholarship; Argued authorial return"
+   },
+   "form": "evidential plate + three section cells"
   },
-  "glyph_rationales": {
-    "What the account has reached": "the formal-limit record's opening section — the dossier's finding",
-    "A contradiction changes what may be formed": "the record's section #1 — contradiction as formation-change",
-    "An admissible sentence exceeds a fixed proof relation": "the record's section #2 — the proof-relation limit",
-    "Saying encounters its own manner of working": "the record's section #3",
-    "Investigation determines; faith continues": "the record's §5→0 — the aphorism's bearing on the limit",
-    "Explication makes a form available": "the Bohm record's section #1 — the unfold",
-    "A participant can examine an operative assumption": "the Bohm record's section #2 — dialogue's office",
-    "Running true through a change of orientation": "the Bohm record's section #3",
-    "The account exposes its own means of continuation": "the Bohm record's §5→0",
-    "An exchange whose differences belong to its result": "the Jung–Pauli record's opening section",
-    "Meaningful coincidence makes cause and time difficult": "the record's section #1 — the psychoid's pressure on causation",
-    "Number's two offices meet the cost of disciplinary adoption": "the record's section #3",
-    "Translation returns into its receiving conditions": "the record's §5→0",
-    "An occurrence becomes an inheritance": "the process record's opening section",
-    "The next note changes the whole heard": "the record's section #1 — the musical figure of process",
-    "A recurrent pattern can change its jurisdiction": "the record's section #4",
-    "A result changes the conditions of the next inquiry": "the record's §5→0",
-    "Receiving a mark is an operation": "the zero-reception record's opening section",
-    "A numeral receives rules, and rules meet an exception": "the record's section #1",
-    "Gerbert and Salem require different recoveries": "the record's section #3 — two reception stories kept distinct",
-    "The loan returns with its history available": "the record's §5→0"
+  {
+   "scene_id": "dossier-process",
+   "source_ref": "dossier-process",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/process.md",
+   "sha256": "d4f753c281b54280832acf712969f083fcbd96ca75ef1dde6dcc844a452b6442",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Paraphrased bounded source passages; Argued native coordination; Offered technical tests"
+   },
+   "form": "evidential plate + three section cells"
+  },
+  {
+   "scene_id": "dossier-indian-philosophy",
+   "source_ref": "dossier-indian-philosophy",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/indian-philosophy.md",
+   "sha256": "11ed980efafaf9c70cddedeff06a869be5846e1d4e74794bb18a351c0113bf00",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Paraphrased source-local material; Argued from native derivation and authorial encounters; Offered technical construction"
+   },
+   "form": "evidential plate + three section cells"
+  },
+  {
+   "scene_id": "dossier-zero-reception",
+   "source_ref": "dossier-zero-reception",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/zero-reception.md",
+   "sha256": "0b575a5bbf767de1cadbb40822c05f6addc022a39eac3498b74ec8ee39eabeb5",
+   "hash_note": "matches current bytes",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Paraphrased selected witnesses; Argued comparison of receiving practices"
+   },
+   "form": "evidential plate + three section cells"
+  },
+  {
+   "scene_id": "dossier-oi-technical-responsibility",
+   "source_ref": "dossier-oi-technical-responsibility",
+   "source_path": "submission-package/essay/symbolon/episteme/dossiers/oi-technical-responsibility.md",
+   "sha256": "355d3208a6131c0f2c9edbc04c6643e1fac7d078c9183887d6ecc873500fb52a",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "source_relation": "Argued authorial technical responsibility; Paraphrased dated product contracts and bounded source witnesses; Offered engineering comparisons"
+   },
+   "form": "evidential plate + three section cells"
   }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "plate-and-cells formations (engine-native shapes)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "episteme/roz-dossiers.cover.png",
+ "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 7 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
+ "status": "reviewed",
+ "notes": [
+  "dossier-formal-limit's compound claim_status is carried verbatim in its kicker and here. Its scene body holds the #0 governing finding; the dossier's two precise containing-field changes (Russell restriction, Cusa polygon comparison) stay in the record.",
+  "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/symbolon/episteme/dossiers/*.md):",
+  "Grammar: evidential plates — the governing plate sequences the record's OWN section findings verbatim (formal-limit, bohm, jung-pauli, process, zero-reception: 5 of 7 carry sequences); tints walk the finding's weight toward the record's §5→0.",
+  "dossier-bohm: THE 3D SCENE — enfoldment: the plate at z −0.4 beneath (the whole enfolded), c1 unfolded above at z +0.3, the walking findings descending z 0.25 → −0.15 (explication to the account's own means); depth means Bohm's own distinction — what unfolds above carries the enfolded whole beneath; depthPerspective+occlusion+tint authored.",
+  "Pointers carry dossier character: formal-limit repel (the limit holds), bohm attract (enfoldment gathers), jung-pauli vortex (coincidence's field, excitation pulse automation), process vortex (recurrent pattern, inheritance drift automation), indian-philosophy attract, zero-reception repel/shove (the exception presses), oi-technical-responsibility attract (answerability gathers).",
+  "Beats: durations 12–14s, transitions 1.7–2.3; 3 automation lanes; grid layouts on two plates.",
+  "Kickers untouched — dossier-formal-limit's long compound status stays byte-exact."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-episteme-l2",
+  "lane": "enrich/expressions-20261006",
+  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "records re-read at fc59a719 — dossiers live under submission-package/essay/symbolon/episteme/dossiers/*.md at that revision | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
+ },
+ "glyph_rationales": {
+  "What the account has reached": "the formal-limit record's opening section — the dossier's finding",
+  "A contradiction changes what may be formed": "the record's section #1 — contradiction as formation-change",
+  "An admissible sentence exceeds a fixed proof relation": "the record's section #2 — the proof-relation limit",
+  "Saying encounters its own manner of working": "the record's section #3",
+  "Investigation determines; faith continues": "the record's §5→0 — the aphorism's bearing on the limit",
+  "Explication makes a form available": "the Bohm record's section #1 — the unfold",
+  "A participant can examine an operative assumption": "the Bohm record's section #2 — dialogue's office",
+  "Running true through a change of orientation": "the Bohm record's section #3",
+  "The account exposes its own means of continuation": "the Bohm record's §5→0",
+  "An exchange whose differences belong to its result": "the Jung–Pauli record's opening section",
+  "Meaningful coincidence makes cause and time difficult": "the record's section #1 — the psychoid's pressure on causation",
+  "Number's two offices meet the cost of disciplinary adoption": "the record's section #3",
+  "Translation returns into its receiving conditions": "the record's §5→0",
+  "An occurrence becomes an inheritance": "the process record's opening section",
+  "The next note changes the whole heard": "the record's section #1 — the musical figure of process",
+  "A recurrent pattern can change its jurisdiction": "the record's section #4",
+  "A result changes the conditions of the next inquiry": "the record's §5→0",
+  "Receiving a mark is an operation": "the zero-reception record's opening section",
+  "A numeral receives rules, and rules meet an exception": "the record's section #1",
+  "Gerbert and Salem require different recoveries": "the record's section #3 — two reception stories kept distinct",
+  "The loan returns with its history available": "the record's §5→0"
+ }
 }

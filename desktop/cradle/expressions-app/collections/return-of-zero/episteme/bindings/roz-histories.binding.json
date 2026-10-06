@@ -1,526 +1,527 @@
 {
-  "artifact": "episteme/roz-histories.journey.json",
-  "family": "episteme-histories",
-  "worker": "E3",
-  "date": "2026-09-17",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "family-history"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
-    "records": [
-      {
-        "record_id": "history-ancient-philosophy",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/ancient-philosophy/HISTORY.md",
-        "sha256": "3b3cc972c6224044b4ef6378b096d807e295dac50d7ca53eaf20c8b94813a414",
-        "sha256_census_receipt": "d4ada784572c85c9c79f2ee8f2b6c057f12ddb164c74016d2d4f2d038e1aa2f8",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-indian-philosophy",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY.md",
-        "sha256": "fcb1f4bdc80776223e3f64e84d2ca11690ce458d03e5f509e8f18d8d7c80fd19",
-        "sha256_census_receipt": "cddc8cfd0de71514675cd7f4975029ca06b1b9309ccbfc41086a5ffe86bd9f05",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-language-law-nation-centralisation",
-        "path": "submission-package/essay/symbolon/episteme/histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md",
-        "sha256": "51267ef14beb2722a9f6179b31c35454c5e1e6c896cb0f642ad7bb6b9287486b",
-        "sha256_census_receipt": "fce96725ed4bb5c874ef82bffdd5259546d24b0b8455ccce931f316858e5377d",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-language-symbol-dialogue",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/HISTORY.md",
-        "sha256": "98b8aeff68ae5e8754a1d0c03dfa1822a1750f01732fd938d32e5ab2ab5f5cd3",
-        "sha256_census_receipt": "e754f5f8b8dee1930e68f15d9bf0949664cd816fde710a7ca13c73f17080532d",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-mathematics",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/mathematics/HISTORY.md",
-        "sha256": "50559b5edcd74354afcdfa55fe1362bd7c5201e35456f7f0dbdef795e59ab9b4",
-        "sha256_census_receipt": "c36c40889031d7a9abcda6c426a6db6913c8e44bd3586e9807493321c9f1cf65",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-myth",
-        "path": "submission-package/essay/symbolon/episteme/histories/encounters-and-transmissions/myth/HISTORY.md",
-        "sha256": "6ca618e99afb2176e9a162a6ab60423f04810b060efe8ee5d172a7897a917722",
-        "sha256_census_receipt": "9a741a09d2467c9833da9f60ebdca00e684b489b16e4dc25eec8fa01c5bfaed0",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-process-systems-science",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/process-systems-science/HISTORY.md",
-        "sha256": "f50195a96dcd5dc56aad99efe85539618aa34b5b66e14de65198bb1b4b572946",
-        "sha256_census_receipt": "0d8e8f7517b5b52f87d0602e9bc620cbfc22cd5f4a764d469344180c735a19d3",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-psychology",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/psychology/HISTORY.md",
-        "sha256": "d374decba65b1e4936a7580491ca01bf81444beef718a70b9f56e7f3401aad99",
-        "sha256_census_receipt": "e21e9814a2767f24fa34bfc9a5d3c228aa16cccb95b5d583f467b221883d3faf",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-technology-politics",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/technology-politics/HISTORY.md",
-        "sha256": "f20427fde27147f741b9a60405f8cfc0318f52a12494447fe2f864ada91c144d",
-        "sha256_census_receipt": "75aa957131cdcc39f78f224bab6959d672672e355e691c693c15040b36e83c01",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      },
-      {
-        "record_id": "history-zero-subject-advent",
-        "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md",
-        "sha256": "c22c5dd6553f238a7da9466a2d15d3413f11bf9782fc272c2e67080d5c1084c0",
-        "sha256_census_receipt": "3823064d0fb3650db6d0d744fc3f9d92876d32d1cce1237d363af509292b7ab2",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      }
+ "artifact": "episteme/roz-histories.journey.json",
+ "family": "episteme-histories",
+ "worker": "E3",
+ "date": "2026-09-17",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "family-history"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
+  "records": [
+   {
+    "record_id": "history-ancient-philosophy",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/ancient-philosophy/HISTORY.md",
+    "sha256": "3b3cc972c6224044b4ef6378b096d807e295dac50d7ca53eaf20c8b94813a414",
+    "sha256_census_receipt": "d4ada784572c85c9c79f2ee8f2b6c057f12ddb164c74016d2d4f2d038e1aa2f8",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-indian-philosophy",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY.md",
+    "sha256": "fcb1f4bdc80776223e3f64e84d2ca11690ce458d03e5f509e8f18d8d7c80fd19",
+    "sha256_census_receipt": "cddc8cfd0de71514675cd7f4975029ca06b1b9309ccbfc41086a5ffe86bd9f05",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-language-law-nation-centralisation",
+    "path": "submission-package/essay/symbolon/episteme/histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md",
+    "sha256": "51267ef14beb2722a9f6179b31c35454c5e1e6c896cb0f642ad7bb6b9287486b",
+    "sha256_census_receipt": "fce96725ed4bb5c874ef82bffdd5259546d24b0b8455ccce931f316858e5377d",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-language-symbol-dialogue",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/HISTORY.md",
+    "sha256": "98b8aeff68ae5e8754a1d0c03dfa1822a1750f01732fd938d32e5ab2ab5f5cd3",
+    "sha256_census_receipt": "e754f5f8b8dee1930e68f15d9bf0949664cd816fde710a7ca13c73f17080532d",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-mathematics",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/mathematics/HISTORY.md",
+    "sha256": "50559b5edcd74354afcdfa55fe1362bd7c5201e35456f7f0dbdef795e59ab9b4",
+    "sha256_census_receipt": "c36c40889031d7a9abcda6c426a6db6913c8e44bd3586e9807493321c9f1cf65",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-myth",
+    "path": "submission-package/essay/symbolon/episteme/histories/encounters-and-transmissions/myth/HISTORY.md",
+    "sha256": "6ca618e99afb2176e9a162a6ab60423f04810b060efe8ee5d172a7897a917722",
+    "sha256_census_receipt": "9a741a09d2467c9833da9f60ebdca00e684b489b16e4dc25eec8fa01c5bfaed0",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-process-systems-science",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/process-systems-science/HISTORY.md",
+    "sha256": "f50195a96dcd5dc56aad99efe85539618aa34b5b66e14de65198bb1b4b572946",
+    "sha256_census_receipt": "0d8e8f7517b5b52f87d0602e9bc620cbfc22cd5f4a764d469344180c735a19d3",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-psychology",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/psychology/HISTORY.md",
+    "sha256": "d374decba65b1e4936a7580491ca01bf81444beef718a70b9f56e7f3401aad99",
+    "sha256_census_receipt": "e21e9814a2767f24fa34bfc9a5d3c228aa16cccb95b5d583f467b221883d3faf",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-technology-politics",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/technology-politics/HISTORY.md",
+    "sha256": "f20427fde27147f741b9a60405f8cfc0318f52a12494447fe2f864ada91c144d",
+    "sha256_census_receipt": "75aa957131cdcc39f78f224bab6959d672672e355e691c693c15040b36e83c01",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "history-zero-subject-advent",
+    "path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md",
+    "sha256": "c22c5dd6553f238a7da9466a2d15d3413f11bf9782fc272c2e67080d5c1084c0",
+    "sha256_census_receipt": "3823064d0fb3650db6d0d744fc3f9d92876d32d1cce1237d363af509292b7ab2",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "journey": {
+  "id": "roz-histories",
+  "name": "Return of Zero — Episteme histories",
+  "scenes": 10,
+  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+ },
+ "scenes": [
+  {
+   "scene_id": "history-ancient-philosophy",
+   "source_ref": "history-ancient-philosophy",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/ancient-philosophy/HISTORY.md",
+   "sha256": "3b3cc972c6224044b4ef6378b096d807e295dac50d7ca53eaf20c8b94813a414",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "03-s01-p2-definition-cut-gift-danger",
+     "13-s1-p0-sign-migrates",
+     "19-s2-p0-difference-cannot-be-escaped",
+     "22-s2-p3-ares-aphrodite-harmonia",
+     "26-s3-p1-spanda-4-2",
+     "29-s3-p4-topology-music-resolution",
+     "35-s4-p4-gebser-apollo-dionysus",
+     "45-s50-p2-antikythera-attunement"
+    ],
+    "domain": "ancient-philosophy",
+    "sections": [
+     "Number becomes relation",
+     "Form, negation, and the finite",
+     "From cosmos to instrument",
+     "Where this history bears the essay"
     ]
+   },
+   "form": "stream-line + 4 stations (one per leading section)"
   },
-  "pointcloud_revision": "f257de5",
-  "journey": {
-    "id": "roz-histories",
-    "name": "Return of Zero — Episteme histories",
-    "scenes": 10,
-    "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+  {
+   "scene_id": "history-indian-philosophy",
+   "source_ref": "history-indian-philosophy",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY.md",
+   "sha256": "fcb1f4bdc80776223e3f64e84d2ca11690ce458d03e5f509e8f18d8d7c80fd19",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "02-s01-p1-define-subject",
+     "03-s01-p2-definition-cut-gift-danger",
+     "07-s0-p0-awareness-bends-display",
+     "08-s0-p1-inner-instrument",
+     "09-s0-p2-vikalpa-samkalpa",
+     "10-s0-p3-apoha",
+     "11-s0-p4-tattvic-compression",
+     "14-s1-p1-sunya-operational",
+     "19-s2-p0-difference-cannot-be-escaped",
+     "26-s3-p1-spanda-4-2",
+     "44-s50-p1-ql-mef-bimba-harness"
+    ],
+    "domain": "indian-philosophy",
+    "sections": [
+     "Sāṃkhya: the subject and the inner instrument",
+     "Buddhist lines: dependent arising, emptiness, and exclusion",
+     "Śūnya enters arithmetic",
+     "Kashmir Śaivism: manifestation as self-differentiation",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
   },
-  "scenes": [
-    {
-      "scene_id": "history-ancient-philosophy",
-      "source_ref": "history-ancient-philosophy",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/ancient-philosophy/HISTORY.md",
-      "sha256": "3b3cc972c6224044b4ef6378b096d807e295dac50d7ca53eaf20c8b94813a414",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "03-s01-p2-definition-cut-gift-danger",
-          "13-s1-p0-sign-migrates",
-          "19-s2-p0-difference-cannot-be-escaped",
-          "22-s2-p3-ares-aphrodite-harmonia",
-          "26-s3-p1-spanda-4-2",
-          "29-s3-p4-topology-music-resolution",
-          "35-s4-p4-gebser-apollo-dionysus",
-          "45-s50-p2-antikythera-attunement"
-        ],
-        "domain": "ancient-philosophy",
-        "sections": [
-          "Number becomes relation",
-          "Form, negation, and the finite",
-          "From cosmos to instrument",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 4 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-indian-philosophy",
-      "source_ref": "history-indian-philosophy",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/indian-philosophy/HISTORY.md",
-      "sha256": "fcb1f4bdc80776223e3f64e84d2ca11690ce458d03e5f509e8f18d8d7c80fd19",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "02-s01-p1-define-subject",
-          "03-s01-p2-definition-cut-gift-danger",
-          "07-s0-p0-awareness-bends-display",
-          "08-s0-p1-inner-instrument",
-          "09-s0-p2-vikalpa-samkalpa",
-          "10-s0-p3-apoha",
-          "11-s0-p4-tattvic-compression",
-          "14-s1-p1-sunya-operational",
-          "19-s2-p0-difference-cannot-be-escaped",
-          "26-s3-p1-spanda-4-2",
-          "44-s50-p1-ql-mef-bimba-harness"
-        ],
-        "domain": "indian-philosophy",
-        "sections": [
-          "Sāṃkhya: the subject and the inner instrument",
-          "Buddhist lines: dependent arising, emptiness, and exclusion",
-          "Śūnya enters arithmetic",
-          "Kashmir Śaivism: manifestation as self-differentiation",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-language-law-nation-centralisation",
-      "source_ref": "history-language-law-nation-centralisation",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md",
-      "sha256": "51267ef14beb2722a9f6179b31c35454c5e1e6c896cb0f642ad7bb6b9287486b",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [],
-        "domain": "language-law-nation-centralisation",
-        "sections": [
-          "Historical and archetypal Logos",
-          "The trunk: centralisation of arbitration",
-          "Branch I — Occitania, Capetian incorporation and the French Logos",
-          "Branch II — Posquières, Lunel and the Languedoc Jewish/Kabbalistic field",
-          "Branch III — Renaissance transmission: Medici, Ficino, Pico, Visconti, Pacioli and Leonardo",
-          "Branch IV — Yates, Hanegraaff and the historical construction of rejected knowledge",
-          "Branch V — Jung's *Aion*: the aeon as psychic history",
-          "Branch VI — Italy: literary Logos becoming national infrastructure",
-          "Branch VII — Germany: language, Volk and arbitration becoming ontology",
-          "Branch VIII — Anglo-Celtic jurisdiction: English as capability",
-          "Branch IX — Hebrew revival, Zionism and the attempted coincidence of the fourfold",
-          "Branch X — Abrahamic Word, Law, people and political order",
-          "Branch XI — post-war recombination",
-          "Branch XII — computation: the historical tree becomes executable",
-          "Rings, leaves and return",
-          "Source and expansion ledger"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-language-symbol-dialogue",
-      "source_ref": "history-language-symbol-dialogue",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/HISTORY.md",
-      "sha256": "98b8aeff68ae5e8754a1d0c03dfa1822a1750f01732fd938d32e5ab2ab5f5cd3",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "03-s01-p2-definition-cut-gift-danger",
-          "04-s01-p3-formal-limit-genealogy",
-          "09-s0-p2-vikalpa-samkalpa",
-          "10-s0-p3-apoha",
-          "13-s1-p0-sign-migrates",
-          "16-s1-p3-crossed-zero",
-          "20-s2-p1-dia-ballein",
-          "21-s2-p2-sym-ballein",
-          "34-s4-p3-lacan-matheme-mytheme",
-          "36-s4-p5-mef-prompt-thrownness",
-          "37-s5-p0-math-moves-meaning",
-          "38-s5-p1-apoha-softmax",
-          "44-s50-p1-ql-mef-bimba-harness"
-        ],
-        "domain": "language-symbol-dialogue",
-        "sections": [
-          "Exclusion makes reference possible",
-          "Logical language encounters its edge",
-          "The signifier divides the speaker",
-          "Symbol joins what has been separated",
-          "Encounter becomes name, count, and account",
-          "Dialogue becomes a shared practice of meaning",
-          "Language becomes a field of weights",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-mathematics",
-      "source_ref": "history-mathematics",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/mathematics/HISTORY.md",
-      "sha256": "50559b5edcd74354afcdfa55fe1362bd7c5201e35456f7f0dbdef795e59ab9b4",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "04-s01-p3-formal-limit-genealogy",
-          "13-s1-p0-sign-migrates",
-          "14-s1-p1-sunya-operational",
-          "15-s1-p2-empty-set-generates-one",
-          "16-s1-p3-crossed-zero",
-          "17-s1-p4-zero-outside-math",
-          "18-s1-p5-loan-returns",
-          "24-s2-p5-zero-changes-role",
-          "25-s3-p0-eight-determinations",
-          "26-s3-p1-spanda-4-2",
-          "27-s3-p2-mark-reentry-complex",
-          "28-s3-p3-projective-dimensional-reframing",
-          "29-s3-p4-topology-music-resolution",
-          "30-s3-p5-arche-topos",
-          "37-s5-p0-math-moves-meaning",
-          "38-s5-p1-apoha-softmax",
-          "39-s5-p2-j-space",
-          "40-s5-p3-preference-hidden-zero",
-          "45-s50-p2-antikythera-attunement"
-        ],
-        "domain": "mathematics",
-        "sections": [
-          "Absence acquires an office",
-          "Zero and one become generators",
-          "The distinction re-enters",
-          "Return takes spatial and musical form",
-          "Mathematics enters the machine",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-myth",
-      "source_ref": "history-myth",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/encounters-and-transmissions/myth/HISTORY.md",
-      "sha256": "6ca618e99afb2176e9a162a6ab60423f04810b060efe8ee5d172a7897a917722",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "22-s2-p3-ares-aphrodite-harmonia",
-          "23-s2-p4-complex-dynamism",
-          "33-s4-p2-complexio-quaternity-senarius",
-          "35-s4-p4-gebser-apollo-dionysus",
-          "40-s5-p3-preference-hidden-zero",
-          "45-s50-p2-antikythera-attunement",
-          "46-s50-p3-4-2-mono-poly"
-        ],
-        "domain": "myth",
-        "sections": [
-          "Aphrodite, Ares, Harmonia",
-          "Hephaestus and the bonds",
-          "Apollo and Dionysus",
-          "Prometheus, Atlas, and the technological imagination",
-          "Indra's net through Huayan",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-process-systems-science",
-      "source_ref": "history-process-systems-science",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/process-systems-science/HISTORY.md",
-      "sha256": "f50195a96dcd5dc56aad99efe85539618aa34b5b66e14de65198bb1b4b572946",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "04-s01-p3-formal-limit-genealogy",
-          "06-s01-p5-return-zero",
-          "07-s0-p0-awareness-bends-display",
-          "11-s0-p4-tattvic-compression",
-          "12-s0-p5-objective-internality",
-          "23-s2-p4-complex-dynamism",
-          "27-s3-p2-mark-reentry-complex",
-          "30-s3-p5-arche-topos",
-          "31-s4-p0-psychoid-problem",
-          "36-s4-p5-mef-prompt-thrownness",
-          "39-s5-p2-j-space",
-          "41-s5-p4-bimba-energy-fields",
-          "42-s5-p5-research-vectors",
-          "44-s50-p1-ql-mef-bimba-harness",
-          "45-s50-p2-antikythera-attunement"
-        ],
-        "domain": "process-systems-science",
-        "sections": [
-          "The finite belongs to an infinite relation",
-          "Becoming replaces inert substance",
-          "The system draws and remakes its boundary",
-          "Dynamics gives recurrent pattern a mathematics",
-          "Observation returns to experience",
-          "Science becomes an instrument of attunement",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-psychology",
-      "source_ref": "history-psychology",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/psychology/HISTORY.md",
-      "sha256": "d374decba65b1e4936a7580491ca01bf81444beef718a70b9f56e7f3401aad99",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "05-s01-p4-gebser-diaphaneity",
-          "12-s0-p5-objective-internality",
-          "20-s2-p1-dia-ballein",
-          "21-s2-p2-sym-ballein",
-          "23-s2-p4-complex-dynamism",
-          "31-s4-p0-psychoid-problem",
-          "32-s4-p1-jung-individuation",
-          "33-s4-p2-complexio-quaternity-senarius",
-          "34-s4-p3-lacan-matheme-mytheme",
-          "35-s4-p4-gebser-apollo-dionysus",
-          "36-s4-p5-mef-prompt-thrownness",
-          "39-s5-p2-j-space",
-          "41-s5-p4-bimba-energy-fields",
-          "42-s5-p5-research-vectors",
-          "47-s50-p4-idealism-horizon",
-          "48-s50-p5-ahi-planetary-return"
-        ],
-        "domain": "psychology",
-        "sections": [
-          "From the crowd to the mass State",
-          "The divided psyche and the work of individuation",
-          "Psyche and matter meet at the psychoid",
-          "Structures of consciousness and historical time",
-          "From psychic field to Agentworld",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-technology-politics",
-      "source_ref": "history-technology-politics",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/technology-politics/HISTORY.md",
-      "sha256": "f20427fde27147f741b9a60405f8cfc0318f52a12494447fe2f864ada91c144d",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "01-s01-p0-question-before-mechanism",
-          "12-s0-p5-objective-internality",
-          "20-s2-p1-dia-ballein",
-          "21-s2-p2-sym-ballein",
-          "22-s2-p3-ares-aphrodite-harmonia",
-          "23-s2-p4-complex-dynamism",
-          "36-s4-p5-mef-prompt-thrownness",
-          "37-s5-p0-math-moves-meaning",
-          "38-s5-p1-apoha-softmax",
-          "39-s5-p2-j-space",
-          "40-s5-p3-preference-hidden-zero",
-          "41-s5-p4-bimba-energy-fields",
-          "42-s5-p5-research-vectors",
-          "43-s50-p0-theory-vocation-compassion",
-          "44-s50-p1-ql-mef-bimba-harness",
-          "45-s50-p2-antikythera-attunement",
-          "46-s50-p3-4-2-mono-poly",
-          "48-s50-p5-ahi-planetary-return"
-        ],
-        "domain": "technology-politics-institutions",
-        "sections": [
-          "Collective formation becomes technical",
-          "Preference becomes infrastructure",
-          "The model acquires a world",
-          "Governance returns inside the machine",
-          "Technē returns to its mythic and planetary depth",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    },
-    {
-      "scene_id": "history-zero-subject-advent",
-      "source_ref": "history-zero-subject-advent",
-      "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md",
-      "sha256": "c22c5dd6553f238a7da9466a2d15d3413f11bf9782fc272c2e67080d5c1084c0",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": null,
-      "relations": {
-        "movement_ids": [
-          "05-s01-p4-gebser-diaphaneity",
-          "13-s1-p0-sign-migrates",
-          "14-s1-p1-sunya-operational",
-          "17-s1-p4-zero-outside-math",
-          "18-s1-p5-loan-returns",
-          "20-s2-p1-dia-ballein",
-          "25-s3-p0-eight-determinations",
-          "31-s4-p0-psychoid-problem",
-          "32-s4-p1-jung-individuation",
-          "35-s4-p4-gebser-apollo-dionysus",
-          "44-s50-p1-ql-mef-bimba-harness",
-          "48-s50-p5-ahi-planetary-return"
-        ],
-        "domain": "transverse-history",
-        "sections": [
-          "Zero enters the count",
-          "The subject enters the rational scene",
-          "The unconscious becomes a scientific psychic fact",
-          "Integral logic arrives",
-          "The technical threshold",
-          "Where this history bears the essay"
-        ]
-      },
-      "form": "stream-line + 5 stations (one per leading section)"
-    }
-  ],
-  "assets": [
-    {
-      "kind": "diagram",
-      "ref": "stream-and-stations formations (engine-native shapes)",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "episteme/roz-histories.cover.png",
-  "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 10 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
-  "status": "reviewed",
-  "notes": [
-    "HISTORY.md records declare no claim_status frontmatter (their DEVELOPMENT companions carry Argued); the kicker therefore reads \"<record_id> · HISTORY\" rather than inventing a status. Binding claim_status is null for these.",
-    "Italic relations = the record's own frontmatter movement_ids (capped with +n more in the card; exact list here) + domain.",
-    "Packet record history-language-law-nation-centralisation maps to the twelve-situated-histories tree (places-and-peoples); packet record history-myth maps to encounters-and-transmissions/myth.",
-    "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/symbolon/episteme/histories/…/HISTORY-*.md):",
-    "Grammar: each trunk formation sequences the record's OWN section headers verbatim, in the record's order — the station row stays, the stream now runs. Six of ten histories carry sequences (ancient, indian, mathematics, myth, process-systems, psychology, zero-subject, law-nation, symbol-dialogue: 9 total).",
-    "history-mathematics: THE 3D SCENE — the five stations distributed in z from +0.42 (absence acquires an office, furthest) to −0.42 (mathematics enters the machine, nearest); depth means time: the stream runs toward the reader, the trunk walking its five sections with deepening tint. depthPerspective+occlusion+tint authored.",
-    "Pointers carry era-character: ancient repel (form holds the finite), indian vortex (differentiation), law-nation repel/shove (centralisation's force), symbol-dialogue attract (dialogue gathers), mathematics attract (generators), myth vortex/vortex (genealogy's traffic), process-systems vortex (recurrent pattern), psychology attract/implode (the field gathers), technology-politics repel/shove (preference enforced), zero-subject attract/implode (the advent gathers).",
-    "Tints walk era-kettle: earth/sand for antiquity and transmission, moss for the living lines, rust for centralisation and technē, violet for the psychoid, ink for the arrived machine — presentation accents, no new claims.",
-    "history-myth body compressed to ≤70 words (no claim changed: 'born to' → 'of', 'the essay's reading' → 'the reading').",
-    "Beats: durations 12–15s, transitions 1.6–2.5; 3 automation lanes (mathematics stream light, myth genealogy pulse, psychology field drift); layouts line on the four station-row scenes."
-  ],
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-episteme-l2",
-    "lane": "enrich/expressions-20261006",
-    "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-    "note": "records re-read at fc59a719 — histories live under submission-package/essay/symbolon/episteme/histories/**/HISTORY-*.md at that revision"
+  {
+   "scene_id": "history-language-law-nation-centralisation",
+   "source_ref": "history-language-law-nation-centralisation",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md",
+   "sha256": "51267ef14beb2722a9f6179b31c35454c5e1e6c896cb0f642ad7bb6b9287486b",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [],
+    "domain": "language-law-nation-centralisation",
+    "sections": [
+     "Historical and archetypal Logos",
+     "The trunk: centralisation of arbitration",
+     "Branch I — Occitania, Capetian incorporation and the French Logos",
+     "Branch II — Posquières, Lunel and the Languedoc Jewish/Kabbalistic field",
+     "Branch III — Renaissance transmission: Medici, Ficino, Pico, Visconti, Pacioli and Leonardo",
+     "Branch IV — Yates, Hanegraaff and the historical construction of rejected knowledge",
+     "Branch V — Jung's *Aion*: the aeon as psychic history",
+     "Branch VI — Italy: literary Logos becoming national infrastructure",
+     "Branch VII — Germany: language, Volk and arbitration becoming ontology",
+     "Branch VIII — Anglo-Celtic jurisdiction: English as capability",
+     "Branch IX — Hebrew revival, Zionism and the attempted coincidence of the fourfold",
+     "Branch X — Abrahamic Word, Law, people and political order",
+     "Branch XI — post-war recombination",
+     "Branch XII — computation: the historical tree becomes executable",
+     "Rings, leaves and return",
+     "Source and expansion ledger"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
   },
-  "glyph_rationales": {
-    "Number becomes relation": "ancient philosophy's first movement — the history's own section (HISTORY-ancient-philosophy)",
-    "Form, negation, and the finite": "the finite and its negation in the ancient record's second section",
-    "From cosmos to instrument": "the ancient record's third section — cosmos becomes instrument",
-    "Sāṃkhya: the subject and the inner instrument": "the Indian record's own section — subject and antaḥkaraṇa",
-    "Buddhist lines: dependent arising, emptiness, and exclusion": "the Indian record's second section — apoha's home lines",
-    "Śūnya enters arithmetic": "the Indian record's third section — the mark's arrival in the count",
-    "Kashmir Śaivism: manifestation as self-differentiation": "the Indian record's fourth section — prakāśa-vimarśa's home",
-    "Absence acquires an office": "the mathematics record's first section — the empty place",
-    "Zero and one become generators": "the mathematics record's second section",
-    "The distinction re-enters": "the mathematics record's third section",
-    "Return takes spatial and musical form": "the mathematics record's fourth section",
-    "Mathematics enters the machine": "the mathematics record's fifth section — the technical threshold",
-    "Aphrodite, Ares, Harmonia": "the myth record's genealogical first section (Hesiod's Theogony)",
-    "Hephaestus and the bonds": "the myth record's second section",
-    "Apollo and Dionysus": "the myth record's third section",
-    "Prometheus, Atlas, and the technological imagination": "the myth record's fourth section — the technological genealogy",
-    "Indra's net through Huayan": "the myth record's fifth section — the net in which each reflects all",
-    "From the crowd to the mass State": "the psychology record's first section",
-    "The divided psyche and the work of individuation": "the psychology record's second section",
-    "Psyche and matter meet at the psychoid": "the psychology record's third section — the Jung–Pauli boundary",
-    "Structures of consciousness and historical time": "the psychology record's fourth section",
-    "From psychic field to Agentworld": "the psychology record's fifth section",
-    "Collective formation becomes technical": "the technology-politics record's first section",
-    "Preference becomes infrastructure": "the technology-politics record's second section",
-    "The model acquires a world": "the technology-politics record's third section",
-    "Governance returns inside the machine": "the technology-politics record's fourth section",
-    "Technē returns to its mythic and planetary depth": "the technology-politics record's fifth section",
-    "The finite belongs to an infinite relation": "the process-systems record's first section",
-    "Becoming replaces inert substance": "the process-systems record's second section",
-    "The system draws and remakes its boundary": "the process-systems record's third section",
-    "Dynamics gives recurrent pattern a mathematics": "the process-systems record's fourth section",
-    "Observation returns to experience": "the process-systems record's fifth section",
-    "Science becomes an instrument of attunement": "the process-systems record's sixth section",
-    "Zero enters the count": "the zero-subject-advent record's first section",
-    "The subject enters the rational scene": "the zero-subject-advent record's second section",
-    "The unconscious becomes a scientific psychic fact": "the zero-subject-advent record's third section",
-    "Integral logic arrives": "the zero-subject-advent record's fourth section",
-    "The technical threshold": "the zero-subject-advent record's fifth section",
-    "Historical and archetypal Logos": "the language-law-nation record's opening section",
-    "The trunk: centralisation of arbitration": "the language-law-nation record's trunk section",
-    "Branch I — Occitania, Capetian incorporation and the French Logos": "the record's Branch I",
-    "Branch II — Posquières, Lunel and the Languedoc Jewish/Kabbalistic field": "the record's Branch II",
-    "Branch III — Renaissance transmission: Medici, Ficino, Pico, Visconti, Pacioli and Leonardo": "the record's Branch III",
-    "Branch IV — Yates, Hanegraaff and the historical construction of rejected knowledge": "the record's Branch IV",
-    "Exclusion makes reference possible": "the language-symbol-dialogue record's first section",
-    "Logical language encounters its edge": "the language-symbol-dialogue record's second section",
-    "The signifier divides the speaker": "the language-symbol-dialogue record's third section",
-    "Symbol joins what has been separated": "the language-symbol-dialogue record's fourth section",
-    "Encounter becomes name, count, and account": "the language-symbol-dialogue record's fifth section",
-    "Dialogue becomes a shared practice of meaning": "the language-symbol-dialogue record's sixth section"
+  {
+   "scene_id": "history-language-symbol-dialogue",
+   "source_ref": "history-language-symbol-dialogue",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/language-symbol-dialogue/HISTORY.md",
+   "sha256": "98b8aeff68ae5e8754a1d0c03dfa1822a1750f01732fd938d32e5ab2ab5f5cd3",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "03-s01-p2-definition-cut-gift-danger",
+     "04-s01-p3-formal-limit-genealogy",
+     "09-s0-p2-vikalpa-samkalpa",
+     "10-s0-p3-apoha",
+     "13-s1-p0-sign-migrates",
+     "16-s1-p3-crossed-zero",
+     "20-s2-p1-dia-ballein",
+     "21-s2-p2-sym-ballein",
+     "34-s4-p3-lacan-matheme-mytheme",
+     "36-s4-p5-mef-prompt-thrownness",
+     "37-s5-p0-math-moves-meaning",
+     "38-s5-p1-apoha-softmax",
+     "44-s50-p1-ql-mef-bimba-harness"
+    ],
+    "domain": "language-symbol-dialogue",
+    "sections": [
+     "Exclusion makes reference possible",
+     "Logical language encounters its edge",
+     "The signifier divides the speaker",
+     "Symbol joins what has been separated",
+     "Encounter becomes name, count, and account",
+     "Dialogue becomes a shared practice of meaning",
+     "Language becomes a field of weights",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
+  },
+  {
+   "scene_id": "history-mathematics",
+   "source_ref": "history-mathematics",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/mathematics/HISTORY.md",
+   "sha256": "50559b5edcd74354afcdfa55fe1362bd7c5201e35456f7f0dbdef795e59ab9b4",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "04-s01-p3-formal-limit-genealogy",
+     "13-s1-p0-sign-migrates",
+     "14-s1-p1-sunya-operational",
+     "15-s1-p2-empty-set-generates-one",
+     "16-s1-p3-crossed-zero",
+     "17-s1-p4-zero-outside-math",
+     "18-s1-p5-loan-returns",
+     "24-s2-p5-zero-changes-role",
+     "25-s3-p0-eight-determinations",
+     "26-s3-p1-spanda-4-2",
+     "27-s3-p2-mark-reentry-complex",
+     "28-s3-p3-projective-dimensional-reframing",
+     "29-s3-p4-topology-music-resolution",
+     "30-s3-p5-arche-topos",
+     "37-s5-p0-math-moves-meaning",
+     "38-s5-p1-apoha-softmax",
+     "39-s5-p2-j-space",
+     "40-s5-p3-preference-hidden-zero",
+     "45-s50-p2-antikythera-attunement"
+    ],
+    "domain": "mathematics",
+    "sections": [
+     "Absence acquires an office",
+     "Zero and one become generators",
+     "The distinction re-enters",
+     "Return takes spatial and musical form",
+     "Mathematics enters the machine",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
+  },
+  {
+   "scene_id": "history-myth",
+   "source_ref": "history-myth",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/encounters-and-transmissions/myth/HISTORY.md",
+   "sha256": "6ca618e99afb2176e9a162a6ab60423f04810b060efe8ee5d172a7897a917722",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "22-s2-p3-ares-aphrodite-harmonia",
+     "23-s2-p4-complex-dynamism",
+     "33-s4-p2-complexio-quaternity-senarius",
+     "35-s4-p4-gebser-apollo-dionysus",
+     "40-s5-p3-preference-hidden-zero",
+     "45-s50-p2-antikythera-attunement",
+     "46-s50-p3-4-2-mono-poly"
+    ],
+    "domain": "myth",
+    "sections": [
+     "Aphrodite, Ares, Harmonia",
+     "Hephaestus and the bonds",
+     "Apollo and Dionysus",
+     "Prometheus, Atlas, and the technological imagination",
+     "Indra's net through Huayan",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
+  },
+  {
+   "scene_id": "history-process-systems-science",
+   "source_ref": "history-process-systems-science",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/process-systems-science/HISTORY.md",
+   "sha256": "f50195a96dcd5dc56aad99efe85539618aa34b5b66e14de65198bb1b4b572946",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "04-s01-p3-formal-limit-genealogy",
+     "06-s01-p5-return-zero",
+     "07-s0-p0-awareness-bends-display",
+     "11-s0-p4-tattvic-compression",
+     "12-s0-p5-objective-internality",
+     "23-s2-p4-complex-dynamism",
+     "27-s3-p2-mark-reentry-complex",
+     "30-s3-p5-arche-topos",
+     "31-s4-p0-psychoid-problem",
+     "36-s4-p5-mef-prompt-thrownness",
+     "39-s5-p2-j-space",
+     "41-s5-p4-bimba-energy-fields",
+     "42-s5-p5-research-vectors",
+     "44-s50-p1-ql-mef-bimba-harness",
+     "45-s50-p2-antikythera-attunement"
+    ],
+    "domain": "process-systems-science",
+    "sections": [
+     "The finite belongs to an infinite relation",
+     "Becoming replaces inert substance",
+     "The system draws and remakes its boundary",
+     "Dynamics gives recurrent pattern a mathematics",
+     "Observation returns to experience",
+     "Science becomes an instrument of attunement",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
+  },
+  {
+   "scene_id": "history-psychology",
+   "source_ref": "history-psychology",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/psychology/HISTORY.md",
+   "sha256": "d374decba65b1e4936a7580491ca01bf81444beef718a70b9f56e7f3401aad99",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "05-s01-p4-gebser-diaphaneity",
+     "12-s0-p5-objective-internality",
+     "20-s2-p1-dia-ballein",
+     "21-s2-p2-sym-ballein",
+     "23-s2-p4-complex-dynamism",
+     "31-s4-p0-psychoid-problem",
+     "32-s4-p1-jung-individuation",
+     "33-s4-p2-complexio-quaternity-senarius",
+     "34-s4-p3-lacan-matheme-mytheme",
+     "35-s4-p4-gebser-apollo-dionysus",
+     "36-s4-p5-mef-prompt-thrownness",
+     "39-s5-p2-j-space",
+     "41-s5-p4-bimba-energy-fields",
+     "42-s5-p5-research-vectors",
+     "47-s50-p4-idealism-horizon",
+     "48-s50-p5-ahi-planetary-return"
+    ],
+    "domain": "psychology",
+    "sections": [
+     "From the crowd to the mass State",
+     "The divided psyche and the work of individuation",
+     "Psyche and matter meet at the psychoid",
+     "Structures of consciousness and historical time",
+     "From psychic field to Agentworld",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
+  },
+  {
+   "scene_id": "history-technology-politics",
+   "source_ref": "history-technology-politics",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/technology-politics/HISTORY.md",
+   "sha256": "f20427fde27147f741b9a60405f8cfc0318f52a12494447fe2f864ada91c144d",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "01-s01-p0-question-before-mechanism",
+     "12-s0-p5-objective-internality",
+     "20-s2-p1-dia-ballein",
+     "21-s2-p2-sym-ballein",
+     "22-s2-p3-ares-aphrodite-harmonia",
+     "23-s2-p4-complex-dynamism",
+     "36-s4-p5-mef-prompt-thrownness",
+     "37-s5-p0-math-moves-meaning",
+     "38-s5-p1-apoha-softmax",
+     "39-s5-p2-j-space",
+     "40-s5-p3-preference-hidden-zero",
+     "41-s5-p4-bimba-energy-fields",
+     "42-s5-p5-research-vectors",
+     "43-s50-p0-theory-vocation-compassion",
+     "44-s50-p1-ql-mef-bimba-harness",
+     "45-s50-p2-antikythera-attunement",
+     "46-s50-p3-4-2-mono-poly",
+     "48-s50-p5-ahi-planetary-return"
+    ],
+    "domain": "technology-politics-institutions",
+    "sections": [
+     "Collective formation becomes technical",
+     "Preference becomes infrastructure",
+     "The model acquires a world",
+     "Governance returns inside the machine",
+     "Technē returns to its mythic and planetary depth",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
+  },
+  {
+   "scene_id": "history-zero-subject-advent",
+   "source_ref": "history-zero-subject-advent",
+   "source_path": "submission-package/essay/symbolon/episteme/histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md",
+   "sha256": "c22c5dd6553f238a7da9466a2d15d3413f11bf9782fc272c2e67080d5c1084c0",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": null,
+   "relations": {
+    "movement_ids": [
+     "05-s01-p4-gebser-diaphaneity",
+     "13-s1-p0-sign-migrates",
+     "14-s1-p1-sunya-operational",
+     "17-s1-p4-zero-outside-math",
+     "18-s1-p5-loan-returns",
+     "20-s2-p1-dia-ballein",
+     "25-s3-p0-eight-determinations",
+     "31-s4-p0-psychoid-problem",
+     "32-s4-p1-jung-individuation",
+     "35-s4-p4-gebser-apollo-dionysus",
+     "44-s50-p1-ql-mef-bimba-harness",
+     "48-s50-p5-ahi-planetary-return"
+    ],
+    "domain": "transverse-history",
+    "sections": [
+     "Zero enters the count",
+     "The subject enters the rational scene",
+     "The unconscious becomes a scientific psychic fact",
+     "Integral logic arrives",
+     "The technical threshold",
+     "Where this history bears the essay"
+    ]
+   },
+   "form": "stream-line + 5 stations (one per leading section)"
   }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "stream-and-stations formations (engine-native shapes)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "episteme/roz-histories.cover.png",
+ "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 10 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
+ "status": "reviewed",
+ "notes": [
+  "HISTORY.md records declare no claim_status frontmatter (their DEVELOPMENT companions carry Argued); the kicker therefore reads \"<record_id> · HISTORY\" rather than inventing a status. Binding claim_status is null for these.",
+  "Italic relations = the record's own frontmatter movement_ids (capped with +n more in the card; exact list here) + domain.",
+  "Packet record history-language-law-nation-centralisation maps to the twelve-situated-histories tree (places-and-peoples); packet record history-myth maps to encounters-and-transmissions/myth.",
+  "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/symbolon/episteme/histories/…/HISTORY-*.md):",
+  "Grammar: each trunk formation sequences the record's OWN section headers verbatim, in the record's order — the station row stays, the stream now runs. Six of ten histories carry sequences (ancient, indian, mathematics, myth, process-systems, psychology, zero-subject, law-nation, symbol-dialogue: 9 total).",
+  "history-mathematics: THE 3D SCENE — the five stations distributed in z from +0.42 (absence acquires an office, furthest) to −0.42 (mathematics enters the machine, nearest); depth means time: the stream runs toward the reader, the trunk walking its five sections with deepening tint. depthPerspective+occlusion+tint authored.",
+  "Pointers carry era-character: ancient repel (form holds the finite), indian vortex (differentiation), law-nation repel/shove (centralisation's force), symbol-dialogue attract (dialogue gathers), mathematics attract (generators), myth vortex/vortex (genealogy's traffic), process-systems vortex (recurrent pattern), psychology attract/implode (the field gathers), technology-politics repel/shove (preference enforced), zero-subject attract/implode (the advent gathers).",
+  "Tints walk era-kettle: earth/sand for antiquity and transmission, moss for the living lines, rust for centralisation and technē, violet for the psychoid, ink for the arrived machine — presentation accents, no new claims.",
+  "history-myth body compressed to ≤70 words (no claim changed: 'born to' → 'of', 'the essay's reading' → 'the reading').",
+  "Beats: durations 12–15s, transitions 1.6–2.5; 3 automation lanes (mathematics stream light, myth genealogy pulse, psychology field drift); layouts line on the four station-row scenes."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-episteme-l2",
+  "lane": "enrich/expressions-20261006",
+  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "records re-read at fc59a719 — histories live under submission-package/essay/symbolon/episteme/histories/**/HISTORY-*.md at that revision | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
+ },
+ "glyph_rationales": {
+  "Number becomes relation": "ancient philosophy's first movement — the history's own section (HISTORY-ancient-philosophy)",
+  "Form, negation, and the finite": "the finite and its negation in the ancient record's second section",
+  "From cosmos to instrument": "the ancient record's third section — cosmos becomes instrument",
+  "Sāṃkhya: the subject and the inner instrument": "the Indian record's own section — subject and antaḥkaraṇa",
+  "Buddhist lines: dependent arising, emptiness, and exclusion": "the Indian record's second section — apoha's home lines",
+  "Śūnya enters arithmetic": "the Indian record's third section — the mark's arrival in the count",
+  "Kashmir Śaivism: manifestation as self-differentiation": "the Indian record's fourth section — prakāśa-vimarśa's home",
+  "Absence acquires an office": "the mathematics record's first section — the empty place",
+  "Zero and one become generators": "the mathematics record's second section",
+  "The distinction re-enters": "the mathematics record's third section",
+  "Return takes spatial and musical form": "the mathematics record's fourth section",
+  "Mathematics enters the machine": "the mathematics record's fifth section — the technical threshold",
+  "Aphrodite, Ares, Harmonia": "the myth record's genealogical first section (Hesiod's Theogony)",
+  "Hephaestus and the bonds": "the myth record's second section",
+  "Apollo and Dionysus": "the myth record's third section",
+  "Prometheus, Atlas, and the technological imagination": "the myth record's fourth section — the technological genealogy",
+  "Indra's net through Huayan": "the myth record's fifth section — the net in which each reflects all",
+  "From the crowd to the mass State": "the psychology record's first section",
+  "The divided psyche and the work of individuation": "the psychology record's second section",
+  "Psyche and matter meet at the psychoid": "the psychology record's third section — the Jung–Pauli boundary",
+  "Structures of consciousness and historical time": "the psychology record's fourth section",
+  "From psychic field to Agentworld": "the psychology record's fifth section",
+  "Collective formation becomes technical": "the technology-politics record's first section",
+  "Preference becomes infrastructure": "the technology-politics record's second section",
+  "The model acquires a world": "the technology-politics record's third section",
+  "Governance returns inside the machine": "the technology-politics record's fourth section",
+  "Technē returns to its mythic and planetary depth": "the technology-politics record's fifth section",
+  "The finite belongs to an infinite relation": "the process-systems record's first section",
+  "Becoming replaces inert substance": "the process-systems record's second section",
+  "The system draws and remakes its boundary": "the process-systems record's third section",
+  "Dynamics gives recurrent pattern a mathematics": "the process-systems record's fourth section",
+  "Observation returns to experience": "the process-systems record's fifth section",
+  "Science becomes an instrument of attunement": "the process-systems record's sixth section",
+  "Zero enters the count": "the zero-subject-advent record's first section",
+  "The subject enters the rational scene": "the zero-subject-advent record's second section",
+  "The unconscious becomes a scientific psychic fact": "the zero-subject-advent record's third section",
+  "Integral logic arrives": "the zero-subject-advent record's fourth section",
+  "The technical threshold": "the zero-subject-advent record's fifth section",
+  "Historical and archetypal Logos": "the language-law-nation record's opening section",
+  "The trunk: centralisation of arbitration": "the language-law-nation record's trunk section",
+  "Branch I — Occitania, Capetian incorporation and the French Logos": "the record's Branch I",
+  "Branch II — Posquières, Lunel and the Languedoc Jewish/Kabbalistic field": "the record's Branch II",
+  "Branch III — Renaissance transmission: Medici, Ficino, Pico, Visconti, Pacioli and Leonardo": "the record's Branch III",
+  "Branch IV — Yates, Hanegraaff and the historical construction of rejected knowledge": "the record's Branch IV",
+  "Exclusion makes reference possible": "the language-symbol-dialogue record's first section",
+  "Logical language encounters its edge": "the language-symbol-dialogue record's second section",
+  "The signifier divides the speaker": "the language-symbol-dialogue record's third section",
+  "Symbol joins what has been separated": "the language-symbol-dialogue record's fourth section",
+  "Encounter becomes name, count, and account": "the language-symbol-dialogue record's fifth section",
+  "Dialogue becomes a shared practice of meaning": "the language-symbol-dialogue record's sixth section"
+ }
 }

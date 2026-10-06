@@ -1,158 +1,159 @@
 {
-  "artifact": "episteme/roz-ac-root.journey.json",
-  "family": "episteme-ac-root",
-  "worker": "E3",
-  "date": "2026-09-17",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "family-concept"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
-    "records": [
-      {
-        "record_id": "A/C",
-        "path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
-        "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
-        "sha256_census_receipt": "3243978521525ca115da622223eb034e8ef73b858bd353e8fd4c4226e4c7aa1a",
-        "hash_note": "receipt hash stale, current-bytes hash used"
-      }
+ "artifact": "episteme/roz-ac-root.journey.json",
+ "family": "episteme-ac-root",
+ "worker": "E3",
+ "date": "2026-09-17",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "family-concept"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
+  "records": [
+   {
+    "record_id": "A/C",
+    "path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
+    "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
+    "sha256_census_receipt": "3243978521525ca115da622223eb034e8ef73b858bd353e8fd4c4226e4c7aa1a",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "journey": {
+  "id": "roz-ac-root",
+  "name": "Return of Zero — A/C, Root of the Conjugate Field",
+  "scenes": 5,
+  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+ },
+ "scenes": [
+  {
+   "scene_id": "ac-root",
+   "source_ref": "A/C",
+   "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
+   "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "declared_field": "hangs beneath it: A01–A36, A01′–A36′, C01–C64 (the 137-record shared suite); S bodies extend the field to 144"
+   },
+   "form": "the one field: ring + 0/1 glyph — self-describing root"
+  },
+  {
+   "scene_id": "ac-a-face",
+   "source_ref": "A/C",
+   "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
+   "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "frozen_ethic": "Respect for Experience: right form and clear intention — carried by reference to /Users/admin/Central/Control/agents/now/agents/experience-law-pstack/respect-for-experience.proposed.md; linked, never rewritten or restated in the artifact",
+    "six_movements_named_by_reference": [
+     "Life is awareness, experience",
+     "Form gives experience a world",
+     "Intention takes effect",
+     "Law carries entrusted power",
+     "The common world is apportioned",
+     "Experience renews the form"
+    ],
+    "grounding": "C01, A01, A05, A06, A14, A32, A34, C13, C14, C38, C43, C49, C50, C51, C55, C56, C60 (the record's key grounding links)"
+   },
+   "form": "frozen plate inside a faint unfrozen envelope — the ethic stays frozen, the ruling lives around it"
+  },
+  {
+   "scene_id": "ac-crossed-zero",
+   "source_ref": "A/C",
+   "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
+   "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "sequence": "0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1",
+    "alignments": [
+     "§1 · #3 The Crossed Zero",
+     "§4 · #3 Lacan, Matheme, and Mytheme"
     ]
+   },
+   "form": "six tokens as static stations around the ring — the recognition sequence staged as arc"
   },
-  "pointcloud_revision": "f257de5",
-  "journey": {
-    "id": "roz-ac-root",
-    "name": "Return of Zero — A/C, Root of the Conjugate Field",
-    "scenes": 5,
-    "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+  {
+   "scene_id": "ac-c-face",
+   "source_ref": "A/C",
+   "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
+   "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "primitive_field": "O Core Primitive Field v2 — constitutional sixfold #0–#5, rows S + S0–S5, recursive law: QL determines at every level relative to that level"
+   },
+   "form": "six discs on the constitutional envelope"
   },
-  "scenes": [
-    {
-      "scene_id": "ac-root",
-      "source_ref": "A/C",
-      "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
-      "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "declared_field": "hangs beneath it: A01–A36, A01′–A36′, C01–C64 (the 137-record shared suite); S bodies extend the field to 144"
-      },
-      "form": "the one field: ring + 0/1 glyph — self-describing root"
-    },
-    {
-      "scene_id": "ac-a-face",
-      "source_ref": "A/C",
-      "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
-      "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "frozen_ethic": "Respect for Experience: right form and clear intention — carried by reference to /Users/admin/Central/Control/agents/now/agents/experience-law-pstack/respect-for-experience.proposed.md; linked, never rewritten or restated in the artifact",
-        "six_movements_named_by_reference": [
-          "Life is awareness, experience",
-          "Form gives experience a world",
-          "Intention takes effect",
-          "Law carries entrusted power",
-          "The common world is apportioned",
-          "Experience renews the form"
-        ],
-        "grounding": "C01, A01, A05, A06, A14, A32, A34, C13, C14, C38, C43, C49, C50, C51, C55, C56, C60 (the record's key grounding links)"
-      },
-      "form": "frozen plate inside a faint unfrozen envelope — the ethic stays frozen, the ruling lives around it"
-    },
-    {
-      "scene_id": "ac-crossed-zero",
-      "source_ref": "A/C",
-      "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
-      "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "sequence": "0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1",
-        "alignments": [
-          "§1 · #3 The Crossed Zero",
-          "§4 · #3 Lacan, Matheme, and Mytheme"
-        ]
-      },
-      "form": "six tokens as static stations around the ring — the recognition sequence staged as arc"
-    },
-    {
-      "scene_id": "ac-c-face",
-      "source_ref": "A/C",
-      "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
-      "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "primitive_field": "O Core Primitive Field v2 — constitutional sixfold #0–#5, rows S + S0–S5, recursive law: QL determines at every level relative to that level"
-      },
-      "form": "six discs on the constitutional envelope"
-    },
-    {
-      "scene_id": "ac-close",
-      "source_ref": "A/C",
-      "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
-      "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
-      "hash_note": "receipt hash stale, current-bytes hash used",
-      "claim_status": "Argued",
-      "relations": {
-        "claim": "A/C is the thing that is its own condition; the conjugate field read as the essay's 1/0; (0/1)/(1/0) held together"
-      },
-      "form": "two overlapping face-rings + (0/1)/(1/0) glyph"
-    }
-  ],
-  "assets": [
-    {
-      "kind": "glyph",
-      "ref": "inline entity text sources (0/1, Ø, X, Ø/X, (0/Ø)/(1/X), 1 ↺ 0/1 — the record's own sequence tokens)",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "episteme/roz-ac-root.cover.png",
-  "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 5 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
-  "status": "reviewed",
-  "notes": [
-    "The frozen *Respect for Experience* ethic is carried by reference only: the scene names its title and six movement names exactly as the record itself lists them, states that the body stays frozen at its path, and does not restate or alter the ethic.",
-    "ac-crossed-zero was first authored as a live step sequence on one formation; captures showed the sequenced-glyph rasterisation blows single-character steps up to the entity-box width (known engine hazard, E4 also hit it). Reworked as a static token arc — the full sequence stays verbatim in the scene body.",
-    "All scene text compressed from AC.md only; no new claims.",
-    "Enrichment moves 2026-10-06 (record re-read at fc59a719: submission-package/essay/section-rooms/arguments/conjugate/AC.md):",
-    "ac-root: near-still ground — the field breathing on its own mark (self-conditioning as a slow scale lfo); repel, weak (nothing outside it to push); 12s.",
-    "ac-a-face: the ethic stays carried by reference (kicker/italic/body unchanged in substance — linked, never rewritten); attract gathers the six movements; plate drifts (form gives experience a world); warmer paper.",
-    "ac-crossed-zero: a walker disc visits the six rungs of the ladder the scene already stages, stepping 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1 in the record's order — rust at the Ø occlusion, blue from Ø/X onward (the slash visible); vortex/vortex pointer (the return circulation).",
-    "ac-c-face: each primitive disc now carries its constitutional office verbatim (#0–#5, AC §3); the ring sequences the local movement identity → form → potency → transformation → embodiment → return, growing toward return; moss/ink (the field alive); ring layout (offices of one act).",
-    "ac-close: THE 3D SCENE — the two faces held as numerator over denominator: A ring at z +0.5, C ring at z −0.5, (0/1)/(1/0) between; depth means the fraction's own stacking — the two orientations of one relation, not two nodes; implode click (the shared close gathers); depthPerspective+occlusion+tint authored.",
-    "Beats: durations 12/14, transitions 1.5–2.4; 3 automation lanes; pointer profiles repel-pulse / attract-pulse / vortex-vortex / attract-implode."
-  ],
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-episteme-l2",
-    "lane": "enrich/expressions-20261006",
-    "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-    "note": "record re-read at fc59a719 — AC.md lives under submission-package/essay/section-rooms/arguments/conjugate/ at that revision (the bound source_path keeps its dbf3b17 home)"
-  },
-  "glyph_rationales": {
-    "0": "unobjectifiable presence bracketing-prior — the kartṛ-pole (AC §2)",
-    "0/1": "the full field of which both series are determinations — the root mark (AC §0)",
-    "Ø": "the slash fused into the zero — the means has taken the knower's office (AC §2)",
-    "X": "the mediating activity on the object-side — the discriminated world (AC §2)",
-    "Ø/X": "the slash becomes visible — mediation readable in both (AC §2)",
-    "(0/Ø)/(1/X)": "subject-side occlusion and object-side determination held in one field (AC §2)",
-    "1 ↺ 0/1": "unity affirmed with differentiations retained, returning to the relation (AC §2)",
-    "identity / centre": "the constitutional sixfold #0 — the implicit ground the local field proceeds from (AC §3)",
-    "form / artifact": "the sixfold #1 — the determinate manifestation through which identity becomes addressable (AC §3)",
-    "potency / praxis": "the sixfold #2 — the power by which a difference can be made (AC §3)",
-    "transformation / trajectory": "the sixfold #3 — the mediating relation through which forms change (AC §3)",
-    "embodiment / actuality": "the sixfold #4 — the situated context where the relation meets resistance (AC §3)",
-    "evidence / continuity": "the sixfold #5 — the returned difference retained into another ground (AC §3)",
-    "identity": "first office of the local movement (AC §3)",
-    "form": "second office of the local movement (AC §3)",
-    "potency": "third office of the local movement (AC §3)",
-    "transformation": "fourth office of the local movement (AC §3)",
-    "embodiment": "fifth office of the local movement (AC §3)",
-    "return": "sixth office — the local movement's return to renewed identity (AC §3)",
-    "(0/1)/(1/0)": "the two orientations of one relation — ground toward manifestation, achieved determination toward its One (AC §5→0)"
+  {
+   "scene_id": "ac-close",
+   "source_ref": "A/C",
+   "source_path": "submission-package/essay/symbolon/episteme/conjugate/AC.md",
+   "sha256": "1afdc69d30554add810b753a7c9f3d5fa9bf69dd4270f4a86f92e32fd39a1f2d",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "claim": "A/C is the thing that is its own condition; the conjugate field read as the essay's 1/0; (0/1)/(1/0) held together"
+   },
+   "form": "two overlapping face-rings + (0/1)/(1/0) glyph"
   }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "inline entity text sources (0/1, Ø, X, Ø/X, (0/Ø)/(1/X), 1 ↺ 0/1 — the record's own sequence tokens)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "episteme/roz-ac-root.cover.png",
+ "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 5 scenes drafted at count 8000 and read (/tmp/roz-e3-drafts)",
+ "status": "reviewed",
+ "notes": [
+  "The frozen *Respect for Experience* ethic is carried by reference only: the scene names its title and six movement names exactly as the record itself lists them, states that the body stays frozen at its path, and does not restate or alter the ethic.",
+  "ac-crossed-zero was first authored as a live step sequence on one formation; captures showed the sequenced-glyph rasterisation blows single-character steps up to the entity-box width (known engine hazard, E4 also hit it). Reworked as a static token arc — the full sequence stays verbatim in the scene body.",
+  "All scene text compressed from AC.md only; no new claims.",
+  "Enrichment moves 2026-10-06 (record re-read at fc59a719: submission-package/essay/section-rooms/arguments/conjugate/AC.md):",
+  "ac-root: near-still ground — the field breathing on its own mark (self-conditioning as a slow scale lfo); repel, weak (nothing outside it to push); 12s.",
+  "ac-a-face: the ethic stays carried by reference (kicker/italic/body unchanged in substance — linked, never rewritten); attract gathers the six movements; plate drifts (form gives experience a world); warmer paper.",
+  "ac-crossed-zero: a walker disc visits the six rungs of the ladder the scene already stages, stepping 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1 in the record's order — rust at the Ø occlusion, blue from Ø/X onward (the slash visible); vortex/vortex pointer (the return circulation).",
+  "ac-c-face: each primitive disc now carries its constitutional office verbatim (#0–#5, AC §3); the ring sequences the local movement identity → form → potency → transformation → embodiment → return, growing toward return; moss/ink (the field alive); ring layout (offices of one act).",
+  "ac-close: THE 3D SCENE — the two faces held as numerator over denominator: A ring at z +0.5, C ring at z −0.5, (0/1)/(1/0) between; depth means the fraction's own stacking — the two orientations of one relation, not two nodes; implode click (the shared close gathers); depthPerspective+occlusion+tint authored.",
+  "Beats: durations 12/14, transitions 1.5–2.4; 3 automation lanes; pointer profiles repel-pulse / attract-pulse / vortex-vortex / attract-implode."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-episteme-l2",
+  "lane": "enrich/expressions-20261006",
+  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "record re-read at fc59a719 — AC.md lives under submission-package/essay/section-rooms/arguments/conjugate/ at that revision (the bound source_path keeps its dbf3b17 home) | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
+ },
+ "glyph_rationales": {
+  "0": "unobjectifiable presence bracketing-prior — the kartṛ-pole (AC §2)",
+  "0/1": "the full field of which both series are determinations — the root mark (AC §0)",
+  "Ø": "the slash fused into the zero — the means has taken the knower's office (AC §2)",
+  "X": "the mediating activity on the object-side — the discriminated world (AC §2)",
+  "Ø/X": "the slash becomes visible — mediation readable in both (AC §2)",
+  "(0/Ø)/(1/X)": "subject-side occlusion and object-side determination held in one field (AC §2)",
+  "1 ↺ 0/1": "unity affirmed with differentiations retained, returning to the relation (AC §2)",
+  "identity / centre": "the constitutional sixfold #0 — the implicit ground the local field proceeds from (AC §3)",
+  "form / artifact": "the sixfold #1 — the determinate manifestation through which identity becomes addressable (AC §3)",
+  "potency / praxis": "the sixfold #2 — the power by which a difference can be made (AC §3)",
+  "transformation / trajectory": "the sixfold #3 — the mediating relation through which forms change (AC §3)",
+  "embodiment / actuality": "the sixfold #4 — the situated context where the relation meets resistance (AC §3)",
+  "evidence / continuity": "the sixfold #5 — the returned difference retained into another ground (AC §3)",
+  "identity": "first office of the local movement (AC §3)",
+  "form": "second office of the local movement (AC §3)",
+  "potency": "third office of the local movement (AC §3)",
+  "transformation": "fourth office of the local movement (AC §3)",
+  "embodiment": "fifth office of the local movement (AC §3)",
+  "return": "sixth office — the local movement's return to renewed identity (AC §3)",
+  "(0/1)/(1/0)": "the two orientations of one relation — ground toward manifestation, achieved determination toward its One (AC §5→0)"
+ }
 }
