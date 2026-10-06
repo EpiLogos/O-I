@@ -62,6 +62,11 @@ def desktop(page, base, prefix, label):
     check(f'[{label}] corpus scaffolding is not shown (Where you are / Write here)', ev("![...document.querySelectorAll('article p')].some(p=>/^(Write here|Where you are|Open beside it)\\s*:/.test(p.textContent))"))
     check(f'[{label}] no literal [[wikilinks]] left in the manuscript', ev("!document.querySelector('article').textContent.includes('[[')"))
 
+    # the manuscript is long (hundreds of thousands of pixels): give the position sync time to settle rather than a fixed pause
+    def settle(js, timeout=20000):
+        try: page.wait_for_function(js, timeout=timeout)
+        except Exception: pass
+    settle("document.querySelector('#toc a.is-here')?.dataset.m === '16'")
     # one locus drives every region
     check(f'[{label}] deep link: position chip M16', 'M16' in ev("document.querySelector('#head-pos').innerText"))
     check(f'[{label}] graph centred on M16', 'M16' in ev("document.querySelector('.gn--focus text').textContent"))
@@ -72,12 +77,14 @@ def desktop(page, base, prefix, label):
     check(f'[{label}] plates are not a first-class group', ev("![...document.querySelectorAll('#tree .tn--section .tn__label, #tree .tn--folder > .tn__row .tn__label')].some(l=>/^Plates/i.test(l.textContent.trim()))"))
     plate = ev("[...document.querySelectorAll('figure.fig')].some(x=>x.textContent.includes('Plate 2'))")
     check(f'[{label}] the authored plate follows its M16 anchor as a figure with a caption' + ('' if plate else ' (this edition carries no plate: skipped)'), not plate or ev("(()=>{const f=[...document.querySelectorAll('figure.fig')].find(x=>x.textContent.includes('Plate 2'));const a=document.querySelector('a#M16');return !!f&&a.getBoundingClientRect().top<f.getBoundingClientRect().top&&f.querySelector('img').alt.length>40&&f.querySelector('figcaption').innerText.length>150})()"))
+    if plate: ev("(()=>{const f=[...document.querySelectorAll('figure.fig')].find(x=>x.textContent.includes('Plate 2'));f.scrollIntoView({block:'center'})})()"); settle("(()=>{const f=[...document.querySelectorAll('figure.fig')].find(x=>x.textContent.includes('Plate 2'));const i=f&&f.querySelector('img');return !i||(i.complete&&i.naturalWidth>100)})()", 8000)
     check(f'[{label}] the figure image really loaded', not plate or ev("(()=>{const f=[...document.querySelectorAll('figure.fig')].find(x=>x.textContent.includes('Plate 2'));const i=f.querySelector('img');return i.complete&&i.naturalWidth>100})()"))
     page.screenshot(path=str(OUT / f'{label}-01-manuscript-m16.png'))
 
     # reading moves the graph
     ev("(()=>{const s=document.querySelector('#scroller');const a=document.querySelector('a#M30');s.scrollTo({top:a.getBoundingClientRect().top-s.getBoundingClientRect().top+s.scrollTop+10})})()")
     page.wait_for_timeout(900)
+    settle("window.OI && OI.S.cur.m === 30")
     check(f'[{label}] scroll to M30: state, rail, contents and graph follow', ev('OI.S.cur.m') == 30 and ev("document.querySelector('.mrail__t.is-here')?.dataset.m") == '30' and ev("document.querySelector('#toc a.is-here')?.dataset.m") == '30' and 'M30' in ev("document.querySelector('.gn--focus text').textContent"))
     check(f'[{label}] the address bar follows the reading position (?m=)', ev("new URLSearchParams(location.search).get('m')") == '30')
 
