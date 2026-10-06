@@ -1,0 +1,155 @@
+{
+ "artifact": "matheme/roz-matheme-computation.journey.json",
+ "family": "matheme",
+ "worker": "E4",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-matheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "fc59a719",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "matheme-softmax-argmax",
+    "path": "submission-package/essay/symbolon/matheme/computation/softmax-argmax.md",
+    "sha256": "51290c2dfd988e22d02ff1c95cc52840bb6587da100dc449e4bc0b2d967ce6fc"
+   },
+   {
+    "record_id": "matheme-preference-gauge",
+    "path": "submission-package/essay/symbolon/matheme/computation/preference-gauge.md",
+    "sha256": "15323374335cb2834a8d837eeb7808f2ded3a7ea8d694dc42c9450ff64369ee0"
+   },
+   {
+    "record_id": "matheme-j-space",
+    "path": "submission-package/essay/symbolon/matheme/computation/j-space.md",
+    "sha256": "b6fe5e0cd29142b89af18c52050e9095800d1f0a15014f81379b6ae82407711a"
+   },
+   {
+    "record_id": "matheme-ebm-resonance",
+    "path": "submission-package/essay/symbolon/matheme/computation/ebm-resonance.md",
+    "sha256": "0b2226a938407080fe7b2d7e5ff5e8d0b634d35344264cbc70523c71b7187340"
+   },
+   {
+    "record_id": "matheme-operational-parity",
+    "path": "submission-package/essay/symbolon/matheme/computation/operational-parity.md",
+    "sha256": "736781a36f8f0f698d8d0d5d10a67833824626abdcd89673127c3e1dc943591d"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "comp-softmax-argmax",
+   "source_ref": "matheme-softmax-argmax",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "comp-preference-gauge",
+   "source_ref": "matheme-preference-gauge",
+   "claim_status": "derived",
+   "relations": ""
+  },
+  {
+   "scene_id": "comp-j-space",
+   "source_ref": "matheme-j-space",
+   "claim_status": "offered",
+   "relations": ""
+  },
+  {
+   "scene_id": "comp-ebm-resonance",
+   "source_ref": "matheme-ebm-resonance",
+   "claim_status": "offered",
+   "relations": ""
+  },
+  {
+   "scene_id": "comp-operational-parity",
+   "source_ref": "matheme-operational-parity",
+   "claim_status": "offered",
+   "relations": ""
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "authored token glyphs throughout (QL notation: 0/1, 1/0, −/−, ?/!, −/+, X/x, AM/IS, ∞/dx, Ø, 4+2, 5→0, 9/8, 16/9, (0/1)/(1/0), T² = ℝ²/ℤ², π₁ ≅ ℤ×ℤ, 531441/524288 …)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "concentric mandala plate (ql-eight-determinations) per ql-expression-grammar.md §III",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "crossed-zero recognition sequence as entity step sequence (ql-crossed-zero)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "tetraktys dot diagram (har-tetraktys-triangle, four rows 1·2·3·4)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "fundamental square + torus ring plates (quilt-topology, top-torus-cover-winding)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "matheme/roz-matheme-computation.cover.png",
+ "status": "authored",
+ "notes": [
+  "Claim statuses travel: softmax/argmax and preference gauge Derived, J-space/EBM/operational-parity Offered. The gauge experiment separation (shift-inert vs reference-acts) is staged as the scene glyph. No scene claims an implemented system; each body keeps the record’s own Open/Offered boundary. ",
+  "Per-scene moves (2026-10-06 enrichment): comp-softmax-argmax — the six-step sequence drives objectState size as concentration: the distribution forms (blue), shift leaves size untouched (invariance shown, not said), T=2 widens and thins, T→0 narrows and golds, T→∞ spreads widest: temperature read as geometry while the text keeps every exact value. comp-preference-gauge — the swap step physically moves position and flips tint (the preference reverses), shift keeps everything fixed, the new-reference step arrives gold: shift inert, reference acts. comp-j-space — THE 3D SCENE: the three attempts sit at z +0.3 in front of the J surface, the spec behind at z −0.3 (laminate, slab volume, perspective) — permission as the space the attempts live in; the sequence runs refusal (red) → policy change → opening (gold, position lifted). comp-ebm-resonance — three moments separated: inference at θ=2, domain flip to {0,1} (blue), learning moves the parameter (gold, position shift), and the second-order revision scales the tuple glyph; gentle linear morph is movement inside the field, never revision of it. comp-operational-parity — the six tests hold an arc under mild attract forces, the vortex pointer walks them; the watchword sequence derives the parity procedure.",
+  "Craft: pointer profiles by meaning — attract for the distribution/gauge readings (the field retained), repel+shove at J-space (publish refused from the touch surface), vortex for the parity walk, plain pulse on EBM. Automation: turbulence LFO (softmax), dispersion LFO (gauge), speed LFO (EBM movement), circulation LFO (parity walk). Durations 12/14 s, transitions 1.5/2.0/2.2 s differ. Honesty guards kept: the softmax analogy stays at selection level (no semantic or soteriological borrowing), the gauge scene keeps its Offered/Derived bands (softmax/gauge DERIVED, J-space/EBM/parity OFFERED), and no scene claims an implemented system.",
+  "What the third dimension means (comp-j-space): permission is an operative condition — so the scene builds it as the space the attempts stand in: inspect/edit/publish at the front plane (z +0.3), the J specification at the back (z −0.3), the decision glyph mid-plane, all under slab volume and perspective. The refusal and the later opening are moves the surface makes possible; depth is the difference between acting and the conditions of acting."
+ ],
+ "description": "Computation mathemes: softmax/argmax, preference gauge and reference policy, J-space, energy-based inference, the six operational-parity tests.",
+ "scene_count": 5,
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-matheme-l1",
+  "lane": "wave1/matheme",
+  "basis_commit": "dbf3b17"
+ },
+ "glyph_rationales": {
+  "(m,θ,E)→(m′,θ′,E′)": "the second-order move — revising what counts as an answer; distinct from inference and from learning.",
+  "+10: unchanged": "shift invariance — a common offset leaves every probability where it was.",
+  "E1 seam": "the first parity test — a seam varied to see whether the declared operation changes.",
+  "E2 gauge": "the gauge test — shift-only changes must be inert for the distinction to hold.",
+  "E3 lens": "the lens test — style-level variation, unable to reach more than presentation.",
+  "E4 continuity": "the topological continuity test — the distinction carried through connected change.",
+  "E5 recursion": "the QL recursion test — where silent promotion is the specified failure.",
+  "E6 return": "the deferential return test — disclaimer as failure mode, specified first.",
+  "J = J(B, ℓ, φ, s)": "the permission surface — J as the operative condition the decision lives in, not metadata.",
+  "T=2: flatten": "temperature raises softness — the distribution spreads; concentration is a parameter, not a fact.",
+  "T→0: one-hot": "the cold limit — mass on the maxima; the cut of argmax approached but not identified with it.",
+  "T→∞: uniform": "the hot limit — the distribution flattened to equality; selection dissolved.",
+  "circumscription, no circumstance": "the J-space guard — permissions bound the action without knowing the world it acts in.",
+  "distribution · max · draw": "three different outputs — retaining, cutting, sampling; the analogy holds at selection level only.",
+  "domain is constitutive": "the EBM guard — what inference selects depends on the declared domain, not preference alone.",
+  "edit ✓": "the permitted attempt — the permission surface allows this operation.",
+  "failure specified first": "the parity discipline — each test names its own failure before any promotion.",
+  "inspect ✓": "the permitted attempt — reading the space the decision sits in.",
+  "keep z, T, candidates, rule": "what travels with the cut — the field retained by the distribution view.",
+  "learn θ: 2→3": "learning changes the domain — what inference selects moves; distinct from selecting inside it.",
+  "new ref: 1/2": "changing the reference acts — the gauge floor moves; the zero was occupied.",
+  "p=(1/7,2/7,4/7)": "the distribution formed — positive, summing to one; softmax output at the given logits.",
+  "policy change": "the second-order move in J-space — the surface itself revised, not the choice within it.",
+  "publish ✓ — open": "the permission earned — the same operation, the surface changed; gold marks the opening.",
+  "publish ✕": "the refused operation — the boundary the surface enforces; red by authored tint.",
+  "shift inert · reference acts": "the experiment separation — shifts change nothing, references can; confusing them hides a faulty experiment.",
+  "shift −20: 3/4": "the shift stays inert — differences only enter; the gauge floor is unlearnable.",
+  "swap: 1/4": "swapping the pair flips the probability — the difference operation running.",
+  "vary the distinction, watch the decision": "the parity procedure — promotion earned only through declared operational change.",
+  "what changes?": "the EBM test question — a probe of the domain, stated as an open Offered question.",
+  "z=(0,ln2,ln4)": "the logits stated before any transformation — object, then operation, then retained relation.",
+  "{0,1}: min at 1": "the same energy on a different domain selects differently — constitutive, not accidental.",
+  "×2: 9/10": "scaling the differences acts — the family is difference-based, not level-based.",
+  "β·log Z cancels — DPO": "the partition function cancels in the difference — why preference objectives are gauge-structured.",
+  "θ=2: min at 2": "inference inside a fixed field — argmin at the declared parameter; movement, not revision.",
+  "σ(ln3) = 3/4": "the logistic gauge worked once — a difference turned into a probability."
+ }
+}
