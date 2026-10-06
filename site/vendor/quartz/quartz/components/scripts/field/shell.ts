@@ -2,6 +2,7 @@
 import { $, $$, D, S, act, emit, esc, listen, mountCleanup, observe, pad, pathOf, readsAsMovement, store, sub, urlFor } from "./core"
 
 const narrow = matchMedia("(max-width: 1099px)")
+const narrowPhone = matchMedia("(max-width: 759px)")
 let pop: HTMLElement | null = null
 const firstLeaf = (f: any): number | null => { for (const c of f.children) { if (c.kind === "leaf") return c.ni; const x = firstLeaf(c); if (x != null) return x } return null }
 
@@ -9,8 +10,12 @@ export function mountShell() {
   const app = $("#quartz-root")!
   const params = new URLSearchParams(location.search)
 
-  /* view modes: Essay · Split · Field. A collapsed panel keeps a rail; nothing disappears. */
+  /* One reading view, one resizable field panel, and the Library as a visit. (Essay/Split/Field were three widths of the
+     same two panels; the panel's own drag handle is that now. "field" remains only as the phone's full-screen panel.) */
+  let before = "essay"
   function setView(v: string, persist = true) {
+    if (v === "split" || (v === "field" && !narrowPhone.matches)) v = "essay"
+    if (v === "library" && S.view !== "library") before = S.view || "essay"
     S.view = v; app.dataset.view = v
     $$("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)))
     if (v !== "essay" && app.dataset.right === "closed") app.removeAttribute("data-right")
@@ -35,7 +40,8 @@ export function mountShell() {
   if (params.get("depth")) S.depth = +params.get("depth")!
   sub("drawer", ({ open }) => setDrawer(open))
 
-  for (const b of $$("[data-view]")) listen(b, "click", () => setView(b.dataset.view!))
+  // the Library buttons toggle: pressing it again goes back to the reading view you came from
+  for (const b of $$("[data-view]")) listen(b, "click", () => setView(b.dataset.view === "library" && S.view === "library" ? before : b.dataset.view!))
   listen(document, "click", (e: MouseEvent) => {
     const b = (e.target as Element).closest?.("[data-act]") as HTMLElement | null; if (!b || !app.contains(b)) return
     switch (b.dataset.act) {
@@ -54,12 +60,41 @@ export function mountShell() {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); focusSearch(); return }
     if (typing || e.metaKey || e.ctrlKey || e.altKey) return
     if (e.key === "/") { e.preventDefault(); focusSearch() }
-    else if (e.key === "1") setView("essay"); else if (e.key === "2") setView("split"); else if (e.key === "3") setView("field"); else if (e.key === "4") setView("library")
+    else if (e.key === "1") setView("essay"); else if (e.key.toLowerCase() === "l" || e.key === "4") setView(S.view === "library" ? before : "library")
     else if (e.key === "[") setLeft(app.dataset.left === "closed")
     else if (e.key === "Escape") { closePop(); if (narrow.matches) setDrawer(false) }
   })
   // following a link in the drawer puts it away
   listen($("#left"), "click", (e: MouseEvent) => { if (narrow.matches && (e.target as Element).closest("a[href]")) setDrawer(false) })
+
+  /* the field panel's width: drag its left edge, arrow keys on the handle, double-click to reset; remembered */
+  const rsz = $("#rsz"), DEFAULT_W = 340
+  const maxW = () => Math.round(Math.min(900, innerWidth * 0.66))
+  const setWidth = (w: number, persist = true) => {
+    w = Math.max(260, Math.min(maxW(), Math.round(w)))
+    app.style.setProperty("--rw", w + "px"); if (persist) store.set("rw", w)
+    return w
+  }
+  const saved = store.get<number>("rw", DEFAULT_W); if (saved !== DEFAULT_W && !narrowPhone.matches) setWidth(saved, false)
+  if (rsz) {
+    let start: { x: number; w: number } | null = null
+    const width = () => ($("#right") as HTMLElement).getBoundingClientRect().width
+    listen(rsz, "pointerdown", (e: PointerEvent) => {
+      if (e.button) return
+      e.preventDefault(); rsz.setPointerCapture(e.pointerId); start = { x: e.clientX, w: width() }; app.dataset.resizing = "1"
+    })
+    listen(rsz, "pointermove", (e: PointerEvent) => { if (start) setWidth(start.w + (start.x - e.clientX), false) })
+    const end = () => { if (!start) return; start = null; delete app.dataset.resizing; store.set("rw", Math.round(width())); emit("view", {}) }
+    listen(rsz, "pointerup", end); listen(rsz, "pointercancel", end)
+    listen(rsz, "dblclick", () => { setWidth(DEFAULT_W); emit("view", {}) })
+    listen(rsz, "keydown", (e: KeyboardEvent) => {
+      const step = e.shiftKey ? 80 : 24
+      if (e.key === "ArrowLeft") { e.preventDefault(); setWidth(width() + step); emit("view", {}) }
+      else if (e.key === "ArrowRight") { e.preventDefault(); setWidth(width() - step); emit("view", {}) }
+      else if (e.key === "Home" || e.key === "Enter") { e.preventDefault(); setWidth(DEFAULT_W); emit("view", {}) }
+    })
+    listen(window, "resize", () => { const w = width(); if (w > maxW()) setWidth(maxW(), false) })
+  }
 
   /* breadcrumbs: structure labels, not slugs; every separator opens that level's siblings (upward: it is a footer) */
   const crumbsEl = $("#crumbs")!
