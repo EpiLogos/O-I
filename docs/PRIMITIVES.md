@@ -1,6 +1,5 @@
 # O:I primitives and design background
 
->
 > Standing: authored position and design commitment, as the README carried them. For what is implemented today, read the [README](../README.md) and each product's own README; for current operation routes, [architecture/README.md](architecture/README.md).
 
 ## The former README opening
