@@ -1,0 +1,2511 @@
+{
+  "generated_at": "2026-10-06T16:41:55.936Z",
+  "collections": [
+    "desktop/cradle/expressions-app/collections/return-of-zero",
+    "../../env-2/point-cloud-demo/production/s-products"
+  ],
+  "skipped": [],
+  "totals": {
+    "journeys": 135,
+    "passed": 135,
+    "failed": 0
+  },
+  "corpus": {
+    "scenes": 1194,
+    "entities": 4808,
+    "seqEntities": 854,
+    "multiGlyphEntities": 540,
+    "entitiesZ": 535,
+    "scenes3d": 140,
+    "autoScenes": 284,
+    "textEntities": 2906,
+    "strongForces": 189,
+    "journeysChanging": 134,
+    "layouts": {
+      "Single formation": 91,
+      "Kundalini": 8,
+      "Chakra Body": 1,
+      "Cymatic plate": 1,
+      "free": 199,
+      "ring": 67,
+      "line": 736,
+      "column": 46,
+      "grid": 37,
+      "laminate": 5,
+      "spiral": 3
+    },
+    "glyphHist": {
+      "0": 98,
+      "1": 88,
+      "2": 17,
+      "3": 8,
+      "4": 12,
+      "6": 20,
+      "7": 10,
+      "8": 4,
+      "9": 3,
+      "10": 19,
+      "11": 19,
+      "17": 4,
+      "58": 4,
+      "82": 3,
+      "is": 6,
+      "=": 9,
+      "Ø": 33,
+      "/": 69,
+      "x": 39,
+      "X": 55,
+      "I": 6,
+      "00": 19,
+      "01": 19,
+      "∅": 33,
+      "S0": 7,
+      "S1": 8,
+      "S2": 7,
+      "S3": 7,
+      "S4": 7,
+      "S5": 7,
+      "U": 5,
+      "M": 7,
+      "…": 18,
+      "t": 8,
+      "b": 8,
+      "n": 8,
+      "f": 8,
+      "ℕ": 4,
+      "Q8": 5,
+      "+1": 5,
+      "−1": 9,
+      "≠": 17,
+      "IS": 24,
+      "F": 3,
+      "T₀": 3,
+      "T₁": 3,
+      "−4": 4,
+      "−2": 4,
+      "OR": 6,
+      "∞": 11,
+      "☉": 21,
+      "☽": 15,
+      "◉": 92,
+      "?": 46,
+      "·": 114,
+      "≈": 8,
+      "𝑀": 4,
+      "∷": 4,
+      "❋": 4,
+      "ϴ": 8,
+      "♪": 23,
+      "A": 14,
+      "∴": 15,
+      "❤": 5,
+      "↺": 20,
+      "→": 10,
+      "⚕": 5,
+      "✕": 14,
+      "◌◌": 5,
+      "♡": 9,
+      "⤫": 5,
+      "✧": 9,
+      "≤≥": 4,
+      "↘": 4,
+      "ℓ": 5,
+      "☠": 21,
+      "⚒": 5,
+      "⚖": 50,
+      "≡": 36,
+      "⊢": 13,
+      "←": 5,
+      "⌂": 4,
+      "⚠": 12,
+      "⚠⚠": 4,
+      "☀": 25,
+      "•": 5,
+      "↥": 5,
+      "ΠΑ": 5,
+      "🐜": 5,
+      "✂": 5,
+      "☾": 31,
+      "🦅": 10,
+      "↑": 10,
+      "☩": 11,
+      "♪♪": 6,
+      "❀": 7,
+      "☂": 3,
+      "❧": 3,
+      "⊙⊙": 4,
+      "♥": 4,
+      "SW": 4,
+      "!": 7,
+      "卍": 4,
+      "Σ": 4,
+      "Λ": 4,
+      "Τ": 4,
+      "⊣": 9,
+      "E1": 6,
+      "B": 22,
+      "Z": 11,
+      "✎": 18,
+      "⛏": 4,
+      "✍": 4,
+      "≡+": 4,
+      "Eh": 4,
+      "☁": 4,
+      "𓅃": 5,
+      "✋": 10,
+      "♛": 4,
+      "⚔": 14,
+      "⁂": 9,
+      "☮": 21,
+      "प": 11,
+      "≣": 5,
+      "⌫": 5,
+      "⌘": 6,
+      "≡?": 5,
+      "⊗": 5,
+      "—": 5,
+      "?′": 5,
+      "☺": 7,
+      "⚙": 3,
+      "⇉": 9,
+      "↓": 4,
+      "☰": 4,
+      "∨": 4,
+      "∧": 4,
+      "⊘": 8,
+      "Ψ": 8,
+      "☄": 4,
+      "5×": 4,
+      "⛔": 5,
+      "☸☸": 4,
+      "℘": 3,
+      "◉◉": 7,
+      "4×": 4,
+      "◌": 4,
+      "☹": 4,
+      "♓": 5,
+      "♈": 5,
+      "◑◕": 5,
+      "◕": 5,
+      "☵": 5,
+      "🧲": 5,
+      "☿": 5,
+      "⚗": 5,
+      "a": 6,
+      "C": 6,
+      "D": 6,
+      "⇅": 5,
+      "♄": 10,
+      "◘◘": 5,
+      "/‑": 5,
+      "ψ": 4,
+      "♭": 4,
+      "♀♿": 4,
+      "⬮⬮": 14,
+      "⬮": 5,
+      "✦": 9,
+      "∅→": 4,
+      "±": 4,
+      "○": 4,
+      "❝": 4,
+      "∅⁺": 4,
+      "◉✂": 5,
+      "i": 5,
+      "∅#": 3,
+      "QL": 3,
+      "¶": 4,
+      "♟": 4,
+      "▣☐": 6,
+      "▣": 6,
+      "☐": 6,
+      "⧒⧓": 6,
+      "∵∴": 6,
+      "✷": 5,
+      "→→": 5,
+      "G?": 4,
+      "🚁": 4,
+      "↩": 4,
+      "⑃": 5,
+      "⇗": 4,
+      "▦": 8,
+      "dv": 5,
+      "⑂": 5,
+      "⚡": 4,
+      "∓": 4,
+      "◯↻": 5,
+      "⊕": 5,
+      "☉☀": 5,
+      "∙": 5,
+      "⊙": 4,
+      "≈⚰": 5,
+      "🔥": 4,
+      "#1": 9,
+      "#0": 9,
+      "#3": 5,
+      "#4": 5,
+      "#2": 5,
+      "T²": 5,
+      "−": 8,
+      "+": 4,
+      "AM": 4,
+      "dx": 4,
+      "#5": 4,
+      "md": 10,
+      "ql": 24,
+      "pi": 6,
+      "r0": 6
+    },
+    "paramSpread": {
+      "circulation": 154,
+      "speed": 140,
+      "turbulence": 133,
+      "dispersion": 112,
+      "pointerStrength": 24,
+      "frequency": 21,
+      "depth": 20,
+      "roundness": 19,
+      "excitation": 13,
+      "dominance": 12,
+      "count": 11,
+      "zConfinement": 11,
+      "recovery": 10,
+      "size": 9,
+      "contrast": 7,
+      "edgeWeight": 7,
+      "pointerRadius": 7,
+      "halo": 6,
+      "opacity": 5,
+      "vortexRadius": 5,
+      "swirlRadius": 5,
+      "irregularity": 4,
+      "densityScale": 4,
+      "snapRigidity": 4,
+      "softness": 3,
+      "densityTether": 3,
+      "curlDepth": 3,
+      "gravityX": 3,
+      "gravityY": 3,
+      "sizeBias": 1,
+      "elongation": 1,
+      "orientation": 1,
+      "densityPhase": 1,
+      "turbulenceScale": 1,
+      "pointerFalloff": 1,
+      "grain": 1,
+      "gravityZ": 1,
+      "quadraticDrag": 1,
+      "thermalJitter": 1,
+      "speedLimit": 1,
+      "timeScale": 1,
+      "gravitySoftening": 1,
+      "gravityFalloff": 1,
+      "easing_note": 1,
+      "jitter": 1
+    },
+    "engineSpread": {
+      "paletteSource": 1,
+      "grainProfile": 1,
+      "backgroundMode": 2,
+      "resonatorMode": 1,
+      "focusOrder": 1,
+      "dotShape": 1,
+      "autoFitSizes": 2,
+      "mediumEnabled": 2,
+      "collisionEnabled": 2,
+      "collisionMode": 1,
+      "pairwiseEnabled": 2,
+      "fontFamily": 1,
+      "fontWeight": 1,
+      "resonanceEnabled": 2,
+      "morphEnabled": 2,
+      "trajectory": 3,
+      "driveShape": 1,
+      "autoOscillate": 2,
+      "relationalEnabled": 2,
+      "relationalMode": 1,
+      "pointerMode": 3,
+      "pointerClick": 5,
+      "pointerClickStrength": 46,
+      "pointerClickRadius": 23,
+      "colorMode": 1,
+      "colorEnabled": 1,
+      "mediumPlane": 1,
+      "mediumDimension": 1,
+      "autoSweep": 2,
+      "sweepDirection": 1,
+      "depthPerspective": 1,
+      "depthOcclusion": 2,
+      "depthTintColor": 57,
+      "thetaRate": 2,
+      "phiRate": 2,
+      "law": 2,
+      "inkMode": 2,
+      "volumeEnabled": 1,
+      "volumeProfile": 4,
+      "vortex3d": 6,
+      "dispersion3d": 2
+    }
+  },
+  "results": [
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/arguments/roz-a-arguments.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-a-arguments",
+      "name": "Return of Zero — Arguments A01–A36",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 36,
+        "seqScenes": 33,
+        "scenes3d": 2,
+        "profiles": 25,
+        "autoScenes": 7,
+        "laidOut": 36
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/conjugates/roz-a-prime-conjugates.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-a-prime-conjugates",
+      "name": "Return of Zero — Conjugates A01′–A36′",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 36,
+        "seqScenes": 34,
+        "scenes3d": 1,
+        "profiles": 16,
+        "autoScenes": 8,
+        "laidOut": 36
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-ac-root.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-ac-root",
+      "name": "Return of Zero — A/C, Root of the Conjugate Field",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-c-concepts-1.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-c-concepts-1",
+      "name": "Return of Zero — Episteme Concepts C01–C32",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 32,
+        "seqScenes": 11,
+        "scenes3d": 1,
+        "profiles": 32,
+        "autoScenes": 9,
+        "laidOut": 17
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-c-concepts-2.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-c-concepts-2",
+      "name": "Return of Zero — Episteme Concepts C33–C64",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 32,
+        "seqScenes": 12,
+        "scenes3d": 1,
+        "profiles": 30,
+        "autoScenes": 7,
+        "laidOut": 16
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-dossiers.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-dossiers",
+      "name": "Return of Zero — Episteme dossiers",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 7,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-etymologies.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-etymologies",
+      "name": "Return of Zero — Etymology whole-fields",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 2,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-histories.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-histories",
+      "name": "Return of Zero — Episteme histories",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 10,
+        "scenes3d": 1,
+        "profiles": 10,
+        "autoScenes": 3,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-lenses-aphorism.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-lenses-aphorism",
+      "name": "Return of Zero — Lenses and the Aphorism",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/episteme/roz-s-products.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-s-products",
+      "name": "Return of Zero — S, World and Life: the product field",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 7,
+        "scenes3d": 1,
+        "profiles": 7,
+        "autoScenes": 3,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/essay/roz-essay-reading.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-essay-reading",
+      "name": "The Return of Zero — the sovereign reading path",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 9,
+        "scenes3d": 3,
+        "profiles": 9,
+        "autoScenes": 9,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-computation.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-matheme-computation",
+      "name": "Matheme — Computation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 4,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-formal-neighbours.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-matheme-formal-neighbours",
+      "name": "Matheme — Formal Neighbours",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 17,
+        "seqScenes": 16,
+        "scenes3d": 1,
+        "profiles": 15,
+        "autoScenes": 3,
+        "laidOut": 17
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-four-files.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-matheme-four-files",
+      "name": "Matheme — The Four Files",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 28,
+        "seqScenes": 17,
+        "scenes3d": 1,
+        "profiles": 22,
+        "autoScenes": 9,
+        "laidOut": 28
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-logics.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-matheme-logics",
+      "name": "Matheme — The Two Logics",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 3,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-ql-spanda.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-matheme-ql-spanda",
+      "name": "Matheme — QL and Spanda",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 9,
+        "scenes3d": 1,
+        "profiles": 9,
+        "autoScenes": 6,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/matheme/roz-matheme-topology-harmonics.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-matheme-topology-harmonics",
+      "name": "Matheme — Topology and Harmonics",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 15,
+        "seqScenes": 15,
+        "scenes3d": 2,
+        "profiles": 15,
+        "autoScenes": 11,
+        "laidOut": 14
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-antikythera-attunement.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-antikythera-attunement",
+      "name": "Antikythera as Attunement Instrument",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 3,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-apollo-dionysus-daphne",
+      "name": "Apollo, Dionysus and Daphne",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-apollo-eros-daphne-peneus",
+      "name": "Apollo · Eros/Cupid · Daphne · Peneus",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-ares-aphrodite-hephaestus-poseidon",
+      "name": "Ares, Aphrodite, Harmonia, Eros, Hephaestus and Poseidon — the whole relation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 7,
+        "autoScenes": 2,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-avatar-image-mask-idol.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-avatar-image-mask-idol",
+      "name": "Avatar · image · mask · idol",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 4,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-eros-psyche.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-eros-psyche",
+      "name": "Eros and Psyche",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 4,
+        "laidOut": 4
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-goethe-permanence-change.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-goethe-permanence-change",
+      "name": "Goethe — Permanence in Change",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 4,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 3,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-indra-net.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-indra-net",
+      "name": "Indra's jewel net — the whole within each reflection",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 7,
+        "scenes3d": 1,
+        "profiles": 7,
+        "autoScenes": 3,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-job.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-job",
+      "name": "Job",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 8,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-maya-eye-veil-frame-horizon.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-maya-eye-veil-frame-horizon",
+      "name": "Māyā — Eye, Veil, Frame, Horizon",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 5,
+        "laidOut": 4
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-meal-epistemic-metabolism",
+      "name": "The Meal — Epistemic Metabolism and the Shared Table",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 3,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-mirror-that-moves-first.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-mirror-that-moves-first",
+      "name": "The Mirror That Moves First",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-mother-assumption-chiasm.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-mother-assumption-chiasm",
+      "name": "Mother, Assumption and chiasm",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 4,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "name": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "name": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-narrative-fanon-language-gaze-mask-recognition.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-narrative-fanon-language-gaze-mask-recognition",
+      "name": "Fanon — Language, White Gaze, Racialised Body, Mask, and Recognition",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "name": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-neumann-images.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-neumann-images",
+      "name": "Neumann images and plate relations",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 8,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-pauli-egg-dream.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-pauli-egg-dream",
+      "name": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-stained-glass-refraction.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-stained-glass-refraction",
+      "name": "Stained Glass — Originating Light, Spectrum, Panes, Seams, and Returning Recognition",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 3,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-taylor-authored-images.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-taylor-authored-images",
+      "name": "Taylor — Poetry and Authored Images",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-the-prisoner.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-the-prisoner",
+      "name": "The Prisoner — Number Six, the changing Two, and the question of One",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-travelling-jigsaw-atlas.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-travelling-jigsaw-atlas",
+      "name": "The travelling jigsaw — from box-lid to atlas",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-uroboros-trickster.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-uroboros-trickster",
+      "name": "Uroboros, circulation and trickster",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 7,
+        "autoScenes": 2,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-mytheme-valentinian-sophia-horos-achamoth",
+      "name": "Valentinian Sophia, Horos, Achamoth and Soter",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 3,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-00-integral-threshold.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-00-integral-threshold",
+      "name": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-01-differentiating-mind.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-01-differentiating-mind",
+      "name": "Return of Zero · Room 2 of 8 · §0 — Differentiating Mind",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-02-return-of-zero.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-02-return-of-zero",
+      "name": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-03-two-logics.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-03-two-logics",
+      "name": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-04-mathematical-substrate.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-04-mathematical-substrate",
+      "name": "Return of Zero · Room 5 of 8 · §3 — Mathematical Substrate",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-05-psychoid-flowering.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-05-psychoid-flowering",
+      "name": "Return of Zero · Room 6 of 8 · §4 — Psychoid Flowering",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-06-objective-internality.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-06-objective-internality",
+      "name": "Return of Zero · Room 7 of 8 · §5 — Objective Internality",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/rooms/roz-room-07-instrument-returns.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-room-07-instrument-returns",
+      "name": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 6,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/symbolon/roz-symbolon-spine.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-symbolon-spine",
+      "name": "Symbolon — the twelvefold spine",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 13,
+        "seqScenes": 12,
+        "scenes3d": 1,
+        "profiles": 12,
+        "autoScenes": 2,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "desktop/cradle/expressions-app/collections/return-of-zero/symbolon/roz-symbolon-whole.journey.json",
+      "collection": "desktop/cradle/expressions-app/collections/return-of-zero",
+      "id": "roz-symbolon-whole",
+      "name": "Symbolon — the whole/register relation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-docs.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-docs",
+      "name": "S-seeded products — S1 Actuation · full-depth · Core documentation — harness capability, placement, activity, QL migration",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 7
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-now-day-2026-09-11-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-now-day-2026-09-11-1",
+      "name": "S-seeded products — S1 Actuation · full-depth · ProjectCentral NOW — day 2026-09-11 and its session flows (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-now-day-2026-09-11-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-now-day-2026-09-11-2",
+      "name": "S-seeded products — S1 Actuation · full-depth · ProjectCentral NOW — day 2026-09-11 and its session flows (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-now-day-2026-09-12-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-now-day-2026-09-12-1",
+      "name": "S-seeded products — S1 Actuation · full-depth · ProjectCentral NOW — day 2026-09-12 and its session flows (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-now-day-2026-09-12-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-now-day-2026-09-12-2",
+      "name": "S-seeded products — S1 Actuation · full-depth · ProjectCentral NOW — day 2026-09-12 and its session flows (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-product.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-product",
+      "name": "S-seeded products — S1 Actuation · full-depth · Product face — README, gateway, QL relational system prompt",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-projectcentral-governance.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-projectcentral-governance",
+      "name": "S-seeded products — S1 Actuation · full-depth · ProjectCentral ground — repo covenant, capability matrix, telos",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 1,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-comparison.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-comparison",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — comparison series design and status",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-deep-prime.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-deep-prime",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — deep QL research, typing corpus, prime skills",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-experiment-trees-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-experiment-trees-1",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — native, Pi and Pydantic experiment trees (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-experiment-trees-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-experiment-trees-2",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — native, Pi and Pydantic experiment trees (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 1,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-foundations.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-foundations",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — foundation runtimes, fixtures, optics, contracts",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 7
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-protocols.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-protocols",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — development protocols, specs and clarifications",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-reviews-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-reviews-1",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — series 1 run reviews (native and staged) (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-ql-runtime-reviews-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-ql-runtime-reviews-2",
+      "name": "S-seeded products — S1 Actuation · full-depth · QL runtime — series 1 run reviews (native and staged) (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 2,
+        "seqScenes": 1,
+        "scenes3d": 1,
+        "profiles": 2,
+        "autoScenes": 1,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-rust-refoundation-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-rust-refoundation-1",
+      "name": "S-seeded products — S1 Actuation · full-depth · Rust refoundation — R0–R11: reconciliation, evidence, oracles, cutover (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-rust-refoundation-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-rust-refoundation-2",
+      "name": "S-seeded products — S1 Actuation · full-depth · Rust refoundation — R0–R11: reconciliation, evidence, oracles, cutover (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 1,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation-skills.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation-skills",
+      "name": "S-seeded products — S1 Actuation · full-depth · Skills — actuation extension and operation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 2,
+        "seqScenes": 1,
+        "scenes3d": 1,
+        "profiles": 2,
+        "autoScenes": 1,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/actuation/sp-actuation.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-actuation",
+      "name": "S-seeded products — S1 Actuation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-adr-implementation.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-adr-implementation",
+      "name": "S-seeded products — S2 AIKit full depth · adr-implementation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-docs-p1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-docs-p1",
+      "name": "S-seeded products — S2 AIKit full depth · docs (1)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-docs-p2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-docs-p2",
+      "name": "S-seeded products — S2 AIKit full depth · docs (2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 8
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-ground.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-ground",
+      "name": "S-seeded products — S2 AIKit full depth · ground",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 7
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-periphery.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-periphery",
+      "name": "S-seeded products — S2 AIKit full depth · periphery",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 11,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-plans.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-plans",
+      "name": "S-seeded products — S2 AIKit full depth · plans",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-skills-p1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-skills-p1",
+      "name": "S-seeded products — S2 AIKit full depth · skills (1)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-skills-p2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-skills-p2",
+      "name": "S-seeded products — S2 AIKit full depth · skills (2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-v2-p1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-v2-p1",
+      "name": "S-seeded products — S2 AIKit full depth · v2 (1)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit-fd-v2-p2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit-fd-v2-p2",
+      "name": "S-seeded products — S2 AIKit full depth · v2 (2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 11,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/aikit/sp-aikit.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-aikit",
+      "name": "S-seeded products — S2 AIKit",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-ctrl-defaults.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-ctrl-defaults",
+      "name": "S-seeded products — S0 Central · full-depth · Distributed default ground — governance and ProjectCentral starters",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 8
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-docs-connectors.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-docs-connectors",
+      "name": "S-seeded products — S0 Central · full-depth · Connector SDK and integration surfaces",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 7,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 7
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-docs-governance.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-docs-governance",
+      "name": "S-seeded products — S0 Central · full-depth · Governance protocols and the ProjectCentral contract",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-docs-operations.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-docs-operations",
+      "name": "S-seeded products — S0 Central · full-depth · Operations — CLI, install, census, native reading, extension",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-docs-vision.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-docs-vision",
+      "name": "S-seeded products — S0 Central · full-depth · Product vision and system spec",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-projectcentral.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-projectcentral",
+      "name": "S-seeded products — S0 Central · full-depth · ProjectCentral user ground — capability matrix and telos",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 1,
+        "seqScenes": 1,
+        "scenes3d": 1,
+        "profiles": 1,
+        "autoScenes": 1,
+        "laidOut": 1
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-root-and-connectors.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-root-and-connectors",
+      "name": "S-seeded products — S0 Central · full-depth · Root handoff and connector SDK faces",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 4,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 4
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-skills.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-skills",
+      "name": "S-seeded products — S0 Central · full-depth · Skills — connector authoring, control maintenance, docs methodology",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central-surfaces.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central-surfaces",
+      "name": "S-seeded products — S0 Central · full-depth · Surfaces — Raycast and Shortcuts",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 2,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 2,
+        "autoScenes": 1,
+        "laidOut": 2
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/central/sp-central.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-central",
+      "name": "S-seeded products — S0 Central",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-docs-canon-modules.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-docs-canon-modules",
+      "name": "S3 Factory full depth — canon — QL-MEF module and wayfinders",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 15,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 15
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-docs-canon.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-docs-canon",
+      "name": "S3 Factory full depth — project canon",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 15,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 15
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-docs-program-research.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-docs-program-research",
+      "name": "S3 Factory full depth — programme, pstack reduction, research",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-claude-front.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-claude-front",
+      "name": "S3 Factory full depth — Inkwell factory — commands, herdr, exe-dev skills",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-orchestrator.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-orchestrator",
+      "name": "S3 Factory full depth — Inkwell factory — sandbox orchestrator skill",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 15,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 15
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-overview-appdocs.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-overview-appdocs",
+      "name": "S3 Factory full depth — Inkwell factory — overview and app docs",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 15,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 15
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-prompts.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-prompts",
+      "name": "S3 Factory full depth — Inkwell factory — prompts",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 17,
+        "seqScenes": 7,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 17
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-specs.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-specs",
+      "name": "S3 Factory full depth — Inkwell factory — specs",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-sssf-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-sssf-1",
+      "name": "S3 Factory full depth — Inkwell factory — SSSF skill (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 17,
+        "seqScenes": 7,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 17
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-sssf-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-sssf-2",
+      "name": "S3 Factory full depth — Inkwell factory — SSSF skill (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 8
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-inkwell-templates-adws.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-inkwell-templates-adws",
+      "name": "S3 Factory full depth — Inkwell factory — prompt templates and ADW data",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 11,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-product-root.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-product-root",
+      "name": "S3 Factory full depth — product root ground",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 15,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 15
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-ql-core.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-ql-core",
+      "name": "S3 Factory full depth — QL agent experiments — core and foundation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 14,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 6,
+        "autoScenes": 1,
+        "laidOut": 14
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-ql-experiments.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-ql-experiments",
+      "name": "S3 Factory full depth — QL agent experiments — experiment records",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 16,
+        "seqScenes": 7,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 16
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-seed-docs.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-seed-docs",
+      "name": "S3 Factory full depth — seed documents",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-sites.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-sites",
+      "name": "S3 Factory full depth — site captures",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-skills.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-skills",
+      "name": "S3 Factory full depth — factory skills",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 8
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-sssf-1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-sssf-1",
+      "name": "S3 Factory full depth — Super Simple Software Factory skill (1/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 17,
+        "seqScenes": 7,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 17
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory-fd-sssf-2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory-fd-sssf-2",
+      "name": "S3 Factory full depth — Super Simple Software Factory skill (2/2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/factory/sp-factory.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-factory",
+      "name": "S-seeded products — S3 Software Factory",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 2,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/ql/sp-ql.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql",
+      "name": "S-seeded products — S5 Quaternal Logic",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 6,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 2,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-craft.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-craft",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · craft",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 9,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 9
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-docs-p1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-docs-p1",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · docs (1)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-docs-p2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-docs-p2",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · docs (2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 12,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 12
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-epi-logos-p1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-epi-logos-p1",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · epi-logos (1)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 11,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-epi-logos-p2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-epi-logos-p2",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · epi-logos (2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 11,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-epi-logos-p3.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-epi-logos-p3",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · epi-logos (3)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 11,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 11
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-epi-logos-p4.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-epi-logos-p4",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · epi-logos (4)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-fixtures.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-fixtures",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · fixtures",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-geometry.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-geometry",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · geometry",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-ground.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-ground",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · ground",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-kernel-rebuild-p1.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-kernel-rebuild-p1",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · kernel-rebuild (1)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-kernel-rebuild-p2.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-kernel-rebuild-p2",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · kernel-rebuild (2)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 10,
+        "seqScenes": 5,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 10
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-kernel-rebuild-p3.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-kernel-rebuild-p3",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · kernel-rebuild (3)",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 8
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-periphery.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-periphery",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · periphery",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/quaternal-logic/sp-ql-fd-skills.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-ql-fd-skills",
+      "name": "S-seeded products — S5 Quaternal Logic full depth · skills",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 8,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 8
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell-docs-connectivity.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell-docs-connectivity",
+      "name": "S-seeded products — S4 Workcell · full-depth · Connectivity and placement — fabric, control service, interop, cells",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 5,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 5
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell-docs-operations.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell-docs-operations",
+      "name": "S-seeded products — S4 Workcell · full-depth · Material operations — CAW procedures and secret projection",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell-docs-platform.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell-docs-platform",
+      "name": "S-seeded products — S4 Workcell · full-depth · Platform understanding — deployment, worlds, model serving, wayfinder",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 4,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell-docs-sources.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell-docs-sources",
+      "name": "S-seeded products — S4 Workcell · full-depth · Source integrations — Arrakis, Docker, OpenSandbox",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell-projectcentral.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell-projectcentral",
+      "name": "S-seeded products — S4 Workcell · full-depth · ProjectCentral ground — repo covenant, capability matrix, telos",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 4,
+        "seqScenes": 3,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 4
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell-sdk-and-skills.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell-sdk-and-skills",
+      "name": "S-seeded products — S4 Workcell · full-depth · SDK and skills — provider authoring, workcell operation",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 3,
+        "seqScenes": 2,
+        "scenes3d": 1,
+        "profiles": 3,
+        "autoScenes": 1,
+        "laidOut": 3
+      }
+    },
+    {
+      "file": "../../env-2/point-cloud-demo/production/s-products/workcell/sp-workcell.journey.json",
+      "collection": "/Users/admin/Central/worktrees/env-2/point-cloud-demo/production/s-products",
+      "id": "sp-workcell",
+      "name": "S-seeded products — S4 Workcell",
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "scenes": 6,
+        "seqScenes": 4,
+        "scenes3d": 1,
+        "profiles": 5,
+        "autoScenes": 1,
+        "laidOut": 6
+      }
+    }
+  ]
+}
