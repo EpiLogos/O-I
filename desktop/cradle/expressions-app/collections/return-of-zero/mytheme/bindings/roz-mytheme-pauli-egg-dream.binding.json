@@ -1,0 +1,165 @@
+{
+  "artifact": "mytheme/roz-mytheme-pauli-egg-dream.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-pauli-egg-dream",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/analytical-psychology/pauli-egg-dream/WHOLE.md",
+        "sha256": "f53d0937155a586dbe0ba8c71826d10fe4d35d7df2dbf408870943c9dcd61e85"
+      }
+    ]
+  },
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-pauli-0-background",
+      "phase": "#0 a physicist meets his concepts in a dream",
+      "relations": "Atom and Archetype App.3 §4, pp.192–196 (p001, p002); Fierz App.2; dating via 60P p006"
+    },
+    {
+      "scene_id": "m-pauli-1-selfdivision",
+      "phase": "#1 pictures 1–2",
+      "relations": "the self-division before intervention"
+    },
+    {
+      "scene_id": "m-pauli-2-hand",
+      "phase": "#2 pictures 3–4",
+      "relations": "the egg in his own hand; division preserving wholeness"
+    },
+    {
+      "scene_id": "m-pauli-3-quotient",
+      "phase": "#3 pictures 5–6",
+      "relations": "the four expressions; the conjugate quotient"
+    },
+    {
+      "scene_id": "m-pauli-3b-circle",
+      "phase": "#3 picture 7",
+      "relations": "the spoken recognition; formula → circle"
+    },
+    {
+      "scene_id": "m-pauli-4-commentary",
+      "phase": "#4 Pauli reads consciousness's part",
+      "relations": "p.195 commentary; pp.190, 195–196 limits; Neumann comparison (no stage assignment)"
+    },
+    {
+      "scene_id": "m-pauli-5-return",
+      "phase": "#5→0 the recovered telling returns to its authorial programme",
+      "relations": "anchor pauli-egg-native-refraction, pauli-egg-conscious-participation-return; harmonised quilt lines 840/881; A19 (no for new edge), A16"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "the woman and the bird",
+      "occurrence": "#1 arrival and laying only; no further actions, no mythological identity supplied"
+    },
+    {
+      "figure": "the self-divided pair",
+      "occurrence": "#1 two whole eggs, no conflict between them"
+    },
+    {
+      "figure": "the blue-shelled egg",
+      "occurrence": "#2 found already in his hand; #4 read as the ground state's contrast"
+    },
+    {
+      "figure": "the four expressions and quotient",
+      "occurrence": "#3 cos/sin rows; conjugate quotient with modulus-one denominator"
+    },
+    {
+      "figure": "the circle",
+      "occurrence": "#3 picture 7 — the formula vanishing into the named image"
+    },
+    {
+      "figure": "the imaginary unit",
+      "occurrence": "#4 its symbolic office permitting opposites to combine"
+    },
+    {
+      "motif": "seven pictures / four eggs with two origins",
+      "occurrence": "#0–#3 cardinality retained; #5→0 neither counts as an eightfold identity"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "whole-before-fragments programme/design office",
+      "flag": "yes"
+    },
+    {
+      "relation": "new exact egg-to-Neumann stage assignment; the new source-to-A19 edge; the exact egg-to-QL symbolic map",
+      "flag": "no"
+    }
+  ],
+  "cross_story_relations": [
+    "Neumann whole compared as shared archetypal structuration — orientation, not substitute narrative."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-pauli-egg-dream.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: the seven pictures are staged as sequences (disc→pair→divided pair) so the two origins of the four eggs remain visible in the frames; the circle scene stages formula→ring literally. The Göttingen companion dream is kept as a labelled glyph, not merged scenes. E0 acceptance repair: title/field collision fixed on m-pauli-3-quotient, m-pauli-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
+    "#0 background — blackboard-dark; ψ brightening (offense becoming inquiry); ✎ → 1948 stages the record's own distinction — Fierz's undated typescript against the later 60P dating; attract/pulse gentle; no automation (the interval before the dream).",
+    "#1 self-division — the egg disc walks from centre to the second position (one has become two, each still an egg); '' → ⬮⬮ marks the plurality; the motion quiet (pointerStrength 0.25) — this happens without the dreamer; no automation.",
+    "#2 the hand — THE 3D SCENE. z is the dreamer's approach: the spontaneous pair deepest (⬮⬮ at z −0.3), the blue egg at z −0.05 brightening (noticed), ⬮ → ⬮⬮ the division that keeps wholeness at z +0.15, ✦ the marvel at z +0.25, the dreamer ◉ nearest at z +0.35; attract/implode — the approach gathering; the record's space 'enacted by arrival, approach and the discovery of something already in the hand' staged as depth.",
+    "#3 quotient — cos sin → cos±i·sin: four displayed terms becoming one relation retaining opposing signs; ± held at the rim; vortex/pulse faint — the turning of the relation.",
+    "#4 circle — e^{iδ} → ○: the formula vanishes and the circle appears, with the unit-circle ring brightening in step; ❝ the first speech; ∅⁺ no eighth scene; attract/pulse — the naming settling.",
+    "#5 commentary — ⬮⬮ → ⬮⬮⬮⬮: the two pairs with two different origins completing the quaternion; ◉✂ the intervention; i the imaginary office; ∅ the refused finished interpretation; vortex/pulse faint.",
+    "#6 return — ring layout: the circle brightening (exact in its own scope), ⬮⬮⬮⬮ the four eggs with two origins retained beneath it; X/x and A19 keep the authorial offices (human-amplified guards in view); attract/pulse — the recovered telling received.",
+    "ENDING QUALIFIES BEGINNING: #0 opened with concepts arriving unbidden (ψ dim, an undated note); #6 returns to the circle the dreamer named — the seven pictures' cardinality and the four eggs' two origins retained beneath it, the spontaneous first division of #1 now readable beside the participated division of #2 without being absorbed into one origin. The dream's space began as arrival/approach/discovery and ends as a circle exact in its own scope: what entered unbidden is received consciously, and the telling refuses both the eighth scene and the finished interpretation.",
+    "Human-amplified guards carried (relation-local): human-amplified: yes for the whole-before-fragments programme office only; no new symbolic identity ratified; X/x Taylor's, not the dream's; the Maria Prophetissa axiom his comparison via Jung, not verified ancient attribution; a faster process is not more conscious (distinction kept in the record, trimmed from the scene body for the word floor); no shell-to-function assignment; no egg-to-stage or egg-to-QL map (human-amplified: no); the exact separate Taylor egg-specific commentary remains an authorial-carrier debt. Mythemic verbs only: the dream displays spontaneous division and participated division; the commentary demonstrates conscious participation.",
+    "Automation: auto-angle on #4's circulation — 'as the angle varies it describes the circle': the one lane the record itself licenses; elsewhere the sequence-clocks carry the beats (division, naming, appearing) and the pictures are held still, as a dream sequence holds; durations 12–14, transitions 1.3–1.6 with distinct beats; #2 and #3 held longest (the approach and the relation)."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l4",
+    "lane": "mytheme"
+  },
+  "glyph_rationales": {
+    "W.P.": "the dreamer — Pauli after the Kepler work, mid-March 1948 by the later 60P dating (#0).",
+    "ψ": "background physics — physical concepts arriving spontaneously in dreams, qualitative and symbolic; initially offensive to his habits, then an inquiry (#0).",
+    "♭": "the companion dream — Göttingen, the changed hydrogen ground state, brass tones engraved on a metal plate; kept distinct from the egg dream's scenes (#0).",
+    "✎": "Fierz's note — an undated typescript, an outline rather than a finished publication (#0).",
+    "1948": "the retrospective dating — the 60P letter's identification, distinct from the typescript's undated state (#0).",
+    "♀♿": "the woman with the bird — unnamed figures whose action brings the egg into the dream, given no further identity (#1).",
+    "⬮": "the single egg outline — one thing awaiting what will happen to it (#1; at #2 the divided blue pair's marker).",
+    "⬮⬮": "the spontaneous pair — two complete eggs after a division without the dreamer's intervention (#1; read as ground state at #5).",
+    "⬮⬮⬮⬮": "the four eggs with two different origins — one pair from spontaneous change witnessed, one from recognition and action (#5, retained at #6).",
+    "≠": "the refused moral reading — no good egg and evil egg, no conflict between them (#1).",
+    "✦": "the marvel — preservation through division: two eggs, not two broken portions (#2).",
+    "◉": "the dreamer — approaching, noticing, participating (#2).",
+    "cos sin": "picture 5 — four expressions in two rows, cosine left and sine right, the paired arrangement kept (#3).",
+    "cos±i·sin": "picture 6 — the conjugate relation: the cosine the same, the imaginary sine's sign changed (#3).",
+    "ᵉⁱδ/²⁄ₑ⁻ⁱδ/²": "the quotient — well-defined, modulus one in the denominator for real δ (#3).",
+    "∅→": "no shell-to-function assignment is added by this telling (#3).",
+    "±": "the opposing signs retained in one relation (#3).",
+    "e^{iδ}": "the spoken identification — the dreamer's first speech, the quotient read as the exponential (#4).",
+    "○": "the vanishing formula's replacement — the circle appearing as the dream's end (#4).",
+    "❝": "the spoken recognition — speech entering last, after the silent pictures (#4).",
+    "∅⁺": "no eighth scene — no return of the woman and bird, no restart of the first picture (#4).",
+    "◉✂": "conscious intervention — noticing and dividing what was already held (#5).",
+    "i": "the imaginary unit's symbolic office — permitting paired opposites to combine into the form read as wholeness (#5).",
+    "∅": "the refusal — further progress in the sciences would be required before a finished interpretation (#5).",
+    "X/x": "Taylor's notation — the egg dream does not supply it: seven pictures and four eggs count no eightfold identity (#6).",
+    "A19": "the comparison — the observer brought into the operation he first receives as a scene before him; human-amplified: no for the newly specified edge (#6)."
+  }
+}
