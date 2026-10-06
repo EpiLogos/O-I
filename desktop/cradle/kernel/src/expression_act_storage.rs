@@ -3,7 +3,8 @@
 //! inside one bounded record; they never depend on current owner state.
 use crate::expression::{Document, DOCUMENT_BYTES};
 use crate::expression_file::{self, StoredImage, UniqueValue};
-use crate::expression_world::{Act, ActPhase, PassageKind};
+use crate::expression_world::{Act, ActPhase, Passage, PassageKind};
+use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -101,6 +102,128 @@ pub(crate) fn measure<T: Serialize + ?Sized>(value: &T, limit: usize) -> Result<
     Ok(output.bytes)
 }
 
+/// Count the prospective complete history without cloning any prior edition.
+/// Timestamp uses the widest u64 representation, so the bound is conservative
+/// until the ordinary native commit chooses its actual current time.
+pub(crate) fn preflight_append(
+    act: &Act,
+    passage: &Passage,
+    summary: &str,
+    actor: &str,
+    activity: Option<&str>,
+    basis: u64,
+    revision: u64,
+) -> Result<usize, String> {
+    if act.material_contract.is_some() {
+        return Err("retained-performance Act requires explicit versioned preflight".into());
+    }
+    struct Sequence<'a>(&'a [Passage], &'a Passage);
+    impl Serialize for Sequence<'_> {
+        fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            let mut seq = s.serialize_seq(Some(self.0.len() + 1))?;
+            for p in self.0 {
+                seq.serialize_element(p)?;
+            }
+            seq.serialize_element(self.1)?;
+            seq.end()
+        }
+    }
+    struct Appended<'a> {
+        act: &'a Act,
+        passage: &'a Passage,
+        summary: &'a str,
+        actor: &'a str,
+        activity: Option<&'a str>,
+        basis: u64,
+        revision: u64,
+    }
+    impl Serialize for Appended<'_> {
+        fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            // Exhaustive destructuring makes a future public Act field require
+            // an explicit addition to this borrowed prospective serializer.
+            let Act {
+                act_ref,
+                expression_ref,
+                summary: _,
+                actor: _,
+                activity_ref,
+                phase: _,
+                basis_revision: _,
+                revision: _,
+                mode,
+                cast,
+                subject_ref,
+                instrument_ref,
+                material,
+                bindings,
+                selection,
+                position: _,
+                sequence,
+                performance_custody,
+                material_contract,
+                continuations,
+                return_ref,
+                result,
+                role_entities,
+                updated_at_unix_ms: _,
+                archived,
+            } = self.act;
+            let mut m = s.serialize_map(None)?;
+            macro_rules! field {
+                ($k:literal, $v:expr) => {
+                    m.serialize_entry($k, &$v)?;
+                };
+            }
+            macro_rules! optional {
+                ($k:literal, $v:expr) => {
+                    if let Some(v) = $v {
+                        m.serialize_entry($k, v)?;
+                    }
+                };
+            }
+            field!("act_ref", act_ref);
+            field!("expression_ref", expression_ref);
+            field!("summary", self.summary);
+            field!("actor", self.actor);
+            optional!("activity_ref", self.activity.or(activity_ref.as_deref()));
+            field!("phase", ActPhase::Running);
+            field!("basis_revision", self.basis);
+            field!("revision", self.revision);
+            field!("mode", mode);
+            field!("cast", cast);
+            optional!("subject_ref", subject_ref);
+            optional!("instrument_ref", instrument_ref);
+            optional!("material", material);
+            field!("bindings", bindings);
+            optional!("selection", selection);
+            field!("position", self.passage.index);
+            field!("sequence", Sequence(sequence, self.passage));
+            optional!("performance_custody", performance_custody);
+            optional!("material_contract", material_contract);
+            field!("continuations", continuations);
+            optional!("return_ref", return_ref);
+            optional!("result", result);
+            field!("role_entities", role_entities);
+            field!("updated_at_unix_ms", u64::MAX);
+            if *archived {
+                field!("archived", true);
+            }
+            m.end()
+        }
+    }
+    measure(
+        &Appended {
+            act,
+            passage,
+            summary,
+            actor,
+            activity,
+            basis,
+            revision,
+        },
+        EXPANDED_BYTES,
+    )
+}
 pub(crate) fn fingerprint<T: Serialize + ?Sized>(
     value: &T,
     limit: usize,
@@ -141,7 +264,9 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
                     ]
                     .contains(&key.as_str())
                     || (key == "constructor"
-                        && !crate::expression_file::native_constructor_metadata(values))
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(
+                            values,
+                        ))
                 {
                     return Err("Unsafe Act storage key".into());
                 }
@@ -222,6 +347,14 @@ pub(crate) fn canonical_field(key: &str, value: &Value) -> Result<(), String> {
     }
 }
 pub(crate) fn validate(act: &Act) -> Result<(), String> {
+    if act.material_contract.is_some() {
+        return crate::expression_performance_act::validate(act);
+    }
+    if act.performance_custody.is_some()
+        || act.sequence.iter().any(|p| p.performance_edition.is_some())
+    {
+        return Err("native performance edition has no custody".into());
+    }
     measure(act, EXPANDED_BYTES)?;
     if act.revision == 0
         || act.sequence.len() > 513
@@ -256,6 +389,9 @@ pub(crate) fn validate(act: &Act) -> Result<(), String> {
 }
 
 pub(crate) fn encode(act: &Act) -> Result<Vec<u8>, String> {
+    if act.material_contract.is_some() {
+        return crate::expression_performance_act::encode(act);
+    }
     // This borrowed pass counts every complete occurrence before allocating a
     // Value or sharing fields. Unique dictionary size cannot license history.
     let (_, expanded_act_sha256) = fingerprint(act, EXPANDED_BYTES)?;
@@ -360,7 +496,10 @@ fn bounded(bytes: Vec<u8>) -> Result<Vec<u8>, String> {
 
 pub(crate) fn header(bytes: &[u8]) -> Result<(String, bool, u64, bool), String> {
     let UniqueValue(value) = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
-    if value["schema"] != SCHEMA && value["schema"] != crate::expression_act_store::SCHEMA {
+    if value["schema"] != SCHEMA
+        && value["schema"] != crate::expression_act_store::SCHEMA
+        && !crate::expression_performance_act::supports_storage(&value["schema"])
+    {
         return Err("Unsupported Act storage schema".into());
     }
     let reference = value["act"]["act_ref"]
@@ -388,6 +527,9 @@ pub(crate) fn decode(bytes: &[u8], available: usize) -> Result<Act, String> {
     let UniqueValue(value) =
         serde_json::from_slice(bytes).map_err(|e| format!("Invalid Act record: {e}"))?;
     safe(&value, 0)?;
+    if crate::expression_performance_act::supports_storage(&value["schema"]) {
+        return crate::expression_performance_act::decode(value, available);
+    }
     if !value["act"]["material_contract"].is_null()
         || !value["act"]["performance_custody"].is_null()
         || value["act"]["sequence"]
