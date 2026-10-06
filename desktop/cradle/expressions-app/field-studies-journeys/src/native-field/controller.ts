@@ -54,6 +54,7 @@ export class NativeFieldController {
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
+ private played:{at:number;strikes:number;last_ms:number}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
@@ -127,7 +128,7 @@ export class NativeFieldController {
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
-   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,
+   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
@@ -163,7 +164,7 @@ export class NativeFieldController {
  private async admit(sampleRate:number,open:()=>Promise<any>){
   if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
-  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.changed();
+  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.played=null;this.changed();
   let context:AudioContext|null=null;
   try{
    // This is invoked directly by the person's open action; no microphone and no
@@ -377,6 +378,28 @@ export class NativeFieldController {
   try{if(this.event)editSceneEvent(this.event,edit);}catch(error){if(this.session)this.refusal={operation:label,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return Promise.reject(error);}
   return this.determinant(label,()=>({operation:'replace-event',event:editSceneEvent(this.event,edit),strike:this.influenceReading?.material?.strike_on_event!==false}),true);
  }
+ /** A played note: strike the named scene voices (native mode references taken from the
+  * owner's own `played_addresses`) now. A performance act, not a determinant: no hold, no
+  * source or influence re-read, and the struck body's sound queues behind sound already
+  * scheduled — so the latency is the presentation lookahead, reported, never hidden. */
+ playVoices(modeRefs:string[],amplitude=0.35){
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played strike belongs to a scene owner'));
+  if(!Array.isArray(modeRefs)||modeRefs.length<1||modeRefs.length>64||modeRefs.some(r=>typeof r!=='string'||!r))return Promise.reject(new Error('a played strike names 1..64 voices'));
+  if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  const acts=modeRefs.map(mode_ref=>({mode_ref,amplitude:[amplitude,0] as [number,number]}));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the note was not sent');
+   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
+   const sent=performance.now();
+   try{await session.strike(acts);}
+   catch(error){this.refused('played strike',error,session);throw error;}
+   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.changed();
+  });
+ }
+ /** The performance journal of the current native lifetime (acts and aggregate advances). */
+ journal(){return this.session?this.session.journal():null;}
  /** Re-excite the same voices from the declared strike amplitude. */
  strike(){return this.determinant('strike',()=>({operation:'replace-event',event:structuredClone(this.event),strike:true}),true);}
  /** The first admitted event, carried under the owner's next M1 revision so M1's
