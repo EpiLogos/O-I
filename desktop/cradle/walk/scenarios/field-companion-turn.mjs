@@ -160,7 +160,7 @@ try {
   const errs = f.errors.filter(m => !/Failed to load resource|favicon/.test(m));
   check(errs.length === 0, "no page or console errors", errs.slice(0, 4));
   const passed = checks.filter(c => c.ok).length;
-  writeReceipt("field-companion-turn.json", {scenario: "field-companion-turn", at: new Date().toISOString(), real_turn: real, record, passed: passed === checks.length && !failed, counts: {passed, total: checks.length, skipped: skipped.length}, skipped, checks});
+  writeReceipt(real ? "field-companion-turn.json" : "field-companion-turn.no-send.json", {scenario: "field-companion-turn", at: new Date().toISOString(), real_turn: real, record, passed: passed === checks.length && !failed, counts: {passed, total: checks.length, skipped: skipped.length}, skipped, checks});
   console.log(`\n${passed}/${checks.length} checks passed${skipped.length ? `, ${skipped.length} skipped` : ""}`);
   await f.dispose();
   process.exit(passed === checks.length && !failed ? 0 : 1);

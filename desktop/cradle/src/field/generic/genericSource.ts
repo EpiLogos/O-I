@@ -23,6 +23,8 @@ export interface GenericIo {
   list(path: string): Promise<GenericEntry[]>;
   read(path: string): Promise<{ content: string; revision: string }>;
   bytes?(path: string): Promise<{ base64: string; mime: string | null }>;
+  /** The owner's own location for a path it has disclosed (a Central file ref), for citing the page as a source. */
+  location?(path: string): import("../../kernel/location").CentralLocation | undefined;
 }
 export interface GenericCorpus {
   /** `project:{id}` or `control:root` — the world that owns the files. */
@@ -30,6 +32,8 @@ export interface GenericCorpus {
   /** Where the corpus starts, in the io's own path terms (also the prefix stripped to make world-relative paths). */
   root: string;
   label: string;
+  /** The Central Project the files belong to, by the name the kernel knows it by (absent for a plain directory). */
+  project?: string;
   io: GenericIo;
   /** Bounds: a corpus larger than this is read partially and says so. */
   limits?: { dirs: number; files: number; bytes: number; concurrency: number };
@@ -246,6 +250,13 @@ export function createGenericFieldSource(c: GenericCorpus): FieldSource & { mode
       const {model} = await ensure(), out = new Map<FieldRef, string>();
       for (const n of model.data.nodes) { try { out.set(n.ref, parseFrontmatter((await c.io.read(abs(n.path))).content).body); } catch { /* skip */ } }
       return out;
+    },
+    async nativeSource(ref) {
+      const {model} = await ensure(), path = model.pathOf.get(ref);
+      if (!path || !c.project) return undefined;
+      const location = c.io.location?.(abs(path)); if (!location) return undefined;
+      const r = await c.io.read(abs(path));
+      return {project: c.project, location, revision: r.revision, content: r.content, title: model.byRef.get(ref)?.title ?? path};
     },
     sourceOf: ref => ({location: ref}),
   };

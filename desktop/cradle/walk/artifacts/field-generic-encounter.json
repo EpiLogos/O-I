@@ -1,6 +1,6 @@
 {
   "scenario": "field-generic-encounter",
-  "at": "2026-10-06T19:35:55.670Z",
+  "at": "2026-10-06T20:04:46.514Z",
   "passed": true,
   "counts": {
     "passed": 26,
@@ -24,7 +24,7 @@
       "ok": true,
       "label": "native ref and pinned revision from the owner's read",
       "detail": {
-        "ref": "central:source:project:Field:README.md",
+        "ref": "central:source:project:field-walk:README.md",
         "revision": "central.content-fnv1a64/v1:275:0363b1de7b05dee2"
       }
     },
@@ -44,7 +44,7 @@
     {
       "ok": true,
       "label": "Alpha Tide is among the home page's connections",
-      "detail": "central:source:project:Field:notes/alpha.md"
+      "detail": "central:source:project:field-walk:notes/alpha.md"
     },
     {
       "ok": true,
@@ -62,7 +62,7 @@
         "native_owner": "Central",
         "origin": "graph",
         "revision": "central.content-fnv1a64/v1:274:a79ccf1012089e7d",
-        "subject_ref": "central:source:project:Field:notes/alpha.md"
+        "subject_ref": "central:source:project:field-walk:notes/alpha.md"
       }
     },
     {
@@ -91,7 +91,7 @@
       "detail": [
         [
           "preview",
-          "central:source:project:Field:notes/alpha.md"
+          "central:source:project:field-walk:notes/alpha.md"
         ]
       ]
     },
@@ -159,7 +159,7 @@
       "ok": true,
       "label": "an external selection_set moved the selected node: no tab, no navigation",
       "detail": {
-        "selected": "central:source:project:Field:notes/deep/gamma.md"
+        "selected": "central:source:project:field-walk:notes/deep/gamma.md"
       }
     },
     {

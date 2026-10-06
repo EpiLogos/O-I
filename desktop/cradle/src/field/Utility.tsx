@@ -14,7 +14,7 @@ import {chooseScope, scopeLabel, useScope, type Scope} from "../workspace/scope"
 import {setLens, useEpiLens} from "../workspace/lens";
 import {MODE_CURATION, STRIP_MODES, type WorkspaceMode} from "../workspace/mode";
 import {modesOffered, useProductPresence} from "../workspace/products";
-import {fieldContextMode, setFieldContextMode, subscribeFieldContextMode, type FieldContextMode} from "../context/fieldContext";
+import {fieldContextMode, fieldContextPinned, setFieldContextMode, subscribeFieldContextMode, type FieldContextMode} from "../context/fieldContext";
 import type {HostedHostContext} from "../contributions/contracts";
 import {Icon} from "./icons";
 
@@ -81,7 +81,7 @@ export function FieldUtility({host, orientation}: {host?: HostedHostContext; ori
               {item("Put away", depth === "collapsed" || depth === "strip", () => { companion.setDepth("collapsed"); setOpen(null); })}
             </>}
             <p className="futil__h">Its context</p>
-            {(["off", "follow", "pin"] as FieldContextMode[]).map(m => item(m === "off" ? "The field is present, not prepared" : m === "follow" ? "Follows the active locus" : "Pinned at this moment", ctxMode === m, () => setFieldContextMode(m),
+            {(["off", "follow", "pin"] as FieldContextMode[]).map(m => item(m === "off" ? "The field is present, not prepared" : m === "follow" ? "Follows the active locus" : ctxMode === "pin" && fieldContextPinned() ? `Pinned at generation ${fieldContextPinned()!.generation}` : "Pinned at this moment", ctxMode === m, () => setFieldContextMode(m),
               m === "follow" ? "At each turn the prepared context carries the field's current main page, tangent and selection" : m === "pin" ? "The encounter as it stands now stays the prepared basis until you change it" : "Nothing from the field is prepared unless you choose it")) }
           </div>
         ) : null}

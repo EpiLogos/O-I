@@ -142,3 +142,14 @@ node scripts/candidate-launch.mjs --mode web   --site-root <built site root> --o
 
 `--site-root` is a built site (`essay/static/fieldIndex.json`, `expression.html`): `site/dist` after
 `npm run build:public`, or a snapshot of it. Ctrl-C stops everything the launcher started.
+
+## 8 — Constellation, continuity (Sonnet B, 6 Oct 2026)
+
+- **Gathering** is the encounter's `enter-constellation` / `leave-constellation` (Ctrl/Cmd-click a graph node, the card's Gather, or `g`
+  on the selected node; removed from the constellation bar). It never selects, opens or navigates.
+- **Technè hand-off** (`src/field/constellation.ts`) is the wiki map's own "+" path: `aikit.constellation.apply` (create + one `member_add`
+  per page, one request, each member citing its exact source at the revision the owner disclosed) → re-read the projection → seat the scene →
+  `requestWikiSelection` → `oi:epi-examine`. A page that is not a Central source a Wiki can cite (the published edition's pages; any file
+  outside the Project's source horizon) is refused in the owner's words and nothing is created.
+- **Refs of a linked corpus** use the Project's own id (`project:{id}`, disclosed as its wiki space), not its directory name.
+- **Companion context** is a person's choice (`off · follows the active locus · pinned`); the pin is persisted with its reading and re-prepared.

@@ -32,11 +32,14 @@ export interface GraphDeps {
   openMain: (ref: FieldRef) => void;
   openExpression: (ref: FieldRef) => void;
   hover: (ref: FieldRef | null) => void;
+  /** Cmd/Ctrl-click or `g`: add the page to — or take it out of — the gathered constellation. */
+  gather: (ref: FieldRef) => void;
 }
 export interface GraphHandle {
   setFocus(ref: FieldRef | null): void;
   setSelected(ref: FieldRef | null): void;
   setHits(hits: ReadonlySet<FieldRef> | null): void;
+  setGathered(refs: readonly FieldRef[]): void;
   setHover(ref: FieldRef | null): void;
   /** The filter changed: lay out again. */
   refresh(): void;
@@ -62,7 +65,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
   let lastTap: { n: any; t: number } = {n: null, t: 0};
   let alpha = 0, heat = 0, raf = 0, vraf = 0, lraf = 0, sel: any = null, hot: any = null, cx = 0, cy = 0, dead = false;
   let gView: SVGGElement, gSec: SVGGElement, gEdge: SVGGElement, gNode: SVGGElement, springs = false, lastMode = "mouse", tween = false;
-  let override: FieldRef[] | null = null, selectedRef: FieldRef | null = null, hits: ReadonlySet<FieldRef> | null = null, drawnCount = 0;
+  let gatheredSet: ReadonlySet<FieldRef> = new Set(), override: FieldRef[] | null = null, selectedRef: FieldRef | null = null, hits: ReadonlySet<FieldRef> | null = null, drawnCount = 0;
   const pts = new Map<number, { x: number; y: number }>();
   let gesture: any = null;
   let live: HTMLElement, zoomBox: HTMLElement;
@@ -169,6 +172,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
     alpha = 0.02; kick();
     drawnCount = override ? nodes.length - 1 : nb.all.length;
     applyHits();
+    paintGathered();
     paintSelection();
   }
 
@@ -365,6 +369,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
       gesture = g; releaseNode(!cancelled); gesture = null;
       if (!g.moved && !cancelled) {
         if (e.shiftKey && g.n.pinned) { pin(g.n, false); return; }
+        if ((e.metaKey || e.ctrlKey) && !e.altKey) { deps.gather(g.n.ref); return; }       // a multi-select click: gathers, selects nothing
         tap(g.n, e);
       }
     } else if (g.type === "pan") {
@@ -387,7 +392,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
     const now = performance.now();
     if (lastTap.n === n && now - lastTap.t < 420) {
       lastTap = {n: null, t: 0}; select(null);
-      if (e.altKey || e.metaKey || e.ctrlKey) deps.openMain(n.ref); else deps.openTangent(n.ref);
+      if (e.altKey) deps.openMain(n.ref); else deps.openTangent(n.ref);
     } else { lastTap = {n, t: now}; select(n); }
   }
   function pin(n: any, on: boolean) {
@@ -442,7 +447,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
   function showCard(n: any, sticky: boolean) {
     const nd = node(n.ref), {cites, citedBy} = idx().counts(n.ref), xs = deps.expressionsOf(n.ref);
     const kind = [idx().group(nd.group)?.label, kindOf(nd)].filter(Boolean).join(" · ");
-    card.innerHTML = `<b>${esc(nd.label)}</b><span class="gcard__where" style="--rc:${tone(n.ref)}"><i></i>${esc(idx().whereOf(n.ref))}</span><span class="gcard__n gcard__k">${nd.coord ? esc(nd.coord) + " · " : ""}${esc(kind)}</span><span class="gcard__n">${idx().degree(n.ref)} neighbours · cites ${cites} · cited by ${citedBy}${n.pinned ? " · pinned" : ""}</span>${xs.length ? `<span class="gcard__x"><svg width="12" height="12" aria-hidden="true"><use href="#fi-expression"/></svg>${xs.length} Expression${xs.length > 1 ? "s" : ""}</span>` : ""}${sticky ? `<span class="gcard__act"><button type="button" data-open>Open page</button>${xs.length ? `<button type="button" data-open-x class="is-x">Open the Expression</button>` : "<i>or double-click</i>"}</span>` : ""}`;
+    card.innerHTML = `<b>${esc(nd.label)}</b><span class="gcard__where" style="--rc:${tone(n.ref)}"><i></i>${esc(idx().whereOf(n.ref))}</span><span class="gcard__n gcard__k">${nd.coord ? esc(nd.coord) + " · " : ""}${esc(kind)}</span><span class="gcard__n">${idx().degree(n.ref)} neighbours · cites ${cites} · cited by ${citedBy}${n.pinned ? " · pinned" : ""}</span>${xs.length ? `<span class="gcard__x"><svg width="12" height="12" aria-hidden="true"><use href="#fi-expression"/></svg>${xs.length} Expression${xs.length > 1 ? "s" : ""}</span>` : ""}${sticky ? `<span class="gcard__act"><button type="button" data-open>Open page</button><button type="button" data-gather class="is-g">${gatheredSet.has(n.ref) ? "Gathered ✓" : "Gather"}</button>${xs.length ? `<button type="button" data-open-x class="is-x">Open the Expression</button>` : "<i>or double-click</i>"}</span>` : ""}`;
     card.classList.toggle("is-sticky", sticky); card.classList.toggle("is-compact", H < 380 || W < 380); card.hidden = false;
     placeCard(n);
   }
@@ -457,6 +462,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
     if (!sel) return;
     const t = e.target as Element;
     if (t.closest("[data-open-x]")) { const r = sel.ref; select(null); deps.openExpression(deps.expressionsOf(r)[0]); }
+    else if (t.closest("[data-gather]")) { deps.gather(sel.ref); showCard(sel, true); }
     else if (t.closest("[data-open]")) { const r = sel.ref; select(null); deps.openTangent(r); }
   });
 
@@ -494,6 +500,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
     else if (k === "+" || k === "=") zoomBy(1.4); else if (k === "-" || k === "_") zoomBy(1 / 1.4);
     else if (k === "Home") { const f = byId.get(focusRef!); if (f) { select(f); reveal(f); } }
     else if (k === "p" && sel) pin(sel, !sel.pinned);
+    else if (k === "g" && !e.metaKey && !e.ctrlKey) { const n = sel || null; if (!n) return; deps.gather(n.ref); }
     else return;
     e.preventDefault(); e.stopPropagation();
   });
@@ -512,6 +519,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
   });
   disposers.push(() => { zoomBox.remove(); live.remove(); });
 
+  function paintGathered() { for (const n of nodes) n.el.classList.toggle("is-gathered", gatheredSet.has(n.ref)); }
   function applyHits() {
     const lit = hits && nodes.some(n => hits!.has(n.ref));
     nodes.forEach(n => n.el.classList.toggle("is-dim", !!lit && !n.focus && !hits!.has(n.ref)));
@@ -525,6 +533,7 @@ export function mountGraph(deps: GraphDeps): GraphHandle {
     setFocus(ref) { if (ref === focusRef) return; focusRef = ref; view = {k: 1, x: 0, y: 0}; override = null; build(); },
     setSelected(ref) { selectedRef = ref; paintSelection(); },
     setHits(h) { hits = h; applyHits(); },
+    setGathered(refs) { gatheredSet = new Set(refs); paintGathered(); if (sel && !card.hidden && card.classList.contains("is-sticky")) showCard(sel, true); },
     setHover(ref) { if (!svg.isConnected) return; nodes.forEach(n => n.el.classList.toggle("is-hot", ref != null && n.ref === ref)); },
     refresh() { view = {k: 1, x: 0, y: 0}; override = null; build(); },
     resize: size, fit,

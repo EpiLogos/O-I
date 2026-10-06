@@ -5,7 +5,7 @@
 //   FIELD_SITE_ROOT    a built site root: it holds essay/ and expression.html   required
 //   FIELD_BRIDGE_BIN   the walk-bridge binary                                   default kernel/target/debug/walk-bridge
 import {execFileSync, spawn} from "node:child_process";
-import {cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs";
+import {cpSync, existsSync, realpathSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -21,7 +21,7 @@ async function waitHttp(url, label, ms = 30000) {
   throw new Error(`${label} did not answer at ${url}`);
 }
 
-export async function bootField({width = 1440, height = 900, epi = true, bridge = true, fixture = null, provision = null, siteRoot = process.env.FIELD_SITE_ROOT, appUrl = process.env.FIELD_APP_URL ?? "http://localhost:1451/"} = {}) {
+export async function bootField({width = 1440, height = 900, epi = true, bridge = true, fixture = null, fixtureAt = "", provision = null, siteRoot = process.env.FIELD_SITE_ROOT, appUrl = process.env.FIELD_APP_URL ?? "http://localhost:1451/"} = {}) {
   if (!siteRoot || !existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) throw new Error("FIELD_SITE_ROOT must name a built site root (essay/static/fieldIndex.json)");
   const disposers = [];
   let ground = null;
@@ -33,12 +33,12 @@ export async function bootField({width = 1440, height = 900, epi = true, bridge 
     if (bridge) {
       const bin = process.env.FIELD_BRIDGE_BIN ?? join(cradleRoot, "kernel/target/debug/walk-bridge");
       if (!existsSync(bin)) throw new Error(`no walk-bridge binary at ${bin} (build it, or set FIELD_BRIDGE_BIN)`);
-      const root = mkdtempSync(join(tmpdir(), "oi-field-ground-")), home = mkdtempSync(join(tmpdir(), "oi-field-home-"));
+      const root = realpathSync(mkdtempSync(join(tmpdir(), "oi-field-ground-"))), home = mkdtempSync(join(tmpdir(), "oi-field-home-"));
       disposers.push(() => { rmSync(root, {recursive: true, force: true}); rmSync(home, {recursive: true, force: true}); });
       const ctrl = process.env.OI_CENTRAL_CTRL_BIN ?? "ctrl";
       const call = (a, i = {}) => execFileSync(ctrl, ["--root", root, "--json", "action", "run", a, JSON.stringify(i)], {encoding: "utf8"});
       call("central.init"); mkdirSync(join(root, "Work", "Field")); call("projectcentral.init", {project: "Field", project_id: "field-walk"});
-      if (fixture) cpSync(fixture, join(root, "Work", "Field"), {recursive: true});   // an ordinary corpus, linked as the project
+      if (fixture) { mkdirSync(join(root, "Work", "Field", fixtureAt), {recursive: true}); cpSync(fixture, join(root, "Work", "Field", fixtureAt), {recursive: true}); }   // an ordinary corpus, linked as the project
       const port = 4300 + Math.floor(Math.random() * 500);
       // a walk that needs more of the ground (an AIKit home, a session) provisions it here and may add to the bridge's env
       const extra = provision ? await provision({root, home, projectRoot: join(root, "Work", "Field")}) : {};
@@ -60,7 +60,7 @@ export async function bootField({width = 1440, height = 900, epi = true, bridge 
     page.on("pageerror", e => errors.push("pageerror: " + e.message + " " + String(e.stack ?? "").split("\n").slice(1, 3).join(" | ")));
     page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text().slice(0, 300)); });
     const editionUrl = `http://127.0.0.1:${edition.port}/essay/`;
-    await page.addInitScript(({bridgeUrl, editionUrl}) => {
+    await context.addInitScript(({bridgeUrl, editionUrl}) => {
       try {
         sessionStorage.setItem("oi-cradle.welcome.v1", "field-walk"); localStorage.setItem("oi-cradle.welcome.v1", "field-walk");
         localStorage.setItem("oi-cradle.essay-edition", editionUrl);

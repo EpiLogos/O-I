@@ -1,10 +1,10 @@
 {
   "scenario": "field-first-encounter",
-  "at": "2026-10-06T19:35:39.241Z",
+  "at": "2026-10-06T20:04:29.636Z",
   "passed": true,
   "counts": {
-    "passed": 37,
-    "total": 37
+    "passed": 39,
+    "total": 39
   },
   "checks": [
     {
@@ -221,7 +221,7 @@
         "ref": "expression:roz-room-02-return-of-zero",
         "scene": "movement-15",
         "sceneName": "§1 · #2 — The Empty Set Generates One",
-        "frame": "http://127.0.0.1:60827/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+        "frame": "http://127.0.0.1:49475/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
         "tabs": [
           {
             "label": "The Return of Zero",
@@ -261,7 +261,7 @@
       "ok": true,
       "label": "the real Expression renderer is playing in the frame",
       "detail": {
-        "url": "http://127.0.0.1:60827/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+        "url": "http://127.0.0.1:49475/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
         "textLength": 812
       }
     },
@@ -299,6 +299,19 @@
     {
       "ok": true,
       "label": "leaving the Expression stops it (no frame left running)"
+    },
+    {
+      "ok": true,
+      "label": "maths renders with KaTeX's bundled fonts (no CDN stylesheet)",
+      "detail": {
+        "katex": true,
+        "loaded": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "no request left the machine: no CDN, no font service",
+      "detail": []
     },
     {
       "ok": true,
@@ -346,7 +359,7 @@
       "ref": "expression:roz-room-02-return-of-zero",
       "scene": "movement-15",
       "sceneName": "§1 · #2 — The Empty Set Generates One",
-      "frame": "http://127.0.0.1:60827/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
+      "frame": "http://127.0.0.1:49475/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light",
       "tabs": [
         {
           "label": "The Return of Zero",

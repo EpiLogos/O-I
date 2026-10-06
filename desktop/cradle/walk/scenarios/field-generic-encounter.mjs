@@ -26,7 +26,7 @@ try {
   await page.waitForSelector(".article.fpane:not([hidden]) .ahead__title", {timeout: 30000}); await settle(800);
   const e0 = await enc();
   check(await title() === "Harbour Notes", "the corpus opens on its own home page (the root README)", await title());
-  check(e0.world_ref === "project:Field" && e0.primary.ref.startsWith("central:source:project:Field:") && /^central\.content-fnv1a64\/v1:\d+:[0-9a-f]+$/.test(e0.primary.revision), "native ref and pinned revision from the owner's read", e0.primary);
+  check(e0.world_ref === "project:field-walk" && e0.primary.ref.startsWith("central:source:project:field-walk:") && /^central\.content-fnv1a64\/v1:\d+:[0-9a-f]+$/.test(e0.primary.revision), "native ref and pinned revision from the owner's read", e0.primary);
   const counts = await page.evaluate(() => ({rows: document.querySelectorAll(".tn__row").length, pages: document.querySelector(".field-root .left-foot")?.textContent, essay: !!document.querySelector(".mrail__t, .xchip")}));
   check(/7 pages/.test(counts.pages) && !counts.essay, "7 markdown pages, no rail and no Expression chips (no essay semantics)", counts);
   check(await page.locator(".conn__g li").count() >= 3, "connections list the home page's links (paths and wiki names)");
@@ -76,11 +76,11 @@ try {
   check(await title() === "Harbour Notes" && (await enc()).trail.length === trail0, "back returns to the previous main page");
   // 6b — out-of-band: another caller's selection_set moves the selected node with NO navigation; an agent's portal_open opens a tangent
   const tabsBefore = (await tabs()).length, main0 = (await enc()).primary.ref;
-  await world({operation: "selection_set", origin: "agent", subject_ref: "central:source:project:Field:notes/deep/gamma.md", kind: "source", native_owner: "Central", revision: "ext"});
+  await world({operation: "selection_set", origin: "agent", subject_ref: "central:source:project:field-walk:notes/deep/gamma.md", kind: "source", native_owner: "Central", revision: "ext"});
   await page.waitForFunction(() => JSON.parse(document.querySelector(".field-root").dataset.encounter).selected?.endsWith("notes/deep/gamma.md"), null, {timeout: 8000});
   const eExt = await enc();
   check((await tabs()).length === tabsBefore && eExt.focus === "primary" && eExt.primary.ref === main0, "an external selection_set moved the selected node: no tab, no navigation", {selected: eExt.selected});
-  await world({operation: "portal_open", portal_ref: "agent-walk-1", target_ref: "central:source:project:Field:reference/glossary.md", surface_kind: "field", surface_id: "agent-walk-surface", placement: "preview", title: "Glossary", actor: "agent:walk"});
+  await world({operation: "portal_open", portal_ref: "agent-walk-1", target_ref: "central:source:project:field-walk:reference/glossary.md", surface_kind: "field", surface_id: "agent-walk-surface", placement: "preview", title: "Glossary", actor: "agent:walk"});
   await page.waitForFunction(n => document.querySelectorAll(".ftab").length === n + 1, tabsBefore, {timeout: 8000});
   tb = await tabs();
   check(tb.at(-1).preview && /Glossary/.test(tb.at(-1).label), "an agent's portal_open opened the same preview tab a double-click does", tb.at(-1));
