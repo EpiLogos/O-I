@@ -36,6 +36,10 @@ what they carry semantically.
 - **Engine and editor are untouched.** A shared defect goes to your report as a Point-Cloud #6 candidate; do not fix it here.
 - **Do not touch the essay vault, the primary checkout, other families' dirs, or any file outside your declared region.** Commit with prefix `[enrich:<family>]`. Do not push (the parent pushes after review).
 
+## Hard craft rule: the authoring-app ceiling
+
+The PCD authoring/capture app refuses scenes over **10 formations / 8 pins** (`field-studies-journeys/src/app.ts` `ensureCapacity`) while the validator admits 32 entities and the site engine supports 64 — three surfaces, three ceilings (Point-Cloud #6 candidate, verified 2026-10-06 by the symbolon critic: a 13-formation scene refuses to boot in the capture app). Until the ceiling is raised, **keep every scene ≤10 formations and ≤8 pins** so members render through both the authoring shell and the site. Sequences morph ONE formation through steps — depth of meaning does not need crowds of formations.
+
 ## The floor (linter-enforced; details in the linter header)
 
 1. Formation sequences on ≥1/3 of scenes; ≥1 sequence changing glyph AND object state (position/size/tint). Single-glyph holds don't count.

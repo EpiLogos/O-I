@@ -18,6 +18,13 @@
 - **Wave 3:** S-products (83 members, PCD env-2 checkout, own branch+PR; split internally by product: actuation 19, factory 20, quaternal-logic 15, aikit 11, central 10, workcell 7, ql 1). Sources: product repos at the commits pinned in each binding's `material_source_ref`; essay product records under `submission-package/essay/symbolon/episteme/products/` at vault fc59a719.
 - **Critic (Aletheia's office):** runs after each wave's members land on the branch — CRITIC-RUBRIC.md, reject with named reasons; revise-and-resubmit.
 
+## Wave-1 results so far (2026-10-06)
+
+- symbolon: author lane PASS 2/2 (`38a53e5fe`, `f030a8a83`); critic PASS both (independent pixel diffs, contact sheets in `renders/symbolon/`, log `critic-log-wave1-symbolon.md`).
+- arguments + conjugates: author lane PASS 2/2 (`08beb04c5`, `3c474a444`); critic dispatched.
+- matheme: in progress (4+ members authored when last checked).
+- Confirmed Point-Cloud #6 candidates (hold until filed at convergence): capture tool needs `npm ci`+build with opaque timeout; `setScene` takes an index not an id (id throws misleading undefined-transition error); `openScene` does not exist; `setScene` does not stop the presentation auto-advance clock (unattended captures photograph the wrong scene); the app/validator/engine formation-ceiling mismatch (10/8 vs 32 vs 64); text layers render markdown markers literally.
+
 ## Convergence (parent)
 
 1. Covers re-captured from each member's strongest scene (capture.mjs).
