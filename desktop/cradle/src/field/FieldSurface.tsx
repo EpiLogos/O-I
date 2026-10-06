@@ -26,6 +26,8 @@ import {useFieldController, type FieldBindingView} from "./useFieldController";
 import {useFieldSource} from "./useFieldSource";
 import {type FieldExpression, type FieldExpressionIndex, type FieldReading, type FieldSource} from "./source";
 import {Explorer} from "./Explorer";
+import {FieldUtility} from "./Utility";
+import type {HostedHostContext} from "../contributions/contracts";
 import {SearchBar, SearchResults, useFieldSearch} from "./Search";
 import {Tabs} from "./Tabs";
 import {Article, type Following} from "./Article";
@@ -68,7 +70,7 @@ function loadVisited(world: string): Set<string> {
 }
 
 /* ───────── the surface ───────── */
-export function FieldSurface({binding, onView}: {binding: SurfaceBinding; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void}) {
+export function FieldSurface({binding, onView, host: hostOps}: {binding: SurfaceBinding; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void; host?: HostedHostContext}) {
   const lens = useEpiLens();
   const s = useFieldSource(lens.on);
   const host = useRef<HTMLDivElement>(null);
@@ -77,20 +79,21 @@ export function FieldSurface({binding, onView}: {binding: SurfaceBinding; onView
       <div className="field-host" ref={host}>
         <div className="field-root page no-field" data-theme="light" data-left="open" data-view="essay">
           <FieldIcons/>
-          <div className="center" style={{padding: "3rem 2rem", overflow: "auto"}}>
+          <div className="center" style={{padding: "3rem 2rem 0", overflow: "auto"}}>
             <p className="ahead__eyebrow"><span>{lens.on ? "Epi-Logos" : "Central"}</span><span>{s.status === "loading" ? "Opening" : "Not connected"}</span></p>
             <h1 className="ahead__title">{s.status === "loading" ? "Opening the field…" : s.title}</h1>
             {s.status === "unavailable" ? <p className="ahead__deck" role="status">{s.reason}</p> : null}
             {s.status === "unavailable" && s.setup ? s.setup : null}
+            <div style={{marginTop: "auto", paddingTop: 24}}><FieldUtility host={hostOps} orientation="bar"/></div>
           </div>
         </div>
       </div>
     );
   }
-  return <FieldLoaded key={s.source.world_ref} binding={binding} source={s.source} index={s.index} onView={onView}/>;
+  return <FieldLoaded key={s.source.world_ref} binding={binding} source={s.source} index={s.index} onView={onView} hostOps={hostOps}/>;
 }
 
-function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding; source: FieldSource; index: CorpusIndex; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void}) {
+function FieldLoaded({binding, source, index, onView, hostOps}: {binding: SurfaceBinding; source: FieldSource; index: CorpusIndex; onView?: (view: NonNullable<SurfaceBinding["view"]>) => void; hostOps?: HostedHostContext}) {
   const world = source.world_ref;
   const themeRef = useRef<"light" | "dark">("light");
   const host = useRef<HTMLDivElement>(null), rootEl = useRef<HTMLDivElement>(null), scroller = useRef<HTMLDivElement>(null), progress = useRef<HTMLElement>(null);
@@ -342,8 +345,9 @@ function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding;
     }
     setContents(entries);
     requestAnimationFrame(() => {
+      const sc = scroller.current; if (!sc) return;                 // unmounted while the frame was pending
       measure(); settling.current = true;
-      const sc = scroller.current!, saved = tops.current.get(viewKey);
+      const saved = tops.current.get(viewKey);
       const span = (stateRefSpan() ?? undefined);
       if (saved != null) { sc.scrollTop = saved; pin.current = null; }
       else if (sp && !sp.at && span && anchors.current.some(a => a.span === span)) scrollToSpan(span, false);
@@ -452,6 +456,7 @@ function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding;
             <div className="rail-left">
               <button className="ibtn" type="button" aria-label="Open the explorer" onClick={() => patchView({left: "open"})}><Icon name="tree" size={18}/></button>
               <button className="ibtn" type="button" aria-label="Search" onClick={focusSearch}><Icon name="search" size={18}/></button>
+              {!narrow && !leftOpen ? <FieldUtility host={hostOps} orientation="rail"/> : null}
             </div>
             <div className="left-inner">
               <div className="page-title">
@@ -468,6 +473,7 @@ function FieldLoaded({binding, source, index, onView}: {binding: SurfaceBinding;
                   openMain={ref => followMain(ref)}/>
                 {searching ? <SearchResults s={search} index={index} onHover={ref => setHover(ref)} onOpen={(ref, e) => (e.metaKey || e.ctrlKey || e.shiftKey ? followMain(ref) : followTangent(ref))}/> : null}
               </div>
+              {narrow || leftOpen ? <FieldUtility host={hostOps} orientation="bar"/> : null}
               <p className="left-foot">{index.nodes.length.toLocaleString("en-US")} pages{index.footnote ? <><br/>{index.footnote}</> : null}</p>
             </div>
           </aside>
