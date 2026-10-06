@@ -57,11 +57,11 @@ them in the table below on first run. Candidate: movement of `THE-RETURN-OF-ZERO
 
 | Slot | Value (fill on first run) |
 |---|---|
-| main passage | `THE-RETURN-OF-ZERO` at movement M16 (`?m=16`, `section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero`) — the site's own reader test locus |
-| selected relation | `section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity` ("Dimensional Reframing at Zero and Infinity"), ref `central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md`; selected by a graph-node click (no navigation, generation 3→4) — walk `walk/scenarios/field-first-encounter.mjs` |
-| tangent | the same page, opened by double-click as an italic preview; replaced by the next tangent (M16 itself, via its connections), kept by double-click, a third opened beside it (M15 · The Empty Set Generates One); promoted → main, `Alt+←` back to the manuscript at M16 |
-| Expression + scene | `roz-room-02-return-of-zero` (ref `expression:roz-room-02-return-of-zero`), scene `movement-15` (§1 · #2 — The Empty Set Generates One), then `movement-16` via the contents; opened from Library → Here as an Expression tab; played by the published renderer (`expression.html`, embed) in the tab |
-| companion prepared-turn basis | one prepared item (owner `Field`, observation anchor `field-encounter:<binding>#<generation>`) in AIKit's `aikit.prepared-context/v1`: text names primary @ revision · span, tangent, selected, constellation and the generation; accepted by the real AIKit (`tests/field-context-owner.mjs`), replaced per generation, stale generation detectable (`fieldItemStatus`) — `src/context/fieldContext.ts` |
+| main passage | |
+| selected relation | |
+| tangent | |
+| Expression + scene | |
+| companion prepared-turn basis | |
 
 ## 3 — File claims (exclusive; the lead serializes git)
 
@@ -72,86 +72,3 @@ them in the table below on first run. Candidate: movement of `THE-RETURN-OF-ZERO
 | Sonnet A (#132/#78/#595) | `Work/Actuation` seat `env-1/actuation` (`feat/central-field-actuation`), `env-1/ai-kit` (`feat/central-field-ai-kit`), `desktop/cradle/package-bundle.sh`, `cli/src/{composition,configuration/profile,desktop_install}.rs` | `src/**` |
 
 Anyone needing a file outside their claim asks the lead; nobody commits or pushes — the lead does.
-
-## 4 — Site reference baseline (recorded 6 Oct 2026, lead)
-
-Source basis: `site/` on main `ca603fb4e` (#600), built edition `site/.public-edition/essay` snapshotted to a scratch copy.
-`python3 tests/essay-reader-controls.py` (root and `/O-I` bases; desktop + phone): **229/229 checks passed**, exit 0,
-including 135 Expressions in the gallery and the "Here" narrowing. This is the behavioural reference the native
-candidate is compared against (UX1–UX10); it is not a statement about the native candidate.
-
-## 5 — Requests to lead (from Sonnet B, 6 Oct 2026)
-
-1. **`HostedMountProps.onView(view)`** in `contributions/contracts.ts`. A hosted surface has no way to write its binding's `view`;
-   the field persists `view.field` through a window event `oi:field-persist {binding_id, field}` that `CradleFrame` now answers
-   (additive effect beside `oi:host-workspace-mode`, calls `workspace.surfaceView`). Replace the event with the prop when you can.
-2. **Registry regeneration.** I ran `oi contribution compile-registry` for core, factory, automations **and field** and wrote
-   `contributions/generated.ts` and `registered-kinds.mjs` (delta is exactly the one `oi.surface/field` entry; baseline
-   regeneration without it reproduced the committed files byte-for-byte). The command to keep:
-   `oi contribution compile-registry --root desktop/cradle/src/contributions <core|factory|automations|field>/contribution.json… > generated.ts`
-   (and `--metadata … > registered-kinds.mjs`). Add `field/contribution.json` to the list in `docs/cradle/HOSTED-CONTRIBUTIONS.md`.
-3. **Agent route.** `src/field/fieldHost.ts` registers every mounted field and runs one typed `FieldOp` through `fieldOperate`
-   (window event `oi:field-operate {op, binding_id?, reply?}`). The kernel/native host-relay admission
-   (`kernel/src/native_expression.rs` or the `oi:*` route) still has to forward an admitted `field.operate` to that event.
-4. **Prepared turn.** To join the companion, `context/situation.ts` (`SituationFrame`) should carry `field: FieldContextReading`
-   and the turn builder should record `field.generation`. I did not touch `context/*` (outside my claim).
-5. **Base default centre.** `CradleFrame` opens the field (tab strip unpinned, left navigator `collapsed`) when a workspace
-   first stands in Base with an empty tree (`fieldDefaulted` effect after `enterModeRef`). The existing `rest` walk assumes Rest
-   at that moment and needs a start that opts out; I did not run or change it.
-6. **Walk registry.** `walk/scenarios/field-first-encounter.mjs` and `field-site-parity.mjs` are standalone (they boot the
-   prebuilt `kernel/target/debug/walk-bridge`, a static edition server and Chrome themselves); register them in `walk/run.mjs`
-   if you want them in `npm run walk`.
-
-## 6 — Decision D3 resolved: agent and human operate the field through the existing ExpressionWorld seam (lead, after reading the kernel)
-
-The kernel already admits the generic world operations agents use (`oi desktop expression`, body schema
-`oi.expression-world/v1`, `kernel/src/expression_world.rs`, renderer face `src/expression/world.ts`). The field does not
-mint a parallel `field.operate` kernel route for what these already say:
-
-| Field operation | Admitted native operation | Meaning kept |
-|---|---|---|
-| `select(ref)` | `selection_set {origin: graph\|page, subject_ref, kind, native_owner, revision}` | "Selection is inspection: it never invokes an Action." Agent reads it with `selection_read`; an agent `selection_set` moves the field's selection. |
-| `open-preview(ref)` | `portal_open {placement: preview, target_ref, surface_id, …}` (+ `surface_open`) | tangent = a preview portal; canonical ref preserved. |
-| `keep` / `promote` | `portal_open` re-place `beside` / `full` | re-placing never re-derives identity. |
-| close tangent | `portal_close` | |
-| `back`, `set-emphasis`, `enter-constellation`, tab focus | host-local presentation (`fieldApply`) | not domain meaning; admitted to agents only if the equivalence test shows a need (then a typed presentation request on the same seam, not a side channel). |
-
-Consequences: `FieldEncounter.selected` and the tangent are *projections* of the shared selection and portal records
-(kernel-owned), not a second store; the one global focus relation (`kernel/src/focus.rs`) is published, not copied.
-`native_owner` for a corpus ref is its source owner (Central source refs for a linked corpus), never `field`.
-Equivalence test: pointer select ≡ `selection_set` ≡ agent `selection_set` produce the same `selection_read`; an agent
-`selection_set` moves the field's selected node without navigation; `portal_open preview` opens the same tangent a
-double-click does.
-
-## 7 — Candidate launch route (main machine)
-
-Isolated profile: `~/.oi-candidates/<profile>/` holds `OI_HOME`, a persistent WebKit store id and its own expression
-socket (`OI_EXPRESSION_SOCKET`), so the everyday O-I installation, its workspaces and layouts are untouched.
-The Central ground defaults to the real one (`--ground` to change); the Epi lens reads the real published essay edition
-served from `--site-root`.
-
-```bash
-cd desktop/cradle
-# once: candidate CLI + kernel bridge (web) and the native debug shell (tauri)
-(cd ../../cli && CARGO_TARGET_DIR=$PWD/../target cargo build --bin oi)
-(cd kernel && cargo build --bin walk-bridge)      # web mode
-(cd src-tauri && cargo build)                       # tauri mode
-node scripts/candidate-launch.mjs --mode tauri --site-root <built site root> --oi <repo>/target/debug/oi
-node scripts/candidate-launch.mjs --mode web   --site-root <built site root> --oi <repo>/target/debug/oi   # browser
-```
-
-With `--worlds-root DIR` (an `essay-world.mjs install` root, e.g. `~/.oi-candidates/worlds`) the Epi lens reads the INSTALLED World through the
-kernel (`WorldResolve` + the `__world` route): no edition server, no edition address — the shape the shipped app has.
-`--site-root` is a built site (`essay/static/fieldIndex.json`, `expression.html`): `site/dist` after
-`npm run build:public`, or a snapshot of it. Ctrl-C stops everything the launcher started.
-
-## 8 — Constellation, continuity (Sonnet B, 6 Oct 2026)
-
-- **Gathering** is the encounter's `enter-constellation` / `leave-constellation` (Ctrl/Cmd-click a graph node, the card's Gather, or `g`
-  on the selected node; removed from the constellation bar). It never selects, opens or navigates.
-- **Technè hand-off** (`src/field/constellation.ts`) is the wiki map's own "+" path: `aikit.constellation.apply` (create + one `member_add`
-  per page, one request, each member citing its exact source at the revision the owner disclosed) → re-read the projection → seat the scene →
-  `requestWikiSelection` → `oi:epi-examine`. A page that is not a Central source a Wiki can cite (the published edition's pages; any file
-  outside the Project's source horizon) is refused in the owner's words and nothing is created.
-- **Refs of a linked corpus** use the Project's own id (`project:{id}`, disclosed as its wiki space), not its directory name.
-- **Companion context** is a person's choice (`off · follows the active locus · pinned`); the pin is persisted with its reading and re-prepared.
