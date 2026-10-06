@@ -1,0 +1,150 @@
+{
+  "artifact": "mytheme/roz-mytheme-travelling-jigsaw-atlas.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-frank-taylor"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-travelling-jigsaw-atlas",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/travelling-jigsaw-atlas/WHOLE.md",
+        "sha256": "c5190aaa4de6c71cad0e6350955d044954a9858e198285281c641beab8d153ad",
+        "sha256_receipt_stale": "c141e5f85381fa846428068023bd19d007c891ee49248b2bd936e28358058995"
+      }
+    ]
+  },
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-jig-0-lid",
+      "phase": "#0 the picture arrives before the pieces",
+      "relations": "anchor jigsaw-box-lid; Heidegger q012; the governing plan development"
+    },
+    {
+      "scene_id": "m-jig-1-travel",
+      "phase": "#1 travel changes what it means to fit",
+      "relations": "anchor jigsaw-travel-and-reconstruction; A22, C37"
+    },
+    {
+      "scene_id": "m-jig-2-circle",
+      "phase": "#2 a crossing has a rule — the circle's two charts",
+      "relations": "anchor jigsaw-mathematical-witness; manifold-atlas matheme; C52, A03"
+    },
+    {
+      "scene_id": "m-jig-2b-torus",
+      "phase": "#2 the torus loop retains its winding",
+      "relations": "torus-cover matheme; A17, A16; the disk abstraction's lack"
+    },
+    {
+      "scene_id": "m-jig-4-marble",
+      "phase": "#4 the planet appears",
+      "relations": "anchor jigsaw-blue-marble-hinge; A04/C09, A20, C38, C61; Encounter/Region/Name/Count/Countenance/Account field"
+    },
+    {
+      "scene_id": "m-jig-5-return",
+      "phase": "#5→0 the atlas travels with the means to revise it",
+      "relations": "anchor jigsaw-atlas-return; C39; Mapper/sheaf Offered; Homologia/Analogia; A34; Bratton q029; A31–A33; M05, M30, M41, M42, M44"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "the box lid",
+      "occurrence": "#0 the destination visible before the pieces; #4 the planetary box-lid danger; #5→0 reopened"
+    },
+    {
+      "figure": "the frame and sorted pieces",
+      "occurrence": "#0 assembly under a prior criterion"
+    },
+    {
+      "figure": "charts and overlaps",
+      "occurrence": "#1 pieces becoming local charts with operative seams"
+    },
+    {
+      "figure": "the shared point (3/5,4/5) with u=3, v=1/3",
+      "occurrence": "#2 v=1/u; height 4/5 in either account; du/dt=2 ⇒ dv/dt=−2/9"
+    },
+    {
+      "figure": "the lifted endpoint (2,−1)",
+      "occurrence": "#2b winding recorded, not the traveller's whole experience"
+    },
+    {
+      "figure": "the Blue Marble (authored image-unit)",
+      "occurrence": "#4 the hinge — no NASA frame selected or supplied"
+    },
+    {
+      "action": "recording how a view was made",
+      "occurrence": "#1 from where, across which region, under what projection"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "declared travelling-jigsaw reconstruction, Blue Marble hinge, native and Neumann structuration, corrected Bimba relation, programme returns",
+      "flag": "yes"
+    },
+    {
+      "relation": "newly written illustrative traveller actions and explanatory phrasing",
+      "flag": "no — not reported events or ratified identities"
+    }
+  ],
+  "cross_story_relations": [
+    "Torus lift shared with the uroboros whole (same matheme home; distinct whole offices).",
+    "Stained-glass whole carries the complementary diaphaneity discipline at the hinge."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-travelling-jigsaw-atlas.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Standing: mathematical constructions retain Derived warrants in their matheme homes; the travelling relation is Argued; technical witness Offered. No NASA asset acquired — none supplied by inference. Craft: the lid and its silent criterion recur visually (square motif) in scenes 0/4/5 so the diagnosis-to-reconstruction arc reads. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-jig-0-lid, m-jig-1-travel, m-jig-2-circle, m-jig-2b-torus, m-jig-4-marble, m-jig-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+    "#0 lid — grid layout: the sorted pieces array flies into the frame's edge (the anticipated whole assembling from its own criterion); the fits-balance dimmed to a witness; pointer attract — the assembly.",
+    "#1 travel — the frame itself warps: the square rotates 0.42 rad and shifts hue (the turn the flat arrangement cannot preserve); the annotator's ✎ becomes ▦ — pieces become local charts; turbulence up (travel's disturbance); pointer vortex with shove — the question forcing the frame.",
+    "#2 circle — ring layout (the circle example): the overlap rule v=1/u becomes the crossing point (3/5,4/5) moved onto the chart's rim; dv becomes −2/9; the agreed height 4/5 steady at the left; slow field — the matheme read carefully; duration 14.",
+    "#2b torus — THE 3D SCENE. z is the loop's lift: the presenting square base at z −0.3, the generating loop at z 0, the displaced endpoint (2,−1)→[2t,−t] nearest at z +0.35 — you see the return and its winding separated in depth; vortex3d + loop LFO on circulation; pointer vortex/vortex; duration 15.",
+    "#4 marble — the planet appears: the blue disc grows from dim to full (the image arriving), the box-lid square held faint (the reading refused dominance), the diaphanous ring bright (conditions readable within use), ? bright between them; pointer attract/implode — the image gathering the gaze; slow speed LFO (the planet's turn).",
+    "#5→0 return — the atlas yantra unfolds a half-turn (the means to revise travelling beside the map); the first picture reopened (square brighter than the box-lid ever was in #4's dark); Mapper and A32 bright at the edges; pointer near-still attract. ENDING QUALIFIES BEGINNING: #0's maker judged every piece by a picture finished in advance; #5→0 hands the traveller the reopened first picture plus the means to revise it — same pieces, same colours, now read with frame, missed continuations and routes; the lid's certainty returns as the atlas's revisability.",
+    "Human-amplified / status staging (binding flags kept): the manifold-atlas matheme Derived in its home, the crossing Offered; Mapper and sheaf routes remain Offered; no NASA frame selected. Mythemic verbs only: the lid embodies the diagnostic; the lift demonstrates local closure retaining difference.",
+    "Automation: auto-loop (the loop's circulation), auto-marble (the planet's slow turn). Durations 11–15, transitions 1.1–2.0; the torus loop held longest."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l2",
+    "lane": "mytheme"
+  },
+  "glyph_rationales": {
+    "·": "the unnamed carrier — a formation whose sense is its shape alone (the lid, the warped frame, the circle, the loop, the planet); no glyph is pretended.",
+    "▦": "the sorted pieces, then the local charts: the array of parts that promised one whole, re-marked as charts whose edges mark limits of usable description (#0–#1).",
+    "⚖": "the confirming fits — each placement judged by the anticipated whole: the diagnostic the travel overturns (#0).",
+    "✎": "the maker's marks: how a view was recorded — from where, across which region, under which projection (#1).",
+    "?": "the question reaching the frame and the prior picture (#1, again at #4).",
+    "v=1/u": "the overlap rule: two charts naming one point in different written values (#2).",
+    "(3/5,4/5)": "the crossing point: (x,y)=(3/5,4/5), named u=3 by one chart and v=1/3 by the other — one point, two accounts (#2).",
+    "dv": "the second chart's coordinate velocity (#2).",
+    "−2/9": "dv/dt=−2/9 where du/dt=2: the same motion in the other coordinate — both velocities reading two would change the motion described (#2).",
+    "4/5": "the height agreed by either account (#2).",
+    "(2,−1)": "the lift's endpoint: the loop returns home while its lift ends displaced — winding recorded (#2b; shared matheme home with the uroboros whole's interposition, distinct whole offices).",
+    "[2t,−t]": "the loop itself: [2t,−t] from t=0 to 1 (A17) (#2b).",
+    "4·2·1·1": "the presenting square's four sides, two generating loops, and the quotient's one vertex, two edge classes, one face — counts that cannot be exchanged (#2b).",
+    "Mapper": "the map-making operation travelling alongside its map — lens, cover, clustering, nerve (Offered) (#5→0).",
+    "A32": "initiated disclosure: the reply able to reach the frame, measure or permission that shaped it (#5→0)."
+  }
+}
