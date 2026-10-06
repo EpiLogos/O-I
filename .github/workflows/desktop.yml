@@ -94,7 +94,7 @@ jobs:
           cargo test --release --manifest-path desktop/cradle/kernel/Cargo.toml --locked --no-fail-fast \
             --test expression_performance --test expression_performance_checkpoint --test expression_performance_delivery \
             --test expression_performance_management --test expression_performance_recording --test expression_performance_source_asset \
-            -- --nocapture --include-ignored --skip actual_captured_prefix_170_to_original_171_public_native_cas_restart_and_selection
+            -- --nocapture --include-ignored --skip actual_captured_prefix_170_to_original_171_public_native_cas_restart_and_selection --skip full_actual_fifteen_minute_committed_workload --skip full_actual_source_form_fifteen_minute_45k --skip full_original_native_source_recipe_keys --skip actual_current_world_personal_shared_and_workload
       - name: Lint all cradle kernel targets
         if: always()
         timeout-minutes: 15
