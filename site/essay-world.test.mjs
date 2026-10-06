@@ -6,12 +6,12 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { chmodSync, existsSync } from 'node:fs';
-import { appendFile, chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { appendFile, symlink, chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import {
   WORLD_ID, SOURCE_ADDRESSING, assemblePackage, closeDependencies, declaredReferences, depthClass, describeEdition, installPackage,
-  ordinaryReadingMutations, parseSourceRef, readAllPages, registerPraxis, resolveWorld, slugOfVaultPath, sourceRef, verifyExpressions,
+  DISPOSITIONS, dispositionEditionDefects, dispositionOf, dispositionSourceDefects, indexVault, ordinaryReadingMutations, parseSourceRef, readAllPages, registerPraxis, resolveWorld, slugOfVaultPath, sourceRef, verifyExpressions,
   verifyPackage, verifyPraxisBinding, walkFiles,
 } from './essay-world.mjs';
 
@@ -263,4 +263,59 @@ test('real AIKit: the set resolves to catalogued Skills, and a removed Skill is 
     assert.deepEqual(unresolved(after), ['skill/epi-logos-reader/investigate']);
     await cleanup(mutilated, home2);
   } finally { await cleanup(source, installRoot, home); }
+});
+
+test('every unresolved reference gets a disposition with its reason; defects stay defects', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'oi-vault-'));
+  try {
+    await put(root, 'quilt/ledger-note.md', 'x');
+    await put(root, 'symbolon/a/AUTHORIAL-TEXT.md', 'x');
+    await rm(join(root, 'symbolon/a/AUTHORIAL-TEXT.md'));
+    await symlink('../../../working/paper.md', join(root, 'symbolon/a/AUTHORIAL-TEXT.md'));
+    await put(root, 'symbolon/etym/homology/WHOLE-FIELD-homology.md', 'x');
+    await put(root, 'section-rooms/m/21-s2-p2-sym-ballein.md', 'x');
+    const published = new Set(['symbolon/etym/homology/WHOLE-FIELD-homology.md', 'section-rooms/m/21-s2-p2-sym-ballein.md']);
+    const ctx = { published, vaultIndex: await indexVault(root), declaredWithheld: ['../../working/antykathera/Antikythera Agentworld Brief.md'] };
+    const wiki = (target) => ({ from: 'a.md', target, why: 'wikilink names no published page' });
+    const link = (target) => ({ from: 'symbolon/b/x.md', target, why: 'no such file' });
+    const of = (item) => dispositionOf(item, ctx);
+    assert.equal(of(link('../a/AUTHORIAL-TEXT.md')).disposition, 'withheld-by-design');
+    assert.match(of(link('../a/AUTHORIAL-TEXT.md')).reason, /symlink into a withheld working desk/);
+    assert.equal(of(wiki('AUTHORIAL-TEXT')).disposition, 'withheld-by-design');
+    assert.equal(of(wiki('ledger-note')).disposition, 'withheld-by-design');
+    assert.match(of(wiki('Antikythera Agentworld Brief')).reason, /withheld desk/);
+    const whole = of(wiki('symbolon/etym/homology/WHOLE-FIELD'));
+    assert.equal(whole.disposition, 'authoring-defect');
+    assert.deepEqual(whole.repair, { kind: 'mechanical', replace: 'symbolon/etym/homology/WHOLE-FIELD', with: 'symbolon/etym/homology/WHOLE-FIELD-homology' });
+    assert.equal(of(wiki('Sym-Ballein')).repair.kind, 'candidates');
+    assert.deepEqual(of(wiki('Dreamcode')).repair, { kind: 'none' });
+    assert.equal(of(link('www.example.org/page')).disposition, 'external');
+    const all = dispositionSourceDefects([wiki('Dreamcode'), wiki('Dreamcode'), wiki('AUTHORIAL-TEXT'), wiki('symbolon/etym/homology/WHOLE-FIELD')], ctx);
+    assert.equal(all.undispositioned, 0);
+    assert.equal(all.distinct_targets, 3);
+    assert.deepEqual(all.totals, { 'withheld-by-design': 1, external: 0, 'authoring-defect': 3, 'publication-defect': 0 });
+    assert.ok(all.references.every((r) => DISPOSITIONS.includes(r.disposition) && r.reason));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('edition dead links inherit the disposition of the source reference; unaccounted links and links into withheld desks are named', () => {
+  const table = [
+    { target: 'symbolon/etym/homology/WHOLE-FIELD', kind: 'wikilink', disposition: 'authoring-defect', reason: 'r' },
+    { target: 'Mono-Poly: Whole and Many', kind: 'wikilink', disposition: 'authoring-defect', reason: 'r' },
+    { target: 'agentworld-response-matrix', kind: 'wikilink', disposition: 'withheld-by-design', reason: 'r' },
+  ];
+  const d = dispositionEditionDefects([
+    { page: 'p', href: '../../symbolon/etym/homology/WHOLE-FIELD', why: 'no such page', target: 'symbolon/etym/homology/WHOLE-FIELD' },
+    { page: 'p', href: '../Mono-Poly--Whole-and-Many', why: 'no such page', target: 'section-rooms/Mono-Poly--Whole-and-Many' },
+    { page: 'p', href: '../agentworld-response-matrix', why: 'no such page', target: 'section-rooms/agentworld-response-matrix' },
+    { page: 'p', href: '../nowhere-at-all', why: 'no such page', target: 'section-rooms/nowhere-at-all' },
+    { page: 'p', href: '../quilt/q', why: 'no such page', target: 'quilt/q' },
+    { page: 'p', href: '../x#m02', why: 'fragment #m02 missing on x', target: 'x', fragment: 'm02', candidates: ['m02--title'] },
+    { page: 'p', href: '../../tags/1-4', why: 'no such page', target: 'tags/1-4' },
+    { page: 'p', href: '../Parasociety', why: 'no such page', target: 'section-rooms/Parasociety' },
+  ], table, { slugs: new Set(['section-rooms/arguments/concepts/parasociety']) });
+  assert.deepEqual(d.links.map((l) => l.disposition), ['authoring-defect', 'authoring-defect', 'withheld-by-design', 'undispositioned', 'publication-defect', 'publication-defect', 'publication-defect']);
+  assert.deepEqual(d.links.map((l) => l.kind), [undefined, undefined, undefined, undefined, 'withheld-desk-link', 'hashtag-link', 'resolver-mismatch']);
+  assert.equal(d.summary.links.undispositioned, 1);
+  assert.deepEqual(d.fragments[0].repair, { kind: 'candidates', candidates: ['m02--title'] });
 });

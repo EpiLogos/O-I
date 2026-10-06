@@ -24,7 +24,7 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { chmod, cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdir, readFile, readdir, readlink, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { basename, dirname, join, posix, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -205,7 +205,7 @@ export async function readAllPages(editionDir, d) {
     idsBySlug.set(slug, idsOf(article));
   }
   const missingPages = [...slugs].filter((s) => !bodyBySlug.has(s));
-  let links = 0, internal = 0, external = 0, withFragment = 0, unresolvedPage = 0, unresolvedFragment = 0, selfFragment = 0, selfFragmentUnresolved = 0;
+  let assetLinks = 0, links = 0, internal = 0, external = 0, withFragment = 0, unresolvedPage = 0, unresolvedFragment = 0, selfFragment = 0, selfFragmentUnresolved = 0;
   const unresolved = [], embeds = { total: 0, resolved: 0, external: 0, unresolved: [] };
   const missingTargets = new Map();   // normalised dangling page target → { count, pages }
   for (const [slug, body] of bodyBySlug) {
@@ -217,11 +217,13 @@ export async function readAllPages(editionDir, d) {
       if (url.origin !== 'http://e') { external++; continue; }
       internal++;
       const target = pageForPath(url.pathname, slugs);
+      // A link to a published file (a figure, a diagram) names no page and needs none.
+      if (!target && files.has(decodeURIComponent(url.pathname).replace(/^\/+/, ''))) { assetLinks++; continue; }
       const fragment = url.hash ? decodeURIComponent(url.hash.slice(1)) : '';
       if (!target) {
         // A same-page fragment resolves against its own page; anything else that names no page is a defect.
         if (!url.pathname.replace(/\/+$/, '') || url.pathname === base.pathname) { selfFragment++; if (fragment && !idsBySlug.get(slug)?.has(fragment)) { selfFragmentUnresolved++; unresolved.push({ page: slug, href, why: 'fragment missing on this page' }); } continue; }
-        unresolvedPage++; unresolved.push({ page: slug, href, why: 'no such page' });
+        unresolvedPage++; unresolved.push({ page: slug, href, why: 'no such page', target: decodeURIComponent(url.pathname).replace(/^\/+/, '').replace(/\.html$/, '') });
         const key = decodeURIComponent(url.pathname).replace(/^\/+/, '').replace(/\.html$/, '');
         const entry = missingTargets.get(key) ?? { count: 0, from: new Set() };
         entry.count++; entry.from.add(slug); missingTargets.set(key, entry);
@@ -229,7 +231,7 @@ export async function readAllPages(editionDir, d) {
       }
       if (fragment) {
         withFragment++;
-        if (!idsBySlug.get(target)?.has(fragment)) { unresolvedFragment++; unresolved.push({ page: slug, href, why: `fragment #${fragment} missing on ${target}` }); }
+        if (!idsBySlug.get(target)?.has(fragment)) { unresolvedFragment++; unresolved.push({ page: slug, href, why: `fragment #${fragment} missing on ${target}`, target, fragment, candidates: [...idsBySlug.get(target) ?? []].filter((id) => id.startsWith(`${fragment}-`)).slice(0, 3) }); }
       }
     }
     for (const src of embedsOf(body)) {
@@ -262,7 +264,7 @@ export async function readAllPages(editionDir, d) {
   }
   return {
     pages_read: bodyBySlug.size, pages_missing: missingPages, dangling_all: unresolved,
-    links: { total: links, internal, external, internal_with_fragment: withFragment, same_page_fragment: selfFragment,
+    links: { total: links, internal, external, to_published_files: assetLinks, internal_with_fragment: withFragment, same_page_fragment: selfFragment,
       unresolved_page: unresolvedPage, dangling_targets: summariseDangling(missingTargets), unresolved_fragment: unresolvedFragment + selfFragmentUnresolved, unresolved_sample: unresolved.slice(0, 20), unresolved_all: unresolved.length },
     embeds: { total: embeds.total, resolved: embeds.resolved, external: embeds.external, unresolved: embeds.unresolved.length, unresolved_sample: embeds.unresolved.slice(0, 10) },
     ref_round_trip: { pages: refs, round_tripped: refRound, problems: refProblems.slice(0, 20), problem_count: refProblems.length },
@@ -321,8 +323,8 @@ export function stripCode(text) {
 export function declaredReferences(text) {
   const body = stripCode(text.replace(/^---\n[\s\S]*?\n---/, ''));
   const refs = [];
-  for (const m of body.matchAll(/!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) refs.push({ kind: m[0].startsWith('!') ? 'embed' : 'link', target: m[1] });
-  for (const m of body.matchAll(/(!?)\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g)) refs.push({ kind: m[1] ? 'wikiembed' : 'wikilink', target: m[2].trim() });
+  for (const m of body.matchAll(/!?\[[^\]]*\]\(\s*(<[^>]+>|[^)\s]+)(?:\s+"[^"]*")?\s*\)/g)) refs.push({ kind: m[0].startsWith('!') ? 'embed' : 'link', target: m[1].replace(/^<(.*)>$/s, '$1') });
+  for (const m of body.matchAll(/(!?)\[\[([^\]|#\\]+)(?:#[^\]|\\]*)?(?:\\?\|[^\]]*)?\]\]/g)) refs.push({ kind: m[1] ? 'wikiembed' : 'wikilink', target: m[2].trim() });
   for (const m of body.matchAll(/<(?:img|source)\b[^>]*\ssrc="([^"]+)"/g)) refs.push({ kind: 'embed', target: m[1] });
   return refs;
 }
@@ -333,7 +335,7 @@ export function closeDependencies(entries, texts, exists = () => false) {
   const mdBase = new Map();
   for (const e of entries) if (e.rel.endsWith('.md')) { const b = basename(e.rel, '.md').toLowerCase(); (mdBase.get(b) ?? mdBase.set(b, []).get(b)).push(e.rel); }
   const totals = { references: 0, resolved: 0, external: 0, anchor_only: 0, withheld: 0, unresolved: 0, wikilinks: 0 };
-  const withheld = {}, unresolved = [];
+  const withheld = {}, unresolved = [], withheldDeclared = new Set();
   const externalDomains = {};
   for (const [rel, text] of texts) {
     for (const r of declaredReferences(text)) {
@@ -347,7 +349,7 @@ export function closeDependencies(entries, texts, exists = () => false) {
         if (named.length || published.has(target)) totals.resolved++;
         else if (withheldTarget) {
           totals.withheld++;
-          const g = (withheld[withheldTarget[0]] ??= { references: 0, targets: new Set() }); g.references++; g.targets.add(target);
+          const g = (withheld[withheldTarget[0]] ??= { references: 0, targets: new Set() }); g.references++; g.targets.add(target); withheldDeclared.add(target);
         } else { totals.unresolved++; unresolved.push({ from: rel, target, why: 'wikilink names no published page' }); }
         continue;
       }
@@ -366,7 +368,7 @@ export function closeDependencies(entries, texts, exists = () => false) {
       if (rule || escapes || (path.endsWith('.md') && exists(path))) {
         totals.withheld++;
         const category = rule ? rule[0] : escapes ? 'outside-publication' : 'unpublished-page';
-        (withheld[category] ??= { references: 0, targets: new Set() });
+        (withheld[category] ??= { references: 0, targets: new Set() }); withheldDeclared.add(path);
         withheld[category].references++; withheld[category].targets.add(escapes || rule ? posix.normalize(posix.join(posix.dirname(rel), target.split('#')[0])) : path);
         continue;
       }
@@ -381,7 +383,115 @@ export function closeDependencies(entries, texts, exists = () => false) {
     external_domains: Object.fromEntries(Object.entries(externalDomains).sort((a, b) => b[1] - a[1]).slice(0, 25)),
     unresolved_sample: unresolved.slice(0, 25),
     unresolved_all: unresolved,
+    withheld_declared: [...withheldDeclared],
   };
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Dispositions: every declared reference that does not resolve is classified, never hidden.
+//   withheld-by-design   the target is a note that exists but never publishes (working/, quilt/, reference-notes/, private/, templates/,
+//                        -NOTES, or a link into one); essay-source.mjs withholds it on purpose and the reading shows a plain label
+//   external             a deliberate reference outside the essay
+//   authoring-defect     the essay source names something that is not there; `repair` says whether the fix is mechanical (a unique
+//                        published target differs only by name), has candidates (the author chooses), or has none
+//   publication-defect   the edition links into a withheld desk (the staging law was not applied)
+// ---------------------------------------------------------------------------------------------------------------------
+
+export const DISPOSITIONS = ['withheld-by-design', 'external', 'authoring-defect', 'publication-defect'];
+const norm = (value) => String(value).replace(/\.(?:md|html)$/i, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+
+/** Every vault path under the essay directory (links not followed): `rel → { symlink }`. */
+export async function indexVault(essayDir) {
+  const index = new Map();
+  async function walk(dir, prefix) {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith('.')) continue;
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isSymbolicLink()) index.set(rel, { symlink: await readlink(join(dir, entry.name)) });
+      else if (entry.isDirectory()) await walk(join(dir, entry.name), rel);
+      else index.set(rel, { symlink: null });
+    }
+  }
+  await walk(essayDir, '');
+  return index;
+}
+
+const isWithheldPath = (path) => WITHHELD_RULES.some(([, test]) => test(path)) || /(?:^|\/)(?:NOTES|[^/]*-NOTES)\.md$/.test(path) || path.startsWith('../');
+
+/** Classify one unresolved declared reference. `ctx`: published (Set of rel paths), vaultIndex (Map), declaredWithheld (array of target paths the essay itself places in withheld desks). */
+export function dispositionOf(item, { published = new Set(), vaultIndex = new Map(), declaredWithheld = [] } = {}) {
+  const target = item.target;
+  const wiki = /wikilink/.test(item.why);
+  const stripped = target.replace(/^(?:\.\.?\/)+/, '').replace(/\\+$/, '');
+  if (/^(?:www\.|[a-z0-9-]+(?:\.[a-z0-9-]+)+\/)/i.test(target)) return { disposition: 'external', reason: 'a bare web address, deliberately outside the essay' };
+  // A vault entry that is, or links into, a withheld place.
+  const bySuffix = [...vaultIndex].filter(([rel]) => rel === stripped || rel.endsWith(`/${stripped}`) || rel === `${stripped}.md` || rel.endsWith(`/${stripped}.md`));
+  const byName = wiki && !target.includes('/') ? [...vaultIndex].filter(([rel]) => norm(basename(rel)) === norm(target)) : [];
+  for (const [rel, info] of [...bySuffix, ...byName]) {
+    if (info.symlink !== null && isWithheldPath(posix.normalize(posix.join(posix.dirname(rel), info.symlink)))) {
+      return { disposition: 'withheld-by-design', reason: `the note is a symlink into a withheld working desk (${rel} -> ${info.symlink}); essay-source.mjs never publishes symlinked or working material`, evidence: rel };
+    }
+    if (isWithheldPath(rel) && !published.has(rel)) return { disposition: 'withheld-by-design', reason: `the note exists but is withheld by rule (${rel})`, evidence: rel };
+  }
+  const declared = declaredWithheld.find((d) => norm(basename(decodeURIComponent(String(d)))) === norm(wiki ? target : basename(stripped)) && norm(target).length > 2);
+  if (declared) return { disposition: 'withheld-by-design', reason: `the essay itself places a note of this name in a withheld desk (${declared})`, evidence: String(declared) };
+  // Candidates among published pages.
+  const dir = posix.dirname(stripped), leaf = basename(stripped, '.md');
+  const sameDir = target.includes('/') ? [...published].filter((rel) => posix.dirname(rel) === dir && basename(rel).toLowerCase().startsWith(`${leaf.toLowerCase()}-`) && rel.endsWith('.md')) : [];
+  if (sameDir.length === 1) {
+    return { disposition: 'authoring-defect', reason: 'the link names a page that does not exist; exactly one published page in that folder has this name plus a suffix', repair: { kind: 'mechanical', replace: target, with: sameDir[0].replace(/\.md$/, '') } };
+  }
+  const wanted = norm(wiki ? target : leaf);
+  const byTitle = wanted.length > 3 ? [...published].filter((rel) => rel.endsWith('.md') && (norm(basename(rel)) === wanted || norm(basename(rel)).endsWith(`-${wanted}`))) : [];
+  if (byTitle.length) return { disposition: 'authoring-defect', reason: 'the link names no published page; published pages answer to a similar name, and the author decides whether one is meant', repair: { kind: 'candidates', candidates: byTitle.slice(0, 3).map((rel) => rel.replace(/\.md$/, '')) } };
+  return { disposition: 'authoring-defect', reason: wiki ? 'a title-style wikilink that names no note in the vault or any withheld desk' : 'the path names no file in the vault', repair: { kind: 'none' } };
+}
+
+/** Per-reference dispositions plus the per-target table the manifest carries. */
+export function dispositionSourceDefects(unresolved, ctx) {
+  const references = unresolved.map((item) => ({ ...item, ...dispositionOf(item, ctx) }));
+  const table = new Map();
+  for (const r of references) {
+    const row = table.get(r.target) ?? { target: r.target, kind: /wikilink/.test(r.why) ? 'wikilink' : 'link', references: 0, example_from: r.from, disposition: r.disposition, reason: r.reason, ...(r.repair ? { repair: r.repair } : {}), ...(r.evidence ? { evidence: r.evidence } : {}) };
+    row.references++; table.set(r.target, row);
+  }
+  const rows = [...table.values()].sort((a, b) => a.disposition.localeCompare(b.disposition) || a.target.localeCompare(b.target));
+  return { references, table: rows, totals: totalsOf(references.map((r) => r.disposition)), undispositioned: references.filter((r) => !DISPOSITIONS.includes(r.disposition)).length, distinct_targets: rows.length };
+}
+function totalsOf(list) { const t = Object.fromEntries(DISPOSITIONS.map((d) => [d, 0])); for (const d of list) t[d] = (t[d] ?? 0) + 1; return t; }
+
+/** Classify the edition's dead links and missing fragments. A dead link inherits the disposition of the source reference it came from (matched by
+ *  its normalised path, or by its note name for a bare wikilink); a link into a withheld desk is a publication defect; anything else is undispositioned. */
+export function dispositionEditionDefects(dangling, sourceTable, { slugs = new Set() } = {}) {
+  const byPath = new Map(), byName = new Map();
+  for (const row of sourceTable) {
+    byPath.set(norm(row.target.replace(/^(?:\.\.?\/)+/, '')), row);
+    if (row.kind === 'wikilink' && !row.target.includes('/')) byName.set(norm(row.target), row);
+    byName.set(`~${norm(basename(row.target))}`, row);
+  }
+  const bySlugLeaf = new Map();
+  for (const slug of slugs) (bySlugLeaf.get(norm(basename(slug))) ?? bySlugLeaf.set(norm(basename(slug)), []).get(norm(basename(slug)))).push(slug);
+  const links = [], fragments = [];
+  for (const item of dangling) {
+    if (item.why === 'no such page') {
+      const target = item.target ?? '', key = norm(target), leaf = norm(basename(target));
+      let verdict;
+      if (isWithheldPath(target)) verdict = { disposition: 'publication-defect', kind: 'withheld-desk-link', reason: 'the edition links into a withheld desk; staging should have unlinked it' };
+      else if (/(?:^|\/)tags(?:\/|$)/.test(target)) verdict = { disposition: 'publication-defect', kind: 'hashtag-link', reason: 'prose containing a #tag was rendered as a link to /tags/<tag>, and the edition emits no page there; the source did not write a link' };
+      else {
+        const row = byPath.get(key) ?? [...byPath].find(([k]) => key.endsWith(`-${k}`) || key === k)?.[1] ?? byName.get(leaf) ?? byName.get(`~${leaf}`);
+        const alike = bySlugLeaf.get(leaf);
+        if (row) verdict = { disposition: row.disposition, reason: row.reason };
+        else if (alike?.length) verdict = { disposition: 'publication-defect', kind: 'resolver-mismatch', reason: `the vault resolves this wikilink (a note named ${alike[0]} exists) but the edition's link names it differently, so the page was not found`, repair: { kind: 'candidates', candidates: alike.slice(0, 3) } };
+      }
+      links.push({ page: item.page, href: item.href, disposition: verdict?.disposition ?? 'undispositioned', ...(verdict?.kind ? { kind: verdict.kind } : {}), reason: verdict?.reason ?? 'no source reference accounts for this link', ...(verdict?.repair ? { repair: verdict.repair } : {}) });
+    } else {
+      fragments.push({ page: item.page, href: item.href, disposition: 'authoring-defect', reason: item.candidates?.length ? `the link names an anchor the page does not have; headings on that page begin ${item.candidates.map((c) => `#${c}`).join(', ')}` : 'the link names an anchor the page does not have', repair: item.candidates?.length ? { kind: 'candidates', candidates: item.candidates } : { kind: 'none' } });
+    }
+  }
+  const group = (list) => ({ total: list.length, by_disposition: { ...totalsOf(list.map((l) => l.disposition)), ...(list.some((l) => l.disposition === 'undispositioned') ? { undispositioned: list.filter((l) => l.disposition === 'undispositioned').length } : {}) }, by_kind: Object.fromEntries([...list.reduce((m, l) => l.kind ? m.set(l.kind, (m.get(l.kind) ?? 0) + 1) : m, new Map())]), undispositioned: list.filter((l) => !DISPOSITIONS.includes(l.disposition)).length });
+  return { links, fragments, summary: { links: group(links), fragments: group(fragments) } };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -422,6 +532,22 @@ export async function verifyPackage(dir, { vaultEssayDir } = {}) {
   if (pages.links.unresolved_fragment !== recorded.links.unresolved_fragment) problems.push(`unresolved fragments: ${pages.links.unresolved_fragment} now, ${recorded.links.unresolved_fragment} recorded`);
   if (pages.embeds.unresolved !== recorded.embeds.unresolved) problems.push(`unresolved embeds: ${pages.embeds.unresolved} now, ${recorded.embeds.unresolved} recorded`);
   if (expressions.problems.length) problems.push(`${expressions.problems.length} Expression members do not verify`);
+  // Dispositions: nothing declared-internal that fails to resolve may be unclassified, and what is recorded may not drift.
+  const recordedDisp = manifest.dependency_closure.dispositions;
+  const defects = await readJson(join(dir, 'source/dependency-defects.json')).catch(() => null);
+  let dispositions = null;
+  if (!recordedDisp || !defects) problems.push('no recorded dispositions for the unresolved references');
+  else {
+    const sourceUnclassified = defects.source_references_unresolved.filter((r) => !DISPOSITIONS.includes(r.disposition)).length;
+    if (sourceUnclassified || recordedDisp.undispositioned) problems.push(`${sourceUnclassified || recordedDisp.undispositioned} unresolved source references have no disposition`);
+    if (defects.source_references_unresolved.length !== manifest.dependency_closure.declared_internal_unresolved) problems.push(`source reference defects listed ${defects.source_references_unresolved.length}, recorded ${manifest.dependency_closure.declared_internal_unresolved}`);
+    if (recordedDisp.table.reduce((n, r) => n + r.references, 0) !== manifest.dependency_closure.declared_internal_unresolved) problems.push('the disposition table does not account for every unresolved reference');
+    dispositions = dispositionEditionDefects(pages.dangling_all, recordedDisp.table, { slugs: description._slugs });
+    const edition = recorded.dispositions;
+    if (dispositions.summary.links.undispositioned || (dispositions.summary.links.by_disposition.undispositioned ?? 0)) problems.push(`${dispositions.summary.links.by_disposition.undispositioned ?? dispositions.summary.links.undispositioned} edition links to no page have no disposition`);
+    if ((dispositions.summary.links.by_kind['withheld-desk-link'] ?? 0) || (recordedDisp.totals['publication-defect'] ?? 0)) problems.push('the edition links into a withheld desk');
+    if (!edition || JSON.stringify(dispositions.summary) !== JSON.stringify(edition)) problems.push('edition link/fragment dispositions differ from the recorded ones');
+  }
   for (const [name, expected] of Object.entries({ pages: manifest.counts.pages.nodes, expressions: manifest.counts.expressions.members })) {
     const found = name === 'pages' ? description.pages.nodes : description.expressions.members;
     if (found !== expected) problems.push(`${name}: the artifact has ${found}, the manifest says ${expected}`);
@@ -431,7 +557,7 @@ export async function verifyPackage(dir, { vaultEssayDir } = {}) {
   let vault = null;
   if (vaultEssayDir) vault = await verifyAgainstVault(description, vaultEssayDir, manifest);
   if (vault?.problems?.length) problems.push(...vault.problems);
-  return { ok: problems.length === 0, problems, manifest_sha256: sha256(await readFile(join(dir, MANIFEST_NAME))), pages, expressions, praxis, vault };
+  return { ok: problems.length === 0, problems, manifest_sha256: sha256(await readFile(join(dir, MANIFEST_NAME))), pages, expressions, praxis, vault, dispositions: dispositions?.summary };
 }
 
 /** Ordinary reading is read-only: snapshot every file's content and mode, read every page and Expression body, snapshot again. */
@@ -532,7 +658,9 @@ async function pinnedCheckout(repo, commit, sparse, dest) {
   return head;
 }
 
-export async function buildWorld({ vault, vaultCommit, pcd, pcdCommit, oi, oiCommit, nodeModulesFrom, out, scratch }) {
+/** `overlay`: repo-relative files taken from the O:I working tree over the pinned archive (a build of uncommitted edition law). The manifest
+ *  records each overlaid file's digest and says the build is not pinned; re-build from a commit that contains them to pin it. */
+export async function buildWorld({ vault, vaultCommit, pcd, pcdCommit, oi, oiCommit, nodeModulesFrom, out, scratch, overlay = [] }) {
   for (const [name, v] of Object.entries({ vault, vaultCommit, pcd, pcdCommit, oi, oiCommit, nodeModulesFrom, out })) if (!v) throw new Error(`--${name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)} is required`);
   scratch ??= `${out}.scratch`;
   await rm(scratch, { recursive: true, force: true });
@@ -545,6 +673,13 @@ export async function buildWorld({ vault, vaultCommit, pcd, pcdCommit, oi, oiCom
   await mkdir(oiDir, { recursive: true });
   const archive = await exec('sh', ['-c', `git -C '${oi}' archive '${oiCommit}' site desktop/cradle/expressions-app/collections | tar -x -C '${oiDir}'`]);
   void archive;
+  const overlaid = [];
+  for (const rel of overlay) {
+    const bytes = await readFile(join(oi, rel));
+    await mkdir(dirname(join(oiDir, rel)), { recursive: true });
+    await writeFile(join(oiDir, rel), bytes);
+    overlaid.push({ path: rel, sha256: sha256(bytes) });
+  }
   const site = join(oiDir, 'site');
   // Dependencies are tooling, not content: linked from an existing install so the build needs no network.
   await exec('ln', ['-s', resolve(nodeModulesFrom, 'vendor/quartz/node_modules'), join(site, 'vendor/quartz/node_modules')]);
@@ -567,33 +702,36 @@ export async function buildWorld({ vault, vaultCommit, pcd, pcdCommit, oi, oiCom
   await cp(join(vaultDir, 'submission-package/MANIFEST.json'), join(out, 'source/vault-MANIFEST.json'));
 
   const essayDir = join(vaultDir, 'submission-package/essay');
-  return finalizeWorld({ out, essayDir, vaultDir, vaultCommit, pcdCommit, oiCommit, receipt, siteDir: site, scratch });
+  return finalizeWorld({ out, essayDir, vaultDir, vaultCommit, pcdCommit, oiCommit, receipt, siteDir: site, scratch, overlaid });
 }
 
-async function finalizeWorld({ out, essayDir, vaultDir, vaultCommit, pcdCommit, oiCommit, receipt, siteDir }) {
+async function finalizeWorld({ out, essayDir, vaultDir, vaultCommit, pcdCommit, oiCommit, receipt, siteDir, overlaid = [] }) {
   const d = await describeEdition(join(out, 'edition'));
   // The declared-dependency closure is computed from the published SOURCE (the staged inputs), through the site's own selection law.
   const sourceModule = await import(pathToFileURL(join(siteDir, 'essay-source.mjs')).href);
   const inputs = await sourceModule.readEssayInputs(essayDir);
   const texts = new Map(inputs.entries.filter((e) => e.kind === 'markdown').map((e) => [e.rel, e.bytes.toString('utf8')]));
   const closure = closeDependencies(inputs.entries, texts, (p) => existsSync(join(essayDir, p)));
+  closure.dispositions = dispositionSourceDefects(closure.unresolved_all, { published: new Set(inputs.entries.map((e) => e.rel)), vaultIndex: await indexVault(essayDir), declaredWithheld: closure.withheld_declared });
   const vault = await verifyAgainstVault(d, essayDir, null);
   const bindings = await expressionSourceBindings(siteDir, essayDir, vaultDir);
-  return assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, receipt, closure, bindings, vault, publishedInputs: inputs.entries.length });
+  return assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, receipt, closure, bindings, vault, publishedInputs: inputs.entries.length, overlaid });
 }
 
 /** Describe, verify and seal a package whose `edition/` and `praxis/` are already in place. Every count comes from the artifact. */
-export async function assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, receipt, closure, bindings, vault, publishedInputs }) {
+export async function assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, receipt, closure, bindings, vault, publishedInputs, overlaid = [] }) {
   const d = await describeEdition(join(out, 'edition'));
   const pages = await readAllPages(join(out, 'edition'), d);
   const expressions = await verifyExpressions(join(out, 'edition'), d);
   await mkdir(join(out, 'source'), { recursive: true });
+  const sourceDisp = closure.dispositions ?? dispositionSourceDefects(closure.unresolved_all, { declaredWithheld: closure.withheld_declared ?? [] });
+  const editionDisp = dispositionEditionDefects(pages.dangling_all, sourceDisp.table, { slugs: d._slugs });
   await writeFile(join(out, 'source/dependency-defects.json'), JSON.stringify({
-    schema: 'oi.world-dependency-defects/v1', vault_commit: vaultCommit,
-    meaning: 'declared references that resolve to no published page or file; each is a defect in the essay source or its publication, listed so it can be repaired at its owner',
-    source_references_unresolved: closure.unresolved_all,
-    edition_links_to_no_page: pages.dangling_all.filter((u) => u.why === 'no such page'),
-    edition_fragments_missing: pages.dangling_all.filter((u) => u.why !== 'no such page'),
+    schema: 'oi.world-dependency-defects/v2', vault_commit: vaultCommit,
+    meaning: 'declared references that resolve to no published page or file, each with its disposition: withheld by design, external, an authoring defect (with the repair that exists) or a publication defect. Defects stay listed so they can be repaired at their owner.',
+    source_references_unresolved: sourceDisp.references,
+    edition_links_to_no_page: editionDisp.links,
+    edition_fragments_missing: editionDisp.fragments,
   }, null, 1) + '\n');
   const skills = (await readdir(join(out, 'praxis/skills'), { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name).sort();
   const praxisFiles = await walkFiles(join(out, 'praxis'));
@@ -613,7 +751,7 @@ export async function assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, r
     source: {
       vault: { repo: 'EpiLogos/Antykathera-Essay-Work', commit: vaultCommit, scope: ['submission-package/essay/', 'submission-package/epi-logos/'], working_tree_dirty: receipt.working_tree_dirty, input_sha256: receipt.input_sha256 },
       expression_products: { repo: 'EpiLogos/Point-Cloud-Demo', commit: pcdCommit, path: 'production/s-products' },
-      edition_build: { repo: 'EpiLogos/O-I', commit: oiCommit, paths: ['site/build-essay-quartz.mjs', 'site/essay-source.mjs', 'site/essay-expressions.mjs', 'site/essay-expression-map.json', 'site/vendor/quartz', 'desktop/cradle/expressions-app/collections/return-of-zero'], quartz: { upstream: 'jackyzha0/quartz', commit: receipt.quartz_commit, vendored_with_local_modifications: 'site/vendor/quartz/PROVENANCE.json' } },
+      edition_build: { repo: 'EpiLogos/O-I', commit: oiCommit, pinned: overlaid.length === 0, ...(overlaid.length ? { uncommitted_overlay: overlaid, note: 'built with these files from an uncommitted working tree over the pinned archive; rebuild from a commit containing them to pin the package' } : {}), paths: ['site/build-essay-quartz.mjs', 'site/essay-source.mjs', 'site/essay-expressions.mjs', 'site/essay-expression-map.json', 'site/vendor/quartz', 'desktop/cradle/expressions-app/collections/return-of-zero'], quartz: { upstream: 'jackyzha0/quartz', commit: receipt.quartz_commit, vendored_with_local_modifications: 'site/vendor/quartz/PROVENANCE.json' } },
     },
     counts: {
       pages: d.pages, structure: d.structure, depth_classes: d.depth_classes, assets: d.assets, expressions: d.expressions,
@@ -623,21 +761,29 @@ export async function assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, r
     dependency_closure: {
       basis: 'the published source markdown at the pinned commit, through the site\'s own selection law (essay-source.mjs readEssayInputs)',
       published_inputs: publishedInputs,
-      ...Object.fromEntries(Object.entries(closure).filter(([k]) => k !== 'unresolved_all')),
+      ...Object.fromEntries(Object.entries(closure).filter(([k]) => !['unresolved_all', 'withheld_declared', 'dispositions'].includes(k))),
       full_list: 'source/dependency-defects.json',
-      disposition: 'every declared reference is resolved to a published page/asset, external, an in-page anchor, or withheld by rule; declared_internal_unresolved must be 0',
+      disposition: 'every declared reference is resolved to a published page or asset, external, an in-page anchor, or withheld by rule; each one that is not is recorded in `dispositions` and `source/dependency-defects.json` with a disposition. `dispositions.undispositioned` must be 0; authoring defects stay listed as defects.',
+      dispositions: { undispositioned: sourceDisp.undispositioned, references: sourceDisp.references.length, distinct_targets: sourceDisp.distinct_targets, totals: sourceDisp.totals, table: sourceDisp.table },
     },
     expression_source_bindings: bindings,
     verification: {
       source_receipt: { files: vault.receipt_files, matched_vault_bytes: vault.matched, problems: vault.problem_count },
-      edition: { pages_read: pages.pages_read, pages_missing: pages.pages_missing.length, links: pages.links, embeds: pages.embeds },
-      acceptance: { declared_internal_dependencies_unresolved_zero: closure.declared_internal_unresolved === 0 && pages.links.unresolved_page === 0, source_references_unresolved: closure.declared_internal_unresolved, edition_links_to_no_page: pages.links.unresolved_page },
+      edition: { pages_read: pages.pages_read, pages_missing: pages.pages_missing.length, links: pages.links, embeds: pages.embeds, dispositions: editionDisp.summary },
+      acceptance: {
+        declared_internal_references_undispositioned_zero: sourceDisp.undispositioned === 0 && editionDisp.summary.links.undispositioned === 0 && editionDisp.summary.fragments.undispositioned === 0,
+        links_into_withheld_desks_zero: (sourceDisp.totals['publication-defect'] ?? 0) === 0 && (editionDisp.summary.links.by_kind['withheld-desk-link'] ?? 0) === 0,
+        declared_internal_dependencies_unresolved_zero: closure.declared_internal_unresolved === 0 && pages.links.unresolved_page === 0,
+        source_references_unresolved: closure.declared_internal_unresolved, source_reference_dispositions: sourceDisp.totals,
+        edition_links_to_no_page: pages.links.unresolved_page, edition_link_dispositions: editionDisp.summary.links.by_disposition,
+        edition_fragments_missing: pages.links.unresolved_fragment, edition_fragment_dispositions: editionDisp.summary.fragments.by_disposition,
+      },
       ref_round_trip: pages.ref_round_trip, anchor_round_trip: pages.anchor_round_trip,
       expressions: { members: expressions.members, hash_verified: expressions.verified, problems: expressions.problems },
     },
     exclusions: {
       not_in_the_package: ['quilt/ (working ledgers)', 'reference-notes/', 'private/', 'templates/', 'working/ (private working desks, including transcripts)', 'personal Control or Central ground', 'credentials, tokens or keys', 'the author checkout and its Git history', 'Expression journeys other than the 135 curated members', 'legacy field-study, demo and starter collections'],
-      withheld_references_remain_as_plain_labels: 'markdown links into withheld desks are unlinked at staging; wikilinks into them are not, and render as dead links (counted under verification.edition.links.dangling_targets)',
+      withheld_references_remain_as_plain_labels: 'markdown links and wikilinks into withheld desks (and bare wikilinks naming withheld notes) are unlinked at staging and read as plain labels (essay-source.mjs stageEssayInputs)',
       third_party_works: 'bibliographic and source-house pages are published; the underlying third-party works are not redistributed',
     },
     files: { count: files.length, bytes: files.reduce((s, f) => s + f.bytes, 0), tree_sha256: treeDigest(files), list_sha256: sha256(JSON.stringify(files)), list: FILES_NAME },
@@ -731,15 +877,16 @@ export async function expressionSourceBindings(siteDir, essayDir, vaultDir) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [command, ...rest] = process.argv.slice(2);
   const option = (name) => { const i = rest.indexOf(name); return i >= 0 ? rest[i + 1] : undefined; };
+  const all = (name) => rest.flatMap((a, i) => a === name ? [rest[i + 1]] : []);
   try {
     if (command === 'build') {
       const manifest = await buildWorld({ vault: option('--vault'), vaultCommit: option('--vault-commit'), pcd: option('--pcd'), pcdCommit: option('--pcd-commit'),
-        oi: option('--oi'), oiCommit: option('--oi-commit'), nodeModulesFrom: option('--node-modules-from'), out: resolve(option('--out') ?? ''), scratch: option('--scratch') });
+        oi: option('--oi'), oiCommit: option('--oi-commit'), nodeModulesFrom: option('--node-modules-from'), out: resolve(option('--out') ?? ''), scratch: option('--scratch'), overlay: all('--overlay') });
       process.stdout.write(JSON.stringify({ built: option('--out'), revision: manifest.revision, counts: manifest.counts, dependency_closure: manifest.dependency_closure }, null, 2) + '\n');
     } else if (command === 'verify') {
       const dir = resolve(rest.find((a) => !a.startsWith('--')) ?? '');
       const verdict = await verifyPackage(dir, { vaultEssayDir: option('--vault') });
-      process.stdout.write(JSON.stringify({ ok: verdict.ok, problems: verdict.problems, pages: verdict.pages, expressions: { members: verdict.expressions.members, verified: verdict.expressions.verified }, vault: verdict.vault }, null, 2) + '\n');
+      process.stdout.write(JSON.stringify({ ok: verdict.ok, problems: verdict.problems, pages: verdict.pages, expressions: { members: verdict.expressions.members, verified: verdict.expressions.verified }, vault: verdict.vault, dispositions: verdict.dispositions, undispositioned: verdict.dispositions ? verdict.dispositions.links.undispositioned + verdict.dispositions.fragments.undispositioned : null }, null, 2) + '\n');
       process.exit(verdict.ok ? 0 : 1);
     } else if (command === 'install') {
       const installed = await installPackage(resolve(rest.find((a) => !a.startsWith('--')) ?? ''), { root: option('--root') ?? defaultWorldsRoot() });

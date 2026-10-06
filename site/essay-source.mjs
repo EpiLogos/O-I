@@ -116,41 +116,16 @@ const WITHHELD_DESK = /(?:^|\/)(?:working|quilt|reference-notes|private|template
 /** A wikilink into a withheld desk stays a readable label, like a markdown link into one. `[[a/b|label]]` and `![[a/b]]` included.
  *  A path-qualified target is judged by its desk; a bare name resolves by file name, so it is unlinked only when it names a note that
  *  exists in the vault but never publishes (`withheldNames`) and no published note answers to it (`publishedNames`). Code is untouched. */
-const WIKILINK = /(```[\s\S]*?```)|(`[^`\n]*`)|(!?)\[\[([^\]|#\\]+)((?:#[^\]|\\]*)?)(?:(\\?)\|([^\]]*))?\]\]/g;
-
-/** One left-to-right scan: a fence or code span that starts first protects what is inside it, and a wikilink that starts first
- *  keeps any code span inside its own fragment (`[[quilt/x#25 `->` 36|label]]`). `fn` gets the parts and returns the replacement or `undefined` to keep. */
-function mapWikilinks(text, fn) {
-  return text.replace(WIKILINK, (whole, fence, span, bang, target, fragment, escape, alias) => {
-    if (fence !== undefined || span !== undefined) return whole;
-    return fn({ whole, bang, target, fragment, escape, alias }) ?? whole;
-  });
-}
-
 export function unlinkWithheldWikilinks(text, { withheldNames = new Set(), publishedNames = new Set() } = {}) {
-  return mapWikilinks(text, ({ target, alias }) => {
+  // One left-to-right scan: a fence or code span that starts first protects what is inside it, and a wikilink that starts first
+  // keeps any code span inside its own fragment (`[[quilt/x#25 `->` 36|label]]`).
+  return text.replace(/(```[\s\S]*?```)|(`[^`\n]*`)|(!?)\[\[([^\]|#\\]+)((?:#[^\]|\\]*)?)(?:(\\?)\|([^\]]*))?\]\]/g, (whole, fence, span, bang, target, fragment, _escape, alias) => {
+    if (fence !== undefined || span !== undefined) return whole;
     const path = target.trim().replace(/^\.?\//, '');
     const name = noteName(posix.basename(path));
     const withheld = path.includes('/') ? WITHHELD_DESK.test(path) : withheldNames.has(name) && !publishedNames.has(name);
-    if (!withheld) return undefined;
+    if (!withheld) return whole;
     return alias !== undefined ? alias : posix.basename(path).replace(/\.md$/i, '');
-  });
-}
-
-/** Obsidian resolves `[[Name]]` to a note without regard to case; Quartz resolves it by exact name. A wikilink that names exactly one published
- *  note, differing only in case, is written with the note's exact name and keeps the text the reader saw (`[[Parasociety]]` becomes
- *  `[[parasociety|Parasociety]]`). A name that matches a published note exactly, matches several, or matches none is left alone. */
-export function exactCaseWikilinks(text, { publishedByLowerName = new Map(), publishedByLowerPath = new Map() } = {}) {
-  return mapWikilinks(text, ({ bang, target, fragment, escape, alias }) => {
-    const written = target.trim();
-    const bare = !written.includes('/');
-    const key = (bare ? noteName(written) : written.replace(/\.md$/i, '').toLowerCase());
-    const exact = (bare ? publishedByLowerName : publishedByLowerPath).get(key);
-    if (!exact || exact.length !== 1) return undefined;
-    const wanted = exact[0];
-    if (wanted === (bare ? written.replace(/\.md$/i, '') : written.replace(/\.md$/i, ''))) return undefined;
-    const label = alias !== undefined ? alias : written.replace(/\.md$/i, '');
-    return `${bang}[[${wanted}${fragment}${escape ?? ''}|${label}]]`;
   });
 }
 
@@ -158,14 +133,6 @@ export async function stageEssayInputs(inputs, contentDir) {
   const selectedPaths = new Set(inputs.entries.map(entry => entry.rel));
   const publishedNames = new Set(inputs.entries.filter(entry => entry.kind==='markdown').map(entry => noteName(posix.basename(entry.rel))));
   const withheldNames = inputs.withheldNames ?? new Set();
-  const publishedByLowerName = new Map(), publishedByLowerPath = new Map();
-  const note = (map, key, exact) => { const list = map.get(key) ?? []; if (!list.includes(exact)) list.push(exact); map.set(key, list); };
-  for (const entry of inputs.entries) {
-    if (entry.kind !== 'markdown') continue;
-    const noExt = entry.rel.replace(/\.md$/i, '');
-    note(publishedByLowerName, noteName(posix.basename(entry.rel)), posix.basename(noExt));
-    note(publishedByLowerPath, noExt.toLowerCase(), noExt);
-  }
   await rm(contentDir,{ recursive:true,force:true });
   await mkdir(contentDir,{ recursive:true });
   let frontmatterFixed=0;
@@ -188,7 +155,7 @@ export async function stageEssayInputs(inputs, contentDir) {
           (path.endsWith('.md') && !selectedPaths.has(path));
         return withheld ? label : link;
       });
-      await writeFile(dest,exactCaseWikilinks(unlinkWithheldWikilinks(publicText,{ withheldNames,publishedNames }),{ publishedByLowerName,publishedByLowerPath }));
+      await writeFile(dest,unlinkWithheldWikilinks(publicText,{ withheldNames,publishedNames }));
     } else await writeFile(dest,entry.bytes);
   }
   return { staged:inputs.entries.filter(entry=>entry.kind==='markdown').length,

@@ -660,6 +660,14 @@ fn handle_with_diagnostic(
                 body: served.body,
             }
         }
+        _ if request.method == "GET" && path.starts_with("/world/") => {
+            let served = oi_cradle_kernel::world_resolve::serve(&path["/world/".len()..]);
+            BridgeResponse::Binary {
+                status: served.status,
+                content_type: served.content_type,
+                body: served.body,
+            }
+        }
         _ if request.method == "GET" && path.starts_with("/material/") => {
             material(kernel, &path["/material/".len()..])
         }
