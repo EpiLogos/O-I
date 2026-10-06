@@ -101,3 +101,24 @@ candidate is compared against (UX1–UX10); it is not a statement about the nati
 6. **Walk registry.** `walk/scenarios/field-first-encounter.mjs` and `field-site-parity.mjs` are standalone (they boot the
    prebuilt `kernel/target/debug/walk-bridge`, a static edition server and Chrome themselves); register them in `walk/run.mjs`
    if you want them in `npm run walk`.
+
+## 6 — Decision D3 resolved: agent and human operate the field through the existing ExpressionWorld seam (lead, after reading the kernel)
+
+The kernel already admits the generic world operations agents use (`oi desktop expression`, body schema
+`oi.expression-world/v1`, `kernel/src/expression_world.rs`, renderer face `src/expression/world.ts`). The field does not
+mint a parallel `field.operate` kernel route for what these already say:
+
+| Field operation | Admitted native operation | Meaning kept |
+|---|---|---|
+| `select(ref)` | `selection_set {origin: graph\|page, subject_ref, kind, native_owner, revision}` | "Selection is inspection: it never invokes an Action." Agent reads it with `selection_read`; an agent `selection_set` moves the field's selection. |
+| `open-preview(ref)` | `portal_open {placement: preview, target_ref, surface_id, …}` (+ `surface_open`) | tangent = a preview portal; canonical ref preserved. |
+| `keep` / `promote` | `portal_open` re-place `beside` / `full` | re-placing never re-derives identity. |
+| close tangent | `portal_close` | |
+| `back`, `set-emphasis`, `enter-constellation`, tab focus | host-local presentation (`fieldApply`) | not domain meaning; admitted to agents only if the equivalence test shows a need (then a typed presentation request on the same seam, not a side channel). |
+
+Consequences: `FieldEncounter.selected` and the tangent are *projections* of the shared selection and portal records
+(kernel-owned), not a second store; the one global focus relation (`kernel/src/focus.rs`) is published, not copied.
+`native_owner` for a corpus ref is its source owner (Central source refs for a linked corpus), never `field`.
+Equivalence test: pointer select ≡ `selection_set` ≡ agent `selection_set` produce the same `selection_read`; an agent
+`selection_set` moves the field's selected node without navigation; `portal_open preview` opens the same tangent a
+double-click does.
