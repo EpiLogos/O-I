@@ -14,8 +14,8 @@ type Entry = {
   scenes: IndexScene[]; nodes: string[]; digest: string; bytes: number; journey: string; cover: string;
 };
 type ExpressionIndex = { schema: string; collections: { id: string; label: string; count: number }[]; entries: Entry[] };
-type TextItem = { id: string; visible?: boolean; kicker?: string; title?: string; italic?: string; body?: string };
-type Scene = { id: string; name: string; character?: string; field?: { background?: string }; engine?: Record<string, unknown>; text?: TextItem[] };
+type TextItem = { id: string; visible?: boolean; kicker?: string; title?: string; italic?: string; body?: string; x?: number; y?: number; width?: number; size?: number; align?: 'left' | 'center' | 'right' };
+type Scene = { id: string; name: string; character?: string; field?: { background?: string; palette?: string[] }; engine?: Record<string, unknown>; text?: TextItem[] };
 type Journey = { id: string; name: string; scenes: Scene[] };
 type Failure = { kind: 'no-expression' | 'not-published' | 'index' | 'journey' | 'integrity' | 'invalid'; title: string; detail: string };
 type Loaded = { entry: Entry; journey: Journey; collection: string };
@@ -168,6 +168,15 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
   // Touch (the Expression's own pointer interaction) is the way in; Orbit is the camera.
   const [mode, setMode] = useState<Mode>('touch');
   const [touched, setTouched] = useState(false);
+  const frame = useRef<HTMLDivElement>(null);
+  const [stageWidth, setStageWidth] = useState(900);
+  useEffect(() => {
+    const node = frame.current; if (!node) return;
+    const measure = () => setStageWidth(Math.round(node.getBoundingClientRect().width) || 900);
+    measure();
+    const watch = new ResizeObserver(measure); watch.observe(node);
+    return () => watch.disconnect();
+  }, []);
   const composition = useMemo(() => ({ revision: 1, scenes: journey.scenes.map((s) => ({ scene_ref: s.id, entity_refs: [] as string[] })), entities: {} }), [journey]);
   const sceneMap = useMemo(() => Object.fromEntries(journey.scenes.map((s) => [s.id, s.id])), [journey]);
   const latest = useRef({ composition, sceneMap, journey, sceneId: scene.id, playing });
@@ -218,7 +227,7 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
   const ground = /^#[0-9a-f]{6}$/i.test(scene.field?.background ?? '') ? scene.field!.background : undefined;
   return (
     <div className="xp-stage" data-playing={playing ? 'true' : 'false'} data-scene={scene.id}>
-      <div className="xp-field" style={ground ? { background: ground } : undefined}>
+      <div className="xp-field" ref={frame} style={ground ? { background: ground } : undefined}>
         <canvas
           ref={canvas} tabIndex={0} data-testid="field" data-mode={mode}
           aria-label={mode === 'touch'
@@ -243,6 +252,7 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
           onPointerLeave={() => { if (!touching.current) field.current?.pointerOff(); }}
           onKeyDown={onKeyDown}
         />
+        <TextLayer scene={scene} width={stageWidth} />
         {!ready && !error && <div className="xp-loading" role="status"><span />Opening the field…</div>}
         {error && (
           <div className="xp-fielderror" role="alert">
@@ -274,22 +284,29 @@ function Stage({ journey, scene, playing, onPlaying }: { journey: Journey; scene
   );
 }
 
-function Editorial({ scene }: { scene: Scene }) {
+/* The scene's text blocks belong to the Expression: each one sits at its own place on the stage (x, y as fractions of
+   the stage, width and size as authored), in the scene's own ink, exactly as the authoring shell lays them out. */
+const color = (value: string | undefined) => (/^#[0-9a-f]{6}$/i.test(value ?? '') ? value : undefined);
+function TextLayer({ scene, width }: { scene: Scene; width: number }) {
   const items = (scene.text ?? []).filter((item) => item && item.visible !== false && (item.kicker || item.title || item.italic || item.body));
-  if (!items.length) return <p className="xp-quiet">This scene carries no editorial text.</p>;
-  let titled = false;
+  if (!items.length) return null;
+  const ink = color(scene.field?.palette?.[0]);
+  const narrow = width < 520;
   return (
-    <div className="xp-text" data-testid="editorial">
+    <div className="xp-text" data-testid="editorial" role="group" aria-label="Scene text" style={ink ? ({ ['--xp-ink' as string]: ink } as React.CSSProperties) : undefined}>
       {items.map((item, i) => {
-        const heading = item.title ? (titled ? <h3 className="xp-title xp-title--minor">{item.title}</h3> : (titled = true, <h2 className="xp-title">{item.title}</h2>)) : null;
+        const w = Math.round(Math.min(item.width ?? 320, width * (narrow ? 0.78 : width < 900 ? 0.5 : 0.42)));
+        const size = Math.round(clamp((item.size ?? 34) * Math.min(1, Math.max(width, 320) / 1100), 18, item.size ?? 34));
+        const align = item.align === 'center' || item.align === 'right' ? item.align : 'left';
+        const x = clamp(item.x ?? 0.06, 0, 0.96), y = clamp(item.y ?? 0.08, 0, 0.94);
         const paragraphs = (item.body ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
         return (
-          <section key={item.id || i} className="xp-item">
+          <article key={item.id || i} className="xp-item" style={{ left: `${x * 100}%`, top: `${y * 100}%`, width: w, textAlign: align, transform: align === 'center' ? 'translateX(-50%)' : align === 'right' ? 'translateX(-100%)' : undefined }}>
             {item.kicker && <p className="xp-kicker">{item.kicker}</p>}
-            {heading}
-            {item.italic && <p className="xp-italic">{item.italic}</p>}
+            {item.title && <h2 className="xp-title" style={{ fontSize: size }}>{item.title}</h2>}
+            {item.italic && <p className="xp-italic" style={{ fontSize: Math.round(size * 0.9) }}>{item.italic}</p>}
             {paragraphs.map((p, j) => <p key={j} className="xp-body">{p}</p>)}
-          </section>
+          </article>
         );
       })}
     </div>
@@ -401,7 +418,6 @@ export function ExpressionApp() {
             </div>
             <div className="xp-side" ref={side}>
               {stray && <p className="xp-quiet" role="status">The scene named in the address (“{stray}”) is not in this Expression; showing its first scene.</p>}
-              <Editorial scene={scene} />
               <SceneList scenes={scenes} current={scene.id} onSelect={pick} />
               {!embed && <InTheEssay nodes={data.entry.nodes ?? []} />}
             </div>

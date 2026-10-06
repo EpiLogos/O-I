@@ -72,16 +72,21 @@ button { font: inherit; color: inherit; }
 .xp-fielderror p { margin: 0; color: var(--xp-muted); font-size: 13px; overflow-wrap: anywhere; }
 .xp-fielderror button { padding: 6px 14px; border: 1px solid var(--xp-fg); border-radius: 16px; background: transparent; cursor: pointer; }
 
-/* editorial text */
-.xp-label { margin: 28px 0 8px; font-family: var(--xp-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--xp-muted); }
-.xp-text { margin-bottom: 4px; }
-.xp-item + .xp-item { margin-top: 18px; }
-.xp-kicker { margin: 0 0 6px; font-family: var(--xp-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--xp-gold); overflow-wrap: anywhere; }
-.xp-title { margin: 0 0 8px; font-family: var(--xp-serif); font-weight: 400; font-size: clamp(21px, 2vw, 27px); line-height: 1.2; }
-.xp-title--minor { font-size: 18px; }
-.xp-italic { margin: 0 0 12px; font-family: var(--xp-serif); font-style: italic; font-size: 16px; line-height: 1.5; color: var(--xp-fg); }
-.xp-body { margin: 0 0 12px; font-family: var(--xp-serif); font-size: 15.5px; line-height: 1.62; overflow-wrap: break-word; }
+/* the scene's own text blocks, laid on the stage where the Expression put them */
+.xp-label { margin: 0 0 8px; font-family: var(--xp-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--xp-muted); }
+.xp-text { position: absolute; inset: 0; pointer-events: none; z-index: 1; --xp-ink: var(--xp-fg); }
+.xp-text .xp-item { position: absolute; user-select: none; animation: xp-text-in 0.7s ease both; }
+.xp-kicker { display: flex; align-items: center; gap: 9px; margin: 0 0 14px; font-family: var(--xp-ui); font-size: 10px; letter-spacing: 0.16em; line-height: 1.5; color: color-mix(in srgb, var(--xp-ink) 62%, transparent); overflow-wrap: anywhere; }
+.xp-kicker::before { content: ''; flex: none; width: 18px; height: 1px; background: currentColor; }
+.xp-item[style*='text-align: center'] .xp-kicker { justify-content: center; }
+.xp-item[style*='text-align: right'] .xp-kicker { justify-content: flex-end; }
+.xp-title { margin: 0 0 6px; font-family: var(--xp-serif); font-weight: 400; line-height: 1.08; letter-spacing: -0.04em; color: var(--xp-ink); overflow-wrap: break-word; }
+.xp-italic { margin: 0 0 14px; font-family: var(--xp-serif); font-style: italic; font-weight: 400; line-height: 1.12; letter-spacing: -0.03em; color: var(--xp-ink); overflow-wrap: break-word; }
+.xp-body { margin: 0 0 8px; font-family: var(--xp-ui); font-size: 12px; line-height: 1.75; color: color-mix(in srgb, var(--xp-ink) 66%, transparent); max-width: 260px; white-space: pre-line; overflow-wrap: break-word; }
+.xp-item[style*='text-align: center'] .xp-body, .xp-item[style*='text-align: right'] .xp-body { margin-left: auto; }
+.xp-item[style*='text-align: center'] .xp-body { margin-right: auto; }
 .xp-quiet { margin: 0 0 12px; color: var(--xp-muted); font-size: 13px; }
+@keyframes xp-text-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* scene list */
 .xp-scenes ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--xp-rule); }
@@ -93,6 +98,7 @@ button { font: inherit; color: inherit; }
 .xp-scenes button[aria-current='step'] .xp-num { color: var(--xp-gold); }
 .xp-scene-name { font-size: 14px; line-height: 1.3; font-weight: 500; }
 .xp-scenes button[aria-current='step'] 
+.xp-essay { margin-top: 28px; }
 .xp-essay ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .xp-essay a { display: inline-block; padding: 3px 10px; border: 1px solid var(--xp-rule); border-radius: 14px; font-size: 12.5px; text-decoration: none; text-transform: capitalize; }
 .xp-essay a:hover { border-color: var(--xp-gold); }
@@ -126,5 +132,6 @@ button { font: inherit; color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .xp-loading span { animation: none; }
+  .xp-text .xp-item { animation: none; }
   .xp-hint { animation: none; }
 }

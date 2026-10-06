@@ -187,7 +187,7 @@ def render_and_controls(browser, index):
 
     # the editorial text is plain text: nothing injected as markup
     check('editorial text is rendered as text (no injected elements from journey strings)',
-          page.evaluate("document.querySelectorAll('.xp-text :not(section):not(p):not(h2):not(h3)').length") == 0)
+          page.evaluate("document.querySelectorAll('.xp-text :not(article):not(p):not(h2)').length") == 0)
 
     # camera: buttons and keyboard move the camera; canvas keeps rendering
     f0 = frames(page)
@@ -352,7 +352,8 @@ def themes(browser):
     dark = bg(page)
     check('?theme=light is the paper ground and ?theme=dark is the black ground', light == PAPER and dark == BLACK, f'{light} / {dark}')
     page.screenshot(path=str(OUT / 'standalone-dark.png'))
-    check('dark theme sets readable text (light ink on black)', page.evaluate("getComputedStyle(document.querySelector('.xp-text .xp-title')).color") == 'rgb(244, 242, 236)')
+    check('the scene text is set in the scene\'s own ink, legible against the scene ground (not the page theme)', page.evaluate("(() => { const t = getComputedStyle(document.querySelector('.xp-text .xp-title')).color, g = getComputedStyle(document.querySelector('.xp-field')).backgroundColor; return t !== g && t !== 'rgba(0, 0, 0, 0)'; })()"))
+    check('the scene text sits inside the stage, over the field (not in the side column)', page.evaluate("(() => { const t = document.querySelector('.xp-text .xp-item').getBoundingClientRect(), f = document.querySelector('.xp-field').getBoundingClientRect(); return t.left >= f.left - 1 && t.top >= f.top - 1 && !document.querySelector('.xp-side .xp-text'); })()"))
     page.context.close()
 
     page = make_page(browser, color_scheme='dark')
