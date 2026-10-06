@@ -96,7 +96,7 @@ short-circuit for the op in `src-tauri/src/main.rs` and the bridge (like `Expres
 - Rust tests (kernel `cargo test --lib -j2`: 244 passed, baseline 231 + 13 new): absent/available/broken resolution, wire shape of the op and result,
   exact serve + content types, file not in the manifest 404, traversal in 14 forms refused with no outside byte read, a listed symlink to outside refused,
   changed bytes not served, replaced listing not served. `tests/world_resolve_installed.rs` (set `OI_WORLD_TEST_ROOT`) served all 3106 listed files of the
-  real installed World (133,266,037 bytes) and refused the manifest, the listing, an unlisted file and a traversal.
+  real installed World (133,266,392 bytes) and refused the manifest, the listing, an unlisted file and a traversal.
 
 ## 5. Exact TypeScript contract for B
 
@@ -152,10 +152,10 @@ have none. The 25 withheld-by-design references are the `AUTHORIAL-TEXT` symlink
 working paper the essay itself links to in `working/`). `ESSAY-MECHANICAL-REPAIRS.proposal.patch` (this directory) applies the mechanical repairs and the Method/Methodology
 description prefixes to the pinned vault commit; it is a proposal, not applied.
 
-## 7. Verification receipts (vault 4df2f721, PCD e875344c, O:I 138f76bb plus the uncommitted `site/essay-source.mjs`)
+## 7. Verification receipts (vault 4df2f721, PCD e875344c, O:I ddf3e1f69be11b3ae8108ce9cdc08d42a19e452c)
 
-The package records `source.edition_build.pinned: false` and the overlaid file's digest, because the staging fix is not yet in a commit; rebuild with the commit that contains it to pin.
-Package revision `352c9138c3f17bf0`: 3106 files, 133,266,037 bytes.
+The package records `source.edition_build.pinned: true`: the O:I commit contains the staging fix (an uncommitted file can be built with `--overlay`, and the manifest then says `pinned: false` and names its digest).
+Package revision `47631ca54cdcec4d`: 3106 files, 133,266,392 bytes.
 
 | check | result |
 |---|---|
