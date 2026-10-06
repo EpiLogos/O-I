@@ -1,379 +1,390 @@
-# Central Field — site-led Base/Cradle refit and Epi-Logos distribution
+# Epi-Logos Field — full agent, authored World, shared encounter
 
-**Owner direction, consolidated 6 October 2026.**  
-**Implementation:** the owner's main machine; O:I branch `feat/central-field-base`.  
-**Team:** Opus lead, one or two Sonnet implementers only.  
-**Parent:** [O:I #592](https://github.com/EpiLogos/O-I/issues/592).  
-**Map publication:** [PR #596](https://github.com/EpiLogos/O-I/pull/596), `docs/epi-logos-field-wayfinder-20261006`.  
-**Current deliverable:** a site-led redesign of **Base / Central in the existing Cradle app**, shipped as a genuine minimal O:I installation with full QL/MEF and Epi-Logos.  
-**Excluded products:** Software Factory and Workcell.  
-**Later horizon:** progressively refit the fuller product field and shared-field experience into the refined foundation; [#594](https://github.com/EpiLogos/O-I/issues/594) remains deferred.
+**Owner commission:** 6 October 2026.  
+**Execution host:** Omarchy.  
+**Execution lead:** Claude Opus, with **one or two Sonnet implementer subagents only**.  
+**Integration parent:** [O:I #592](https://github.com/EpiLogos/O-I/issues/592).  
+**Standing:** commissioned product direction and executable ticket map; implementation and experience receipts are added by the executing team.
 
-This replaces the earlier standalone-app and Cradle-led-layout instructions. The same canonical file and ticket identities are retained. Earlier revisions remain provenance, not competing execution instructions. The branch is for reviewable development of the existing application, not a permanent Cradle fork or separate app identity.
+This file is the canonical map for EF0–EF5. The parent issue is the live integration/decision ledger. Delivery issues retain native changes, execution state and evidence. Changes to intent or contracts are recorded here and linked from affected tickets, rather than silently diverging between worker prompts.
 
-## 0 — Intent, scope and direction of development
+## 0 — What we are bringing into the world
 
-### 0.1 What the person should receive
+### 0.1 The destination
 
-Someone arrives at the updated O:I site, enters the essay's graph–pages–Expressions field, obtains the local edition and companion, and continues in an O:I Cradle installation whose **Base, labelled Central**, carries the site's successful interaction. The full existing QL/MEF agent, local Kev, Redis-backed preparation, reader/expressive praxis and public corpus are part of the selected installation.
+A person comes to the O:I site, obtains the Epi-Logos agent together with the authored essay and Expression corpus, opens a small local application, configures their conversational model through Pi or Prime login/API-key setup, and begins exploring the World with its full QL/MEF companion.
 
-The native application adds real agency, editing, constructive Expressions/Technē, durable reader work and continuation. It preserves the site's ability to read, follow a tangent, inspect relations and return without losing the question that made the exploration meaningful.
+The essay application is the concrete place in which we establish the complete **graph–pages–Expressions–companion experience**. We carry that working implementation into desktop Explore and O:I web/shared-field experiences. The essay is the first rich proving World, not a special-purpose interface whose design must later be rebuilt for the real product.
 
-This is not an isolated essay tab surrounded by the old Cradle experience. The new interaction belongs to Base/Central itself. Epi-Logos mode/world then supplies its corpus, domain agent, QL/MEF instruments and practices over that same foundation. An ordinary linked local Project uses the same Base without acquiring essay-specific semantics.
+Graph makes relations and bounded wholes available. Pages let the person enter their articulated substance. Expressions give those same subjects and relations expressive, spatial, temporal and interactive form. The person can move among these presentations while the subject, inquiry and companion remain continuous.
 
-### 0.2 Owner-authored corrections and their reasons
+**Technē is the focused Expressions projection of graph constellations.** A gathering within the field becomes a focused workspace in which the person and agent can examine, arrange, express, make and return material. The established professional instrument depths continue to supply their differentiated powers within this relation.
 
-The owner first established the full capability basis:
+The shared field relativises a user's local Central within its meta-Central field. The wider field makes participating worlds and their relations encounterable while each originating World remains intelligible and independently grounded. Entering a shared field, entering a participant World, opening its pages and Expressions, contributing, and returning locally are movements through this same experience.
+
+### 0.2 Preserve the owner's actual correction
+
+The immediate source of this map is the owner's conversation on 6 October 2026:
 
 > “we have existing full ql agent, the experiemtns are good, mef plus local kev model too super good, aikit comes with full redis stack too”
-
-The next correction fixed the direction of UX authority:
-
-> “we still want to be ensuring the UX comes formo the existing updated site, or at least porting the ocnventions in th UX porpelry over to the cradle in the process”
 >
-> “the process long term is develop the minimal system then refit the full product field into this”
-
-The latest instruction makes the application and architecture scope explicit:
-
-> “the UI being agent native and built for composability/plugin paradoigm, with decoupled domain type archietcure, should mean that these kinds of UI change are not an issue at the level of business logic; if this approahc/intent has been violated anywhee then this is the chance to amend this”
+> “the full experience of the graph + pages + expressions is what the desktop shared field/explore/o-i web experience OUGHT TO BE”
 >
-> “this apply to the BASE mode, the CENTRAL mode... the system wouldnt have factory or workcell, but it WOULD be have ql-mef and epi-logos mode right”
+> “shared field just reltaivises the local users Central within its meta-Central field”
+>
+> “with techne being the focused expressions projection of the graph constealltions”
 
-The previous main-machine correction still holds. Develop and refine on the **main machine**, not Omarchy. The earlier request to defer desktop porting now means deferring the **wider product-field refit and shared-host rollout**; it does not prohibit the Base/Cradle work explicitly commissioned here.
+These are the authored direction, retained verbatim so that downstream engineering stays connected to the reason for this work.
 
-### 0.3 The development movement
+The execution basis is the **existing full QL/MEF agent, existing experiments and native tools, local Kev, and AIKit's full Redis-backed stack**. The work makes that capability distributable and experientially coherent. Smallness describes the installation/entry experience and focused app shell, not a reduced agent, stripped corpus, prompt-only substitute or optional-by-default decision/context stack.
+
+The simple **0/1/2** foundation composes **Central, Actuation and AIKit**, retaining the current native product numbering. QL/MEF, local Kev and required service material participate through existing package/provider/lifecycle relations. Users need not assemble the internal products by hand.
+
+### 0.3 Relation to existing work
+
+This is a bounded delivery tranche within the existing product field. Its cross-product reference is [O:I #220](https://github.com/EpiLogos/O-I/issues/220); its Explore/reference-host relation is [O:I #18](https://github.com/EpiLogos/O-I/issues/18). It consumes the full-agent programme [QL-MEF #258](https://github.com/EpiLogos/QL-MEF/issues/258), shared Prime/Pi decision/tool work [QL-MEF #291](https://github.com/EpiLogos/QL-MEF/issues/291), acting body [Actuation #107](https://github.com/EpiLogos/Actuation/issues/107), and native decision/prepared context [AIKit #388](https://github.com/EpiLogos/ai-kit/issues/388).
+
+QL-MEF #291 records O:I #65 as historical acceptance provenance. Retain useful inherited scenarios and evidence machinery, leave that campaign closed, and record this tranche through #592 and current owner tickets. Older proposals for many workers, Mac-first execution or a smaller reader-only package do not override this commission's **Omarchy + Opus + at most two Sonnet implementers + full configuration**.
+
+The current authored positions in [FOUNDING-POSITIONS.md](../../docs/positions/FOUNDING-POSITIONS.md) remain the upstream product ground. Current code identifies the implementation to extend; it does not redefine this commission's intended encounter.
+
+## 1 — The experience the implementation must carry
+
+The EFX labels below are local trace keys. Link them to current native capability/account/experience records; they do not establish another suite-wide taxonomy.
+
+### EFX01 — Arrive and begin
+
+The website explains the field through what the person can do and offers a real downloadable app/World. First run supplies the configured foundation, QL/MEF, local Kev and Redis path; then the person chooses Pi or Prime and a supported login/API-key model route. They can read while authentication completes. Harness, speaking model and local decision model have clearly different roles in the interface.
+
+### EFX02 — Know where one is
+
+Make three relations legible: the containing World/field, the constellation currently being explored, and the particular subject in focus. Search, opening, typed-neighbour expansion, recentering, back/forward and history preserve exact native refs. A complete corpus is reachable through indexed discovery and bounded neighbourhoods; a graph view need not render every node at once to preserve the whole.
+
+### EFX03 — Read the real work
+
+Render the actual publication with its typography, Markdown/HTML, media, links, wikilinks, backlinks and heading/block/span destinations. A page has real argumentative or expressive substance. Opening source depth retains the path back to the originating passage. Graph and page resolve the same link/occurrence rather than deriving conflicting relations independently.
+
+### EFX04 — Move between page, graph and Expression
+
+Selecting a passage or subject makes its relational situation available. Following a graph connection opens its real page or Expression. An Expression's subjects and sources remain addressable through native portals/front-verso/deep-open. Back restores the same page anchor, selection and meaningful scene state. Related views change the form of encounter, not the identity of what is encountered.
+
+### EFX05 — Enter Technē from a constellation
+
+The person can enter an existing constellation or gather one from actual subjects/passages. Technē opens it as focused expressive work with the current native tools: member/role inspection, presentation arrangement, supported relation operations, glyph/text/media composition, scenes and saved results. Keep the six established professional instrument depths available as differentiated ways of working, not a compulsory step sequence.
+
+An authored interpretation, a native semantic relation and a spatial arrangement retain their distinct meanings. This lets the person explore and make freely while keeping the source basis intelligible.
+
+### EFX06 — Speak with the companion from here
+
+The companion receives the current page/span, subject, constellation, Expression/scene, containing World and relevant inquiry through AIKit's existing context preparation. QL/MEF faculties, local Kev, source work and the appropriate practices operate on this encounter.
+
+A question such as “why are these related?” is already situated. The person does not reconstruct the page or selection in chat. The answer can open a source, show a relation, gather a constellation, enter an Expression or perform a permitted constructive action through the same native operations the human uses. Full tool/praxis capability remains available; each turn receives the relevant part.
+
+### EFX07 — Sustain a conversation, not a per-page chatbot
+
+Reuse the current Cradle conversation stream, composer, tool/result presentation and native session bridge. The continuing reader inquiry survives navigation, view changes and restart. Follow-current and pinned-subject states are explicit. A new selected subject informs subsequent input while an in-flight answer remains attributed to the context supplied to that turn.
+
+Changing model or harness preserves the durable inquiry through supported continuation/handover. Runtime session identity is reported truthfully; preserving the reader's thread does not require pretending every provider uses an identical transcript format.
+
+### EFX08 — Return something into one's World
+
+Reader notes, questions, traversal records, new constellations, Expression variants and other results are saved through their native owners with source provenance. The person can find and reopen them later. Publication updates preserve these reader-owned returns and the source basis they refer to. Ordinary reading leaves the authored publication intact.
+
+### EFX09 — Use the same experience in desktop Explore
+
+Mount the same field components and state orchestration in real desktop local-World/Explore destinations. Open the essay and at least one other local Project or eligible object through that generic boundary. Preserve existing workspace/Surface/companion placement and current Expressions design. Porting means running the shared implementation in this host, not producing a lookalike shell.
+
+### EFX10 — Enter and participate in the shared field
+
+The open shared field contains participating Worlds; entering one reveals its eligible graph, pages, Expressions and agents/resources. World provenance remains visible. Cross-world relations and shared constellations become addressable subjects themselves.
+
+A person can make an eligible attributed contribution and observe its reception from another independently grounded World. Local return brings a relation, reference, note or new composition back into their own context. Existing Projection/Participant/Contribution/Encounter and meta-Central relations supply the semantics.
+
+### EFX11 — Keep the encounter responsive and inhabitable
+
+Give the main subject generous space with summonable/resizable graph navigation and companion. Graph, page or Expression can take the foreground; the underlying inquiry remains. Preserve keyboard operation, link copying, text selection, visible focus, narrow layouts, reduced motion and current Expressions/O:I design tokens.
+
+Retained reads, indices, in-flight work and subscriptions belong in the existing runtime resource layer, above disposable views. Warm navigation should feel immediate; current state and meaningful drafts restore together. Profile actual cold/warm use and repeated switching against a fixed Omarchy basis.
+
+### EFX12 — Install, update, recover and continue
+
+The distribution is reproducible from pinned artifacts, not the developer's checkout. Compatible existing installations can be adopted; clean-user installation is isolated from the owner's live World. Missing services or credentials have an ordinary repair/retry path. Interrupted updates and compatible rollback preserve reader state. The full configured stack is restored after fault tests rather than silently replaced with a lesser default.
+
+## 2 — Shared composition and implementation boundaries
+
+### 2.1 One encounter implementation, several hosts
 
 ```text
-Updated site's working essay-field interaction
-                   ↓
-Site-led Base/Central in the existing Cradle application
-                   +
-Full selected native agency, QL/MEF, Kev, Redis and corpus
-                   ↓
-Minimal install + real use + refinement on the main machine
-                   ↓
-Distributable O:I configuration and maintained simple entrance
-                   ↓  later owner-directed horizon
-Refit wider native products and shared-field participation into it
+Current authored essay + source/argument/room field + real Expressions
+                               |
+                 Central / native source World
+                               |
+       shared graph / page / Expression / Technē encounter
+                    <-> continuing companion
+                               |
+                 AIKit context, praxis, discovery
+                 + existing Redis preparation
+                               |
+           full QL/MEF + local Kev + Actuation body
+                      /                 \
+               Pi extension        Prime harness fork
+
+The same encounter components and state orchestration mount in:
+   local essay wrapper | desktop local Explore | shared-field O:I web
+
+Shared frame:
+   local Central/World -> eligible native Projection/participation
+                     -> containing meta-Central / SharedField
+                     -> encounter / contribution / local Return
 ```
 
-Preserve native domain meaning, contracts and data; improve how the person encounters and operates them. Existing Cradle widgets are implementation material, not blanket UX authority. Reuse those that carry the intended behavior; recompose or refactor those that prevent it. The site is more than a skin to copy: its coordinated navigation is the reference.
+Authentication is a choice within the selected harness/provider route. API-key setup does not create a third agent runtime. Model credentials remain with their native owner. The website can connect to the installed companion through the existing authenticated session/channel relation without acquiring the provider's credentials.
 
-The full product refit is not switching all old panels back on. Each later contribution must become intelligible through the improved common interaction while retaining its domain-specific tools and native ownership. That later work does not gate this release.
+### 2.2 Native ownership
 
-### 0.4 Exact installation and mode composition
-
-| Layer | Included now | Meaning |
-|---|---|---|
-| Application | Existing O:I Cradle identity, kernel, installation/update and workspace mechanisms | Base/Central is the redesigned default work surface; no new standalone reader application |
-| Operational foundation | Central #0, Actuation #1, AIKit #2 | The existing 0/1/2 core |
-| Formal/domain contribution | QL-MEF / Quaternal Logic #5 | Explicitly installed and discoverable, including its native operations/faculties; not a hidden prompt substitute |
-| Epi-Logos | Mode/world configuration, existing full agent and practices, essay and Expressions | Specialises the same Base; does not become a new product position or exclusive home for the redesign |
-| Local intelligence/services | Local Kev and AIKit Redis-backed preparation, selected Pi or Prime body | Full configured capability; lifecycle participates through existing native provider seams |
-| Excluded products | Software Factory #3; Workcell #4 | Neither is installed, required, silently reached or presented as a broken prerequisite |
-| Deferred environment | Shared-field hosting and full-product UX refit | Existing future architecture remains available; deployment/refit is not in this pass |
-
-Positions describe actual product membership, not a new invented Context Frame or CLI install-mode string. Extend the existing requested/effective composition and `oi.profile/v1` model so it reports **0/1/2 plus selected QL** honestly. Epi-Logos is the world/mode specialisation, not a seventh product.
-
-Use the existing `base`/Central arrangement and Epi world/context/mode ownership rather than minting another competing mode state. Epi mode-off and another ordinary corpus exercise the improved Base; mode-on activates the real source-qualified agent/tools/practices. Preserve explicit user model/harness choices and supported turn/session boundaries.
-
-Minimal means fewer products and a focused encounter, not less QL capability. A selected service temporarily failing is different from an intentionally unselected product. Package a coherent normal start with repair paths for actual failures, not a screen of missing Factory/Workcell warnings.
-
-## 1 — UX authority: the updated site, transferred into native use
-
-### 1.1 Required source entry
-
-Read `site/ESSAY-FIELD-LAYOUT-2026-10-05.md`, then inspect and run the **current updated site** on the main machine. Record its source/deployed/local build basis and any newer owner-approved local changes. The October 5 file is the explicit reference entry, not a freeze against later accepted improvements.
-
-Follow the actual implementation:
-
-- `site/vendor/quartz/quartz/components/scripts/field/{core,reader,tabs,graph,explorer,search,library,shell}.ts`;
-- `site/vendor/quartz/quartz/components/Field.tsx`, its `renderPage.tsx` and `styles/field.scss`/`custom.scss`;
-- `quartz/util/essayField.ts`, `plugins/emitters/fieldIndex.ts` and `util/expressionIndex.ts` under the same vendor tree;
-- `site/essay-expressions.mjs`, `essay-expression-map.json`, `build-essay-quartz.mjs`, `expression.html` and `src/expression/`;
-- `site/tests/essay-reader-controls.py`, `essay-host-smoke.py` and relevant site model/Expression tests.
-
-Read the current test paths/scripts before execution. Existing browser tests are executable behavioral references, not proof that this branch has passed them.
-
-### 1.2 Transfer the interaction, with its reason
-
-| Ref | Site convention | Why / native requirement |
-|---|---|---|
-| UX1 | One locus coordinates page position, contents, graph, explorer and address | One meaningful current subject drives the encounter. In Base generalise to native subject/page/span; essay movement information comes from its adapter. |
-| UX2 | Main page versus tangent preview; keep, replace, promote and return | Explore a source without losing the primary inquiry. Preserve separate preview slots where needed for page and Expression. Dirty editable material cannot be discarded by preview replacement. |
-| UX3 | Click selects; double-click opens; drag moves a node; explorer/pager/breadcrumbs navigate main | Inspection, presentation manipulation and navigation have different effects. Keyboard and agent operations express those same distinctions. |
-| UX4 | Graph and connections list share filters and the same neighbourhood | The visual and text accounts agree. “Here” uses the same actual eligible neighbourhood, not a separately guessed list. |
-| UX5 | Breadcrumb footer exposes ancestry, folder contents and siblings | Make return and lateral exploration available without reconstructing paths. Native refs remain authoritative underneath displayed paths. |
-| UX6 | Fast title/path search, deeper full-text loading only when needed, located results | Give useful response immediately; retain richer native retrieval without waiting for every optional provider or full corpus download. |
-| UX7 | Expressions indicated on pages, tree, graph and connections; contextual Library; Expressions as tabs | An Expression is another encounter with the same field, not an unrelated gallery. Preserve source/aboutness, scenes and the route back. |
-| UX8 | Essay/Split/Field/Library change emphasis; collapsible rails and responsive drawers | Let the main activity take space without losing access. Adapt labels appropriately for generic Base while retaining the site's behavior. |
-| UX9 | Actual typography, whitespace, figures/captions, tokens, link behavior and theme | The reading experience is part of the contract. Copying colours alone is not fidelity. Preserve image dimensions/loading so reading position stays stable. |
-| UX10 | Site navigation has explicit actions and shared state | Map these onto native presentation/application operations, source refs and revision-aware state. Site ordinals/DOM/slugs are not the agent's domain API. |
-
-Capture before/after interaction walks and the relevant actual visuals. Each transfer record names the source behavior, native implementation, reason for any departure and evidence. Test selection, preview, keep, promote and return as separate operations; a screenshot or component inventory does not establish fidelity.
-
-### 1.3 Native enrichment, not regression to old chrome
-
-Use the site's reading and field hierarchy as the starting composition of Base. Do not bury it inside the old Base shell with duplicate title bars, mode rails, graph panels or tab stacks. Native windows, resizing and advanced tools should add useful power without reinstating the fragmentation this work addresses.
-
-Keep the graph/contents/connections depth useful when introducing the companion. Reusing Cradle's chat mechanics does not require replacing the site's field with a permanent chat sidebar. Develop summonable/pinned/focused companion placement through actual use with the owner. Its context follows the active locus or an explicit pin, including the relation between the main inquiry and the current tangent.
-
-Technē remains **the focused Expressions projection of graph constellations**. Enter/gather a constellation from the Base field, work it through existing native instruments, save a reader-owned result and return. Existing Expression/Technē capabilities and domain depths remain available; this is not a requirement to redesign every specialist instrument before the minimal Base works.
-
-Port or reuse the site code at the smallest suitable boundary. Direct reuse of render/style modules is welcome; adaptation to native source/action/persistence is required. A permanently opaque embedded website whose actions cannot participate in the native field does not finish the task. Equally, do not rewrite the entire site merely to impose React or a new state library.
-
-## 2 — Agent-native composition and domain boundaries
-
-### 2.1 Desired architecture
-
-```text
-Site-led Base presentation / native Epi specialisation
-              ↕
-Typed host interaction + common selection/continuation
-              ↕
-Admitted contribution / capability / action dispatch
-              ↕
-Owner-native domain operations and data
- Central | Actuation | AIKit | QL-MEF | Expression owner
-              ↕
-Actual source, services, tools, events and returned evidence
-
-Human control and agent invocation meet the same admitted operations.
-A different presentation does not silently change domain meaning.
-```
-
-The host owns composition, presentation state and lifecycle. Domain contributions own their semantics, native types, rules, durable data and operations. Retain typed discriminated results, capability/ref identity and revision/authority handling; do not reduce decoupling to untyped arbitrary JSON or a universal graph database.
-
-Source reads/writes, relation authoring, QL computation, agency and persistent artifact effects remain at native owners. Preview/promote/layout/selection can be host-native application operations with their own visible effects. Both people and agents can use them without scraping the rendered interface. Component selection or a successful animation does not confer domain authority.
-
-Use the current contribution/SDK and compile-time admission rules; plugin composability does not require unrestricted dynamic code loading. A contribution can provide its renderer, tools, context description, settings, requirements and lifecycle through actual public seams. Domain-specific data must not be passed through universal host props just because one product was integrated first.
-
-### 2.2 Scoped audit and repair — EF0a / #598
-
-This is implementation work in the active tranche. Audit the producer/consumer boundaries traversed by Base, Epi, agent and minimal installation; extend along any discovered coupling until its owner can be repaired. Do not demand a complete suite census before starting the first vertical.
-
-For every violation retain: source revision/path/symbol; intended relation; concrete behavioral consequence; owning contract; repair; tests; affected consumers; any genuinely broader follow-up. Fix required native seams rather than writing feature-local workarounds. Domain invariance is the expectation, not an assumption that existing code has already earned.
-
-Confirmed source entry points from the 6 October review, to reconcile with current local successors:
-
-- `desktop/cradle/src/contributions/contracts.ts` puts `FactoryCentreContext`, `factoryCentre` and `factoryTasks` inside the common hosted mount contract. `CradleFrame.tsx`, static modes and the generated registry have Factory-specific integration. Refactor the domain context behind its contribution and prove the common host independently. Imports alone are not evidence a runtime process launches.
-- `workspace/mode.ts`, `store.ts`, menu/action registration, restoration and startup effects must consume the actual composition. A hidden icon is not product absence. Preserve legitimate historical bindings and explicitly unavailable optional surfaces while new minimal workspaces start cleanly.
-- AIKit `crates/aikit-cli/src/decide.rs` distinguishes Workcell-owned `managed-local` from a standalone compatible `endpoint`. Use the actual endpoint/provider path for local Kev without Workcell. The endpoint configuration alone is not full lifecycle: bundle/provision startup, health, stop, restart and upgrade through the appropriate existing native local-service/provider path. Apply the same inspection to Redis and agent/body placement. If current paths assume Workcell, repair that assumption at the native boundary while retaining provider identity and useful lifecycle.
-- `desktop/cradle/package-bundle.sh` presently builds a shared-field client and checks it in the macOS payload. Make build/package resource selection reflect the current local composition, without forcing hosted/shared rollout. Distinguish passive client assets from actual required services and record the chosen package closure.
-- `epilogos/sources.ts` has a receiving-only essay adapter; `EpiLogosSurface.tsx` has old title copy and a generated-Markdown/no-relative-assets assumption. Bind the real current corpus through the source adapter and richer Base rather than polishing that disconnected doorway.
-- Site field node ordinals, static maps, movement counts and page addresses are projection details. Translate them to native stable refs and exact source/aboutness relations. Keep useful static indices and caches derived and rebuildable; do not replace native source ownership with the site model.
-
-No requirement here to transplant all business logic out of files merely to satisfy a directory aesthetic. The test is whether native behavior is owned, invocable and independently testable without dependence on incidental UI layout or unselected products.
-
-### 2.3 Small common contract
-
-Opus records the current native types/actions for these relations; names here describe meaning, not mandatory new schemas.
-
-| Relation | Required basis |
+| Owner | Responsibility in this tranche |
 |---|---|
-| Encounter | World/project, primary inquiry, active native subject/source revision, page/span/anchor, tangent/pin, constellation membership, Expression/scene and selection generation |
-| Presentation actions | Select, open-main, open-preview, keep, promote, back/return, field emphasis and focused constructive entry; distinct effects and supported keyboard/agent invocation |
-| Prepared turn | Relevant source neighbourhood/practice and full QL/Kev service readings where used; AIKit/Redis prepared version actually delivered to the particular turn |
-| Domain action | Owner/tool/action ref, eligibility and authority, expected revision, actual input/result/effect, cancellation and refusal |
-| Continuity | Reader-owned notes/traversal/results, current agent and real runtime session/handover, meaningful unsaved state and restore refs |
-| Contribution | Identity, owner, typed contract, renderer/tool/settings/context/lifecycle bindings, required capabilities, admitted presence and removal behavior |
+| Essay repository | Authored publication, argument/source structure, reader practices and corpus/source-to-artifact bindings |
+| Central | Persistent authored/readership ground, World/project/source identity, reader-local continuity and accepted source returns |
+| AIKit | Model/harness and capability composition, Skill/Method/Methodology/SkillSet disclosure, source/search/context, local decision provider and Redis preparation through current seams |
+| Actuation | Existing acting body, agency/session/activity/authority and native Prime execution relations |
+| QL-MEF | Full formal/MEF faculties, source-defined lenses/harmonics and common native operations used by both bodies |
+| Current Expression owner/engine | Expression/Profile/Scene/Edition and constructive material/renderer operations |
+| O:I | Shared encounter UI, native composition/host adapters, shared-field relations, public packaging and website entry |
+| Existing material/service provider | Current process/model/Redis lifecycle and resource placement, consumed through existing installation contracts |
 
-Extend current KernelOp, native Actions, component contracts and context APIs. Keep native durable work, retained runtime resource state and view/workspace presentation distinct. A new layout is not another source database, agent session or cache policy. In-flight turns keep their actual delivered basis while new selections affect subsequent input.
+O:I composition keeps these owners connected. It does not need another model roster, corpus database, coordinate registry, credential store or agent identity to do so.
 
-### 2.4 Genuine absence and full selected operation
+### 2.3 EF0's small integration contract
 
-The target release has neither Factory nor Workcell installed, registered, callable on PATH or silently supplied by another personal-machine installation. The minimal build must not require a Workcell source checkout or Factory business library to render Base or run its companion. Optional contribution source can remain in the monorepo for the full build; the selected build/runtime path excludes its mandatory role.
+Opus publishes the exact current native types/actions for the following relations. These are semantic requirements over existing types, not prescribed new schema names.
 
-Ordinary local processes, Redis, model serving and material-address metadata are legitimate without installing the Workcell product. Prefer existing non-Workcell endpoint/local adapters; where a lifecycle contract is currently overcoupled, repair/reuse the correct native provider implementation. Do not create a second Workcell manager in the reader, falsely label the endpoint Workcell-managed, or remove Kev/Redis to obtain a green absence test.
+| Relation | Required content | Producer → consumer |
+|---|---|---|
+| Current encounter | Containing/local/shared World; originating World; selected subject/source and revision; page/span/anchor; constellation and membership revision; Expression/Scene; selection generation; inquiry/session relation | Native source/UI selection → all views and AIKit preparation |
+| Prepared act context | Eligible bounded source neighbourhood, current question/practice, QL/Kev reading where used, prepared version, delivered basis for that act | AIKit/Redis → actual Pi/Prime invocation and inspectable receipt |
+| Native operation | Exact action/tool identity, subject/ref, admitted effects/authority, input revision, result/receipt and cancellation | Human or agent → native owner → all affected consumers |
+| Continuing inquiry | Reader-owned question/traversal/notes/results plus canonical Agent and runtime session/handover refs | Central/native session owners → restore/navigation/companion |
+| Expression/constellation return | Native artifact/revision, members and source bases, authored layout versus semantic relation, actor and return destination | Technē/Expression/native owner → source discovery and reader World |
+| Host/projected resolution | Originating refs, Projection/participant/audience/currentness, material transport and permitted operations | Local/shared provider → the same encounter implementation |
 
-The included QL-MEF product and Epi mode are real. Report registered/effective versions and actual native operation. Epi mode-off demonstrates generic Base; it is not permission to omit QL from this distribution. Factory Run ancestry is unnecessary for ordinary reader work, direct agent actions, notes or Expression construction.
+For each row retain a compact binding: `experience clause → native symbol/action/file → current revision → writer → consumer → test → observed result`. Extend the existing capability/account records with those references. A working mock contract is useful during isolated development but the joined encounter invokes actual native owners.
 
-## 3 — Delivery graph and working branch
+### 2.4 State and lifecycle
 
-### 3.1 Active tickets
+Preserve the current three responsibilities: native durable data and work; retained runtime resources and in-flight requests; view/workspace presentation. Native identity is shared across views. Resource caching is revision- and access-scoped. Presentation remembers focus, camera, panels and scroll without copying semantic objects into a UI-only world.
 
-| Packet | Ticket | Work | Primary lane |
+A source change invalidates affected readings and prepared context. A later result cannot overwrite a newer selection, source or edited composition. In-flight turns keep their actual delivered basis. Hidden rich views release/suspend resources through the current render owner while native agent work can continue. Restart rehydrates refs and meaningful checkpoints through the existing continuity path.
+
+### 2.5 Public/local boundary
+
+The release includes the intended public corpus and admitted media/editions; reader-local notes, private authoring transcripts and personal Central/credentials stay in their respective Worlds. Manifest closure follows explicit source/asset relations, not an indiscriminate repository copy. External bibliography remains available when the underlying third-party work is not redistributed.
+
+Shared-field eligibility is applied before search, counts, adjacency, assets, cache reuse and agent context. A web-to-local companion connection is origin/session-bound and uses current authorization. Untrusted rendered HTML/Expression content has no ambient local-file, shell or credential authority. Reuse native sandbox/portal/channel policy. Fault tests exercise these boundaries while the normal experience remains straightforward.
+
+## 3 — Ticket map, owners and bounded dispatch
+
+### 3.1 Published delivery graph
+
+| Packet | Ticket | Primary responsibility | Dependencies and exit |
 |---|---|---|---|
-| EF0 | [O:I #592](https://github.com/EpiLogos/O-I/issues/592) | Site baseline, current native basis, small contracts, first real connection, integration and owner review | Opus |
-| EF0a | [O:I #598](https://github.com/EpiLogos/O-I/issues/598) | Agent-native/plugin/domain boundary repairs and true no-Factory/no-Workcell conformance | Opus, delegated A/B by owner |
-| EF1 | [Actuation #132](https://github.com/EpiLogos/Actuation/issues/132) | Full agent, Workcell-independent Kev/Redis/provider path, Pi package, Prime fork and native companion binding | Sonnet A |
-| EF2 | [Essay #78](https://github.com/EpiLogos/Antykathera-Essay-Work/issues/78) | Complete public World, site-to-source mapping and reader/expressive SkillSet/Methods/Methodologies | Opus semantic entry; A integration |
-| EF3 | [O:I #593](https://github.com/EpiLogos/O-I/issues/593) | Site-led Base/Central redesign, generic use, Epi mode, Expressions/Technē and actual refinement | Sonnet B |
-| EF5 | [O:I #595](https://github.com/EpiLogos/O-I/issues/595) | Minimal Cradle distribution/profile, clean absence tests, both harnesses and upgrade/continuity | Opus; existing A/B lanes |
-
-**Deferred:** [EF4 / #594](https://github.com/EpiLogos/O-I/issues/594) now holds **progressive wider-product refit and shared-field work**. It no longer describes porting a separate essay app back into Cradle. It has no automatic dispatch or current release dependency.
+| EF0 | [O:I #592](https://github.com/EpiLogos/O-I/issues/592) | Opus: intent, first concrete encounter, shared contract/file claims, integration, current-state ledger and verification | Begin immediately. Exit preparation with a real source/view/agent binding and dispatchable native interfaces; continue as integrator throughout. |
+| EF1 | [Actuation #132](https://github.com/EpiLogos/Actuation/issues/132) | Sonnet A: full agent, local Kev/Redis integration, Pi package, Prime fork and native session bridge | EF0 interface; EF2 praxis consumed as it lands. Exit with real package discovery/invocation and usable stream/action/continuation in both bodies. |
+| EF2 | [Essay #78](https://github.com/EpiLogos/Antykathera-Essay-Work/issues/78) | Opus semantic entry; Sonnet A corpus/praxis joins | Source work begins during EF0; packages bind through EF1. Exit with complete public corpus/Expression closure and useful source-qualified reader/expressive praxis. |
+| EF3 | [O:I #593](https://github.com/EpiLogos/O-I/issues/593) | Sonnet B: shared graph/pages/Expressions/Technē/companion experience | EF0 boundary and EF2 real source specimen; integrate EF1 early. Exit with a working local wrapper and reusable complete encounter implementation. |
+| EF4 | [O:I #594](https://github.com/EpiLogos/O-I/issues/594) | Sonnet B + Opus host integration: desktop and shared meta-Central | Starts against EF3's stable shared exports; consumes EF1/EF2. Exit with the same implementation mounted and exercised in both real hosts. |
+| EF5 | [O:I #595](https://github.com/EpiLogos/O-I/issues/595) | Opus release/proof; A package/install; B site/first run | Packaging scaffolding starts early; full release consumes EF1–EF4. Exit with public downloadable artifact, clean Omarchy install and six-cell joined proof. |
 
 ```mermaid
 flowchart TD
-  SITE[Current updated site: behavior and visual reference]
-  EF0[EF0 Opus: native basis and shared boundary]
-  EF0A[EF0a: native domain and plugin repairs]
-  EF1[EF1 A: full agent and local services]
-  EF2[EF2 Opus/A: corpus and praxis]
-  EF3[EF3 B: Base/Central refit and Epi mode]
-  USE[One real site-faithful native encounter; refine in place]
-  EF5[EF5: minimal Cradle distribution and proof]
-  SITE --> EF0
-  EF0 --> EF0A
+  EF0[EF0 Opus: intent + native boundary + first real binding]
+  EF1[EF1 Sonnet A: full agent + Pi/Prime]
+  EF2[EF2 Opus/A: corpus + praxis]
+  EF3[EF3 Sonnet B: shared field experience]
+  JOIN[First joined passage / graph / companion / Expression walk]
+  EF4[EF4 Sonnet B: desktop + shared-field hosts]
+  EF5[EF5 Opus + A/B: release + clean install + joined proof]
   EF0 --> EF1
   EF0 --> EF2
   EF0 --> EF3
-  EF0A --> USE
-  EF1 --> USE
-  EF2 --> USE
-  EF3 --> USE
-  USE --> EF5
+  EF1 --> JOIN
+  EF2 --> JOIN
+  EF3 --> JOIN
+  JOIN --> EF4
+  EF1 --> EF5
+  EF2 --> EF5
+  EF4 --> EF5
 ```
 
-EF0a proceeds with the vertical, not as a gate requiring every audit item finished before any view is built. Package scaffolding starts early. Finish with actual absence and conformance evidence.
+### 3.2 EF0 — Opus creates the first executable ground
 
-### 3.2 Branch and installation isolation
+Read the intent and current small set of source/operation anchors. Resolve actual local source seats, active writers, installed configuration and relevant native entrypoints. Keep that a bounded reconciliation of this deliverable. The owner has supplied the full agent/stack as the starting capability; the preflight identifies the versions and exact joins to use.
 
-The dedicated remote implementation branch is **`feat/central-field-base`**, created from O:I main. The map remains published through #596 until merged; read its current version directly without resetting a checkout. Integrate the reviewed map into the feature line through ordinary Git operations, preserving newer source and active work. The documentation publication branch is not a stale runtime baseline.
+Select a real passage, its argument/source neighbourhood and an existing linked Expression. Identify the initial reader question and expected source-opening/expressive action. Capture current interface behavior and a first performance baseline. Publish the small contract in section 2.3 and explicit file claims. Make the first actual source/view/runtime connection, then dispatch A/B and keep integrating.
 
-Before local checkout/switch, inspect the main-machine source seat, dirty state and existing writers. Use an assigned seat for the feature line. One feature-line checkout/worktree is sufficient; create another only for a real ownership conflict, not one per Sonnet. Native-repository changes use corresponding scoped branches only where needed, with exact dependency refs recorded in the parent. Do not mass-clone all repositories or reset unpublished work.
+Opus is the single decision owner for shared selection types, host/session bridge, root workspace/state, generated registries and serialized integration mutations. A worker may implement a specifically delegated change to one of these files while that claim is exclusive; ownership does not imply that Opus must hand-code every shared change.
 
-Develop the new Base on this feature line, with the normal full-build contracts regressed but no forced update of the owner's everyday installation during iteration. Use existing development launch/data-root selection to give the feature an isolated candidate profile and test state. Preserve the production app identity for distribution; an isolated development build does not commission a second enduring application or updater.
+### 3.3 EF1 — Deliver the existing full body in both harness routes
 
-Opus owns shared schema/selection/kernel/host boundary decisions and serializes Git/index/commit, generated registries, install and conflicting service operations. Workers can implement shared files under exclusive claims. Retain main-machine platform/architecture facts, not the old Omarchy/Linux assumptions.
+Continue the existing native agent and QL-MEF #291 package/tool seam. Produce a real Pi extension package and the requested distributable Prime harness fork, with source-owned practices and full native tools/faculties. Retain the native QL kernel/MEF/decision implementation; adapters handle target integration. Record the current Prime upstream basis and patch delta from the existing source configuration.
 
-### 3.3 Team and first useful increment
+Integrate the actual SDK/RPC/process session path, stream, tool results, cancellation and resume. Bring the supplied local Kev and Redis preparation online through native installation/lifecycle. Ordinary model setup uses the harness/provider's actual login or API credential path. EF1 tests both packages from their distributable boundaries before handing them to EF5.
 
-Opus retains whole-product intent, site reference, semantic entry, architecture repair decisions, integration and actual review. Sonnet A carries runtime/native/provider/package/corpus joins. Sonnet B carries site transfer/Base presentation/contribution integration and first-run UI. Use one Sonnet sequentially or two on disjoint claims; no nested workers or additional review swarm.
+### 3.4 EF2 — Make the complete essay World and praxis portable
 
-Each task includes the ticket, why the change matters, exact source/contract basis, writable files, expected native act, runnable test and return requirements. Returns contain actual files/commits, operations, executed tests/results, remaining fault and next action. Cross-review or fresh reuse of a freed slot supplies independent checking.
+The canonical release source remains `Antykathera-Essay-Work/submission-package/essay/`, with the current authored title/entry discovered there. Preserve rooms/movements, A/A′/C/A-C/S depth, the four registers and linked source/media structure. Resolve the actual Expression/Profile/Scene/Edition artifacts through the production alignment and current collection; retain their source bindings and full expressive assets.
 
-End EF0 preparation with a real connection:
+The existing Reader Companion supplies the starting reader practice: `using-epi-logos`, `walk-the-essay`, `okf-wiki`, `converse-pedagogically`, `investigate` and specialist operations. Compose this with the full QL/MEF and current expressive practices. Reconcile the exact `METHOD:` and `METHODOLOGY:` Skill classifications and SkillSet selection; add only missing functions at their native source.
 
-`current site passage → same passage in new Base → relation/tangent → real companion → source → actual Expression → return`.
+Required methodological functions are dialogical reading, source investigation, QL/MEF inquiry, constellation/Expression participation, pedagogy/traversal and reader-owned Return. The companion speaks naturally through the encountered material and uses explicit formal vocabulary when it clarifies the actual question. The full repertoire is available through selective context rather than being flattened into a permanent prompt.
 
-Then finish the full corpus, constructive operation, generic Base, Epi mode and lifecycle over that path. Provide the owner the actual candidate launch route on the main machine and refine there before the broader refit.
+### 3.5 EF3 — Make the local encounter good, with reuse built in
 
-## 4 — Packet implementation and source entry
+Reuse/extract the existing Cradle graph, page, Expression, Technē and conversation components with current Expressions design. Build the actual continuous selection/deep-open/return and constructive paths in EFX02–EFX08. The small wrapper selects the essay World and companion configuration around this shared implementation.
 
-### EF0 / EF0a — Intent into native structure
+Implement current-subject and pinned-scope behavior, stable streaming-turn attribution, page/scene/constellation restoration and reader return. Make linked reading and complete corpus discovery pleasant and responsive. Preserve actual glyphs, media, text, scenes and native authoring rather than substituting presentation placeholders. Publish component/state exports that EF4 actually consumes.
 
-Begin from `docs/positions/FOUNDING-POSITIONS.md`, this owner's correction, site UX sources and current repository/seat instructions. Capture one main/tangent/Expression reference walk and a performance baseline. Inspect only the native boundaries needed to connect it, publishing the contract in section 2.3. Fix domain/UI coupling along the way and add regression tests at the actual owners.
+### 3.6 EF4 — Port faithfully by mounting the same implementation
 
-The architectural proof combines unchanged native domain readbacks, equivalent agent/human actions, a public contribution specimen and the true product-absence run. The UI can change substantially without an implicit source or business-rule rewrite. Explicit required contract improvements retain their reasons and compatible consumers.
+Mount EF3 in desktop Explore/local-world destinations and shared-field web. Host adapters supply scope, source/projected resolution, transport and existing workspace/session placement. Interactions, selection, page/Expression rendering and constructive actions remain shared.
 
-### EF1 — Full QL agent, services and two distributable bodies
+The shared-field walk uses two independently grounded Worlds. Enter and leave a participant World, gather a cross-world constellation, make an attributed permitted contribution, observe it from the other World and return locally. Show originating World and containing field. Test reconnect and revocation through actual current provider infrastructure. The web companion binds the installed agent through the native authenticated channel; an additional hosted agent service is not required by this tranche.
 
-Continue Actuation #107, QL-MEF #258/#291 and AIKit #388/current code. Reuse the existing full QL/MEF faculties, harmonics, recurrence, model decision and prepared-context services. No new training programme or default election is needed for this delivery.
+### 3.7 EF5 — Make the public route real and prove the joined result
 
-Package the actual Pi extension and requested Prime harness fork over the same source-owned tools/practices. Pin actual selected upstream versions, adapter imports and fork delta at execution. Connect native session start/stream/tool/results/cancel/resume through the current supported SDK/RPC/process boundary. The app is Cradle, not a new reader runtime.
+Use existing O:I package, edition, install/update and website release machinery to publish compatible artifacts for the verified Omarchy/Linux target. Include the full configured stack and current corpus. Provide a real app preview and a concise first-run path, with independent Pi-package/Prime-fork instructions for existing harness users.
 
-Use the native non-Workcell local endpoint/provider path for Kev and supply its complete lifecycle. Keep the AIKit Redis preparation online without requiring Workcell or Factory. Where this exposes missing local lifecycle or dispatch separation, implement the repair at the appropriate existing native owner and feed #598. Both bodies must actually consume QL operations, Kev results and delivered prepared context.
+Build/release artifacts rather than requiring public users to build the full development suite. Verify clean installation in an isolated HOME/config/service namespace, existing-install adoption, retry/update/compatible rollback and reader-state preservation. Record exact tested commands from implemented entrypoints. Carry the complete walk through all three hosts and both harness routes before the parent's software-delivery verdict.
 
-Provider login/API key are authentication choices inside Pi/Prime setup, not another agent runtime. The speaking model, harness, enduring companion and local decision model have distinct identities. Native credential ownership, user selection and truthful continuation survive model/harness changes. UI actions and user/agent commands use the same source/operation boundary.
+### 3.8 Opus and the two Sonnet lanes
 
-### EF2 — Complete public World and praxis
-
-Canonical authoring stays in `Antykathera-Essay-Work/submission-package/essay/` and the current structural/orienting sources. Reader practices originate in `submission-package/epi-logos/`. Follow current source-to-Expression editions and the site's current `essay-expressions.mjs`/`essay-expression-map.json` rather than treating inventories as artifacts or resurrecting the retired public shelf as the UX.
-
-Preserve rooms/movements, A/A′/C/A-C/S depth, Symbolon/Matheme/Mytheme/Episteme, source houses, actual diagrams/media/captions, profiles/scenes and exact aboutness/source bindings. Use current authored title/entry; old filenames remain locators. Release dependency closure distinguishes internal dependencies from deliberately external/withheld sources. Package the full intended public field, not all private working files.
-
-Make an Epi source/World contribution that supplies native refs, hierarchy, reader adapters and domain-specific metadata to generic Base. Site slugs, movements and family labels do not become universal host types. Static indices remain derived, source-pinned projections; live reader results follow their native owner.
-
-Compose existing orientation, walk-the-essay, linked-vault/source, pedagogical, investigative and specialist QL/MEF practices with constructive Expression/Technē operations. `METHOD:` and `METHODOLOGY:` remain classifications over existing Skill identity/lifecycle, composed through native SkillSets. Support natural conversation through the actual encounter, deep inquiry and a useful next ground. Notes, traversal, generated interpretations and authored work keep their attribution and are saved into the reader's World without modifying the publication through ordinary reading.
-
-### EF3 — Site-led Base/Central, with Epi mode over it
-
-This is the redesign of the `base` arrangement labelled Central in Cradle. Implement UX1–UX10 in its common native structure, not only inside `EpiLogosSurface` or a new essay-only mode. The site leads hierarchy, interaction and visuals; Cradle provides reusable kernel/resource/Surface/agent/Expression machinery and the native powers to enrich it.
-
-Carry main/tangent/keep/promote/return, joint locus, graph/text filtering, contextual Library/Expression links, source reading and responsive focus. Extend preview conventions for writable/native work: keep unsaved changes, release or suspend rich renderers correctly and restore meaningful state. Avoid duplicate tab owners and state stores.
-
-QL/MEF and Epi mode supply their real agent/body, corpus and practices on the same Base. Demonstrate another local linked corpus with Epi mode off, then mode-on with full domain tools and continuing inquiry. Do not force ordinary Base to manufacture QL metadata. Existing Expressions and focused Technē remain accessible through the same subject/constellation relationship.
-
-Place companion controls without erasing the useful site field; make the agent able to operate selection/open/preview/construct/return via typed native operations. Refine the actual application with the owner on the main machine. A colour/theme copy or old Base with a hidden Factory button is not the intended result.
-
-### EF5 — A real configuration of the existing system
-
-Use `oi.profile/v1`, current-world/composition, contribution/package, desktop footprint and native installer/update mechanisms. Supply one coherent minimal configuration of the **existing app**, plus versioned World/praxis/model packages. The product set is Central, Actuation, AIKit and QL-MEF, with Epi-Logos and local Kev/Redis, and no Factory/Workcell product.
-
-Complete the profile-to-install-to-first-workspace connection. A compatible existing O:I installation receives the profile/World without losing other workspaces, settings, agents or data. Do not uninstall the owner's Factory/Workcell to simulate minimality. Prove real absence in an isolated clean installation instead.
-
-Prefer one application code line and contribution-aware startup. If reducing artifact size needs selected frontend/native build features or resource manifests, keep them in the same build pipeline and identity. Audit transitive dependencies, not merely navigation visibility. Build target follows the main machine's real OS/architecture; the website download and independent Pi/Prime distribution remain in scope, but a new hosted companion/shared-field rollout does not.
-
-Publish tested install/open/repair/update commands, actual artifacts, platform/size/prerequisites, source/revision manifest and a useful first run. Detect/provision local services, then use native model login/API-key configuration. Reading/graph/Expressions stay usable while authentication completes or remote inference is unavailable; included service faults have truthful recovery. Updates/rollback preserve notes, main/tangent position, scenes, saved constructions and real session continuity.
-
-### Current native source anchors
-
-| Source | Purpose |
+| Role | Continuing responsibility |
 |---|---|
-| `desktop/install-footprint.json`, `cli/src/{desktop_command,desktop_install,current_world,composition}.rs`, `cli/src/configuration/profile.rs` | Existing app identity, requested/effective presence, profiles and native lifecycle |
-| `desktop/cradle/src/{workspace,contributions,surface,kernel}/`, Cradle/CradleFrame and actual successors | Base, contribution admission, host operations, resources and continuity; inspect source-backed coupling points in section 2.2 |
-| `desktop/cradle/src/{knowledge,material,files,expressions,expression,techne,epilogos,agent,encounter}/` | Native source reading, page/graph/Expression joins and actual companion/action routes |
-| `desktop/cradle/kernel/`, `src-tauri/` and current O:I public Actions | Domain/host dispatch, native bridge and production authority |
-| AIKit decision/endpoint, Redis/NOW/context, portable-package, model/session/source implementations | Full local intelligence and non-Workcell native runtime path |
-| Actuation's current Epi/Prime/owner/faculty/relational/toolset sources; QL-MEF #258/#291 and native implementation | Full agent and common body tooling |
-| O:I `agent-praxis-document-world` and relevant Wiki/constellation position/spec; essay `AGENTS.md`, `WRITING-PROTOCOL.md`, orienting/structure/production sources | Practice and source authority, alongside the new site-led UX authority |
+| Opus | Whole-product intent, source/contract selection, first real binding, EF2 semantic ground, shared integration and write serialization, decisions, reviews, joined runtime/UX/release proof |
+| Sonnet A | EF1 → EF2 package/praxis/runtime joins → EF5 artifact/install/update work |
+| Sonnet B | EF3 → EF4 → EF5 website/first-run/host work |
 
-Follow current successors and local improvements without resetting them. Each worker reads the bounded sources for its packet; this table is navigation, not a mandatory giant context injection.
+Use one Sonnet when the work is sequential; use two only for disjoint packets. These are implementation lanes, not additional runtime domain agents. Workers do not spawn workers. Independent review uses the other implementer or a fresh reuse of a freed slot; the team never expands into a separate reviewer swarm.
 
-## 5 — Acceptance, metrics and Return
+Each dispatch includes: linked ticket and experience clauses; purpose and expected change; exact source entrypoints and inherited contract revision; writable files; read-only dependencies; test command/specimen; return format. Each return contains: actual change, files/commits, operations, executed tests/results, remaining exact fault and next actionable step.
 
-### 5.1 Current proving matrix
+Reuse current assigned feature-line checkout/source seats and native NOW/claim/messaging machinery. Preserve unpublished work. Give shared Git/index/commit, generated files, installs and heavy builds one owner at a time. Reuse build outputs/caches; avoid concurrent heavyweight Rust builds on Omarchy. Extra worktrees are not the default means of parallelism.
 
-Two installation contexts, each with Pi and Prime:
+## 4 — Execution order, source entry and evidence
 
-| Context | Pi | Prime |
+### 4.1 Concrete checkpoints
+
+**C0 — First ground:** Opus records the chosen real reading encounter, current full-stack bindings, small shared contract and claims. A real source/view/runtime connection ends preparation.
+
+**C1 — First joined encounter:** open a passage → reveal its graph relation → ask the actual companion → open a real source → enter an actual Expression → return to the original passage. A and B join early, before separately polishing every package or panel.
+
+**C2 — Complete local World:** finish complete release-corpus closure, praxis, native constructive Technē, save/rediscovery and restart. The initial specimen expands to the complete selected public field; it is not the release ceiling.
+
+**C3 — Same experience in its other hosts:** desktop local Explore, then shared-field web, with the same components and native refs. Exercise real inter-world participation and local Return.
+
+**C4 — Public distribution:** versioned artifacts, app/site entry, clean user-root install, auth/model selection, update/recovery, and full-stack readiness.
+
+**C5 — Joined verdict:** six host/harness cells, quantitative correctness/continuity/performance and actual experiential review. Retain failures and fixes, then repeat the affected full walk.
+
+The C labels are local checkpoint shorthand, not a replacement for any inherited campaign phase meanings. Apply the current native evidence mappings when recording results.
+
+### 4.2 Smallest sufficient source entry
+
+Read the map and assigned ticket first. Follow the source needed for that packet; a worker does not load every document in the programme by default.
+
+| Source | Why it matters / who needs it |
+|---|---|
+| O:I `docs/positions/FOUNDING-POSITIONS.md` | Opus: authored meaning and native ownership; workers receive relevant clauses. |
+| O:I `.wayfinder/maps/wiki-constellation-development.md` and linked `docs/positions/WIKI-CONSTELLATION-PRACTICE.md`, `docs/experience/WIKI-CONSTELLATION-UX.md`, `docs/cradle/WIKI-CONSTELLATION-SPEC.md` | Opus/B: existing connected-reading, constellation-making, resource continuity and Return design. |
+| O:I `.wayfinder/maps/agent-praxis-document-world.md` | Opus/A: native Skill / METHOD: / METHODOLOGY: / SkillSet / World relation. |
+| O:I current `techne-expression-mode`, `expression-production-suite` maps; #335/#375 | B: shared stage, portals/front-verso, existing shell/companion and full Expressions grammar. |
+| QL-MEF #258/#291; current Epi agent architecture and native owner implementation | A/Opus: reuse full agent/MEF/harmonic/Prime/Pi implementation and source-owned tools. |
+| Actuation #107; `docs/EPI-LOGOS-AGENT-ARCHITECTURE.md`; current `epi_agent`, `prime`, `prime_run`, `faculty`, `owner`, `relational`, `policy`, `toolset` | A: body/runtime/session/recurrence/faculty composition. |
+| AIKit #388 and actual model/decision/session/portable-package/context/NOW/service modules | A: full local Kev/Redis configuration, real composition and delivery. |
+| Essay `AGENTS.md`, `WRITING-PROTOCOL.md`, current orienting/structural sources, `docs/REPOSITORY-SHAPE.md` | Opus/A: affected publication authority and current anatomy. |
+| Essay `submission-package/epi-logos/`, `submission-package/essay/`, `docs/EXPRESSION-CORPUS-PRODUCTION-ALIGNMENT.md` | A/Opus: existing reader practices, live publication, real artifact bindings and release closure. |
+| O:I `desktop/cradle/src/{knowledge,expressions,expression,agent/chat,agent/panel,surface,workspace,kernel}/` and actual successors | B/Opus: shared UI, selection, native handoff, resource continuity and host mounting. |
+| O:I #18 and current SharedField/Projection/Participant/Contribution/Encounter/SpaceTimeDB paths | B/Opus: local Central within the containing shared field, actual transport and participation. |
+
+Read relevant local repository/seat instructions and current owner claims before editing. The paths above are source locators; when a native implementation has moved, record the successor once in the binding ledger and continue from it. Local unpublished improvements are part of the current source relation and must survive integration.
+
+Upstream references for versions selected by EF1: [Pi package contract](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md), its adjacent extension/session documentation, and [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent). The Pi package reference was observed on 6 October 2026 redirecting from the former `badlogic/pi-mono` location. Pin actual releases/import contracts rather than treating a mutable documentation page as a compatibility lock. Preserve the existing Prime origin and native composition identified by the local configuration.
+
+### 4.3 Joined acceptance matrix
+
+| Host | Pi package | Prime fork |
 |---|---|---|
-| Clean minimal Cradle: selected products only, Factory/Workcell absent | Complete walk and absence proof | Complete walk and absence proof |
-| Isolated candidate profile in the owner's richer existing installation | Same Base/Epi walk; other workspaces preserved | Same Base/Epi walk; other workspaces preserved |
+| Small local essay application | J1 complete encounter | J2 complete encounter |
+| Desktop local Explore | J3 complete encounter | J4 complete encounter |
+| Shared-field/O:I web with installed companion connection | J5 complete encounter plus shared participation | J6 complete encounter plus shared participation |
 
-These are four current **installation/harness checks**, not the old three-host/six-cell programme. Shared-host and cross-world contribution tests remain deferred. In each context verify generic Base with another linked corpus and Epi mode-off/on; the change must not be trapped in the essay specialisation.
+The complete encounter:
 
-The main-machine full installation may contain extra products. Presence there never satisfies the separate clean-absence test and must not contaminate it through PATH, source fallback, environment, service discovery or credentials.
+1. Enter from the public artifact/host route and resolve the intended full configuration.
+2. Open the current authored essay and read a passage.
+3. Follow its graph/argument/source depth using exact links.
+4. Ask a substantive question needing more than one linked part of the field; inspect the useful answer and relevant delivered context.
+5. Deep-open a source from the companion's answer and return.
+6. Enter a real related Expression and continue the conversation from that scene.
+7. Gather or enter a constellation; open it in Technē; perform a permitted constructive act and save a reader-owned composition/variant.
+8. Find that result through native discovery and return to the original question.
+9. Quit/reopen and continue the same reader inquiry with the actual native runtime/session disposition.
 
-### 5.2 Complete encounter and site fidelity
+For J5/J6, add two independently grounded Worlds, cross-world navigation/constellation, one attributed contribution seen from the other participant, shared-service reconnect and revocation. Keep controlled test principals and actual human encounter evidence identified separately.
 
-From the genuine profile/package route: open the current essay in Base; move through its reading locus; select a graph relation without navigation; open a tangent; replace, keep and promote it deliberately; return to the main passage. Search and breadcrumb navigation retain their distinct effect. Graph and connections filters agree.
+Cover both supported login and API-key authentication routes across the delivered harnesses. A missing external entitlement is an exact provider-evidence gap, not a reason to abandon native implementation or claim a login passed. Public instructions say precisely which route was demonstrated.
 
-Ask a substantive source-grounded question; inspect the actual prepared turn basis and relevant native operations. Open a source from the answer as an appropriate tangent without losing the main inquiry. Enter a real Expression/scene and continue; gather/enter a constellation, focus it in Technē, perform a permitted constructive act, save a reader-owned variant/result, rediscover it and return. Quit/reopen; continue from meaningful native state. Repeat site-reference behaviors by pointer and keyboard; exercise equivalent agent operations through the native API.
+### 4.4 Source-rich dialogue specimens
 
-Capture current site reference and native candidate at comparable viewports, including narrow and reduced-motion states. Preserve natural typography, image/caption treatment and reading position. Record deliberate improvements or departures with their reason and actual owner feedback.
+EF2 selects current real sources for these repeatable questions: a multi-page argument; a source-depth investigation; a whole Mytheme whose later movement qualifies its beginning; a Matheme/formal inquiry using actual QL operations; a constellation-to-Expression act; and continuation from a previous inquiry. Preserve source refs and answer/action criteria without prescribing prose.
 
-### 5.3 Architectural tests
+Evaluate usefulness, fidelity to source, appropriate depth, coherent voice and actual tool/action success. Use held-out criteria or independent review where comparing behavior. Do not turn a numerical pass/fail score into a replacement for reading the answer and encountering the app.
 
-- **Product absence:** no installed/registered/resolved Factory or Workcell, no mandatory transitive checkout/binary/service calls, no fake success handler. Tripwire unexpected discovery/dispatch. QL/MEF, Kev, Redis, chat, source navigation and constructive return still work.
-- **Agent-native equivalence:** structured and human invocations agree on native refs, revision, admission and intended effect; presentation changes remain distinguishable from source/domain mutations. No DOM/screenshot dependence for semantic operation.
-- **Public contribution:** a small non-essay source/surface/tool admitted through the existing public SDK/manifest/compile-time path works without editing host business logic; removal preserves historical bindings truthfully. Reuse existing conformance fixtures where sufficient.
-- **Domain invariance:** existing owner conformance tests and exact native readbacks remain valid before/after presentation changes. Contract evolutions are explicit, bounded and tested with their consumers.
-- **Generic Base/Epi:** ordinary corpus works under Base with Epi off; Epi uses the same interaction with full QL/MEF agent/practices. No hard-coded essay filenames, counts or lens tables in generic host semantics.
-- **Isolation/regression:** existing personal workspace/data/credentials survive candidate use, install/adoption/update. Full contribution-enabled code still passes its relevant contract/type tests without commissioning the wider UX refit.
+### 4.5 Measurements and concrete correctness targets
 
-### 5.4 Numerical evidence
+Fix corpus/artifact/task/model/hardware basis before comparing builds. Report raw observations, sample count, numerator/denominator and failures. Preserve current native metrics/receipt machinery and map these checks into existing capability/account records.
 
-Fix source/corpus/model/artifact/hardware and task basis. Report exact pass counts, denominators, samples, raw observations and failures. Map these into existing capability/account and test evidence rather than creating a competing global quality system.
-
-| Measure | Required result |
+| Measure | Required return |
 |---|---|
-| UX transfer | UX1–UX10 behavior checks on native candidate against site reference; exact departures/decisions recorded |
-| Product independence | Zero required/resolved Factory or Workcell calls in the clean run, with actual QL/Kev/Redis work succeeding |
-| Installation/harness coverage | Four specified context/harness checks completed; login and API-key coverage named independently |
-| Source and corpus | Live release page/asset/Expression counts; zero unresolved *declared internal* dependencies after explicit external/withheld dispositions; zero wrong ref/revision substitutions |
-| Native operation | Source-grounded QL/action success, actual Kev results and Redis-prepared context delivered/used, agent/human equivalence |
-| Correctness | Zero unintended publication writes, private/credential disclosures, unauthorized effects or stale results/writes admitted as current |
-| Continuity | Main/tangent/pin/reading/scene/draft, notes/constructions and supported session return through view switches, restart, update and rollback |
-| Responsiveness | Cold/warm launch, page/graph readiness, input latency and first useful answer; Kev/preparation overhead separate from LLM latency |
-| Resources | Install footprint; peak/settled memory and relevant VRAM; renderer/listener/service counts over 30 repeated transitions; no orphan accumulation after settled teardown |
-| Architectural repair | Each required violation linked to native fix and regression; public contribution conformance and ordinary/full-build regressions |
+| Distribution completeness | Current page/asset/Expression counts; every declared internal release dependency resolves or has a reviewed external disposition; unresolved internal dependency count reaches zero. |
+| Reference fidelity | Page → graph → Expression → companion/tool → saved-result round trips; target zero wrong native-ref/revision substitutions. |
+| Full-agent operation | Successful native QL/MEF tools and useful acts in each body; actual Kev result and Redis-prepared context used, not only installed-process presence. |
+| Host parity | J1–J6 completed, with the same component imports/interaction contract and native semantics; denominator six. |
+| Continuity | Restart, update, view switches and explicit harness handover checks; reader notes/traversals/compositions retained. |
+| Correct effects and access | Zero unintended publication mutations, private-canary/credential disclosures, unauthorized effects and stale writes/results applied as current. |
+| Installation | Download/install/first-open duration and artifact footprint under a named clean Omarchy user-root; successful retry, update and compatible rollback. |
+| Response | Cold/warm page-ready and graph-ready time, UI input latency, time to first useful answer; Kev and prepared-context timing separate from LLM latency. |
+| Resources | Peak/settled RSS, relevant VRAM, active renderer/subscription counts and growth over 30 repeated transitions; zero orphan renderer/listener set after settled teardown. |
+| Comparative quality | Source-grounded answer/action completion counts, exact failed cases, actual model/token/resource cost and independent qualitative review. |
 
-Inherit applicable performance budgets; otherwise set concrete limits against the first main-machine baseline **before tuning**. Do not present a relative improvement over an unusable baseline as sufficient. Qualitative refinement is actual owner use and review, alongside these numbers.
+Use inherited performance budgets when they apply. Otherwise Opus records concrete latency/memory limits from the first real Omarchy baseline **before tuning** and tests the same workload after changes. Report and repair misses; a percent improvement over an unusable baseline is not sufficient to call the experience good.
 
-### 5.5 Faults and recovery
+### 4.6 Fault and recovery cases
 
-Exercise corrupt/missing/incompatible artifacts, absent native login, lost model connection, Kev/Redis restart, slow graph/source provider, source revision during streaming, rapid selection, cancellation, dirty preview replacement, interrupted construction, process restart and interrupted install/update. Disconnect a real native action/context producer to ensure its test fails. Test removed optional contribution restore without making it a new-install warning wall.
+Exercise corrupt/missing release asset, wrong version, missing model authentication, provider disconnect, local Kev/Redis restart, slow graph provider, source revision while a turn streams, rapid selection changes, cancellation, interrupted composition, process restart, interrupted download/update, shared-service loss and projection revocation. A private canary checks search/counts/graph/assets/caches/context together. A disconnected native action/context producer must fail the corresponding integration test.
 
-Keep reading and available local operations useful during provider loss. Restore and retest the full selected configuration after faults. Preserve failed receipts. An actual unavailable entitlement or human review remains an exact named evidence item, not simulated completion or a reason to stop other implementation.
+Each fault returns to the useful activity it interrupted. Restore and retest the full configured path. Native/source correctness, actual provider/material operation, UI interaction and human judgement have their respective evidence rather than one misleading aggregate verdict.
 
-### 5.6 Completion and later horizon
+## 5 — Return, release and completion
 
-Deliver the new site-led Base/Central in the same Cradle code line and installation identity, with explicit minimal composition, QL/MEF/Epi mode, full native companion/practices and complete public World. Required domain/plugin/capability violations are repaired and regressed. Install and run it without Factory or Workcell; also use its isolated profile within the richer installation without disturbing existing work.
+### 5.1 What stays live during execution
 
-Return exact branch/commits/native dependencies, contribution and provider contracts, compatible release manifest, Pi package/Prime fork, tested install/open/update commands, actual site/native screenshots, numerical results and the owner's real feedback. Keep #592's current packet, file claims, decisions, remaining fault and next action current; concise NOW/ticket handoffs preserve continuity across worker replacement.
+The parent ledger carries active packet, owner, claimed files, current interface revision, actual completed change, executed evidence, remaining fault and next executable action. Child issues link native commits/PRs and detailed results. Keep the source-to-capability/operation/control mapping current as interfaces change. Document an interpretation or contract change with its reason and update affected consumers deliberately.
 
-Only after refining this foundation does EF4 revisit Factory, Workcell, other product interfaces and shared meta-Central. They retain their native business meaning while their presentation is deliberately fitted to the improved Base. Preserve the useful minimal configuration as a permanent supported entry even when the full field grows.
+Existing NOW/continuation and native messaging carry worker progress. A replacement worker receives the current ticket, concise delta and exact refs, rather than a retelling of the whole investigation. Shared Git/build/install changes remain serialized and attributed.
 
-**Immediate finish line: the site's functionally apt encounter has become a genuinely agent-native, composable Base/Central in O:I, with the full selected Epi capability and real product independence.**
+### 5.2 Release material
+
+EF5 returns the real public/download entry, release/version manifest, downloadable app/World artifacts, actual Pi package and Prime fork refs, verified install/open/repair/update commands, and native source/rebuild instructions. The manifest ties together compatible publication, Expression, praxis, QL/MEF, Kev, AIKit/Central/Actuation, renderer/app and harness versions.
+
+The site uses the current authored publication title. Legacy filenames remain compatibility locators. The release retains provenance and required notices for admitted content/software. The clean install does not depend on the author's absolute paths or unpublished development seats.
+
+### 5.3 Whole completion
+
+The full QL/MEF companion, local Kev and AIKit Redis preparation operate through both delivered harness routes. The complete selected public essay and real Expression corpus are locally available. A person can read, explore relations, converse, enter Expressions, gather and work a constellation in Technē, save a meaningful return, quit/reopen and continue.
+
+The same experience is mounted in desktop local Explore and the shared-field web, where a participant's local Central is encountered within the containing meta-Central field. Actual inter-world participation returns to native ground. Website distribution and clean installation make this available beyond the developer checkout.
+
+Return the six-cell matrix, exact source/build/artifact basis, native action/context/decision receipts, measured performance/resources, continuity/recovery results and representative actual screenshots. Retain the owner's experiential judgement separately and plainly. Software delivery can be reported precisely without inventing that judgement.
+
+**The finish line is the person entering and using this whole encounter from the public distribution boundary.** Opus keeps implementing through the packet graph to that result, with one or two Sonnet implementers, and leaves any genuinely external missing evidence as an exact named item alongside everything actually delivered.
