@@ -3,7 +3,7 @@
 // kernel on an ISOLATED candidate profile, so the person's everyday installation, workspaces and layouts are not touched.
 //
 //   node scripts/candidate-launch.mjs [--mode web|tauri] [--profile NAME] [--site-root DIR] [--ground DIR] [--oi PATH]
-//                                      [--bridge-port N] [--vite-port N] [--edition-port N] [--no-open]
+//                                      [--worlds-root DIR] [--bridge-port N] [--vite-port N] [--edition-port N] [--no-open]
 //
 //   web    (default) the Cradle served by vite, the kernel as the loopback walk bridge — dev tooling that fronts the same
 //          typed KernelOp seam the native host does. Opens in the default browser. No native build needed.
@@ -36,9 +36,10 @@ mkdirSync(home, {recursive: true});
 const siteRoot = resolve(arg("site-root", process.env.FIELD_SITE_ROOT ?? join(repo, "site/dist")));
 const ground = resolve(arg("ground", process.env.OI_CENTRAL_ROOT ?? join(homedir(), "Central")));
 const oi = arg("oi", process.env.OI_CANDIDATE_BIN ?? process.env.OI_BIN ?? "oi");
+const worldsRoot = arg("worlds-root", process.env.OI_WORLDS_ROOT);
 const bridgePort = Number(arg("bridge-port", 4311)), vitePort = Number(arg("vite-port", mode === "tauri" ? 1421 : 1431)), editionPort = Number(arg("edition-port", 4717));
 
-if (!existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) { console.error(`candidate: --site-root must name a built site root (essay/static/fieldIndex.json); got ${siteRoot}`); process.exit(2); }
+if (!worldsRoot && !existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) { console.error(`candidate: --site-root must name a built site root (essay/static/fieldIndex.json); got ${siteRoot}`); process.exit(2); }
 if (!existsSync(ground)) { console.error(`candidate: the Central ground ${ground} does not exist`); process.exit(2); }
 
 // A stable 32-hex id gives the native shell its own persistent WebKit store for this profile.
@@ -51,13 +52,15 @@ const stop = () => { for (const c of children) { try { c.kill(); } catch { /* go
 process.on("SIGINT", stop); process.on("SIGTERM", stop);
 const waitHttp = async (url, label) => { for (let i = 0; i < 240; i++) { try { if ((await fetch(url)).ok) return; } catch { /* not yet */ } await new Promise(r => setTimeout(r, 250)); } throw new Error(`${label} did not answer at ${url}`); };
 
-const edition = await serveEdition(siteRoot, editionPort);
-const editionUrl = `http://127.0.0.1:${edition.port}/essay/`;
-console.log(`candidate: essay edition   ${editionUrl}   (from ${siteRoot})`);
+// With --worlds-root the Epi lens reads the INSTALLED World through the kernel (WorldResolve + the __world route): no edition
+// server and no edition address. Without it the essay edition is served from --site-root and handed over as VITE_ESSAY_EDITION.
+let editionUrl;
+if (worldsRoot) console.log(`candidate: essay World    installed under ${resolve(worldsRoot)} (kernel WorldResolve; no edition server)`);
+else { const edition = await serveEdition(siteRoot, editionPort); editionUrl = `http://127.0.0.1:${edition.port}/essay/`; console.log(`candidate: essay edition   ${editionUrl}   (from ${siteRoot})`); }
 
 // The desktop's expression socket defaults to a path keyed by HOME alone, which the everyday app also uses; the
 // profile gets its own so the two can run side by side.
-const env = {...process.env, OI_HOME: home, OI_CENTRAL_ROOT: ground, OI_BIN: oi, VITE_ESSAY_EDITION: editionUrl, OI_EXPRESSION_SOCKET: join(profileDir, "expression.sock")};
+const env = {...process.env, OI_HOME: home, OI_CENTRAL_ROOT: ground, OI_BIN: oi, ...(editionUrl ? {VITE_ESSAY_EDITION: editionUrl} : {}), ...(worldsRoot ? {OI_WORLDS_ROOT: resolve(worldsRoot)} : {}), OI_EXPRESSION_SOCKET: join(profileDir, "expression.sock")};
 if (mode === "web") {
   const bridgeBin = process.env.FIELD_BRIDGE_BIN ?? join(cradle, "kernel/target/debug/walk-bridge");
   if (!existsSync(bridgeBin)) { console.error(`candidate: no walk bridge at ${bridgeBin} — build it: (cd desktop/cradle/kernel && cargo build --bin walk-bridge)`); process.exit(2); }

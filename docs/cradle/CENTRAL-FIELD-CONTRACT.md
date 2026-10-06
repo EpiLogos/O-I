@@ -140,6 +140,8 @@ node scripts/candidate-launch.mjs --mode tauri --site-root <built site root> --o
 node scripts/candidate-launch.mjs --mode web   --site-root <built site root> --oi <repo>/target/debug/oi   # browser
 ```
 
+With `--worlds-root DIR` (an `essay-world.mjs install` root, e.g. `~/.oi-candidates/worlds`) the Epi lens reads the INSTALLED World through the
+kernel (`WorldResolve` + the `__world` route): no edition server, no edition address — the shape the shipped app has.
 `--site-root` is a built site (`essay/static/fieldIndex.json`, `expression.html`): `site/dist` after
 `npm run build:public`, or a snapshot of it. Ctrl-C stops everything the launcher started.
 
