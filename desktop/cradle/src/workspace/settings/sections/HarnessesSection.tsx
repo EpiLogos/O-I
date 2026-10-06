@@ -10,7 +10,7 @@ import {useScope,scopeProject} from "../../scope";
 import {chatProvisionTarget} from "../../../agent/chat/firstSend";
 import {modelChoices} from "../../../agent/chat/modelPresentation";
 import {useActiveEncounter} from "../../activeEncounter";
-import {adapterNeeded,harnessEffect,harnessItems,harnessName,notFound,readyHarnesses} from "../sectionModel";
+import {adapterNeeded,adapterNeededReason,harnessEffect,harnessItems,harnessName,notFound,readyHarnesses} from "../sectionModel";
 import {expect,loadSuite,plain,refreshAll,stageDefaultConnection,defaultScope,resolutionKey,watchPair,type SettingsSnapshot} from "../settingsData";
 import {currentConnection,DEFAULT_CONNECTION_ROW,settingRowId,stageSetting,stagedChanges,undoChange} from "../changeModel";
 import {connectionVerification,connectionNames,providerName,MODEL_DEFAULT_SETTING,modelDefaults,modelDefaultChoice} from "../harnessCapabilities";
@@ -184,8 +184,8 @@ export function HarnessesSection({data}:{data:SettingsSnapshot}) {
    {reading.harness.harnesses.state==="failed"?<Unreadable error={reading.harness.harnesses.error} onRetry={()=>void loadSuite()}/>:<>
     <div className="settings-cards">{ready.map(row=><DetectionCard key={row.client} row={row}/>)}</div>
     {needing.length>0&&<details className="settings-name-details" data-harness-adapter-needed>
-     <summary>{needing.length} detected without a chat adapter yet</summary>
-     <ul className="settings-name-list">{needing.map(row=><li key={row.client} data-harness-client={row.client}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">Detected · adapter needed</span></li>)}</ul>
+     <summary>{needing.length} detected outside the ready set</summary>
+     <ul className="settings-name-list">{needing.map(row=><li key={row.client} data-harness-client={row.client} data-adapter-reason={adapterNeededReason(row)}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">{adapterNeededReason(row)==="census-pending"?"Detected · adapter ready, capability census pending":"Detected · adapter needed"}</span></li>)}</ul>
     </details>}
     {missing.length>0&&<details className="settings-name-details" data-harness-not-found>
      <summary>{missing.length} not on this machine</summary>
