@@ -1,0 +1,150 @@
+{
+  "artifact": "mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "fc59a719",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-valentinian-sophia-horos-achamoth",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/late-antique-gnostic/valentinian-sophia-horos-achamoth/WHOLE.md",
+        "sha256": "fd39f4553cd2e9843013d06c8373bec63525768502c1c75d8a80b8a78c9e4526"
+      }
+    ]
+  },
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-val-0-ogdoad",
+      "phase": "#0 the fullness in conjunction",
+      "relations": "I.1.1–I.2.1; the thirty Aeons in fifteen syzygies"
+    },
+    {
+      "scene_id": "m-val-1-horos",
+      "phase": "#1 Sophia reaches; Horos restores",
+      "relations": "I.2.2–I.2.4, I.3.5; the variant kept distinct; upper Sophia not exiled twice"
+    },
+    {
+      "scene_id": "m-val-2-soter",
+      "phase": "#2 teaching, thanksgiving, the common fruit",
+      "relations": "I.2.5–I.2.6, I.3.1's distinction of the two named Christs"
+    },
+    {
+      "scene_id": "m-val-3-achamoth",
+      "phase": "#3 Achamoth receives form twice",
+      "relations": "I.4.1–I.4.5; the translation tension retained; Irenaeus's sweat satire as speaker-change"
+    },
+    {
+      "scene_id": "m-val-4-demiurge",
+      "phase": "#4 the maker who does not know his mother",
+      "relations": "I.5.1–I.5.6; the second affect table; I.6 under polemic; I.7.2's \"some\""
+    },
+    {
+      "scene_id": "m-val-5-return",
+      "phase": "#5→0 bridal return and what remains outside",
+      "relations": "I.7.1, I.7.5; variants I.11–I.12, I.15.1, I.17.1, I.21; the Offered founding comparison; A13, A19 (human-amplified: no); Neumann shared ground"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "the fifteen syzygies",
+      "occurrence": "#0 the Ogdoad, Decad, Duodecad with repeated-but-distinct names"
+    },
+    {
+      "figure": "Horos / Stauros",
+      "occurrence": "#1 sustaining and separating functions of one power; two Horoi belonging to Valentinus's variant"
+    },
+    {
+      "figure": "the enthymesis / Achamoth",
+      "occurrence": "#1 excluded with its passion; #3 the lower Sophia formed twice"
+    },
+    {
+      "figure": "the earlier Christ and the collective Soter",
+      "occurrence": "#2–#3 teacher and common fruit, distinct despite the shared name"
+    },
+    {
+      "figure": "the Demiurge",
+      "occurrence": "#4 effective, ignorant of Achamoth's agency; #5→0 learning at the Saviour's advent, restored to the intermediate place"
+    },
+    {
+      "figure": "the two affect-to-cosmos accounts",
+      "occurrence": "#3 tears/smile/grief and #4 fear/grief/earth-water-air-fire — both retained, constraining comparison"
+    },
+    {
+      "figure": "the spiritual seed",
+      "occurrence": "#3 conceived in the angels' likeness; #4 placed within the Demiurge unknowingly; #5→0 maturing into the bridal union"
+    },
+    {
+      "motif": "the royal mosaic rearranged into a fox",
+      "occurrence": "#5→0 Irenaeus's own refutation image, kept as his"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "the three interpretive relations (founding 0/1→4+2 comparison; Dia/Syn return; Demiurge/resituated local authority) — all Offered with human-amplified: no",
+      "flag": "no — preserved as recovered candidates; no new ratification"
+    }
+  ],
+  "cross_story_relations": [
+    "Distinct from the Hypostasis of the Archons whole; no historical identity across the shared Sophia name."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: six scenes; the two Christs are staged as separate glyphs so I.3.1's distinction stays visible; the founding-compression caveat (\"Sophia with the Limit makes the elements\" as comparative compression, not replacement account) is carried in scene 6 text. Hostile-testimony standing (Irenaeus; Roberts–Rambaut 1885) preserved. E0 acceptance repair: title/field collision fixed on m-val-0-ogdoad, m-val-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
+    "#0 ogdoad — violet fullness; the branches counted 10·12 → 30/15 (the order the crisis will disturb); ⊙ dimming as the others' longing is restrained; attract/pulse — the conjunct world; no automation (the stillness before the passion).",
+    "#1 horos — THE SEPARATING SCENE: Sophia's reach walked — out, strained dim toward the depth, returned bright to her conjunction; the boundary triangle names itself Horos as it acts; repel/shove at full strength — the limit that bounds and sustains; the enthymesis disc excluded at the rim; the amorphous-birth variant triangle kept visibly separate (never silenced).",
+    "#2 soter — ring layout: the fullness gathered; ⁂ → Soter (the contributions composing the common fruit, arriving at the Soter's station); attract/pulse — thanksgiving and rest; auto-rest LFO on dispersion (the shared quiet).",
+    "#3 achamoth — the longest beat (15): formed once by the earlier Christ (disc brightening), formed twice by the Soter (brighter); IAO cried at the boundary triangle; vortex/pulse — the passions' churning becoming cosmos; the affect-table ≈⚰ held centre.",
+    "#4 demiurge — grid layout (the ordered substances); 7·8 → 7 (his knowledge bounded at the Hebdomas, his mother's Ogdoad outside his sight); attract/implode — the hidden agency drawing the making; auto-order triangle LFO (the ordering labour); ◉ the human with the placed seed.",
+    "#5→0 bridal return — THE 3D SCENE. z is the return's layers: the Offered comparison nearest (0/1 → A13·A19 at z +0.3, human-amplified: no kept in view), the bridal chamber breathing at z 0, the Demiurge's reward at z −0.2, fire deepest (z −0.35) consuming matter and finally itself; pointer attract/pulse firmest — the union gathering; auto-bridal LFO on pointerStrength.",
+    "ENDING QUALIFIES BEGINNING: #0's counted fullness (30/15) rested on conjunctions; #1's solitary reach broke measure and was restored by a limit that sustains what it bounds — the excluded passion persisting outside; #5→0 returns as bridal union joined by differentiated destinations (Demiurge dwelling, souls resting, fire self-consuming) with the comparison kept Offered and nearest: the formed four asked whether it can disclose the two implicated conditions — the beginning's reach, limit and contribution re-read without being claimed as proof. The naming-guard held: Achamoth's exile never re-exiles upper Sophia.",
+    "Human-amplified guards carried (amplification relations: all Offered, human-amplified: no): no new symbolic ratification; the image returns to A13 without becoming its proof; the source-to-psychic comparison unratified. Source-led discipline: Irenaeus's accusations, rebuttals and satirical sweat proposal remain his own voices (kept as change of speaker); licentiousness allegations remain polemic; variants marked, not episodes; the translation tension between substantial formation and later intelligence retained; the 'some' of I.7.2 a marked fourfold-Christology variant; royal-mosaic image Irenaeus's own refutation. Mythemic verbs only: the report displays a restored limit and a collective contribution.",
+    "Automation: auto-rest (the shared quiet), auto-order (the ordering labour), auto-bridal (the union gathering) — tied to the record's moves; #0, #1, #3 held without automation (the stillness, the limit, the passion are their own times). Durations 12–15, transitions 1.3–2.0."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l4",
+    "lane": "mytheme"
+  },
+  "glyph_rationales": {
+    "10·12": "the Decad and Duodecad — the two branches of further generation from Logos/Zoe and Anthropos/Ecclesia (#0).",
+    "30/15": "the counted fullness — thirty Aeons in fifteen conjunctions (syzygies), names attached to positions (#0).",
+    "⊙": "Nous — the one Aeon who comprehends the Father; dimmed where the others long and are restrained by Sige (#0).",
+    "Sophia": "the youngest of the Duodecad, joined to Theletos — her solitary reach straining toward the Father's depth, restored by Horos to her conjunction (#1; upper Sophia never exiled).",
+    "Horos": "the limit named as it acts — supporting and separating: Stauros the sustaining function, Horos the separating, one power establishing and dividing (I.3.5) (#1).",
+    "☮": "the Holy Spirit — bringing the Aeons to thanksgiving and rest (#2).",
+    "⁂": "the contributions — each Aeon's most beautiful and excellent, composing one fruit (#2).",
+    "Soter": "the common fruit — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all; distinct from the earlier teaching Christ (#2; the second formation at #3).",
+    "IAO": "Achamoth's cry as Horos stops her crossing back — the report's own explanation of the name (#3).",
+    "≈⚰": "the affects becoming cosmos — tears→liquid substance, the smile→the lucid, grief and perplexity→corporeal existence; conversion generating the psychic order (#3).",
+    "Demiurge": "the psychic maker — ordering the substances and ruling the Hebdomas, ignorant of the mother whose images he executes (#4).",
+    "7·8": "the seven heavens with Achamoth's intermediate Ogdoad above him, below the Pleroma (#4).",
+    "7": "his bounded knowledge — the Hebdomas alone, what exceeds him unseen (#4).",
+    "◉": "the human — earth, psychic breath, skins; the spiritual seed placed within (#4).",
+    "🔥": "fire — hidden until its moment, consuming matter and finally itself (#5→0).",
+    "0/1": "the founding comparison — Offered, human-amplified: no: Sophia's solitary reach, restored limit and collective contribution compared with 0/1→4+2, the two implicate conditions retained (#5→0).",
+    "A13·A19": "the declared returns — A13 (necessary Dia / relational Syn: separation not made every act a fall) and A19 (the Demiurge's education from hidden dependence to a resituated office) (#5→0)."
+  }
+}
