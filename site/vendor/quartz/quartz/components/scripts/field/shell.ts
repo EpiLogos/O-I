@@ -17,7 +17,7 @@ export function mountShell() {
     if (v === "split" || (v === "field" && !narrowPhone.matches)) v = "essay"
     if (v === "library" && S.view !== "library") before = S.view || "essay"
     S.view = v; app.dataset.view = v
-    $$("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)))
+    $$("button[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)))
     if (v !== "essay" && app.dataset.right === "closed") app.removeAttribute("data-right")
     if (persist && v !== "library") store.set("view", v)   // the gallery is a visit, not a way of reading
     emit("view", { v })
@@ -41,7 +41,7 @@ export function mountShell() {
   sub("drawer", ({ open }) => setDrawer(open))
 
   // the Library buttons toggle: pressing it again goes back to the reading view you came from
-  for (const b of $$("[data-view]")) listen(b, "click", () => setView(b.dataset.view === "library" && S.view === "library" ? before : b.dataset.view!))
+  for (const b of $$("button[data-view]")) listen(b, "click", () => setView(b.dataset.view === "library" && S.view === "library" ? before : b.dataset.view!))
   listen(document, "click", (e: MouseEvent) => {
     const b = (e.target as Element).closest?.("[data-act]") as HTMLElement | null; if (!b || !app.contains(b)) return
     switch (b.dataset.act) {
