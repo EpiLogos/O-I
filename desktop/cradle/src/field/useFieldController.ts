@@ -44,7 +44,11 @@ export interface FieldControllerArgs {
   /** Declared effects of an operation (an Expression handed to its own page). */
   onEffect?: (effect: FieldEffect, state: FieldEncounter) => void;
   describe?: (ref: string) => { title: string; revision?: string } | undefined;
+  /** Called after every real change with the encounter before and after — the world seam mirrors it (worldSync.ts).
+   * `remote` marks a change that CAME from the kernel, which must not be echoed back. */
+  onChange?: (prev: FieldEncounter, next: FieldEncounter, op: FieldOp, meta: {remote: boolean; origin?: "graph" | "page"}) => void;
 }
+export interface ApplyMeta { remote?: boolean; origin?: "graph" | "page" }
 
 export function useFieldController(args: FieldControllerArgs) {
   const {index, world_ref, bindingId} = args;
@@ -72,9 +76,13 @@ export function useFieldController(args: FieldControllerArgs) {
     timer.current = window.setTimeout(flush, 250);
   }, [flush]);
 
-  const apply = useCallback((op: FieldOp): FieldResult => {
-    const result = fieldApply(state.current, op);
-    if (result.changed) { state.current = result.state; rerender(); persistSoon(); announceField(); }
+  const apply = useCallback((op: FieldOp, meta: ApplyMeta = {}): FieldResult => {
+    const before = state.current;
+    const result = fieldApply(before, op);
+    if (result.changed) {
+      state.current = result.state; rerender(); persistSoon(); announceField();
+      latest.current.onChange?.(before, result.state, op, {remote: !!meta.remote, origin: meta.origin});
+    }
     for (const effect of result.effects) latest.current.onEffect?.(effect, state.current);
     return result;
   }, [persistSoon]);

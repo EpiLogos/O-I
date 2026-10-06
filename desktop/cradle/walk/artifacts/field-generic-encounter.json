@@ -1,0 +1,205 @@
+{
+  "scenario": "field-generic-encounter",
+  "at": "2026-10-06T19:05:09.757Z",
+  "passed": true,
+  "counts": {
+    "passed": 26,
+    "total": 26
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "Epi OFF: Base still opens on the field"
+    },
+    {
+      "ok": true,
+      "label": "with no project in scope the field offers the linkable projects and assumes none"
+    },
+    {
+      "ok": true,
+      "label": "the corpus opens on its own home page (the root README)",
+      "detail": "Harbour Notes"
+    },
+    {
+      "ok": true,
+      "label": "native ref and pinned revision from the owner's read",
+      "detail": {
+        "ref": "central:source:project:Field:README.md",
+        "revision": "central.content-fnv1a64/v1:275:0363b1de7b05dee2"
+      }
+    },
+    {
+      "ok": true,
+      "label": "7 markdown pages, no rail and no Expression chips (no essay semantics)",
+      "detail": {
+        "rows": 5,
+        "pages": "7 pages",
+        "essay": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "connections list the home page's links (paths and wiki names)"
+    },
+    {
+      "ok": true,
+      "label": "Alpha Tide is among the home page's connections",
+      "detail": "central:source:project:Field:notes/alpha.md"
+    },
+    {
+      "ok": true,
+      "label": "click on a graph node SELECTS it: no tab, no navigation, generation +1",
+      "detail": {
+        "selected": true,
+        "gen": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "the click IS the kernel's selection_set: selection_read names the ref, origin graph, native owner Central, the node's revision",
+      "detail": {
+        "kind": "source",
+        "native_owner": "Central",
+        "origin": "graph",
+        "revision": "central.content-fnv1a64/v1:274:a79ccf1012089e7d",
+        "subject_ref": "central:source:project:Field:notes/alpha.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "double-click opens it as an italic preview tab, in view",
+      "detail": [
+        {
+          "label": "Harbour Notes",
+          "preview": false,
+          "selected": false
+        },
+        {
+          "label": "Alpha Tide",
+          "preview": true,
+          "selected": true
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the main page is unchanged"
+    },
+    {
+      "ok": true,
+      "label": "the tangent IS a preview portal in the kernel, canonical ref preserved",
+      "detail": [
+        [
+          "preview",
+          "central:source:project:Field:notes/alpha.md"
+        ]
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a link in the text replaced the preview with the next tangent",
+      "detail": [
+        {
+          "label": "Harbour Notes",
+          "preview": false,
+          "selected": false
+        },
+        {
+          "label": "Beta Mooring",
+          "preview": true,
+          "selected": true
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "double-click KEEPS it"
+    },
+    {
+      "ok": true,
+      "label": "keep re-placed the same portal beside",
+      "detail": [
+        "beside"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a new tangent opens beside the kept one",
+      "detail": [
+        [
+          "Harbour Notes",
+          false
+        ],
+        [
+          "Beta Mooring",
+          false
+        ],
+        [
+          "Gamma Depth",
+          true
+        ]
+      ]
+    },
+    {
+      "ok": true,
+      "label": "return to the main page"
+    },
+    {
+      "ok": true,
+      "label": "promote makes the tangent the main page",
+      "detail": {
+        "trail": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "back returns to the previous main page"
+    },
+    {
+      "ok": true,
+      "label": "an external selection_set moved the selected node: no tab, no navigation",
+      "detail": {
+        "selected": "central:source:project:Field:notes/deep/gamma.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "an agent's portal_open opened the same preview tab a double-click does",
+      "detail": {
+        "label": "Glossary of Terms",
+        "preview": true,
+        "selected": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "the agent closing the portal closed the tab"
+    },
+    {
+      "ok": true,
+      "label": "search answers at once from titles and paths",
+      "detail": [
+        "Glossary of Terms",
+        "Reference",
+        "Harbour Notes"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Enter opens the hit as a tangent"
+    },
+    {
+      "ok": true,
+      "label": "an image beside the page is the owner's bytes, inlined",
+      "detail": {
+        "src": "data:image/svg+xml;base64,PHN2",
+        "w": 120
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

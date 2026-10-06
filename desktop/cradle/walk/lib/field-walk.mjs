@@ -5,7 +5,7 @@
 //   FIELD_SITE_ROOT    a built site root: it holds essay/ and expression.html   required
 //   FIELD_BRIDGE_BIN   the walk-bridge binary                                   default kernel/target/debug/walk-bridge
 import {execFileSync, spawn} from "node:child_process";
-import {existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs";
+import {cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -21,7 +21,7 @@ async function waitHttp(url, label, ms = 30000) {
   throw new Error(`${label} did not answer at ${url}`);
 }
 
-export async function bootField({width = 1440, height = 900, epi = true, bridge = true, siteRoot = process.env.FIELD_SITE_ROOT, appUrl = process.env.FIELD_APP_URL ?? "http://localhost:1451/"} = {}) {
+export async function bootField({width = 1440, height = 900, epi = true, bridge = true, fixture = null, siteRoot = process.env.FIELD_SITE_ROOT, appUrl = process.env.FIELD_APP_URL ?? "http://localhost:1451/"} = {}) {
   if (!siteRoot || !existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) throw new Error("FIELD_SITE_ROOT must name a built site root (essay/static/fieldIndex.json)");
   const disposers = [];
   const dispose = async () => { for (const d of disposers.reverse()) { try { await d(); } catch { /* best effort */ } } };
@@ -37,6 +37,7 @@ export async function bootField({width = 1440, height = 900, epi = true, bridge 
       const ctrl = process.env.OI_CENTRAL_CTRL_BIN ?? "ctrl";
       const call = (a, i = {}) => execFileSync(ctrl, ["--root", root, "--json", "action", "run", a, JSON.stringify(i)], {encoding: "utf8"});
       call("central.init"); mkdirSync(join(root, "Work", "Field")); call("projectcentral.init", {project: "Field", project_id: "field-walk"});
+      if (fixture) cpSync(fixture, join(root, "Work", "Field"), {recursive: true});   // an ordinary corpus, linked as the project
       const port = 4300 + Math.floor(Math.random() * 500);
       const child = spawn(bin, [`127.0.0.1:${port}`], {cwd: root, env: {...process.env, OI_CENTRAL_ROOT: root, OI_HOME: home, OI_CENTRAL_PROJECT_QUERY: "Field"}, stdio: "ignore"});
       disposers.push(() => child.kill());
