@@ -1,0 +1,7 @@
+{
+  "schema": "oi.egress-allowance-record/v1",
+  "authored_for": "the Epi field companion's NOW preparation request (tests/fixtures/prime-kev-redis/candidates.json)",
+  "what": "external_egress = allowed and agent_visibility = payload on the candidate items the scenario lists in `items`, and on no other source.",
+  "why": "These items are pages of the PUBLISHED Return-of-Zero edition, whose own privacy reading is public, so the request states it per item. The default law is untouched: Central-read sources still default to egress denied, the request names no Central-read source (central.source_refs is empty), and AIKit still refuses any item that is not allowed or not payload-visible.",
+  "not_covered": "any private, working, quilt, reference-note or unpublished note; any other item in any other request"
+}

@@ -208,6 +208,25 @@ AIKIT_TEST_REDIS_ADDR=127.0.0.1:6396 cargo test -p aikit-cli --test now_context_
 
 Limits: the Kev answer body is not persisted by the prepare path, so only the invocation ref and the provider identity digest are reportable; QL tool calls prove the body *called*, and an owner receipt proves the QL owner *executed* (the reading reports both and whether their counts agree, matched by count and time, not identity); a live Pi or Prime body calling QL during an encounter was not run in this packet (no model credentials exercised), so the recorder's QL part is proven over journals shaped like the owner's, not over a live model turn.
 
+### 2.6 Real-turn proof, and the QL failures it exposed (6 Oct 2026)
+
+`walk/scenarios/prime-kev-redis-turn.mjs` (receipt `walk/artifacts/prime-kev-redis-turn.json`, grade A) drives one real encounter turn on the
+Prime-QL body with Redis-prepared NOW context electing the live Kev, then reads it back with `encounter-use` and `now-context inspect`. The two QL
+failures seen in its first runs were run down:
+
+- **`native faculty receipt filing failed (1):` on every `ql_relational` Python call that files a receipt.** Version drift in the install, not a
+  QL-MEF defect. `~/.config/epi-logos/faculty.json` pins `owner.revision` 8eff719b (23 Sep); the source-built owner instrument
+  (`native-owner-instrument`, rebuilt from the 2 Oct Actuation source, #127) bakes `OWNER_REVISION` 6a81fc44 into the binary and answers every request
+  with it. `actuation-research faculty.invoke` refuses the reply ("owner response correlation/revision mismatch"), and its error goes to stdout, so
+  Python reports an empty stderr. Reproduced directly against the installed `actuation-research`; with the pin changed to 6a81fc44 the same call
+  succeeds and files its receipt. The turn is damaged, not just the receipt: after the failure the body went on investigating for over fifteen minutes.
+  The everyday `epi-prime-ql` row still carries the stale config.
+  Repair (Actuation, `distribution/prime-epi`): `install` now refuses a faculty configuration whose pin is not the revision the instrument reports
+  (`checkFacultyCoherence`, naming both), and `epi-distribution.mjs faculty-config --instrument … --source-root … --evidence-root … --out …`
+  writes the configuration from the instrument's own reply, so it follows a rebuild. Native-CLI owners report no revision and are disclosed, not probed.
+- **`ql_decision_frame` refused `quaternary.position.structure` ("expected one of lens, context-frame, faculty, operation").** The model invented
+  an element kind; the kernel's own schema refused it with an error naming the valid ones. Correct behaviour, no defect.
+
 ## 3. Pi / Prime inventory (task C)
 
 Scope: what exists of the Pi extension and the Prime harness fork, how a session crosses the supported boundary into Cradle, and the exact gaps to make both bodies consume QL operations, Kev results and AIKit-prepared context. No runtime was built or changed for this section. Facts below are from source, installed artifacts and one registry/GitHub read on 6 October 2026; where something was not run live it says so.
