@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Point-Cloud-Demo
-          ref: e875344c04c14228840665a91823edc42b078fb2
+          ref: f765b0a14df67e42fff8dc1ec4d16471b693d17f
           path: .publication-sources/Point-Cloud-Demo
           persist-credentials: false
       - name: Check out the exact current essay reading snapshot

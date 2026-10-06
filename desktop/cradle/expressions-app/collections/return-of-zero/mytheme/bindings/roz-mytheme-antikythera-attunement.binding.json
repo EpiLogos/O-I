@@ -1,0 +1,147 @@
+{
+ "artifact": "mytheme/roz-mytheme-antikythera-attunement.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme",
+  "family-frank-taylor"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-antikythera-attunement",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/antikythera-attunement/WHOLE.md",
+    "sha256": "c7140d70bf131da9c0135b3e18d4a45234711f12d71a39a323c9336b292336df"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-ant-0-sky",
+   "phase": "#0 the sky exceeds the hand",
+   "relations": "Taylor's attunement image; Freeth 2006 paraphrase; find-place distinct from workshop"
+  },
+  {
+   "scene_id": "m-ant-1-gearing",
+   "phase": "#1 gearing, scale, inscription, reader",
+   "relations": "the distributed source of intelligibility; the reader within the read world"
+  },
+  {
+   "scene_id": "m-ant-2-cycles",
+   "phase": "#2 coordinated cycles keep their differences",
+   "relations": "anchor antikythera-coordinated-cycles; Metonic/Antikythera matheme; A16"
+  },
+  {
+   "scene_id": "m-ant-3-wreck",
+   "phase": "#3 the damaged instrument makes answerability unavoidable",
+   "relations": "anchor antikythera-reconstruction; Freeth 2021 q001 (p.2) and q002 (p.12 no-replica limit)"
+  },
+  {
+   "scene_id": "m-ant-4-native",
+   "phase": "#4 the shared archetypal return",
+   "relations": "anchor antikythera-native-archetypal-return; Neumann whole; Taylor core field; Symbolon Dynamics; Homologia/Analogia"
+  },
+  {
+   "scene_id": "m-ant-5-return",
+   "phase": "#5→0 the instrument returns to making",
+   "relations": "anchor antikythera-instrument-returns; Heidegger 1977 q003 / 1966 q004; A32; Bratton q029/q038; Symbol/Account/Trust; Movement 45"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "Sun and Moon indications",
+   "occurrence": "#0, #2 different questions answered together at the dial"
+  },
+  {
+   "figure": "gear train, scale, inscription",
+   "occurrence": "#1 motion, mark, interpretation as distinct offices"
+  },
+  {
+   "figure": "the Metonic and Saros operations with their residual",
+   "occurrence": "#2 the matheme owns the quantities"
+  },
+  {
+   "figure": "the 82 surviving fragments",
+   "occurrence": "#3 the reverse direction: fragment toward arrangement"
+  },
+  {
+   "figure": "the nine-output front display (2021)",
+   "occurrence": "#3 the proposal with its no-replica limit"
+  },
+  {
+   "figure": "the reader at the dial",
+   "occurrence": "#0, #1, #5→0 the living exterior of the finished instrument"
+  },
+  {
+   "place": "Antikythera",
+   "occurrence": "#0 the shipwreck find-place — not the workshop, not the research programme"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "existing ratified attunement operation and the commissioned shared archetypal refraction",
+   "flag": "yes"
+  },
+  {
+   "relation": "new archaeological, causal or historical identity",
+   "flag": "no — excluded by the record's amplification_scope"
+  }
+ ],
+ "cross_story_relations": [
+  "The mirror whole (mytheme-mirror-that-moves-first): A32's threshold — the moving mirror adds an instrument that can initiate disclosure of its own conditions; causal influence is necessary middle, not the completed vocation.",
+  "Withholding law (alignment §III.5): the mechanism is withheld by the essay until §5→0 · #2; this artifact notes that standing in its final scene and binding rather than rendering the dial earlier."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-antikythera-attunement.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Standing note carried: withheld-until-§5→0 is an active promise of the essay; the artifact is sequenced whole but binds the withholding in its last scene text. Craft: brass-on-night palette for the dial scenes; the wreck scene uses a fragments→yantra sequence to stage reconstruction and its stated limit. E0 acceptance repair: title/field collision fixed on m-ant-0-sky, m-ant-1-gearing, m-ant-2-cycles, m-ant-4-native, m-ant-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2) — THE CAPSTONE: this journey is where the essay's longest withholding (the Antikythera mechanism, promised from the opening, withheld until §5→0·#2) appears; the record's claim_status is Offered and the journey keeps it so — the contemporary application is staged as proposal, bounded by the record's own limits.",
+  "#0 sky — the disproportion staged in scale and pace: zoom 0.85 (the sky vaster than the dial), the slowest beat of the journey (auto-sky, rate 0.05 — the heavens' turning), pointer repel at 0.15 (receptive attention, near stillness); the reader's ◉ sits dark inside the dial's disc — the reading not yet made; no ancient consultation invented. Critic fix 2026-10-06 (wave-3 re-check): the '82' fragment-count and the Greek inscription wording Ἡλίου are not the record's own at fc59a719 and are withdrawn — the fragment mass is now the unnamed carrier (shape-disc sequence) and the read-as move runs mark · → ☉, both inside the record's own terms; no new archaeological, causal or historical identity.",
+  "#1 gearing — the gear train drives the field (morphEnabled, thetaRate 0.45; auto-gear triangle on speed — the wheel's drive); the scale-mark · becomes what it is to be read AS (☉): the record's own move — an inscription tells a reader what a mark is to be read as (no Greek wording asserted); the ? at the rim keeps the misread indication live; pointer vortex — the turning.",
+  "#2 cycles — the Metonic (gold) and Saros (teal) rings breathe counter-phase (never settling into one rhythm — the operations stay distinct); auto-metonic at rate 0.19 (authored to the 19-year span); ≈ bright at the base — the residual the mytheme carries; pointer attract/pulse gentle — the reader consulting.",
+  "#3 wreck — THE 3D SCENE. z is the direction of reconstruction: the surviving fragment mass deep (z −0.45, gold dimming and resurfacing), the fragment plate (square) opens into the proposed ring arrangement rising to z +0.15 and returns to the plate — the model returning to its stated limit (\"not a replica of the original\"), the 9 outputs nearest the viewer (z +0.35); depth occlusion with a bronze tint; pointer attract/implode — the reconstruction gathering. The withholding pays off here exactly as bounded.",
+  "#4 native — the local pressure of the last two movements: X/x (capacity and particular, held at the rim) walks to the return station as 1/0 — the dial's exact indication reopening its horizon; the Neumann ground disc and Taylor relation ring keep their different objects; pointer repel/shove — differentiation's cut retained; the refraction stays Argued (no Neumann-attribution, no eight-components claim).",
+  "#5→0 return — the instrument returns to making: the coordinating yantra centre-bright, the reader's ◉ now bright (judging), the exposed-terms square lit gold (the constructive demand reachable by resistance), the heavens still beyond the dial (ring at 0.35 — unchanged as condition); pointer attract at 0.7 — participation. ENDING QUALIFIES BEGINNING: #0's sky was received by a dark reader at zoom 0.85 with pointer 0.15; #5→0 returns the same dial composition with the reader bright, the terms exposed, zoom restored to the hand's scale — reception become participation, the exactness preserved (the mechanism still coordinates) while the horizon reopens (the heavens beyond). The Offered band is untouched: architectural body, A32 and Agentworld remain proposal and test, never implementation.",
+  "Human-amplified (frontmatter: yes, relation-local): the ratified attunement operation and the commissioned Neumann refraction — the scene bodies carry the guards (no ancient owner invented; 2006 not credited with 2021's features; model not replica; X/x Taylor's). Mythemic verbs only: the mechanism embodies attunement; the reconstruction demonstrates rigour by naming what remains unavailable.",
+  "Automation: auto-sky (the heavens), auto-gear (the wheel), auto-metonic (the 19-year breath) — all tied to the record's moves. Durations 11–15, transitions 1.1–2.0; the wreck held longest — answerability takes time. Critic fix 2026-10-06 (wave-3 re-check): the '82' fragment-count and the Greek inscription wording Ἡλίου are not the record's own at fc59a719 and are withdrawn — the fragment mass is now the unnamed carrier (shape-disc sequence) and the read-as move runs mark · → ☉, both inside the record's own terms; no new archaeological, causal or historical identity."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l2",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "9": "the nine outputs of the 2021 proposal: Moon, Nodes, Mercury, Venus, Sun, Mars, Jupiter, Saturn, Date (#3).",
+  "☉": "the Sun indication: one celestial office the dial coordinates (Freeth 2006's reported functions).",
+  "☽": "the Moon indication: lunar phase and position — a different office from the calendar's, coordinated not merged.",
+  "◉": "the reader: the active term whose question lets a display answer — dark within the dial at #0 (the reading not yet made), bright and judging at #5→0.",
+  "?": "the misread indication: a wheel can turn correctly while its indication is misread; an inscription legible while its motion is missing (#1).",
+  "≈": "the residual: the astronomical fit stays approximate while the material ratio is exact as an arrangement — attunement includes the possibility of discrepancy (#2).",
+  "𝑀": "the Metonic count: the chosen calendar count the matheme distinguishes from the approximate natural periods it relates (#2).",
+  "1/0": "the return of the achieved determination toward its ground (Taylor's native field, #4).",
+  "X/x": "determining capacity and the indefinite particular — Taylor's native relation, established before the psychic refraction (#4).",
+  "∷": "the field of positions where source, mark and recognition meet — the shared archetypal refraction, Argued, not a claim about Neumann or the makers (#4).",
+  "·": "the unnamed carrier — a formation whose sense is its shape alone (the dial, the scale-mark, the surviving fragment mass, the fragment plate, the proposed ring arrangement, the heavens beyond); no glyph is pretended."
+ }
+}

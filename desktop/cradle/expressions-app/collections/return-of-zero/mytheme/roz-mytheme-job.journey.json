@@ -10,8 +10,8 @@
       "id": "m-job-0-councils",
       "name": "The councils Job never hears",
       "character": "The reader is shown what Job and his friends are not: the wager precedes the suffering, and the account that suffering proves wrongdoing will confront a man whose integrity the opening affirmed.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,12 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": 0.1,
+          "dispersion": 0.04,
+          "pointerStrength": 0.25
+        }
       },
       "entities": [
         {
@@ -42,8 +51,8 @@
           "name": "the council — sons of God presenting; Satan among them",
           "kind": "formation",
           "position": {
-            "x": -0.45,
-            "y": -0.22,
+            "x": -0.5,
+            "y": 0.28,
             "z": 0
           },
           "size": {
@@ -65,18 +74,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st223",
-                "text": "",
+                "id": "st-e205-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.676,
+                    "y": 0.43
+                  },
+                  "rotation": 0,
+                  "tint": "#54626f",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e205-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.38
+                  },
+                  "rotation": 0,
+                  "tint": "#3d4a56",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -149,18 +198,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st225",
+                "id": "st-e207-1",
                 "text": "Job",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e207-2",
+                "text": "Job",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#a89468",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -191,18 +280,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st226",
+                "id": "st-e208-1",
                 "text": "⊣",
                 "shape": "text",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#3a2c1e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e208-2",
+                "text": "☠",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4a3a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -226,7 +355,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "In Uz, Job's uprightness has a household: seven sons, three daughters, livestock, servants, recurring feasts; his sacrifices reach toward a fault he has not witnessed. When the sons of God present themselves, Satan comes among them. The LORD points to Job's integrity; Satan answers: \"Doth Job fear God for nought?\" — remove the hedge and he will curse the giver. Permission reaches what Job has, not his person. The losses arrive through exhausted human mouths, each messenger still speaking when the next comes: Sabeans,",
+          "body": "In Uz, Job's uprightness has a household — seven sons, three daughters, livestock, servants, feasts; his sacrifices reach toward a fault he has not witnessed. When the sons of God present themselves, Satan comes among them. The LORD points to Job's integrity; Satan answers: \"Doth Job fear God for nought?\" Permission reaches what Job has, not his person. The losses arrive through messengers, each still speaking when the next comes:",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -240,12 +369,25 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "fire, Chaldeans, and the great wind on the children's feast house. Job tears his mantle, shaves his head, worships; he has not charged God foolishly — and the council stays undisclosed to him. The second council shifts the bargain from possessions to body; sores cover him; his wife urges curse and die; he answers through receiving evil as well as good. The three friends arrive, rend their clothing, and sit with him seven days and nights in silence — the first companionship that their later failure must be read against.\n\nOccurrences: the two councils (#0); the four messengers and the wind (#0); the potsherd and ashes (#0); the wife's words (#0); the seven-day silence (#0, recalled at #1).",
+          "body": "fire, Chaldeans, the great wind on the children's feast house. Job worships; he has not charged God foolishly — the council stays undisclosed to him. The second council shifts the bargain to his body; sores cover him; his wife urges curse and die; he receives evil too. The friends arrive and sit seven days in silence — the companionship their later failure must be read against.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the two councils (#0); the four messengers and the wind (#0); the potsherd and ashes (#0); the wife's words (#0); the seven-day silence (#0, recalled at #1).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
@@ -273,7 +415,7 @@
       "name": "The three rounds: comfort becoming accusation",
       "character": "Eliphaz, Bildad and Zophar explain; Job answers, protests, and asks for a hearing — the explanation begins to add an injury of its own.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.2,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -285,7 +427,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.2,
+        "pointerClickRadius": 0.45
       },
       "field": {
         "background": "#f6f1e6",
@@ -296,7 +442,12 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.15,
+          "dispersion": 0.06,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -327,18 +478,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st227",
+                "id": "st-e209-1",
                 "text": "E1",
                 "shape": "text",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.3,
+                "position": {
+                  "x": -0.6,
+                  "y": -0.02,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.184,
+                    "y": 0.086
+                  },
+                  "rotation": 0,
+                  "tint": "#7c5a33",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e209-2",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.3,
+                  "y": -0.1,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4226",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -446,9 +645,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.4,
+            "radius": 0.32,
             "spin": 0
           },
           "station": null,
@@ -572,7 +771,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Job breaks the silence cursing the day of his birth — the curse directed at his life's arrival, not the curse Satan predicted. Eliphaz begins from Job's former strength and the innocency question; Job answers with flesh not stone, asks for the pity a friend owes, and compares them to seasonal brooks failing caravans. Bildad insists on divine justice — the children's death then explicable through transgression; Job answers in chs. 9–10 that divine magnitude is the difficulty of obtaining a hearing: no daysman to lay a hand on them both. Zophar intensifies the",
+          "body": "Job breaks the silence cursing the day of his birth — not the curse Satan predicted. Eliphaz begins from Job's former strength and the innocency question; Job answers flesh-not-stone, asks the pity a friend owes, compares them to brooks failing caravans. Bildad insists on divine justice — the children's death explicable through transgression; Job answers that no daysman lays a hand on them both. Zophar intensifies the",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -586,16 +785,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "accusation; Job replies that wisdom is not the friends' possession and asks whether they will speak dishonestly for God. The second round: Job's words become evidence against him; he wants his speech preserved — written, engraved with iron and lead, cut into rock — with the living redeemer and the hope of seeing. The third round: Eliphaz alleges concrete cruelties as his own accusations; chapter 24 widens the witness to workers hungry while handling food. The poem keeps its complexity: Job too describes the wicked person's ruin, and Zophar gets no third speech.\n\nOccurrences: the brooks simile (#1); the daysman (#1); the iron-and-lead engraving (#1); the prosperous wicked (#1); the missing third Zophar speech (#1).",
+          "body": "accusation; Job replies that wisdom is not their possession. Second round: his words become evidence; he wants them preserved — written, engraved with iron and lead, cut into rock — with the living redeemer. Third: Eliphaz alleges cruelties; chapter 24 widens the witness to workers hungry while handling food. The poem keeps its complexity; Zophar gets no third speech.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the brooks simile (#1); the daysman (#1); the iron-and-lead engraving (#1); the prosperous wicked (#1); the missing third Zophar speech (#1).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -618,8 +830,8 @@
       "id": "m-job-2-wisdom",
       "name": "Chapter 28 — where wisdom's place is not",
       "character": "Human skill reaches the earth's hidden interior; wisdom's place is not found by the same achievement. \"The fear of the Lord, that is wisdom.\"",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -631,7 +843,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -642,7 +858,12 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.35,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
+        }
       },
       "entities": [
         {
@@ -650,8 +871,8 @@
           "name": "the miner's shafts — hidden ore brought to light",
           "kind": "formation",
           "position": {
-            "x": -0.5,
-            "y": -0.13,
+            "x": -0.28,
+            "y": -0.34,
             "z": 0
           },
           "size": {
@@ -757,18 +978,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st235",
-                "text": "",
+                "id": "st-e217-1",
+                "text": "·",
                 "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": {
+                  "x": 0,
+                  "y": -0.2,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#3a2c1e",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e217-2",
+                "text": "·",
+                "shape": "square",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": {
+                  "x": 0,
+                  "y": -0.42,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#2b2015",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -789,7 +1058,7 @@
           "text": "",
           "share": 1.4,
           "tint": "#c8b070",
-          "tintWeight": 1,
+          "tintWeight": 0.7,
           "locked": false,
           "force": {
             "kind": "none",
@@ -834,7 +1103,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Between the disputed judgments and Job's final oath, chapter 28 follows human skill underground: shafts opened, hidden ore brought to light, channels cut through rock, water restrained from dripping. The earth that feeds them has another interior their labour can reach. Wisdom's place does not become available by the same achievement: the deep says, It is not in me; the sea says, It is not with me; gold and",
+          "body": "Between the disputed judgments and the final oath, chapter 28 follows human skill underground: shafts opened, hidden ore brought to light, channels cut through rock, water restrained. The earth that feeds them has another interior their labour can reach. Wisdom's place does not become available by the same achievement: the deep says, It is not in me; the sea says, It is not with me; gold and",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -848,12 +1117,25 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "precious stones cannot be given for it. Destruction and death say they have heard the report with their ears. God knows the place — within an ordering of wind, water, rain and thunder that exceeds the miner's reach. The chapter gives human beings reverence and departure from evil as their relation to wisdom. No character named Sophia enters this biblical scene; the composition's historical questions remain separate.\n\nOccurrences: the mining shafts and ore (#2); Abaddon and Death's report (#2); the fear of the Lord as wisdom (#2).",
+          "body": "precious stones cannot be given for it. Destruction and death have heard the report with their ears. God knows the place — an ordering of wind, water, rain and thunder beyond the miner's reach. The chapter gives reverence and departing from evil as the human relation to wisdom. No character named Sophia enters this scene.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the mining shafts and ore (#2); Abaddon and Death's report (#2); the fear of the Lord as wisdom (#2).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
@@ -880,8 +1162,8 @@
       "id": "m-job-2b-oath",
       "name": "The oath and Elihu",
       "character": "Job binds his claim to contestable particulars and asks for the adversary's written charge; Elihu changes the proposed work of suffering yet still defends justice.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1.1,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -893,7 +1175,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#f6f1e6",
@@ -904,7 +1190,13 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.12,
+          "dispersion": 0.05,
+          "pointerStrength": 0.35,
+          "turbulence": 0.2
+        }
       },
       "entities": [
         {
@@ -977,18 +1269,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st238",
+                "id": "st-e220-1",
                 "text": "≡+",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#7c5a33",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e220-2",
+                "text": "✍",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.2,
+                "position": {
+                  "x": -0.3,
+                  "y": -0.14,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.15
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1061,18 +1397,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st240",
+                "id": "st-e222-1",
                 "text": "☁",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#54626f",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e222-2",
+                "text": "☁",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#39434d",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1096,7 +1472,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Job remembers his public righteousness with concrete recipients — the poor, fatherless, widow, blind, lame — and chapter 30 records the inversion: those he once despised now mock him, his own harsh distinctions preserved in the witness. The oath of chapter 31 binds his claim to particulars which can be contested: desire, adultery, treatment of servants, hunger, nakedness, the stranger's lodging, conduct toward an enemy; against contempt for a servant's cause he invokes their common making in the womb. He asks for the",
+          "body": "Job remembers his public righteousness with concrete recipients — poor, fatherless, widow, blind, lame — and chapter 30 records the inversion: those he once despised now mock him, his harsh distinctions preserved. The oath of chapter 31 binds his claim to contestable particulars: desire, adultery, servants, hunger, nakedness, the stranger's lodging; against contempt for a servant's cause he invokes their common making in the womb. He asks for the",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1110,12 +1486,25 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Almighty's answer and the adversary's written charge, to be carried openly on his shoulder and as a crown. Elihu then takes six chapters: angry both at Job's self-justification and at the friends' condemnation without answer; understanding through spirit rather than seniority; suffering as instruction that can turn a person from pride — yet chapters 34–35 bring Job's speech under fresh judgment. The weather begins to displace the imagined courtroom; Elihu's absence from the named rebuke in 42 certifies none of his claims.\n\nOccurrences: the oath's particulars (#2); the shoulder and crown (#2); Elihu's wine and mediation (#2); the gathering weather (#2, leading to #3).",
+          "body": "Almighty's answer and the adversary's written charge, carried on his shoulder and as a crown. Elihu takes six chapters: angry at Job's self-justification and at condemnation without answer; understanding through spirit rather than seniority; suffering as instruction — yet 34–35 bring Job's speech under fresh judgment. Weather begins to displace the courtroom; Elihu's absence from the named rebuke in 42 certifies none of his claims.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the oath's particulars (#2); the shoulder and crown (#2); Elihu's wine and mediation (#2); the gathering weather (#2, leading to #3).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
@@ -1142,20 +1531,28 @@
       "id": "m-job-3-whirlwind",
       "name": "The whirlwind: foundations, rain where no man is, wild creatures",
       "character": "The answer questions the knowledge of the one who questions: measures, morning stars, sea's womb, rain in the wilderness, lion and raven, wild ass, ostrich, horse, hawk and eagle.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 16,
+      "transition": 2.2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.4,
+        "pitch": 0.45,
+        "zoom": 0.88,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
+        "pointerClickStrength": 2,
+        "pointerClickRadius": 0.45,
+        "vortex3d": 0.8,
+        "depthOcclusion": true,
+        "depthTintColor": "#0d1116",
+        "volumeEnabled": true
       },
       "field": {
         "background": "#20242c",
@@ -1166,7 +1563,14 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.7,
+          "circulation": 0.6,
+          "dispersion": 0.12,
+          "turbulence": 0.5,
+          "zConfinement": 1,
+          "pointerStrength": 0.55
+        }
       },
       "entities": [
         {
@@ -1175,8 +1579,8 @@
           "kind": "formation",
           "position": {
             "x": 0,
-            "y": -0.34,
-            "z": 0
+            "y": -0.28,
+            "z": -0.15
           },
           "size": {
             "x": 0.377,
@@ -1197,18 +1601,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st241",
-                "text": "",
+                "id": "st-e223-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.377,
+                    "y": 0.377
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e223-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.6
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1259,8 +1703,8 @@
           "kind": "formation",
           "position": {
             "x": 0.5,
-            "y": -0.1,
-            "z": 0
+            "y": 0.05,
+            "z": 0.1
           },
           "size": {
             "x": 0.5,
@@ -1281,18 +1725,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st243",
-                "text": "",
+                "id": "st-e225-1",
+                "text": "·",
                 "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#54626f",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e225-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#3d4a56",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1301,8 +1785,8 @@
           "kind": "formation",
           "position": {
             "x": -0.5,
-            "y": -0.52,
-            "z": 0
+            "y": -0.5,
+            "z": 0.4
           },
           "size": {
             "x": 0.3,
@@ -1323,18 +1807,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st244",
+                "id": "st-e226-1",
                 "text": "𓅃",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": {
+                  "x": -0.5,
+                  "y": -0.5,
+                  "z": 0.4
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e226-2",
+                "text": "𓅃",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.35,
+                  "y": 0.3,
+                  "z": -0.2
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#9a8a5e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1400,7 +1932,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The LORD answers out of the whirlwind by questioning the knowledge of the one who questions: where was Job when the foundations were laid, its measures determined, the morning stars sang together? The sea comes from a womb, meets doors and bars; morning, death's gates, light and darkness open different reaches. Rain falls where no man lives, satisfying the wilderness — consequential precisely without serving Job's",
+          "body": "The LORD answers out of the whirlwind by questioning the knowledge of the one who questions: where was Job when the foundations were laid, its measures determined, the morning stars sang together? The sea comes from a womb, meets doors and bars; morning and death's gates open different reaches. Rain falls where no man lives, satisfying the wilderness — consequential precisely without serving Job's",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1414,12 +1946,25 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "household. Feeding the lion and raven places need within an order that also contains predation. Chapter 39: wild goats and deer, the wild ass beyond the driver's voice, the ostrich's harsh exposure of eggs and extraordinary speed, the horse meeting battle, hawk and eagle. There is a first answer inside the encounter: at 40:3–5 Job lays his hand upon his mouth — and the second speech is not collapsed into that silence.\n\nOccurrences: the foundation questions (#3); the sea's doors and bars (#3); rain without a human place (#3); the wild animals (#3); the hand on the mouth (#3, before the second speech).",
+          "body": "household. Feeding the lion and raven places need within an order containing predation. Chapter 39: wild goats and deer, the wild ass beyond the driver's voice, the ostrich's exposed eggs and speed, the horse meeting battle, hawk and eagle. A first answer inside the encounter: at 40:3–5 Job lays his hand on his mouth — and the second speech is not collapsed into that silence.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the foundation questions (#3); the sea's doors and bars (#3); rain without a human place (#3); the wild animals (#3); the hand on the mouth (#3, before the second speech).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
@@ -1440,14 +1985,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-storm",
+          "target": "field.params.turbulence",
+          "type": "lfo",
+          "wave": "saw",
+          "blend": "replace",
+          "loop": "loop",
+          "min": 0.3,
+          "max": 0.7,
+          "rate": 0.4,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-job-3b-behemoth",
       "name": "Behemoth and Leviathan — no hook draws him out",
       "character": "The challenge turns the wish for just judgement toward the power and extent required to administer it; the creatures are displayed, not slain.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1459,7 +2020,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "vortex",
+        "pointerClickStrength": 1.1,
+        "pointerClickRadius": 0.4
       },
       "field": {
         "background": "#20242c",
@@ -1470,7 +2035,12 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.25,
+          "dispersion": 0.07,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -1543,18 +2113,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st247",
-                "text": "",
+                "id": "st-e229-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.7,
+                    "y": 0.55
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e229-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.82,
+                    "y": 0.64
+                  },
+                  "rotation": 0,
+                  "tint": "#a68a4e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1627,18 +2237,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st249",
+                "id": "st-e231-1",
                 "text": "⚔",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#54626f",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e231-2",
+                "text": "♛",
+                "shape": "text",
+                "hold": 3.6,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.05,
+                  "y": -0.28,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1662,7 +2316,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The LORD speaks again from the whirlwind: would Job condemn God in order to establish his own righteousness? Can he abase the proud and establish his own arm's salvation? Behemoth is presented as a creature made with Job — grass-eating, reed-resting, untroubled by the swollen river. Leviathan brings capture into successive human practices: can Job draw him with a hook, pierce his jaw, bind him by covenant as a lasting",
+          "body": "The LORD speaks again from the whirlwind: would Job condemn God to establish his own righteousness? Can he abase the proud and establish his own arm's salvation? Behemoth is presented as a creature made with Job — grass-eating, reed-resting, untroubled by the swollen river. Leviathan brings capture into successive practices: can Job draw him with a hook, pierce his jaw, bind him by covenant as a lasting",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1676,12 +2330,25 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "servant, keep him as a plaything for daughters, sell him among merchants? Weapons are counted as stubble; his breath kindles coals; the boiling sea and luminous wake develop a strength these uses cannot master. The close names his kingship over the children of pride. The LORD displays these creatures; Job does not slay them; the witness does not identify Leviathan with Satan or assign either animal a determinate QL position.\n\nOccurrences: Behemoth's river (#3); the hook, covenant, trade questions (#3); the pride kingship (#3); the displayed-not-slain relation (#3).",
+          "body": "servant, keep him as a plaything for daughters, sell him among merchants? Weapons are stubble; his breath kindles coals; the boiling sea and luminous wake develop a strength these uses cannot master. The close names his kingship over the children of pride. The creatures are displayed, not slain; Leviathan is not identified with Satan; neither animal takes a QL position.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: Behemoth's river (#3); the hook, covenant, trade questions (#3); the pride kingship (#3); the displayed-not-slain relation (#3).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
@@ -1708,8 +2375,8 @@
       "id": "m-job-4-return",
       "name": "\"Now mine eye seeth thee\" — intercession and the named daughters",
       "character": "The friends' account is rejected; their restoration passes through Job's prayer. Livestock doubled, daughters named and given inheritance — and the first losses are not cancelled.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1721,7 +2388,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -1732,7 +2403,12 @@
           "#e6e0d0"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.2,
+          "dispersion": 0.08,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -1763,18 +2439,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st250",
+                "id": "st-e232-1",
                 "text": "◉",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.12,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#9a9484",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e232-2",
+                "text": "◉",
+                "shape": "text",
+                "hold": 4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#f0ead6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1805,18 +2521,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st251",
+                "id": "st-e233-1",
                 "text": "⚖",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.217,
+                    "y": 0.217
+                  },
+                  "rotation": 0,
+                  "tint": "#c8b070",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e233-2",
+                "text": "✋",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.3,
+                  "y": -0.2,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#e6e0d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1966,7 +2726,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Job answers: he has uttered what he understood not; \"I have heard of thee by the hearing of the ear: but now mine eye seeth thee, wherefore I abhor myself, and repent in dust and ashes\" — and the text's next movement stands with it: the LORD's anger burns against the three friends, who have not spoken rightly as Job has. The one they instructed to correct himself becomes their intercessor: seven bullocks and seven rams, Job praying, his acceptance consequential for them. Restoration accompanies his prayer. Family and acquaintances return; livestock",
+          "body": "Job answers: he has uttered what he understood not; \"I have heard of thee by the hearing of the ear: but now mine eye seeth thee\" — abhorrence and repentance. The LORD's anger burns against the friends, who have not spoken rightly as Job has. The one they instructed to correct himself becomes their intercessor: seven bullocks and seven rams, Job praying, his acceptance consequential for them; livestock",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1980,16 +2740,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "doubles; seven sons and three daughters — Jemima, Kezia, Keren-happuch named, with inheritance among their brothers. He lives 140 years and sees four generations. The ending does not resurrect the first children or cancel the dead servants: the book returns to household life carrying a history household prosperity cannot erase. Jung's Answer to Job enters as a separate attributed whole: the moral contradiction within the God-image, Sophia's remembrance, continuing incarnation in empirical consciousness — distinct registers, not additional speeches.\n\nOccurrences: the eye-sees turn and repentance (#4); the rebuke of the friends (#4); the intercession (#4); the daughters' names and inheritance (#4); the retained first losses (#0, #4).",
+          "body": "doubles; seven sons and three daughters — Jemima, Kezia, Keren-happuch named, with inheritance among their brothers. He sees four generations. The ending does not resurrect the first children or cancel the dead servants: household life returns carrying a history prosperity cannot erase. Jung's Answer to Job enters as a separate attributed whole — distinct registers, not additional speeches.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the eye-sees turn and repentance (#4); the rebuke of the friends (#4); the intercession (#4); the daughters' names and inheritance (#4); the retained first losses (#0, #4).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -2013,7 +2786,7 @@
       "name": "Return: the protected account, trust, and where consequence can arrive",
       "character": "The essay's appointments carried whole: C27's criterion; A24's usurped measure; A23 trust; A25 mediation; A29 consequence; A31/A32 revision of criterion and frame; the native eightfold without biblical derivation.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -2025,7 +2798,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.2,
+        "pointerClickRadius": 0.25
       },
       "field": {
         "background": "#20242c",
@@ -2036,7 +2813,12 @@
           "#c8b070"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.25,
+          "dispersion": 0.09,
+          "pointerStrength": 0.15
+        }
       },
       "entities": [
         {
@@ -2099,7 +2881,7 @@
           "text": "A24",
           "share": 1,
           "tint": "#e6e0d0",
-          "tintWeight": 1,
+          "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "none",
@@ -2270,7 +3052,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The essay appoints this whole to the Protected Account: contradictory witness made defective because the image through which it is judged must remain right (A20; C27's criterion — can the witness alter the authority of the account?). A19/C31 receive the governing image acting through feeling and valuation; C21 the difference between a God-image through which address remains possible and one protected by denying the life that contradicts it. The disputed court returns-to A24: a criterion becomes usurping when its relation to the field can no longer be questioned; the Arbitration field's regard and anamnesis name the renewed",
+          "body": "The whole is appointed to the Protected Account: contradictory witness made defective because the judging image must remain right (A20, C27). A19/C31 receive the governing image through feeling and valuation; C21 the difference between a God-image address can reach and one protected by denying the contradicting life. The court returns-to A24: a criterion becomes usurping when its relation to the field can no longer be questioned; regard and anamnesis",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -2284,12 +3066,25 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "attention and return. A23/C48 receive address persisting after its first account of safety fails; A25 receives intercession as real mediation that remains received and answerable. A29/C53 receive the council's permissions and the losses borne below it as a question about where consequence can arrive — the killed servants are not incidental materials. A31 receives the passage from inherited explanation to changed encounter; A32 receives the question whether the image can initiate its own return before requiring the interlocutor to conform. The native eightfold grounds the terms; no speaker is assigned one determination as a fixed identity.\n\nOccurrences: the friends' explanations and the final rebuke (#1, #4); the intercession (#4); the whirlwind's creatures (#3); the retained losses (#0, #4).",
+          "body": "attention and return. A23/C48 receive address persisting after its first account of safety fails; A25 receives intercession as real mediation, received and answerable. A29/C53 receive the council's permissions and the losses below — where can consequence arrive; the killed servants are not incidental. A31 receives explanation becoming encounter; A32 asks whether the image can initiate its own return. The eightfold grounds the terms; no speaker takes a determination as identity.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the friends' explanations and the final rebuke (#1, #4); the intercession (#4); the whirlwind's creatures (#3); the retained losses (#0, #4).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left",
+          "id": "occ"
         }
       ],
       "composition": {
@@ -2310,8 +3105,24 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-terminal",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.09,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

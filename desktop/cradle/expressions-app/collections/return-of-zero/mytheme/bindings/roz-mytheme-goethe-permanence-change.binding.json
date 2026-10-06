@@ -1,0 +1,132 @@
+{
+ "artifact": "mytheme/roz-mytheme-goethe-permanence-change.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-goethe-permanence-change",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/german-literature/goethe-permanence-change/WHOLE.md",
+    "sha256": "b4be3bd1b591099736120c869ee2a6d85e83ba02ccd8e78dd0bca6647065a347",
+    "sha256_receipt_stale": "532c4b27a5b051c490f84e581266059c925105eb5cd31690791a9e5e265f1e7a"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-goe-0-blossom",
+   "phase": "#0 the wish and the west wind",
+   "relations": "Dauer im Wechsel lines 1–8; Klett witness; Nims uncollated"
+  },
+  {
+   "scene_id": "m-goe-1-river",
+   "phase": "#1 fruit, valley, river",
+   "relations": "lines 9–16"
+  },
+  {
+   "scene_id": "m-goe-2-body",
+   "phase": "#2–#3 the changing eyes; lip, foot, hand; the wave",
+   "relations": "lines 17–32"
+  },
+  {
+   "scene_id": "m-goe-4-muses",
+   "phase": "#4 beginning and end joined; content and form",
+   "relations": "lines 33–40 (q002 German closing words); anchor goethe-two-ones-return; A11, A12, A36; Homology field"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the blossom-shower",
+   "occurrence": "#0 the loss within the flourishing weather"
+  },
+  {
+   "figure": "the west wind",
+   "occurrence": "#0 the gentle force of loss"
+  },
+  {
+   "figure": "the fruit and overlapping germination",
+   "occurrence": "#1 the prompt reaching"
+  },
+  {
+   "figure": "the rains on the beloved valley",
+   "occurrence": "#1 affection without exemption"
+  },
+  {
+   "figure": "the river / the second swim",
+   "occurrence": "#1; echoed by the wave at #3"
+  },
+  {
+   "figure": "the lip, the chamois-foot on the cliff, the doing-good hand",
+   "occurrence": "#2–#3 the bodily powers remembered through their acts"
+  },
+  {
+   "figure": "the name remaining; the wave hurrying to the element",
+   "occurrence": "#3 designation across a succession it cannot arrest"
+  },
+  {
+   "figure": "the Muses; Gehalt im Busen / Form im Geist",
+   "occurrence": "#4 the gathered ending with distinct offices"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "the appointed One-in-change relation returning to the Two Ones; the deepening through the content/form distinction (declared by the source house's A12/A36 routes)",
+   "flag": "yes"
+  },
+  {
+   "relation": "equating poetic water with QL's 0; word-for-word pairing of the German closing with the two Ones",
+   "flag": "no"
+  }
+ ],
+ "cross_story_relations": [
+  "Neumann whole grounds the A11/A12/A36 return through achieved differentiation and renewed articulation."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-goethe-permanence-change.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: four scenes carry the full forty-line arc; the blossom scene stages fall-and-return so the ending can qualify it. Witness limits preserved: the German whole is used; no Nims wording reproduced. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-goe-1-river, m-goe-2-body (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#0 blossom — the wish holds while the wind disperses: attract pointer at 0.3 (the wish to hold), circulation −0.2 (the west wind's drift), auto-wind, a sine LFO on field.params.dispersion — the shaking breathes; the west-wind ring carries a gentle repel (the force that carries beauty away is gentle); the blossom sign falls — ❀ bright and small → pale and scattered, its own position drifting with the wind. Duration 12.\n#1 river — THE 3D SCENE. z is the landscape's receding: the fruit nearest the hand (z +0.4, the share to take), the valley at middle distance (z 0, addressed as one's own), the river deepest (z −0.45, the element that cannot be kept for a repeat encounter) — the swimmer's participation is a motion in depth. vortex + pulse pointer (the current); vortex3d + depth occlusion with green-black tint; auto-current, a sine LFO on circulation — the current breathes; the fruit's sequence gold-full → taken (smaller, dimmed); the river's ring narrows as it passes — same water never twice. Duration 11 — the river's quicker passage.\n#2 body — line layout: the body's powers in articulated series; repel + shove pointer (loss takes away), turbulence 0.15 (the storm's field); the body sequence walks the German whole's own words — Lippe → Fuß → Hand → ∘△✋ paled and dimmed (declared all changed); der Name added as its own formation — ≈ arriving bright, drifting toward the rim and fading (hurrying toward the element). Duration 13.\n#4 muses — ring layout: beginning and end held in the round; attract + implode pointer (the gathering joins what passage separated); auto-gather, a sine LFO on pointerStrength — the gathering's pull breathes; the Muses' ♪ carries an attract force (the favour draws); the joined sign's sequence walks ⊙⊙ → ❀ → ⊙⊙ — the opening's own blossom received inside the ending's joined pair. Duration 14, the longest beat — the gathering takes its time.\nENDING QUALIFIES BEGINNING: the journey opens with a blossom sign falling under a dispersing wind — a wish for one hour answered by loss inside the weather of flourishing — and closes with that same ❀ received inside ⊙⊙, beginning and end drawn together faster than objects flee, with content (♥) and form (the square) given their distinct places. The river that could not be swum twice (#1, the element held deepest in the 3D scene) is the element the wave hurries toward (#2) and the change the Muses' favour carries (#4): water never returns as the same substance; it is the medium the formed sequence crosses. The pointer arcs from the wish's weak holding (0.3 attract) through the current and the losses' shove to the gathering's breathing pull — holding, losing, and gathering are one force at three offices.\nHuman-amplified staging: the One-in-change appointment is flagged in the #4 body exactly as the record carries it (human-amplified: yes); the Nims collation debt is stated in the #0 body. Mythemic verbs only: the poem demonstrates its answer; no formal entailment, no equating of poetic water with QL's 0.\nAutomation: auto-wind (#0, field.params.dispersion sine — the shaking), auto-current (#1, field.params.circulation sine — the current), auto-gather (#4, field.params.pointerStrength sine — the gathering's pull), all tied to the record's moves. Durations 11–14 and transitions 1.2–2.0: the river is quickest, the gathering longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "❀": "the blossom-shower — beauty already answered by loss; the sign the west wind shakes down (#0), returned changed inside the ending's joined sign (#4).",
+  "☂": "the shade just enjoyed — autumn already seen within the present gift (#0).",
+  "❧": "the fruit — the share that must be reached for promptly; ripening and germination overlap (#1).",
+  "≈": "der Name — the name remaining where its bearer has altered: arrived like a wave, hurrying toward the element (#2–#3).",
+  "Lippe": "the lip that once found healing in a kiss — intimacy remembered through its act, passed away (#2).",
+  "Fuß": "the foot that tested itself against the cliff with a chamois's boldness — daring remembered through its act (#2).",
+  "Hand": "the hand once willing and gentle in doing good — kindness in the body's history (#3).",
+  "∘△✋": "lip, foot and hand together — the articulated bodily form the poem declares all changed (lines 25–32).",
+  "⊙⊙": "beginning and end drawn together — the final imperative, faster than the objects flee (#4).",
+  "♪": "the Muses — favour promising something imperishable; the gathering's artistic office (#4).",
+  "♥": "der Gehalt im Busen — the content borne inwardly, given its own place against the form in the mind (the verified closing words)."
+ }
+}

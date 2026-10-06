@@ -10,8 +10,8 @@
       "id": "m-mot-0-cope",
       "name": "The encounter at Skenfrith",
       "character": "Mary being lifted; figures perceived as rabbits; six-winged seraphic forms; wheels; a two-headed eagle — an encountered image answerable to its object.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.35,
+          "circulation": 0.15,
+          "dispersion": 0.05,
+          "pointerStrength": 0.35
+        }
       },
       "entities": [
         {
@@ -65,18 +74,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st392",
+                "id": "st-e355-1",
                 "text": "☽",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": {
+                  "x": -0.1,
+                  "y": -0.05,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.19,
+                    "y": 0.19
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e355-2",
+                "text": "☽",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.5,
+                "position": {
+                  "x": -0.02,
+                  "y": 0.28,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#e0b54a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -107,18 +164,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st393",
-                "text": "angel/rabbit",
+                "id": "st-e356-1",
+                "text": "angel",
                 "shape": "text",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#d9cdb4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e356-2",
+                "text": "rabbit",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#a89a84",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -127,7 +224,7 @@
           "kind": "formation",
           "position": {
             "x": 0.55,
-            "y": 0.3,
+            "y": 0.32,
             "z": 0
           },
           "size": {
@@ -149,18 +246,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st394",
-                "text": "",
+                "id": "st-e357-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#7c5a33",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e357-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "rotation": 1.5708,
+                  "tint": "#7c5a33",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -268,7 +405,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The Mother flow begins with a body received, a body bearing another, and the receiving body itself returned. Taylor's encounter with the cope at St Bridget's in Skenfrith gathers the images: Mary being lifted, figures perceived as rabbits beside her, six-winged seraphic forms, wheels, eagles with two heads. The dialogue is a conversation with an assistant whose proposed readings have different authority from Taylor's corrections; the assistant's identification of angels invokes",
+          "body": "The Mother flow begins with a body received, a body bearing another, and the receiving body itself returned. Taylor's encounter with the cope at St Bridget's in Skenfrith gathers the images: Mary being lifted, figures perceived as rabbits, six-winged seraphic forms, wheels, the two-headed eagle. The dialogue sets an assistant's proposed readings against Taylor's corrections; the assistant's angel identification invokes",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -282,10 +419,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "an unnamed description — without a public object witness it remains a lead. The later quilt expressly re-keys the frame: the visit was personal; the essay-usable material is the Mother flow, Assumption and chiasm — no castle history climbs to a theological conclusion. Mary remains a particular mother; the Assumption belongs to a later doctrinal history, not another Gospel episode; Jung's interpretation and Taylor's chiasm are further operations meeting through the same figure.\n\nOccurrences: the lifted Mary and the rabbit/angel ambiguity (#0); the two wheels and six wings (#0, developed at #3); the two-headed eagle (#0, corrected at #4).",
+          "body": "an unnamed description — without a public object witness it remains a lead. The quilt expressly re-keys the frame: the visit was personal; the essay-usable material is the Mother flow, Assumption and chiasm — no castle history climbs to a theological conclusion. Mary remains a particular mother; the Assumption belongs to a later doctrinal history, not another Gospel episode.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the lifted Mary and the rabbit/angel ambiguity (#0); the two wheels and six wings (#0, developed at #3); the two-headed eagle (#0, corrected at #4).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -308,14 +458,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-cope",
+          "target": "field.params.turbulence",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.04,
+          "max": 0.04,
+          "rate": 0.07,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-mot-1-chiasm",
       "name": "The incarnation–Assumption chiasm",
       "character": "The maternal matrix receives the Logos into bodily life; in the return that maternal body is itself received — assumption-of, not ascent-away-from.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -327,7 +493,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 1,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -338,7 +508,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.2,
+          "dispersion": 0.06,
+          "pointerStrength": 0.4
+        }
       },
       "entities": [
         {
@@ -375,19 +550,19 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "st398",
+                "id": "st-e360-1",
                 "text": "∨",
                 "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
+                "hold": 3.2,
+                "transition": 1.5,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.246,
-                    "y": 0.209
+                    "x": 0.307,
+                    "y": 0.399
                   },
                   "rotation": 0,
-                  "tint": "#c9a227",
+                  "tint": "#252720",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -398,19 +573,19 @@
                 }
               },
               {
-                "id": "st399",
+                "id": "st-e360-2",
                 "text": "∧",
                 "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
+                "hold": 3.2,
+                "transition": 1.5,
                 "position": null,
                 "objectState": {
                   "size": {
-                    "x": 0.246,
-                    "y": 0.209
+                    "x": 0.307,
+                    "y": 0.399
                   },
                   "rotation": 0,
-                  "tint": "#d9cdb4",
+                  "tint": "#7c2a2a",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -421,19 +596,23 @@
                 }
               },
               {
-                "id": "st400",
-                "text": "∨",
+                "id": "st-e360-3",
+                "text": "✕",
                 "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
+                "hold": 3.6,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.1,
+                  "y": -0.3,
+                  "z": 0
+                },
                 "objectState": {
                   "size": {
-                    "x": 0.246,
-                    "y": 0.209
+                    "x": 0.28,
+                    "y": 0.28
                   },
                   "rotation": 0,
-                  "tint": "#c9a227",
+                  "tint": "#7c5a33",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -451,8 +630,8 @@
           "name": "the chiasm — 1–2–3 articulated in 4–5–0's field; 4–5–0 recognised in 1–2–3's",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": -0.35,
+            "x": 0.58,
+            "y": -0.38,
             "z": 0
           },
           "size": {
@@ -464,7 +643,7 @@
           "text": "✕",
           "share": 1,
           "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "tintWeight": 0.85,
           "locked": false,
           "force": {
             "kind": "none",
@@ -593,7 +772,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The movement has two directions. In the first, the maternal matrix receives the Logos into bodily life: what is articulated as divine Word comes through a body which bears it. In the return, that maternal body is itself received — the quilt's correction is assumption-of rather than ascent-away-from: return bears what made manifestation possible instead of discarding the vessel. If only a general feminine principle entered the final account, the particular body would disappear where recognition claims completion. The chiasm then names the crossed readings: articulation, differentiation and explication give 1–2–3 a masculine operation; receiving,",
+          "body": "Two directions. First, the matrix receives the Logos into bodily life: divine Word through a body which bears it. In return, that body is itself received — assumption-of, not ascent-away-from: return bears what made manifestation possible. If only a general feminine principle entered the account, the particular body would disappear where recognition claims completion. The chiasm names the crossed readings: articulation, differentiation, explication give 1–2–3 a masculine operation; receiving,",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -607,10 +786,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "containing, reflecting and gathering give 4–5–0 a feminine one — while the older symbolic assignment associates matter with the feminine and mind with the masculine. Both relations are held as the object of inquiry, symbolic assignments being developed, not determinations of what men and women are. Jung's attributed sequence runs from Proverbs' wisdom through the Second Eve to the Assumption discussion and continuing incarnation; his critique of exceptional protections (§§626–627) stays inside his own psychological reading; the proposed Sophia–Logos–Śakti three-office distribution is assistant elaboration (human-amplified: no for the fixed allocation).\n\nOccurrences: the receiving and the received body (#1); the crossed masculine/feminine operations (#2); Jung's §§609–628, 746–757 as attributed paraphrase (#1); the perfection/completeness difficulty (#1).",
+          "body": "containing, reflecting and gathering give 4–5–0 a feminine one — while the older assignment associates matter with the feminine, mind with the masculine. Both relations are held as the object of inquiry — symbolic assignments being developed, not determinations of what men and women are. Jung's attributed sequence runs from Proverbs' wisdom through the Second Eve to the Assumption discussion; the proposed Sophia–Logos–Śakti three-office distribution is assistant elaboration (human-amplified: no).",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the receiving and the received body (#1); the crossed masculine/feminine operations (#2); Jung's §§609–628, 746–757 as attributed paraphrase (#1); the perfection/completeness difficulty (#1).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -639,20 +831,27 @@
       "id": "m-mot-3-wings",
       "name": "Wheels, wings and the eagle's signed power",
       "character": "0/1 → 1/0 → (0/1)/(1/0); the corrected blockwise pairings; (-1)/(+1) retained — the eagle's unity does not establish in advance that its power is reconciled.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.3,
+        "zoom": 0.95,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.3,
+        "pointerClickRadius": 0.45,
+        "depthOcclusion": true,
+        "depthTintColor": "#241609",
+        "volumeEnabled": true
       },
       "field": {
         "background": "#f6f1e6",
@@ -663,7 +862,13 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.2,
+          "dispersion": 0.06,
+          "pointerStrength": 0.4,
+          "zConfinement": 0.9
+        }
       },
       "entities": [
         {
@@ -673,7 +878,7 @@
           "position": {
             "x": 0,
             "y": -0.14,
-            "z": 0
+            "z": -0.1
           },
           "size": {
             "x": 0.417,
@@ -694,18 +899,62 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st404",
+                "id": "st-e364-1",
                 "text": "0/1→1/0",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.417,
+                    "y": 0.073
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e364-2",
+                "text": "(0/1)/(1/0)",
+                "shape": "text",
+                "hold": 3.8,
+                "transition": 1.5,
+                "position": {
+                  "x": 0,
+                  "y": -0.1,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.073
+                  },
+                  "rotation": 0,
+                  "tint": "#8a6a1e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -714,8 +963,8 @@
           "kind": "formation",
           "position": {
             "x": 0,
-            "y": -0.24,
-            "z": 0
+            "y": -0.3,
+            "z": 0.28
           },
           "size": {
             "x": 0.374,
@@ -757,7 +1006,7 @@
           "position": {
             "x": -0.55,
             "y": -0.42,
-            "z": 0
+            "z": -0.42
           },
           "size": {
             "x": 0.24,
@@ -778,18 +1027,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st406",
+                "id": "st-e366-1",
                 "text": "⊘",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#7c5a33",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e366-2",
+                "text": "⊘",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#9a8a84",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -799,7 +1088,7 @@
           "position": {
             "x": 0.55,
             "y": -0.42,
-            "z": 0
+            "z": 0.15
           },
           "size": {
             "x": 0.62,
@@ -855,7 +1144,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The two wheels give the crossing a second form: the full sequence 0/1 → 1/0 → (0/1)/(1/0) — a first orientation meets its inverse and their relation becomes explicit; the outer slash retains the orientations in operative self-difference, dividing no numerical quantities. As encountered image, a wheel permits changing orientation while its whole form persists; two wheels can bear conjugate orientations without becoming two independent sources. The seraphic forms give orientation a sixfold articulation: one sixfold and its primed counterpart, each retaining the two blocks — while the dialogue's first attempt at vertical",
+          "body": "The wheels give the crossing a second form: the sequence 0/1 → 1/0 → (0/1)/(1/0) — a first orientation meets its inverse, their relation explicit; the outer slash divides no numerical quantities. A wheel changes orientation while its whole form persists; two wheels bear conjugate orientations, not becoming independent sources. The seraphic forms articulate orientation as sixfold and its primed counterpart, each retaining the blocks — the dialogue's first vertical",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -869,16 +1158,29 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "pairing is explicitly corrected: 2↔5 and 3↔0 rejected, only 1↔4 of that proposal belonging; the native complementary folds are 0↔5, 1↔4, 2↔3, with their own harmonic work. The eagle changes the operative question: the assistant's attempt to give it the wheels' equations and a 1/1 reconciliation is refused; the retained form is (-1)/(+1) — addition cancels, each subtraction appropriates, and the sign of a pole does not determine its moral worth. The eagle's power-body can be asked which operation it carries. Isaiah's wing functions and Ezekiel's wheels remain a distinct textual proposal requiring its own object witness.\n\nOccurrences: the wheel sequence (#3); the corrected wing pairings (#3); the eagle's signed-power correction (#4); the scriptural invocation kept as proposal (#3).",
+          "body": "pairing is corrected: 2↔5 and 3↔0 rejected, only 1↔4 of it holding; the native complementary folds are 0↔5, 1↔4, 2↔3. The eagle changes the question: the wheels' equations and a 1/1 reconciliation are refused it; the retained form is (-1)/(+1) — addition cancels, each subtraction appropriates, and sign does not fix moral worth. Isaiah's wings and Ezekiel's wheels remain a distinct textual proposal needing its own object witness.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
           "size": 14,
           "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the wheel sequence (#3); the corrected wing pairings (#3); the eagle's signed-power correction (#4); the scriptural invocation kept as proposal (#3).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
+          "size": 14,
+          "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -901,8 +1203,8 @@
       "id": "m-mot-5-return",
       "name": "The completed constellation returns",
       "character": "Wheels carry inverse orientations and their recognised relation; wings articulate the three through the three that know them; the eagle carries signed alternatives; the Mother flow crosses embodiment and recognition while receiving the maternal body in its return.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -914,7 +1216,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.28
       },
       "field": {
         "background": "#f6f1e6",
@@ -925,7 +1231,12 @@
           "#d9cdb4"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.4,
+          "circulation": 0.3,
+          "dispersion": 0.09,
+          "pointerStrength": 0.2
+        }
       },
       "entities": [
         {
@@ -1159,7 +1470,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The completed constellation returns through distinct offices: wheels carry inverse orientations and their recognised relation; wings articulate the three through the three that know them, bodily coherence intact; the eagle carries the signed alternatives of power; the Mother flow crosses embodiment and recognition while receiving the maternal body in its return. The native 3:1=3:3 gives recognition its articulated office: the one is the unitive condition of the three, whose recognitional constitution can itself be unfolded — the body's persistence prevents the recognitional pole becoming an",
+          "body": "The constellation returns through offices: wheels carry inverse orientations, their relation recognised; wings articulate the three through the three that know them; the eagle carries signed alternatives of power; the Mother flow crosses embodiment and recognition, receiving the maternal body in return. The native 3:1=3:3 gives recognition its office: the one the unitive condition of the three, its constitution unfoldable — the body's persistence keeps the recognitional pole from becoming",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -1173,10 +1484,23 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "external observer. A18 grounds the eightfold field the sixfold recognition does not replace; the Name series retains its coequal Power relation, so Logos and Son cannot be isolated while matrix, labour and consequence disappear. A25/A29 receive the difference between bearing an office and owning the field; A23/A27 the trust and preserved difference of having been borne; A35 the loving direction of return toward the body, history and work. The candidate Levinasian need/Desire join stays human-amplified: no; historical object and scriptural verification remain debts that do not defer the native operation.\n\nOccurrences: the three offices of wheel, wing, eagle (#3–#4, #5→0); the maternal body retained in the recognised whole (#1, #5→0); Taylor's correction as a Symbol/Account return (#3, #5→0).",
+          "body": "external observer. A18 grounds the eightfold the sixfold does not replace; the Name series retains its coequal Power — Logos and Son not isolated while matrix, labour and consequence disappear. A25/A29: bearing an office without owning the field; A23/A27 the trust and preserved difference of being borne; A35 return toward the body, history and work. The Levinasian join stays human-amplified: no; object and scriptural verification remain debts, not deferrals.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
+          "size": 14,
+          "align": "left"
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the three offices of wheel, wing, eagle (#3–#4, #5→0); the maternal body retained in the recognised whole (#1, #5→0); Taylor's correction as a Symbol/Account return (#3, #5→0).",
+          "x": 0.04,
+          "y": 0.78,
+          "width": 560,
           "size": 14,
           "align": "left"
         }
@@ -1202,5 +1526,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

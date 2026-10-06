@@ -1,0 +1,139 @@
+{
+ "artifact": "rooms/roz-room-03-two-logics.journey.json",
+ "family": "rooms",
+ "room_slug": "03-two-logics",
+ "worker": "E1",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-essay",
+  "family-section-room"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+  "records": [
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+    "sha256": "9a8d46c3c5a674d652dbca8ea0e05218b47201d1e23bbe47772545553de05ca0"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "8f017c8815d166a2817f34c169bebcc1707c94e3f7c010efafda52a7d8400c5f"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/19-s2-p0-difference-cannot-be-escaped.md",
+    "sha256": "03ddcf6904a041c5e42dbc7e84ad2dfae0f6227ae76e5de896cdd16c850329d9"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/20-s2-p1-dia-ballein.md",
+    "sha256": "badff2d1f05fb037bbeb2fa3148443f1ff8e4e7b096deaffc9a07094a38d7ab8"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/21-s2-p2-sym-ballein.md",
+    "sha256": "6582c0eafd34ea9c05651eb582835f0fbc91b4d9bef96ef0cebc6355dcf628c6"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/22-s2-p3-ares-aphrodite-harmonia.md",
+    "sha256": "d91555c0b0d4dd9d2d1678c6e3f58a31fbba30dd24429dfc2a186ba04dee5195"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/23-s2-p4-complex-dynamism.md",
+    "sha256": "6350a8750814b88d05be73deb0d77c77868a14ba2b9608664f9d36a5b0d94425"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md",
+    "sha256": "04c09005a2b5453aa94fa000d2d89dbedb5fcf87f4893164975d027d5daf3e93"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "movement-19",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/movements/19-s2-p0-difference-cannot-be-escaped.md",
+   "relations": "movement identity: §2 · #0 — Difference Cannot Be Escaped · canonical route: P1-M19 → A02 · A03 · A08 · A13 / C03 · C06 · C18 · C50 — Homologia/Analogia · reading path: ← previous · M18 The Loan Returns   ·   next → M20 Dia-Ballein"
+  },
+  {
+   "scene_id": "movement-20",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/movements/20-s2-p1-dia-ballein.md",
+   "relations": "movement identity: §2 · #1 — Dia-Ballein · canonical route: P1-M20 → A13 · A15 / C23 · C50 — Dia-ballein; severance is failure-mode, not definition · reading path: ← previous · M19 Difference Cannot Be Escaped   ·   next → M21 Sym-Ballein"
+  },
+  {
+   "scene_id": "movement-21",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/movements/21-s2-p2-sym-ballein.md",
+   "relations": "movement identity: §2 · #2 — Sym-Ballein · canonical route: P1-M21 → A13 · A18 / C21 · C24 · C25 · C50 — Symbol/Account/Trust + Homologia/Analogia · reading path: ← previous · M20 Dia-Ballein   ·   next → M22 Ares, Aphrodite, Harmonia, Eros, and Hephaestus"
+  },
+  {
+   "scene_id": "movement-22",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/movements/22-s2-p3-ares-aphrodite-harmonia.md",
+   "relations": "movement identity: §2 · #3 — Ares, Aphrodite, Harmonia, Eros, and Hephaestus · canonical route: P1-M22 → A13 · A18 · A20 / C23 · C24 · C25 · C33 · C36 · C50 · C61 — whole Ares–Aphrodite–Harmonia Mytheme · reading path: ← previous · M21 Sym-Ballein   ·   next → M23 Complex Dynamism"
+  },
+  {
+   "scene_id": "movement-23",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/movements/23-s2-p4-complex-dynamism.md",
+   "relations": "movement identity: §2 · #4 — Complex Dynamism · canonical route: P1-M23 → A19 · A20 · A21 / C30 · C31 · C32 · C33 · C34 — Arbitration-in-Crisis → local complex; Anamnesis/Recognition → individuation pressure · reading path: ← previous · M22 Ares, Aphrodite, Harmonia, Eros, and Hephaestus   ·   next → M24 Zero Changes Its Role"
+  },
+  {
+   "scene_id": "movement-24",
+   "source_ref": "submission-package/essay/section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md",
+   "relations": "movement identity: §2 · #5→0 — Zero Changes Its Role · canonical route: P1-M24 → A11 · A12 · A13 · A18 / C21 · C49 · C50 · C61 — Symbol/Account/Trust · reading path: ← previous · M23 Complex Dynamism   ·   next → M25 Eight Determinations"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "rooms/roz-room-03-two-logics.cover.png",
+ "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+ "status": "captured",
+ "notes": [
+  "E0 acceptance repair: text/field collision fixed on movement-20 (poles moved to the upper band clear of the claim text; spot-checked) and the pair scene movement-21; positional grammar shifted right-of-centre (GX 0.2), route layer top-left; cover re-captured at authored count.",
+  "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+  "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+  "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+  "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+  "m19 difference: 'a refusal' → 'needs an edge' → 'a world' walking outward with repel force — the marks cannot be one; turbulence sine = the edge held.",
+  "m20 dia-ballein: the bare relation walks −/− → (−1)/(+1) → (−1)+(+1)=0, darkening red at the collapse (the appropriation); both pole formations repel; shove pointer = the cut and its collapse.",
+  "m21 sym-ballein: 0/1 and 1/0 held at attract, leaning; the left formation completes to (0/1)/(1/0) gilded — the superposition the record writes; slow sine on speed = the held relation breathing.",
+  "m22 the myth: Ares and Aphrodite step toward each other (positions converge, weight softens) while Harmonia appears at their midpoint as the third term; the pin 'the net' sits quiet in the scene — the plant the ledger requires. Warm palette: the dramatic register.",
+  "m23 3D (z = the basin's depth): the walker descends bifurcate → compose → perturbation while the basin ring holds mid-depth and a trajectory disc rides near the boundary — attractor dynamics as volume; vortex/vortex pointer = the swirl; depth tint warm.",
+  "m24 zero changes its office (layout ring — the pairings read in the round): B={0,1} → 2+2² → 4+2, the last step gilded — the measurable two counted with its relation; implode click gathers the count.",
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-essay-l2",
+  "lane": "ESSAY+ROOMS wave 2",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "a refusal": "M19: a judgment's edge — a refusal needs an edge; a perception needs a difference",
+  "needs an edge": "M19: the cut that lets anything appear or be asked",
+  "a world": "M19: without difference no world becomes articulate — difference cannot be escaped (gilded: the stakes)",
+  "−/−": "M20: the bare relation — a stroke between two unassigned marks, before a determinate contrast is given",
+  "(−1)/(+1)": "M20: dia's polar form — positive and negative held through a common zero; the stroke retains polarity rather than instructing division",
+  "(−1)+(+1)=0": "M20: the collapsed operation — addition cancels to 0; changing the operation changes the result (the step reddens: the appropriation the record marks)",
+  "0/1": "M21: one orientation of the retained ground–mark relation (earned notation, §1); in m24 the pair B={0,1} counted with its pairings",
+  "(0/1)/(1/0)": "M21: sym-ballein — superpositional polarity as inverse orientations of one relation; recognition through the maintained break (gilded when held)",
+  "1/0": "M21: the other orientation, held at attract — the two lean toward one another without fusing",
+  "the net": "M22: Hephaestus's bonds too fine to see — craft that encloses relation (planted here per the presaging ledger; paid off at §5→0 · #3)",
+  "Harmonia": "M22: concord borne through the conjunction of beauty and strife — opposition generative without silencing (the triangle appears between the drawn-together pair)",
+  "bifurcate": "M23: dia as dynamical operation — bifurcate a field, make a trajectory actual",
+  "compose": "M23: sym as dynamical operation — recursively compose differentiated trajectories into a provisional basin (the ring: trajectories drawn, boundaries open)",
+  "perturbation": "M23: perturbation opens the basin to further difference (the step reddens and tips: the opening)",
+  "4+2": "M24: the first compact QL theorem — 2 + 2² = 6 = 4 + 2: what a two amounts to once it includes the relation that generates it",
+  "B={0,1}": "M24: the minimum recursive body counted directly — pair each with each, retaining order",
+  "2+2²": "M24: the generative count on the way to 6 — two poles plus the four ordered pairings"
+ }
+}

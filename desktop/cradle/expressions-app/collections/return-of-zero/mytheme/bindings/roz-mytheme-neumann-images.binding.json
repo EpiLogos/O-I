@@ -1,0 +1,172 @@
+{
+ "artifact": "mytheme/roz-mytheme-neumann-images.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-neumann-images",
+    "path": "submission-package/essay/symbolon/mytheme/archetypal-ground/neumann-images/WHOLE.md",
+    "sha256": "fe5b8c1ad246d4ad086a5ff3de781374ec12304e968b89254d375c8aa4d2b6c1"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-neu-0-round",
+   "phase": "#0 the round and its held parents",
+   "relations": "anchor neumann-round; the source house; stadial claim kept attributable"
+  },
+  {
+   "scene_id": "m-neu-1-metabolism",
+   "phase": "#1 the round lives by taking into itself",
+   "relations": "anchor neumann-metabolism; pp.27–33 leads; Prajāpati p.29; Bhairava p.27; C26"
+  },
+  {
+   "scene_id": "m-neu-2-separation",
+   "phase": "#2 world-parent separation; the paśu correction",
+   "relations": "anchor neumann-world-parent-separation; p.105 transmitted scene; C14/C15/C16; A09; the p.108 4+2 appointment"
+  },
+  {
+   "scene_id": "m-neu-2b-twins",
+   "phase": "#2 the twins and the signed alternative",
+   "relations": "core theorem IV; Q27 energetics; A13, A18"
+  },
+  {
+   "scene_id": "m-neu-3-hero",
+   "phase": "#3 the two emancipations; captive and treasure; Osiris",
+   "relations": "anchor neumann-hero-centroversion; the essay's authored pressure on liberation; A21; Jung Aion"
+  },
+  {
+   "scene_id": "m-neu-4-paper",
+   "phase": "#4 the paper scene; incest and erasure",
+   "relations": "anchor neumann-paper-eightfold, neumann-incest-erasure; p.17 encounter; A11/C49, A12"
+  },
+  {
+   "scene_id": "m-neu-4b-wheel",
+   "phase": "#4 the self-rolling wheel",
+   "relations": "anchor neumann-self-rolling-wheel; p.18; Text/Texture (human-amplified: yes)"
+  },
+  {
+   "scene_id": "m-neu-5-return",
+   "phase": "#5→0 the return bond",
+   "relations": "anchor neumann-return-bond; p.121; A13, A04, A19–A21, A23, A26, A27, A34–A36; C21, C32; Homologia/Analogia"
+  }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the round / uroboros / womb / egg / waters",
+   "occurrence": "#0 the held possibilities before separation"
+  },
+  {
+   "figure": "the Great Mother's two faces",
+   "occurrence": "#1 life-giver and devourer in a changing relation"
+  },
+  {
+   "figure": "Prajāpati and the horse/universe",
+   "occurrence": "#1 nested through Neumann/Deussen — not an independently verified Vedic telling"
+  },
+  {
+   "figure": "the androgyne's recognition-then-division",
+   "occurrence": "#2 the p.105 sequence; the paśu correction's ontological order"
+  },
+  {
+   "figure": "Ohrmazd and Ahriman",
+   "occurrence": "#2b the broken halves of a prior 0; the three arithmetic results"
+  },
+  {
+   "figure": "the hero's two emancipations",
+   "occurrence": "#3 mother then father, in sequence; captive/treasure; Osiris transformation office"
+  },
+  {
+   "figure": "the written 1, 0, slash and the erasure",
+   "occurrence": "#4 the performable return; capacity remaining"
+  },
+  {
+   "figure": "the self-rolling wheel and En-Soph",
+   "occurrence": "#4b continuing self-composition about the unobjectified opening"
+  },
+  {
+   "motif": "the marriage bond",
+   "occurrence": "#5→0 knowing-as-cutting answerable to knowing-with; even denial through the field it denies"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "toroidal correction and its four operations with the Anuttara/Māyā allocation; the eightfold refraction; paper/mark/slash/erasure; incest–erasure; self-composition/Text-Texture; cut/bond love/war; the explicit paśu correction; the p.108 4+2; the Śaiva assimilation relation; nourishment vs counter-generation",
+   "flag": "yes"
+  },
+  {
+   "relation": "the scaffold's unratified one-to-one Taoist/gender/stadial equivalences; blanket Gebser stage identity; settling the hero/avatar hierarchy",
+   "flag": "no"
+  }
+ ],
+ "cross_story_relations": [
+  "Uroboros whole owns the developed toroidal drama to which this whole's local correction returns; the wheel extends the uroboros's interposition.",
+  "Maya whole shares the paśu correction and the Anuttara/Māyā-not-the-hole allocation.",
+  "Jung Aion and Gebser qualify as distinct sources without authorship of the notation."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-neumann-images.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: eight scenes carry the locked eightfold recapitulation as the record itself appoints (genesis → metabolism → separation → twins → hero → paper → wheel → bond), with the corrected recapitulation explicit in scene text. The paper scene inverts to a light sheet on dark field so the written marks read; the erasure step leaves the sheet visibly blank while the capacity glyph remains. E0 acceptance repair: title/field collision fixed on m-neu-0-round, m-neu-1-metabolism, m-neu-2-separation, m-neu-2b-twins, m-neu-3-hero, m-neu-4-paper, m-neu-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#0 round — attraction authored as enclosure: attract pointer gathers gently inside the round (the life held before it can be faced); slow circulation 0.2; the held-possibilities formation breathes disc→ring (womb, egg, waters, uroboros named in one cycling body); the round's own outline breathes with it. Duration 12.\n#1 metabolism — vortex + pulse pointer (the round's turning); auto-systole, a sine LFO on field.params.circulation ±0.18 — the round breathes; the digestive ring turns with a devourer flush (tint to #8a4a2b); the Mother's two faces walk ☾→☽ — same body, other face. Duration 11 — hunger's quicker beat.\n#2 separation — repel + shove pointer (the interval opens by pushing apart); the sky ring lifts (its y extent grows — the interval in which a world can appear); the androgyne sequence disc→◘◘→disc kept from the draft with the division step tinted; light carries a weak repel (boundaries make a precinct). Duration 13.\n#2b twins — line layout: the prior 0 and its halves held in a row, the arithmetic beneath; the operator sequence walks the record's own three results — (-1)/(+1) → (-1)+(+1)=0 (cancel, tint to grey) → back → (-1)-(+1)=-2 (appropriate, grey) → back — the changed operator as the scene's argument; vortex + shove (opposition's real force). Duration 10, the sharpest beat.\n#3 hero — the hero walks his two emancipations as a position sequence: from between the struggles to the maternal, to the paternal, to rest above the Osiris ring (tint pales to the transformed d8d2c4); the Osiris ring opens gold; repel + shove, turbulence 0.2 (the struggle's field). Duration 13.\n#4 paper — attract + implode click (writing gathers; erasure gathers the figure away); near-still field (speed 0.2, dispersion 0.02) — the sheet holds still, only the marks change; the draft's write 1 → 1/0 → 0/1 → erase sequence kept on the pale sheet with the gold capacity ring beside it. Duration 12.\n#4b wheel — THE 3D SCENE. z is the unobjectified opening the wheel rolls about: En-Sof deepest (z −0.55), the refused readings (∅) behind (z −0.25), the wheel's ring at z 0 with its rotation sequence, the renewed inscription ✎ nearest the reader's hand (z +0.45); vortex3d carries the rolling, depth occlusion with night tint holds the depths; auto-roll, a sine LFO on field.params.speed — the rolling breathes. Duration 14 — the wheel takes time.\n#5→0 return — ring layout: the marriage bond arranges the field; the cut-and-bond sign walks /‑ → (0/1)/(1/0) → /‑ (the cut returning as held relation); attract pointer at strength 0.15 — the bond holds without enclosing; circulation −0.3, a slow counter-turn. Duration 15, the longest beat — the return takes its time.\nENDING QUALIFIES BEGINNING: the journey opens with a round that encloses before the ego can represent dependence (attraction gathering inside an outline, the held possibilities breathing at its centre) and closes with a round that relates without enclosing — the marriage ring in ring layout, attraction at 0.15, and the journey's slash-signs returning transformed: #2's division, #2b's operator and #4's written 0/1 come back as (0/1)/(1/0), the same signs with changed office, the sign become Symbol again. The hunger that drove the round's first breathing (auto-systole) is answered by the wheel's auto-roll and the return's counter-turn — the breathing continues, but now the bond breathes, and the ego that could not represent its dependence begins again with the source relation visible.\nHuman-amplified staging: whose account is stated in the kickers and bodies where flagged (#1 samāveśa, #2 the correction, #2b the energetics-grounding, #4 the paper operation; #3's hero/avatar question human-amplified: no). Mythemic verbs only: the images perform and demonstrate the operations; no formal entailment, no historical attribution beyond the record's own.\nAutomation: auto-systole (#1, field.params.circulation sine — the round's breath) and auto-roll (#4b, field.params.speed sine — the wheel's rolling), both tied to the record's moves. Durations 10–15 and transitions 1.1–2.2: the twins' recognition (10s) is the sharpest beat, the wheel (14s) and the return (15s) are held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "·": "the future ego before it can represent its dependence — a carrier whose sense is its place inside the round (record #0).",
+  "⇅": "hunger — systole and diastole of the round; intake and expenditure in one body (#1).",
+  "☾": "the dark, receiving face: at #1 the Mother's power to take back what she gives; at #2b Ahriman, the dark half of the divided 0.",
+  "☽": "the same body's other face — the Mother as life-giver; the two faces belong to one changing relation (#1).",
+  "प्र": "Prajāpati's self-offering — creation as offering to himself, horse and universe joined (the p.29 transmitted lead).",
+  "♄": "Saturnine devouring — intake without renewed birth; incorporation become counter-generation (C26).",
+  "◘◘": "the androgyne divided — the paired figure previously held in embrace; self-recognition precedes sexual separation (the p.105 lead).",
+  "☀": "light of disclosure: at #2 the oriented world entering the interval; at #2b Ohrmazd, the light half of the prior 0.",
+  "प": "the paśu correction — prakāśa–vimarśa does not first arise when an ego takes possession (p.105; Taylor's correction, human-amplified: yes).",
+  "≡": "Māyā as operative measure — a measure both reveals a field and selects what will count within it (C14).",
+  "(-1)/(+1)": "polarity retained through the slash — each keeps its sign across the relation; the two logics' native form (A13).",
+  "(-1)+(+1)=0": "the stroke become addition between isolated signs — the meeting that cancels them.",
+  "(-1)-(+1)=-2": "the stroke become subtraction — one side takes the span as its own, the other met only as what must disappear.",
+  "+ − ·−": "the three arithmetic results compressed — cancellation and the two appropriative subtractions against the retained slash.",
+  "⚔": "the hero born within the opened world — differentiation carried as an act with two emancipations (#3).",
+  "1": "the first mark on the sheet — All, the world of marks opened by one inscription (A11/C49).",
+  "1/0": "the first mark with its acknowledged ground — the slash inscribed between 1 and 0.",
+  "0/1": "the written figure as such — itself a determinate mark that can be taken as 1 relative to its field.",
+  "↺": "the return that differs: at #4 uroboric incest against enacted erasure (p.17); at #5→0 the sign becoming Symbol again (A35/A36).",
+  "אין סוף": "En-Sof, plenitude and nothingness beside the wheel (the p.18 lead) — the unobjectified opening in its inherited name.",
+  "✎": "the renewed inscription — the paper's capacity meeting the wheel's continuing composition.",
+  "∅": "the refused reading — neither perpetual mechanical motion nor a topology theorem; what the image does not establish.",
+  "/‑": "the cut and the bond (A13's two logics) — knowing-as-cutting made answerable to knowing-with (#5→0).",
+  "(0/1)/(1/0)": "the native relation — the two directions retained together; the return that preserves the achievement.",
+  "Name": "the coequal Name series — Truth, Mind, Word, Logos, Son, Image.",
+  "Power": "the coequal Power series — Play, Need, Sacrifice, Decision, Love, Work; what formation costs and releases."
+ }
+}
