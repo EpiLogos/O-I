@@ -39,10 +39,19 @@ class PersonalWebTests(unittest.TestCase):
             old = {s["id"]: s for s in before["stories"]}
             now = {s["id"]: s for s in current["stories"]}
             self.assertEqual(len(old), 114)
-            self.assertEqual(set(now) - set(old), {f"PW{i:02}" for i in range(1,13)})
+            # The module has grown additively twice: PW01–12 at O-I#279, then
+            # PW13 (personal-history intake, Central #242). Each later story
+            # keeps the earlier field verbatim.
+            self.assertEqual(set(now) - set(old), {f"PW{i:02}" for i in range(1,14)})
             for key, value in old.items():
                 self.assertEqual(now[key], value)
-            self.assertEqual(current["inherited_obligations"], before["inherited_obligations"])
+            inherited = [o for o in current["inherited_obligations"]
+                         if o["source_module"] != "docs/experience/personal-web.json"]
+            self.assertEqual(
+                inherited,
+                [o for o in before["inherited_obligations"]
+                 if o["source_module"] != "docs/experience/personal-web.json"],
+            )
             self.assertEqual(len([o for o in current["inherited_obligations"] if o["source_module"] == "docs/experience/developer-field.json"]), 56)
 
     def test_new_stories_retain_source_and_no_fabricated_acceptance(self):
