@@ -60,7 +60,7 @@ export function mountShell() {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); focusSearch(); return }
     if (typing || e.metaKey || e.ctrlKey || e.altKey) return
     if (e.key === "/") { e.preventDefault(); focusSearch() }
-    else if (e.key === "1") setView("essay"); else if (e.key.toLowerCase() === "l" || e.key === "4") setView(S.view === "library" ? before : "library")
+    else if (e.key === "1") setView("essay"); else if (e.key === "4") setView("library"); else if (e.key.toLowerCase() === "l") setView(S.view === "library" ? before : "library")
     else if (e.key === "[") setLeft(app.dataset.left === "closed")
     else if (e.key === "Escape") { closePop(); if (narrow.matches) setDrawer(false) }
   })
