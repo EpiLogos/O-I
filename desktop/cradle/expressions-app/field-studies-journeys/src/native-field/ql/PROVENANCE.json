@@ -1,10 +1,10 @@
 {
   "repository": "EpiLogos/QL-MEF",
-  "revision": "7a02d87283d185835c88a6937ee7a442db15749e",
+  "revision": "defb3490f8e7a5106c1fe8fc225953931cc750b0",
   "scope": "Browser admission, target/PCM scheduling and recovery, not numeric domain computation. Copied byte-identically; changes belong at QL-MEF.",
   "files": {
     "retained-field.mjs": "853b22f4212a0c2ed9d56b89ac654414d4175a03a531e672bdf61bd1e4d67d6a",
     "native-audio.mjs": "21d1b53ce325907b2de652feacfe65a429a501364d96b00a680d9621fd8e48c1",
-    "instrument-session.mjs": "707d2a4743dfde394c5d7543d5f05a764deb53407ee80b6ea4ed7d62bf9758e8"
+    "instrument-session.mjs": "119cf1497a408824e173fb1dd312e3bf2301c3efd5b00008a974b3134f44deb8"
   }
 }
