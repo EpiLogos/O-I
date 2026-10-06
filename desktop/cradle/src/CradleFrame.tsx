@@ -1756,6 +1756,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     openEncounter:row=>factoryChoose(row),
     newEncounter:()=>setState(s=>({...s,accompanying:undefined})),
     openActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
+    companion:{depth:state.rightDepth??"strip",setDepth:depth=>setState(s=>({...s,rightDepth:depth}))},
     onMessage:message=>setWindowError(message),
   };
   const [chosenAgentRef]=useChosenAgent(workspace.current.project);

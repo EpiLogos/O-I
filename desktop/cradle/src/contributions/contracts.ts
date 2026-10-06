@@ -2,6 +2,7 @@ import type {ComponentType, ReactNode} from "react";
 import type {SurfaceBinding} from "../surface/types";
 import type {HostedAppState} from "../expressions/hostedApp";
 import type {EncounterRow} from "../encounter/EncounterList";
+import type {AgencyDepth} from "../surface/types";
 
 /** Code admission is compile-time. These identities describe presentation;
  * neither a descriptor nor a selected subject confers owner authority. */
@@ -29,6 +30,10 @@ export interface HostedHostContext {
   openEncounter?: (row: EncounterRow) => void | Promise<void>;
   newEncounter?: () => void;
   openActivity?: () => void;
+  /** The accompanying panel's presence — summoned (`panel`), focused (`full`) or put away (`collapsed`). A surface that
+   * carries its own utility rail (the field) summons and dismisses the companion through this; the panel's own
+   * toggle in the window row stays. */
+  companion?: {depth: AgencyDepth; setDepth: (depth: AgencyDepth) => void};
   onMessage?: (message: string) => void;
 }
 

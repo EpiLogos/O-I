@@ -21,9 +21,10 @@ async function waitHttp(url, label, ms = 30000) {
   throw new Error(`${label} did not answer at ${url}`);
 }
 
-export async function bootField({width = 1440, height = 900, epi = true, bridge = true, fixture = null, siteRoot = process.env.FIELD_SITE_ROOT, appUrl = process.env.FIELD_APP_URL ?? "http://localhost:1451/"} = {}) {
+export async function bootField({width = 1440, height = 900, epi = true, bridge = true, fixture = null, provision = null, siteRoot = process.env.FIELD_SITE_ROOT, appUrl = process.env.FIELD_APP_URL ?? "http://localhost:1451/"} = {}) {
   if (!siteRoot || !existsSync(join(siteRoot, "essay/static/fieldIndex.json"))) throw new Error("FIELD_SITE_ROOT must name a built site root (essay/static/fieldIndex.json)");
   const disposers = [];
+  let ground = null;
   const dispose = async () => { for (const d of disposers.reverse()) { try { await d(); } catch { /* best effort */ } } };
   try {
     const edition = await serveEdition(siteRoot, 0);
@@ -39,7 +40,11 @@ export async function bootField({width = 1440, height = 900, epi = true, bridge 
       call("central.init"); mkdirSync(join(root, "Work", "Field")); call("projectcentral.init", {project: "Field", project_id: "field-walk"});
       if (fixture) cpSync(fixture, join(root, "Work", "Field"), {recursive: true});   // an ordinary corpus, linked as the project
       const port = 4300 + Math.floor(Math.random() * 500);
-      const child = spawn(bin, [`127.0.0.1:${port}`], {cwd: root, env: {...process.env, OI_CENTRAL_ROOT: root, OI_HOME: home, OI_CENTRAL_PROJECT_QUERY: "Field"}, stdio: "ignore"});
+      // a walk that needs more of the ground (an AIKit home, a session) provisions it here and may add to the bridge's env
+      const extra = provision ? await provision({root, home, projectRoot: join(root, "Work", "Field")}) : {};
+      const child = spawn(bin, [`127.0.0.1:${port}`], {cwd: root, env: {...process.env, OI_CENTRAL_ROOT: root, OI_HOME: home, OI_CENTRAL_PROJECT_QUERY: "Field", ...(extra?.env ?? {})}, stdio: "ignore"});
+      if (extra?.cleanup) disposers.push(extra.cleanup);
+      ground = {root, home, extra};
       disposers.push(() => child.kill());
       await waitHttp(`http://127.0.0.1:${port}/state`, "the walk bridge");
       bridgeUrl = `http://127.0.0.1:${port}`;
@@ -67,7 +72,7 @@ export async function bootField({width = 1440, height = 900, epi = true, bridge 
     await page.waitForSelector(".desktop-shell", {timeout: 60000});
     await page.waitForSelector(".field-root", {timeout: 60000});
     if (epi) await toggleEpi(page, true);
-    return {page, errors, editionUrl, siteBase: `http://127.0.0.1:${edition.port}`, dispose, browser, context, bridgeUrl};
+    return {page, errors, editionUrl, ground, siteBase: `http://127.0.0.1:${edition.port}`, dispose, browser, context, bridgeUrl};
   } catch (e) { await dispose(); throw e; }
 }
 

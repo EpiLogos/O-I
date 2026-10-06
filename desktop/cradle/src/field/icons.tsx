@@ -13,6 +13,10 @@ export function FieldIcons() {
       <symbol id="fi-fit" viewBox="0 0 20 20"><path d="M3.5 7.5v-4h4M16.5 7.5v-4h-4M3.5 12.5v4h4M16.5 12.5v4h-4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></symbol>
       <symbol id="fi-expression" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"><path d="M10 2.8 17 7v6L10 17.2 3 13V7z"/><path d="M3.3 7.2 10 11l6.7-3.8M10 11v6" strokeLinecap="round"/></g></symbol>
       <symbol id="fi-library" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"><rect x="3" y="3.5" width="5.5" height="5.5" rx="1"/><rect x="11.5" y="3.5" width="5.5" height="5.5" rx="1"/><rect x="3" y="11" width="5.5" height="5.5" rx="1"/><rect x="11.5" y="11" width="5.5" height="5.5" rx="1"/></g></symbol>
+      <symbol id="fi-scope" viewBox="0 0 20 20"><path d="M3 5.5h5l1.5 1.8H17v8H3z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></symbol>
+      <symbol id="fi-modes" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"><rect x="3" y="3.5" width="14" height="13" rx="1.5"/><path d="M3 8h14M8 8v8.5"/></g></symbol>
+      <symbol id="fi-companion" viewBox="0 0 20 20"><path d="M3.5 4.5h13v9h-7l-3.5 3v-3h-2.5z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></symbol>
+      <symbol id="fi-settings" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.8v2M10 15.2v2M2.8 10h2M15.2 10h2M5 5l1.4 1.4M13.6 13.6 15 15M5 15l1.4-1.4M13.6 6.4 15 5"/></g></symbol>
       <symbol id="fi-external" viewBox="0 0 20 20"><path d="M8 4.5H4.5v11h11V12M11 4.5h4.5V9M15.5 4.5 9 11" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></symbol>
     </svg>
   );

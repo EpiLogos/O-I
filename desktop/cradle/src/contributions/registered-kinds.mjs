@@ -87,7 +87,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "oi",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Field"
   }
 ];

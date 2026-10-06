@@ -1,0 +1,114 @@
+{
+  "scenario": "field-reachability",
+  "at": "2026-10-06T19:36:08.552Z",
+  "passed": true,
+  "counts": {
+    "passed": 20,
+    "total": 20
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the field default folds the window's left navigator and the companion",
+      "detail": {
+        "left": "collapsed",
+        "right": "collapsed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the field carries its own utility bar (exactly one, visible)"
+    },
+    {
+      "ok": true,
+      "label": "the scope menu offers Central, the kernel's projects and the Epi world",
+      "detail": [
+        "Central",
+        "Field",
+        "Epi-Logos"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "choosing the project by pointer links its corpus as the field's source"
+    },
+    {
+      "ok": true,
+      "label": "the scope button names the scope"
+    },
+    {
+      "ok": true,
+      "label": "the Epi world toggles from the field"
+    },
+    {
+      "ok": true,
+      "label": "summon: the companion opens beside the field with its composer",
+      "detail": "panel"
+    },
+    {
+      "ok": true,
+      "label": "…and the field stays"
+    },
+    {
+      "ok": true,
+      "label": "focus: the companion takes the width",
+      "detail": "full"
+    },
+    {
+      "ok": true,
+      "label": "the window row's own toggle still works from the focused state",
+      "detail": "panel"
+    },
+    {
+      "ok": true,
+      "label": "put away: the companion folds",
+      "detail": "collapsed"
+    },
+    {
+      "ok": true,
+      "label": "pin: the choice about the field in the companion's context is held"
+    },
+    {
+      "ok": true,
+      "label": "off again: present is not prepared"
+    },
+    {
+      "ok": true,
+      "label": "keyboard: Enter opens a utility menu, Escape closes it"
+    },
+    {
+      "ok": true,
+      "label": "keyboard: Enter, Tab, Enter on the companion menu summons it",
+      "detail": "panel"
+    },
+    {
+      "ok": true,
+      "label": "the modes menu offers the modes the window offers",
+      "detail": [
+        "Central",
+        "Factory",
+        "Expressions",
+        "Technè"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a mode is entered by pointer from the field",
+      "detail": "expressions"
+    },
+    {
+      "ok": true,
+      "label": "…and Base (the field) comes back by pointer, its place kept"
+    },
+    {
+      "ok": true,
+      "label": "Settings opens by pointer from the field",
+      "detail": "settings"
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}
