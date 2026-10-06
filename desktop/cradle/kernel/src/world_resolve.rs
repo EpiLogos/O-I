@@ -738,6 +738,12 @@ mod tests {
             ("edition/index.html", "<article>Root</article>"),
             ("edition/a/b.html", "<article>B</article>"),
             ("edition/symbolon/d.svg", "<svg/>"),
+            (
+                "renderer/expression.html",
+                "<!doctype html><meta name=\"oi-edition-base\" content=\"../edition/\">",
+            ),
+            ("renderer/assets/expression-abc.js", "export const x = 1;"),
+            ("renderer/assets/expression-abc.css", "body{margin:0}"),
             ("praxis/skills/x/SKILL.md", "# x"),
         ])
     }
@@ -788,7 +794,7 @@ mod tests {
             },
         );
         assert_eq!(full.verified.as_ref().unwrap().level, "files");
-        assert_eq!(full.verified.unwrap().files, 5);
+        assert_eq!(full.verified.unwrap().files, 8);
     }
 
     #[test]
@@ -912,6 +918,47 @@ mod tests {
         );
         // A percent-encoded path segment names the same listed file.
         assert_eq!(serve_in(&f.root, &url("edition/a/b%2Ehtml")).status, 200);
+    }
+
+    #[test]
+    fn the_expression_renderer_is_served_from_the_same_route_and_only_what_is_listed() {
+        let f = standard();
+        let page = serve_in(&f.root, &url("renderer/expression.html"));
+        assert_eq!(
+            (page.status, page.content_type.as_str()),
+            (200, "text/html; charset=utf-8")
+        );
+        assert!(String::from_utf8_lossy(&page.body).contains("oi-edition-base"));
+        let script = serve_in(&f.root, &url("renderer/assets/expression-abc.js"));
+        assert_eq!(
+            (script.status, script.content_type.as_str()),
+            (200, "text/javascript; charset=utf-8")
+        );
+        assert_eq!(script.body, b"export const x = 1;");
+        assert_eq!(
+            serve_in(&f.root, &url("renderer/assets/expression-abc.css")).content_type,
+            "text/css; charset=utf-8"
+        );
+        // A renderer file that exists on disk but is not in the listing is not served, nor is a sibling the page never named.
+        fs::write(f.dir.join("renderer/assets/unlisted.js"), "alert(1)").unwrap();
+        let refused = serve_in(&f.root, &url("renderer/assets/unlisted.js"));
+        assert_eq!(refused.status, 404);
+        assert!(String::from_utf8_lossy(&refused.body).contains("not in this revision's file list"));
+        // The renderer reaches the edition only through the listing: `..` out of renderer/ is refused, the listed edition path serves.
+        assert_eq!(
+            serve_in(&f.root, &url("renderer/../edition/index.html")).status,
+            403
+        );
+        assert_eq!(
+            serve_in(&f.root, &url("edition/static/fieldIndex.json")).status,
+            200
+        );
+        // A changed renderer script is not served (its bytes no longer match the recorded digest).
+        fs::write(f.dir.join("renderer/assets/expression-abc.js"), "alert(1)").unwrap();
+        assert_eq!(
+            serve_in(&f.root, &url("renderer/assets/expression-abc.js")).status,
+            500
+        );
     }
 
     #[test]

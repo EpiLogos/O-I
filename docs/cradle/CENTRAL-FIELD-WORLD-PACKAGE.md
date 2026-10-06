@@ -18,6 +18,8 @@ edition/                 the published reading (the Quartz site) + Expression la
   expressions/index.json   oi.essay-expressions/v1; entries[].{id,digest,journey,cover,scenes,nodes}
   expressions/x/<id>.journey.json, <id>.cover.*   digest-checked bodies
   <slug>.html              one rendered page per node; body is `#essay-pane > article`
+renderer/                the Expression renderer: the site's own `expression` entry built alone (`site/vite.renderer.config.ts`):
+                         expression.html + the assets it loads, every file in world.files.json; the page declares `oi-edition-base` = ../edition/
 source/                  dependency-closure receipts (`dependency-defects.json`)
 praxis/skills/<name>/SKILL.md   the shipped reader Skills (source-owned)
 praxis-skillset/members  the reader SkillSet (composition, one capability id per line)
@@ -133,6 +135,19 @@ Rules for the adapter: an `unavailable` result is shown, never replaced by a fal
 refusal to surface (404 = not part of this World, 403 = refused path, 500 = the install does not verify), not a retry; `expressions/x/<id>.journey.json`
 bodies stay hash-checked against `entries[].digest` in the adapter as well (the route already refuses bytes that differ from the listing). The installed
 revision is immutable, so `revision` is the cache key; re-resolve on app start and after an install.
+
+### Expressions play from the package (renderer)
+
+`expressionView` for a packaged edition returns the route URL of the renderer the World carries:
+`<route>/renderer/expression.html?x=<expression id>&scene=<scene id>&embed=1&theme=<light|dark>` (bridge: `<bridge>/world/<world id>/<revision>/renderer/…`;
+native: `oi-material://localhost/__world/…/renderer/…`). The renderer reads `../edition/expressions/index.json` and `x/<id>.journey.json` from the same route,
+checks each body's SHA-256 against the index before drawing, and loads only files in the package. `verify` fails if the renderer is missing, a renderer file drifts from
+the manifest's digest or is not in `world.files.json`, the page names a file the package does not hold, or its declared edition base does not reach this package's
+`expressions/index.json`. `__world` serves only listed files, so an unlisted renderer sibling is a 404 (Rust test). A configured (site) edition still frames the site's
+`../expression.html`. The CSP needs no change: the framed page is an `oi-material:` document, and `frame-src` already names `oi-material:`.
+Known limits: the field's scene and theme messages to the frame are cross-origin and the renderer accepts only same-origin messages (unchanged from the edition-server
+setup: the scene arrives by the URL parameter at load); under the Tauri host the renderer's `crypto.subtle` needs `oi-material:` to be a secure context, which was not
+exercised here (no native shell run).
 
 ## 6. Dispositions (every unresolved reference is classified, none hidden)
 

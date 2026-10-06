@@ -141,6 +141,49 @@ export function depthClass(path) {
 
 async function readJson(file) { return JSON.parse(await readFile(file, 'utf8')); }
 
+/** The Expression renderer a World carries: the site's own `expression` entry, built alone (`site/vite.renderer.config.ts`), at
+ *  `renderer/expression.html` beside `edition/`. Every file it loads is in the package and listed with its digest. */
+export const RENDERER_ENTRY = 'renderer/expression.html';
+export async function describeRenderer(dir, files = null) {
+  const present = (await walkFiles(join(dir, 'renderer')).catch(() => [])).map((f) => `renderer/${f}`);
+  if (!present.includes(RENDERER_ENTRY)) throw new Error(`a World package carries its Expression renderer: ${RENDERER_ENTRY} is missing`);
+  const out = [];
+  for (const path of present.sort()) { const bytes = await readFile(join(dir, path)); out.push({ path, sha256: sha256(bytes), bytes: bytes.length }); }
+  return { entry: RENDERER_ENTRY, edition_base: '../edition/', built_by: 'site/vite.renderer.config.ts (the site\'s expression entry, built alone)', files: out, total_bytes: out.reduce((n, f) => n + f.bytes, 0) };
+}
+
+/** The renderer is closed over the package: the page names only files the package holds, those files name only files it holds, and the page's
+ *  declared edition base is this package's edition. A missing or drifted file is a failure, never a partial renderer. */
+export async function verifyRenderer(dir, manifest, listedByPath) {
+  const problems = [];
+  const declared = manifest.renderer;
+  if (!declared?.files?.length) return ['the manifest declares no Expression renderer'];
+  if (declared.entry !== RENDERER_ENTRY) problems.push(`the renderer entry is ${declared.entry}, not ${RENDERER_ENTRY}`);
+  const names = new Set(declared.files.map((f) => f.path));
+  for (const f of declared.files) {
+    const listed = listedByPath.get(f.path);
+    if (!listed) problems.push(`${f.path}: a renderer file the manifest declares is not in the file list`);
+    else if (listed.sha256 !== f.sha256) problems.push(`${f.path}: renderer digest differs from the one the manifest declares`);
+  }
+  if (!names.has(RENDERER_ENTRY)) problems.push(`${RENDERER_ENTRY} is not among the declared renderer files`);
+  for (const path of listedByPath.keys()) if (path.startsWith('renderer/') && !names.has(path)) problems.push(`${path}: a renderer file the manifest does not declare`);
+  const entry = listedByPath.has(RENDERER_ENTRY) ? await readFile(join(dir, RENDERER_ENTRY), 'utf8').catch(() => null) : null;
+  if (entry === null) { problems.push(`${RENDERER_ENTRY}: missing`); return problems; }
+  const base = /<meta name="oi-edition-base" content="([^"]+)"/.exec(entry)?.[1];
+  if (base !== declared.edition_base) problems.push(`the renderer page declares edition base ${JSON.stringify(base)}, the manifest says ${JSON.stringify(declared.edition_base)}`);
+  else if (!listedByPath.has(posix.normalize(posix.join('renderer', base, 'expressions/index.json')))) problems.push(`the renderer's edition base ${base} does not reach this package's expressions/index.json`);
+  const refs = (text, from) => [...text.matchAll(/(?:src|href)="(\.\/[^"]+)"/g)].map((m) => posix.normalize(posix.join(posix.dirname(from), m[1])));
+  for (const ref of refs(entry, RENDERER_ENTRY)) if (!listedByPath.has(ref)) problems.push(`${RENDERER_ENTRY} loads ${ref}, which the package does not hold`);
+  for (const f of declared.files.filter((x) => /\.(js|css)$/.test(x.path))) {
+    const text = await readFile(join(dir, f.path), 'utf8').catch(() => '');
+    for (const m of text.matchAll(/(?:from|import\()\s*["'](\.\/[A-Za-z0-9_.-]+\.(?:js|css))["']|url\(["']?(\.\/[A-Za-z0-9_.-]+)["']?\)/g)) {
+      const ref = posix.normalize(posix.join(posix.dirname(f.path), m[1] ?? m[2]));
+      if (!listedByPath.has(ref)) problems.push(`${f.path} loads ${ref}, which the package does not hold`);
+    }
+  }
+  return problems;
+}
+
 export async function describeEdition(editionDir) {
   const index = await readJson(join(editionDir, 'static/fieldIndex.json'));
   const receipt = await readJson(join(editionDir, 'quartz-source.json'));
@@ -553,6 +596,7 @@ export async function verifyPackage(dir, { vaultEssayDir } = {}) {
     const found = name === 'pages' ? description.pages.nodes : description.expressions.members;
     if (found !== expected) problems.push(`${name}: the artifact has ${found}, the manifest says ${expected}`);
   }
+  problems.push(...await verifyRenderer(dir, manifest, new Map(list.files.map((f) => [f.path, f]))));
   const praxis = await verifyPraxisBinding(dir).catch((e) => ({ unbound: [{ id: 'praxis', why: e.message }] }));
   if (praxis.unbound.length) problems.push(`${praxis.unbound.length} reader-SkillSet members do not bind to a shipped Skill (${praxis.unbound[0].id}: ${praxis.unbound[0].why})`);
   let vault = null;
@@ -697,6 +741,10 @@ export async function buildWorld({ vault, vaultCommit, pcd, pcdCommit, oi, oiCom
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
   await cp(edition, join(out, 'edition'), { recursive: true });
+  // The Expression renderer: the site's own expression entry, built alone for the packaged layout, from the same pinned commit.
+  const rendererOut = join(scratch, 'renderer-build');
+  await exec(process.execPath, [join(site, 'node_modules/vite/bin/vite.js'), 'build', '--config', 'vite.renderer.config.ts', '--outDir', rendererOut], { cwd: site, maxBuffer: 64 * 1024 * 1024 });
+  await cp(rendererOut, join(out, 'renderer'), { recursive: true });
   // The reader companion's practices, verbatim from the pinned commit.
   await cp(join(vaultDir, 'submission-package/epi-logos'), join(out, 'praxis'), { recursive: true });
   await mkdir(join(out, 'source'), { recursive: true });
@@ -724,6 +772,7 @@ export async function assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, r
   const d = await describeEdition(join(out, 'edition'));
   const pages = await readAllPages(join(out, 'edition'), d);
   const expressions = await verifyExpressions(join(out, 'edition'), d);
+  const renderer = await describeRenderer(out);
   await mkdir(join(out, 'source'), { recursive: true });
   const sourceDisp = closure.dispositions ?? dispositionSourceDefects(closure.unresolved_all, { declaredWithheld: closure.withheld_declared ?? [] });
   const editionDisp = dispositionEditionDefects(pages.dangling_all, sourceDisp.table, { slugs: d._slugs });
@@ -757,8 +806,10 @@ export async function assemblePackage({ out, vaultCommit, pcdCommit, oiCommit, r
     counts: {
       pages: d.pages, structure: d.structure, depth_classes: d.depth_classes, assets: d.assets, expressions: d.expressions,
       praxis: { skills: skills.length, skill_names: skills, files: praxisFiles.length },
+      renderer: { entry: renderer.entry, files: renderer.files.length, bytes: renderer.total_bytes },
       media_note: 'images, figures and SVGs are the published assets under symbolon/*/{diagrams,plates,media,figures,images}; audio/video appear only if listed under assets.by_extension',
     },
+    renderer,
     dependency_closure: {
       basis: 'the published source markdown at the pinned commit, through the site\'s own selection law (essay-source.mjs readEssayInputs)',
       published_inputs: publishedInputs,
