@@ -16,20 +16,30 @@ export interface HostedSurfaceDescriptor {
   region: "canvas";
 }
 
-export interface FactoryCentreContext {
+/** The host operations the frame lends to ANY hosted surface: the project it
+ * is browsing, the conversation bound to the workspace, and the ordinary ways
+ * a surface asks the host to open an encounter, begin a new one, reveal the
+ * activity plane or show a message. These are host/encounter operations, not
+ * any one product's: a contribution maps them onto its own domain context
+ * (Factory's Tasks does so in contributions/factory/descriptor.tsx). Domain
+ * context never travels through this contract. */
+export interface HostedHostContext {
   project?: string;
   accompanying?: {ref: string; project: string; space: string};
-  onOpenTask?: (row: EncounterRow) => void | Promise<void>;
-  onNewTask?: () => void;
-  onOpenActivity?: () => void;
+  openEncounter?: (row: EncounterRow) => void | Promise<void>;
+  newEncounter?: () => void;
+  openActivity?: () => void;
   onMessage?: (message: string) => void;
 }
 
 export interface HostedMountProps {
   binding: SurfaceBinding;
   subject?: {ref?: string; kind?: string; title: string; project?: string};
-  factoryCentre?: ReactNode;
-  factoryTasks?: FactoryCentreContext;
+  /** The frame-built conversation (the shared AgentChat). A surface that
+   * relocates the conversation to its centre mounts it; the frame keeps the
+   * session observer and the choose pair. */
+  conversation?: ReactNode;
+  host?: HostedHostContext;
   onHostedState?: (state: HostedAppState) => void;
 }
 

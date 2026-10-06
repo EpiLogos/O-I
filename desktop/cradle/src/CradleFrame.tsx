@@ -26,6 +26,7 @@ import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import {EncounterList,type EncounterRow} from "./encounter/EncounterList";
+import type {HostedHostContext} from "./contributions/contracts";
 import {AgentLayer} from "./agent/AgentLayer";
 import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
@@ -1727,18 +1728,18 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     }catch(error){setWindowError(String(error));}
     finally{setFactoryChoosing(false);}
   };
-  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onMessage:(message:string)=>void}={
+  const hostOperations:HostedHostContext={
     project:workspace.current.project??state.accompanying?.project,
     accompanying:state.accompanying??undefined,
-    onOpenTask:row=>factoryChoose(row),
-    onNewTask:()=>setState(s=>({...s,accompanying:undefined})),
-    onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
+    openEncounter:row=>factoryChoose(row),
+    newEncounter:()=>setState(s=>({...s,accompanying:undefined})),
+    openActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
     onMessage:message=>setWindowError(message),
   };
   const [chosenAgentRef]=useChosenAgent(workspace.current.project);
   const centreRoster=useAgentRoster(workspace.current.project,!!chosenAgentRef);
   const centreAgent=centreRoster.agents.find(agent=>agent.ref===chosenAgentRef);
-  const factoryCentre=
+  const centreConversation=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
       project={workspace.current.project??state.accompanying?.project}
       agentName={centreAgent?.name}
@@ -1960,7 +1961,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         openExplore={select=>openExplore(select,"side")}
         onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
         openEncounter={row=>openEncounter(row,"side").catch(report)}
-        factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
+        conversation={centreConversation} host={hostOperations}
         subject={workspace.current.context?.subject}
         nativeWindows={kernel.transport.kind==="tauri"}
         workspaceName={workspace.current.name}
@@ -2022,7 +2023,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         return (
           <CanvasStage key={`mode-stage-${stageMode}`} data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
-            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
+            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} conversation={centreConversation} host={hostOperations} onHostedState={engineCallbackFor(binding.id)}/>}
           </CanvasStage>
         );
       })}
@@ -2080,8 +2081,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             openPresentation={openPresentation}
             openExplore={openExplore}
             openEncounter={row=>openEncounter(row).catch(report)}
-            factoryCentre={factoryCentre}
-            factoryTasks={factoryCentreProps}
+            conversation={centreConversation}
+            host={hostOperations}
             subject={workspace.current.context?.subject}
             nativeWindows={kernel.transport.kind==="tauri"}
           />

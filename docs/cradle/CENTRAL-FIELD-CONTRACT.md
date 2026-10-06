@@ -1,0 +1,74 @@
+# Central field — the small shared contract (EF0)
+
+Status: **published 6 October 2026 by the lead, revised as the first vertical lands.**
+Parent: O:I #592 · Map: `.wayfinder/maps/epi-logos-field.md` · Repair ledger: O:I #598.
+Branch: `feat/central-field-base` (seat `env-2/o-i`). Names below describe meaning; where a
+type already exists it is named by its file, and nothing here mints a competing store.
+
+## 0 — The binding decision
+
+The site's field becomes a **hosted surface contribution of the Base arrangement**, not an
+Epi-Logos-only surface and not a new `WorkspaceMode`.
+
+| Question | Decision | Native owner |
+|---|---|---|
+| Where does the field live? | A hosted surface `oi.surface/field` (kind `field`) admitted through the existing compile-time registry (`oi contribution compile-registry` → `src/contributions/generated.ts`). Base (`MODE_CURATION.base`, labelled Central) opens it as its default centre. | `src/contributions/*`, new `src/field/` |
+| What does the field read? | A `FieldSource` adapter (below). A linked local corpus gets the generic adapter (kernel material/files/knowledge reads). Epi-Logos supplies its own adapter through the existing Epi world context (`context.world`, footer toggle). | `src/field/source.ts`; `src/epilogos/sources.ts` |
+| Where does presentation state live? | One typed `FieldEncounter` reducer in `src/field/model.ts`, persisted as the surface binding's `view.field` (extends `SurfaceBinding.view`, `src/surface/types.ts`), restored with the layout. It is not a source database, an agent session or a cache. | host (presentation) |
+| How do agent and human operate it? | Both call the **same** pure operations `fieldApply(state, op)`. The agent reaches them through an admitted native host operation (extend the Expressions native host relay admission list in `kernel/src/native_expression.rs` or the existing `oi:*` host event route — whichever the first vertical proves; record which). No DOM or screenshot dependence. | host + kernel admission |
+| Where does domain meaning stay? | Source reads, relation authoring, QL computation, Expression/Technē acts and agency stay at their owners (Central source reads, QL-MEF, Expression owner, Actuation/AIKit). The field only holds refs + presentation. | owners |
+| Epi mode | Not a mode of the field: the Epi world swaps the adapter and adds domain tools/praxis. Mode-off must work with any linked corpus. | `src/epilogos/*` |
+
+## 1 — The six relations (what exists, what is added)
+
+| Relation | Basis today | Added by this line |
+|---|---|---|
+| **Encounter** | `SurfaceBinding` (`ref`, `address`, `view`, `engine`, `presentation`), `LayoutState.accompanying`, `context.world`, Epi place/passage store (`src/epilogos/places.ts`) | `FieldEncounter`: `{world_ref, primary:{ref,revision,span?}, tangent?:{ref,revision,span?,kind:"page"\|"expression"}, selected?:ref, constellation?:{refs[]}, scene?:{expression_ref,scene_id}, emphasis:"essay"\|"split"\|"field"\|"library", generation:n}` |
+| **Presentation actions** | Workbench open/focus/pin/close/split (`src/surface/engine.ts`), keyboard map (`keys.ts`) | ops: `select(ref)`, `open-main(ref)`, `open-preview(ref)`, `keep`, `promote`, `back`, `set-emphasis`, `enter-constellation(refs)`. Distinct effects; `select` never navigates; `keep`/`promote` never discard dirty editable work. |
+| **Prepared turn** | `PreparedContextView`, `SituationView`, `context/*`, AIKit prepared context | the active `FieldEncounter` (primary + tangent + selected + constellation) is a context contribution; the turn records the exact `generation` it was prepared against. |
+| **Domain action** | `ActionDisclosure`, native Actions, `KernelOp` (`kernel/src/lib.rs`) | none. The field invokes owners; results keep their refs/revisions. |
+| **Continuity** | `LayoutState` persistence (`src/surface/persist.ts`), drafts, encounter session ref | `view.field` restored with the layout; reader-owned notes/constructions saved through the Expression/wiki owners, never into the publication. |
+| **Contribution** | `HostedSurfaceDescriptor` / `RegisteredHostedSurface` (`src/contributions/contracts.ts`) | `oi.contribution/field`; a small non-essay specimen (conformance) is added through the same path. |
+
+### `FieldSource` (meaning, not a mandatory schema)
+
+```text
+nodes()/links()        the local neighbourhood of a ref (filterable by reach/registers/index pages)
+tree()                 explorer + breadcrumb siblings, from native refs (paths are display only)
+search(q)              titles/paths at once; deeper text only when asked
+read(ref)              body + passages + figures + {sourceRef, sourceRevision}   (as EpiReading today)
+expressionsFor(ref)    Expression refs the page is *about*, with scene ids
+```
+
+Rules: refs are native stable refs, never site ordinals/slugs; static indices
+(`fieldIndex.json`, `expressions/index.json`) are derived, source-pinned projections; revision
+travels with every read; a stale revision is refused, not coerced.
+
+## 2 — First working encounter (the path every other piece joins)
+
+`site passage → same passage in the new Base → select a relation (no navigation) → open it as a
+tangent → the actual companion answers from this context → source depth → the real Expression
+(scene) → return to the main passage.`
+
+Pin the concrete passage, tangent page and Expression from the live site build
+(`site/.public-edition/essay/static/fieldIndex.json`, `essay-expression-map.json`) and record
+them in the table below on first run. Candidate: movement of `THE-RETURN-OF-ZERO`
+(Expression `roz-essay-reading`) → an `arguments/A*` page (`roz-a-arguments`).
+
+| Slot | Value (fill on first run) |
+|---|---|
+| main passage | |
+| selected relation | |
+| tangent | |
+| Expression + scene | |
+| companion prepared-turn basis | |
+
+## 3 — File claims (exclusive; the lead serializes git)
+
+| Owner | Writes | Does not touch |
+|---|---|---|
+| Lead (EF0/#598) | `src/contributions/contracts.ts`, `src/contributions/factory/**`, Factory props in `CradleFrame.tsx`/`modeBodies.tsx`, `src/workspace/{mode,store}.ts` composition seams, `docs/cradle/CENTRAL-FIELD-*`, git, generated registry | `src/field/**` |
+| Sonnet B (#593) | new `src/field/**`, `src/epilogos/*` (adapter binding), `site/` reads (no edits to site build), new tests under `desktop/cradle/tests/field-*`, `walk/scenarios/field-*` | contracts.ts, factory/**, Factory regions of CradleFrame |
+| Sonnet A (#132/#78/#595) | `Work/Actuation` seat `env-1/actuation` (`feat/central-field-actuation`), `env-1/ai-kit` (`feat/central-field-ai-kit`), `desktop/cradle/package-bundle.sh`, `cli/src/{composition,configuration/profile,desktop_install}.rs` | `src/**` |
+
+Anyone needing a file outside their claim asks the lead; nobody commits or pushes — the lead does.
