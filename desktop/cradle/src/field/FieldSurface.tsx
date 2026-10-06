@@ -33,7 +33,7 @@ import type {HostedHostContext} from "../contributions/contracts";
 import {SearchBar, SearchResults, useFieldSearch} from "./Search";
 import {Tabs} from "./Tabs";
 import {Article, type Following} from "./Article";
-import {Connections, Contents, GraphPane, type ContentEntry} from "./Right";
+import {Connections, Contents, GraphPane, type ContentEntry, type ContentTarget} from "./Right";
 import {Crumbs, ExpressionFrame, Library, Lightbox, Rail, type LibraryState} from "./Center";
 import type {GraphHandle} from "./graphView";
 
@@ -344,11 +344,11 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
     if (sp && !sp.at) {
       let room = "";
       for (const it of sp.sequence.items) {
-        if (it.section.id !== room) { room = it.section.id; entries.push({key: "r" + room, level: 2, label: it.section.label, mark: it.section.coord, go: () => scrollToSpan(it.span, true)}); }
-        entries.push({key: it.span, level: 3, label: it.label, mark: it.coord, go: () => scrollToSpan(it.span, true)});
+        if (it.section.id !== room) { room = it.section.id; entries.push({key: "r" + room, level: 2, label: it.section.label, mark: it.section.coord, to: {span: it.span}}); }
+        entries.push({key: it.span, level: 3, label: it.label, mark: it.coord, to: {span: it.span}});
       }
     } else {
-      for (const h of pane.querySelectorAll<HTMLElement>("article h2, article h3")) entries.push({key: h.id || (h.textContent ?? ""), level: h.tagName === "H2" ? 2 : 3, label: (h.textContent ?? "").trim(), go: () => scrollToId(h.id, true)});
+      for (const h of pane.querySelectorAll<HTMLElement>("article h2, article h3")) entries.push({key: h.id || (h.textContent ?? ""), level: h.tagName === "H2" ? 2 : 3, label: (h.textContent ?? "").trim(), to: {id: h.id}});
     }
     setContents(entries);
     requestAnimationFrame(() => {
@@ -371,12 +371,15 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
   // contents for an Expression: its scenes
   const expressionContents: ContentEntry[] | null = useMemo(() => {
     if (!tab || tab.kind !== "expression" || !xEntry) return null;
-    return xEntry.scenes.map((sc, k) => ({key: sc.id, level: 3 as const, label: sc.name, mark: String(k + 1).padStart(2, "0"), here: sc.id === (tab.scene ?? xEntry.scenes[0]?.id), go: () => {
-      frames.current.get(tab.id)?.contentWindow?.postMessage({type: "oi-scene", scene: sc.id}, "*");
-      apply({op: "set-scene", scene_id: sc.id});
-    }}));
-  }, [tab, xEntry, apply]);
+    return xEntry.scenes.map((sc, k) => ({key: sc.id, level: 3 as const, label: sc.name, mark: String(k + 1).padStart(2, "0"), here: sc.id === (tab.scene ?? xEntry.scenes[0]?.id), to: {scene: sc.id}}));
+  }, [tab, xEntry]);
   const frames = useRef<Map<string, HTMLIFrameElement | null>>(new Map());
+  /** Where a contents row goes: looked up when it is clicked, so no row holds a page, a pane or a render's scope. */
+  const goContent = (to: ContentTarget) => {
+    if ("span" in to) scrollToSpan(to.span, true);
+    else if ("id" in to) scrollToId(to.id, true);
+    else if (tab) { frames.current.get(tab.id)?.contentWindow?.postMessage({type: "oi-scene", scene: to.scene}, "*"); apply({op: "set-scene", scene_id: to.scene}); }
+  };
   const pageContents = useMemo(() => contents?.map(c => (seqPlace && !seqPlace.at && c.level === 3 ? {...c, here: c.key === spanHere} : c)) ?? null, [contents, seqPlace, spanHere]);
 
   // the tab came into view or went out of it: save where it was (the scroller is shared) and re-settle on arrival
@@ -406,6 +409,8 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
     else if (e.key === "1") setEmphasis("essay"); else if (e.key === "2") setEmphasis("split"); else if (e.key === "3") setEmphasis("field"); else if (e.key === "4") setEmphasis("library");
     else if (e.key.toLowerCase() === "l") toggleLibrary();
     else if (e.key === "[") patchView({left: leftOpen ? "closed" : "open"});
+    else if (tab && e.key.toLowerCase() === "k" && tab.preview) apply({op: "keep", tab: tab.id});          // keep the tangent in view
+    else if (tab && e.key.toLowerCase() === "p") apply({op: "promote", tab: tab.id});                      // open it as the main page (↗)
   };
   useEffect(() => {
     const on = (e: KeyboardEvent) => keysRef.current(e);
@@ -545,7 +550,7 @@ function FieldLoaded({binding, source, index, onView, hostOps}: {binding: Surfac
                 }}
                 hover={ref => setHover(ref, "graph")} collapse={() => patchView({right: "closed"})} onGraph={g => { graph.current = g; }} layoutKey={layoutKey}/>
               <div className="right-scroll">
-                <Contents entries={inViewIsExpression ? expressionContents : pageContents}/>
+                <Contents entries={inViewIsExpression ? expressionContents : pageContents} go={goContent}/>
                 <Connections index={index} focus={locus} filter={filter} setFilter={setFilter} spanLabel={seqPlace && !seqPlace.at && spanHere ? spanHere : null}
                   onOpen={(ref, e) => (e.metaKey || e.ctrlKey || e.shiftKey ? followMain(ref) : followTangent(ref))} onHover={ref => setHover(ref)}/>
               </div>

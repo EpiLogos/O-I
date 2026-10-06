@@ -70,7 +70,9 @@ export function GraphPane(p: GraphPaneProps) {
   useEffect(() => {
     if (!menu) return;
     const away = (e: PointerEvent) => { const t = e.target as Element; if (!t.closest(".gmenu") && !t.closest("[data-filter-btn]")) setMenu(false); };
-    document.addEventListener("pointerdown", away); return () => document.removeEventListener("pointerdown", away);
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setMenu(false); document.querySelector<HTMLElement>("[data-filter-btn]")?.focus(); } };
+    document.addEventListener("pointerdown", away); document.addEventListener("keydown", esc, true);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc, true); };
   }, [menu]);
 
   const nb = p.focus ? neighbourhood(p.index, p.focus, p.filter) : null;
@@ -160,14 +162,17 @@ export function Connections({index, focus, filter, setFilter, spanLabel, onOpen,
 }
 
 /* ───────── contents ───────── */
-export interface ContentEntry { key: string; level: 1 | 2 | 3; label: string; mark?: string; here?: boolean; go: () => void }
-export function Contents({entries}: {entries: ContentEntry[] | null}) {
+/** A contents row is DATA (where it goes), never a closure: a closure built while reading a page captures that render's whole
+ *  scope (and, through `previous`, every earlier one), which kept every page the reader ever left alive (found by heap snapshot). */
+export type ContentTarget = {span: string} | {id: string} | {scene: string};
+export interface ContentEntry { key: string; level: 1 | 2 | 3; label: string; mark?: string; here?: boolean; to: ContentTarget }
+export function Contents({entries, go}: {entries: ContentEntry[] | null; go: (to: ContentTarget) => void}) {
   return (
     <section className="toc">
       <h3>On this page</h3>
       <div>
         {entries == null ? null : entries.length
-          ? entries.map(e => <a key={e.key} className={`l${e.level}${e.here ? " is-here" : ""}`} href="#" onClick={ev => { ev.preventDefault(); e.go(); }}>{e.mark ? <b>{e.mark}</b> : null}{e.label}</a>)
+          ? entries.map(e => <a key={e.key} className={`l${e.level}${e.here ? " is-here" : ""}`} href="#" onClick={ev => { ev.preventDefault(); go(e.to); }}>{e.mark ? <b>{e.mark}</b> : null}{e.label}</a>)
           : <p className="toc__none">This page has no sections.</p>}
       </div>
     </section>

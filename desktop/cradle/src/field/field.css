@@ -3384,6 +3384,11 @@ ul.tags {
 .field-host .field-root.field-root .graph-head { padding-right: max(6px, calc(var(--window-cutout-right, 0px) + 4px)); }
 .field-host .field-root.field-root[data-right='closed'] .rail-right { padding-top: 46px; }
 .field-host .field-root.field-root .field-back { flex: none; margin-left: 4px; }
+/* The site's global element rules that a Quartz document supplies and a hosted surface does not inherit (base.scss): headings
+   take the header font stack, and the eyebrow rides the body line height. Pinned by walk/scenarios/field-typography.mjs
+   (computed styles, native vs site). */
+.field-host .field-root.field-root .ahead__title { font-family: "Avenir Next", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; }
+.field-host .field-root.field-root .ahead__eyebrow { line-height: 1.6rem; }
 /* the gathered constellation (field/Right.tsx, graphView.ts) */
 .field-host .field-root.field-root .gn.is-gathered circle.n { fill-opacity: 1; stroke: var(--gold-hi); stroke-width: 2.2; }
 .field-host .field-root.field-root .gcard__act button.is-g { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
