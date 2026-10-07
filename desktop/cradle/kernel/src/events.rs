@@ -666,6 +666,13 @@ impl KernelEventLog {
         self.entries.len()
     }
 
+    /// This log's generation: the replay-cursor bootstrap value a freshly
+    /// attached client needs, and the restart signal replay compares
+    /// against.
+    pub fn generation(&self) -> &str {
+        &self.generation
+    }
+
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }

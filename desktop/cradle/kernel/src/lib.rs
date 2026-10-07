@@ -100,6 +100,7 @@ pub mod native_owner_transport;
 mod native_wire;
 pub mod owner_read;
 pub mod presentation;
+pub mod protocol;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
 /// (see the module's own law). Private to the kernel's apply path.
 mod read_cache;
@@ -117,6 +118,7 @@ pub mod world;
 pub mod expression_world;
 
 pub use flow::{CentralClient, OwnerCallError};
+pub use protocol::{KernelProtocol, KERNEL_PROTOCOL_SCHEMA};
 
 use std::collections::BTreeMap;
 
@@ -253,6 +255,9 @@ pub struct Kernel {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    /// Which contracts this kernel speaks and enforces, derived from the
+    /// enforcing modules (see `protocol.rs`): advertised is enforced.
+    ProtocolRead,
     FileLastReading {
         location: files::Location,
     },
@@ -938,6 +943,11 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    /// The protocol disclosure: derived from the enforcing constants beside
+    /// the live event log's generation (`oi.kernel-protocol/v1`).
+    Protocol {
+        document: protocol::KernelProtocol,
+    },
     /// Remote receipts keep their owner's generation and cursor. They never
     /// enter this kernel's independent ordered log or local event topic.
     HostedNative {
@@ -3562,6 +3572,12 @@ impl Kernel {
                     result: KernelOpResult::WorkingSurfaceReading { document },
                 })
             }
+            KernelOp::ProtocolRead => Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::Protocol {
+                    document: protocol::KernelProtocol::for_event_log(self.log.generation()),
+                },
+            }),
             KernelOp::RecordingCapabilityRead => Ok(KernelOpOutcome {
                 receipts: vec![],
                 result: KernelOpResult::RecordingCapability {
