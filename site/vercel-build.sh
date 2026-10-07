@@ -11,9 +11,10 @@ SOURCES="$ROOT/.publication-sources"
 WF=".github/workflows/site.yml"
 PCD_REF=$(awk '/repository: EpiLogos\/Point-Cloud-Demo/{f=1} f && /ref:/{print $2; exit}' "$WF")
 ESSAY_REF=$(awk '/repository: EpiLogos\/Antykathera-Essay-Work/{f=1} f && /ref:/{print $2; exit}' "$WF")
-test -n "$PCD_REF" && test -n "$ESSAY_REF" || { echo "could not read pins from $WF" >&2; exit 1; }
+ESSAY_EDITION=$(grep -o 'published-reading/[0-9][0-9-]*' "$WF" | head -1)
+test -n "$PCD_REF" && test -n "$ESSAY_REF" && test -n "$ESSAY_EDITION" || { echo "could not read pins from $WF" >&2; exit 1; }
 echo "vercel-build: Point-Cloud-Demo @ $PCD_REF"
-echo "vercel-build: Antykathera-Essay-Work @ $ESSAY_REF"
+echo "vercel-build: Antykathera-Essay-Work @ $ESSAY_REF ($ESSAY_EDITION)"
 
 mkdir -p "$SOURCES"
 clone_at() { # repo-ref clone-path  — GitHub allows fetching any object sha
@@ -48,6 +49,6 @@ cd site
 OI_PUBLICATION_ENVELOPE="$ROOT/desktop/cradle/expressions-app/collections/return-of-zero/PUBLICATION-CURATED.json" \
 OI_PCD_S_PRODUCTS_ROOT="$SOURCES/Point-Cloud-Demo/production/s-products" \
 OI_ESSAY_REPO="$SOURCES/essay-reading" \
-OI_ESSAY_BROWSER_REPO="$SOURCES/essay-reading/published-reading/2026-10-04" \
+OI_ESSAY_BROWSER_REPO="$SOURCES/essay-reading/$ESSAY_EDITION" \
 npm run build:public
 echo "vercel-build: done"
