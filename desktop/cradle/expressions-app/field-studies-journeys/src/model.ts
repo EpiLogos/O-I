@@ -43,12 +43,20 @@ export function validateRoleSlot(value:{role?:unknown;overrides?:unknown}):void{
 export interface AutomationLane {clockId?:string;syncWith?:string;easing?:AutomationEasing;nativeId?:string;nativePath?:string;entityId?:string;id:string;enabled:boolean;target:string;type:'lfo'|'ramp';wave:'sine'|'triangle'|'square'|'saw'|'steps'|'smooth'|'morph';min:number;max:number;rate:number;phase:number;blend:'replace'|'add'|'multiply';duration:number;delay:number;loop:'once'|'loop'|'pingpong';firedAt:number|null}
 export interface EngineSettings {inkMode?:'blackOnWhite'|'whiteOnBlack';paletteId?:string;templateGeometry?:'square'|'circular'|'volumetric3D';templateDimension?:'2D'|'3D';paletteSource?:'custom'|'legacy';grainProfile?:boolean;backgroundMode?:'solid'|'vignette'|'ambientGlow'|'adaptive';resonatorMode?:'resonator'|'template';focusOrder?:'listed'|'reverse'|'pingpong';resonanceEnabled:boolean;morphEnabled:boolean;trajectory:'linear'|'toroidalHopf'|'vortexSpiral'|'quantumInterference';driveShape:'sine'|'triangle'|'smooth'|'pulse';autoOscillate:boolean;relationalEnabled:boolean;relationalMode:'orbital'|'nbody'|'chaos';pointerMode:'repel'|'attract'|'vortex';pointerClick?:'pulse'|'implode'|'vortex'|'shove'|'off';pointerClickStrength?:number;pointerClickRadius?:number;colorMode:string;colorEnabled:boolean;dotShape?:'circle'|'square';autoFitSizes?:boolean;mediumEnabled?:boolean;collisionEnabled?:boolean;collisionMode?:'obstacle'|'vessel';pairwiseEnabled?:boolean;fontFamily?:string;fontWeight?:string|number;mediumPlane:'vertical'|'horizontal';mediumDimension?:'2D'|'3D';autoSweep:boolean;sweepDirection:'ascent'|'descent'|'pingpong';volumeEnabled?:boolean;volumeProfile?:'slab'|'bevel'|'round'|'dome'|'taper';depthPerspective?:boolean;depthOcclusion?:boolean;vortex3d?:number;dispersion3d?:number;depthTintColor?:string}
 export const DEFAULT_ENGINE_SETTINGS:EngineSettings={paletteSource:'custom',grainProfile:true,backgroundMode:'solid',resonatorMode:'resonator',focusOrder:'listed',dotShape:'circle',autoFitSizes:true,mediumEnabled:false,collisionEnabled:false,collisionMode:'obstacle',pairwiseEnabled:false,fontFamily:'system-ui, -apple-system, sans-serif',fontWeight:900,resonanceEnabled:true,morphEnabled:false,trajectory:'toroidalHopf',driveShape:'sine',autoOscillate:true,relationalEnabled:false,relationalMode:'orbital',pointerMode:'repel',pointerClick:'pulse',pointerClickStrength:2.2,pointerClickRadius:.45,colorMode:'linearGradient',colorEnabled:true,mediumPlane:'vertical',mediumDimension:'2D',autoSweep:false,sweepDirection:'ascent'};
+/** The composition's retained determinant basis: the exact admitted
+ * `ql.sky-snapshot/v1` the field's scene event carried when this Scene's
+ * occasion was composed. It travels inside the Scene's native block, so the
+ * ordinary Scene-material save carries it into the kernel document and a
+ * reopened composition re-opens its field on the SAVED sky — the retained
+ * event's sky, never a fresh compose and never another scene's substitute.
+ * Written only by the live field's own compose; never edited by hand. */
+export interface SceneOccasionSky{schema:'oi.scene-occasion-sky/v1';sky:{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown};event_ref:string;retained_at_unix_ms:number}
 export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global';
  engine:EngineSettings;
  semanticField?:SemanticFieldConfig;
  resonanceDrive?:ResonanceDriveConfig;
  favourites?:string[];
- native?: {config:PointCloudConfig; original:unknown; projection?:PointCloudConfig};
+ native?: {config:PointCloudConfig; original:unknown; projection?:PointCloudConfig; occasion?:SceneOccasionSky};
  propertyTakeRange?:{start:number;end:number};toolbelt?:BeltEntry[];propertyTracks?:PropertyTrack[];id:string;name:string;character:string;duration:number;transition:number;
  view:{nativeScaffold?:'off'|'axis'|'grid';nativeCamera?:CameraOrbState;mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number};
  field:{background:string;palette:string[];material:Material;params:Record<string,number>};

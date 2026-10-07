@@ -7,6 +7,7 @@ import {prepareCompositionEdit,rebaseCompositionView} from '../build/kernelCompo
 import {nativeConnections} from '../build/nativeCorrespondence.js';
 import {NativeWorking,validateWorkingRecord} from '../build/nativeWorking.js';
 import {sameSceneData,mergeScenePage} from '../build/sceneCorrespondence.js';
+import {joinOccasion,validOccasion} from '../build/kernelComposition.js';
 
 // Controlled owner-port responses for converter/state-machine unit tests.
 // Actual Rust storage and browser tests are separate; this reducer is NOT a
@@ -190,4 +191,38 @@ test('a one-object edit on a constellation larger than 256 members prepares one 
  for(let i=0;i<2049;i++){const ref=`expression:huge:entity:m${i}`;huge.entities[ref]={entity_ref:ref,title:`M${i}`,revision:1,subject:null,parameters:{glyph:{value:'O'}}};}
  huge.scenes[0].entity_refs=Object.keys(huge.entities).slice(0,4);
  assert.throws(()=>kernelDocumentToJourney(huge),/binding budget/);
+});
+
+test('the field binding retained occasion sky rides the save and returns on reopen (#312 TS4)',()=>{
+ const j=authored(),view=seed(j);
+ const sky={schema:'ql.sky-snapshot/v1',snapshot_ref:'sha256:9d4c03cf3cb87f1de2f5d1ef08b05cf8892054af082189a6b8014f3cc4c8a041',
+  epoch_utc:'2026-10-07T07:00:00Z',epoch_unix_ms:1794351600000,bodies:[{body:'Jupiter',longitude_degrees:140.6978,native_planet_id:5}]};
+ const occasion={schema:'oi.scene-occasion-sky/v1',sky,event_ref:'ql:k2/default-event',retained_at_unix_ms:1794352000000};
+ // A malformed occasion is refused, never saved.
+ assert.equal(validOccasion({schema:'oi.scene-occasion-sky/v1',sky:{schema:'other/v1'},event_ref:'e'}),null);
+ assert.equal(validOccasion('junk'),null);
+ assert.equal(validOccasion(occasion)?.sky.snapshot_ref,sky.snapshot_ref);
+ // The join touches only the standing Scene, and the existing grammar carries it:
+ // exactly one scene_material_set, at the captured CAS basis.
+ const joined=joinOccasion(clone(j),j.scenes[0].id,occasion);
+ assert.equal(j.scenes[0].native?.occasion,undefined,'the working draft itself stays clean; the join lands on the submitted snapshot');
+ assert.equal(joined.scenes[0].native?.occasion?.sky.snapshot_ref,sky.snapshot_ref);
+ // A scene the person is not standing in is never touched.
+ const alone=joinOccasion(clone(j),'scene:absent',occasion);
+ assert.deepEqual(alone,j);
+ assert.equal(joinOccasion(clone(j),j.scenes[0].id,{schema:'oi.scene-occasion-sky/v1',sky:{schema:'nope'}}).scenes[0].native?.occasion,undefined);
+ const request=prepareCompositionEdit(view,joined,snapshot(j));
+ const material=request.changes.filter(c=>c.change==='scene_material_set');
+ assert.equal(material.length,1);
+ assert.equal(material[0].presentation.scene.native.occasion.sky.snapshot_ref,sky.snapshot_ref);
+ // The owner stores the presentation whole; the acknowledged basis carries the
+ // saved determinant back into the working Scene material.
+ const native=ownerEdit(view.document,request).document;
+ const rebased=rebaseCompositionView(view,joined,native);
+ assert.equal(rebased.journey.scenes[0].native.occasion.sky.snapshot_ref,sky.snapshot_ref);
+ // The acknowledged result is not perpetually dirty: the mirrored draft is clean.
+ assert.equal(prepareCompositionEdit(rebased,joined,snapshot(j)).changes.length,0);
+ // A fresh session reopening the document (identity reminted) still supplies it.
+ const restart=kernelDocumentToJourney(JSON.parse(JSON.stringify(native)));
+ assert.equal(restart.journey.scenes[0].native.occasion.sky.snapshot_ref,sky.snapshot_ref);
 });

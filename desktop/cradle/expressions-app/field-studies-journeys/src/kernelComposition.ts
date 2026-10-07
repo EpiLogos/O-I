@@ -2,7 +2,7 @@
  * operation builder, not storage. Its captured document revision is the CAS
  * basis; callers must not replace it with a freshly inspected revision.
  */
-import {clone, validateJourney, type Journey, type Scene} from './model.js';
+import {clone, validateJourney, type Journey, type Scene, type SceneOccasionSky} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
 import {validateEntitySound} from './native-field/entitySound.js';
@@ -26,6 +26,31 @@ export interface CompositionEdit {
   changes:CompositionChange[];
 }
 const same = sameSceneData;
+
+/** The field binding's retained determinant, as the save may carry it: the
+ * exact admitted `ql.sky-snapshot/v1` the scene event carried at its last
+ * dated opening, labelled `oi.scene-occasion-sky/v1`. Anything else is
+ * refused — a malformed occasion is never saved. */
+export function validOccasion(value:unknown):SceneOccasionSky|null{
+  if(!value||typeof value!=='object'||Array.isArray(value))return null;
+  const candidate=value as Partial<SceneOccasionSky>,sky=candidate.sky;
+  if(candidate.schema!=='oi.scene-occasion-sky/v1'||!sky||typeof sky!=='object'||Array.isArray(sky)
+   ||sky.schema!=='ql.sky-snapshot/v1'||typeof sky.snapshot_ref!=='string'||!sky.snapshot_ref)return null;
+  return clone(candidate) as SceneOccasionSky;
+}
+
+/** The save's determinant join: the retained occasion sky enters the submitted
+ * journey on the named Scene's material, so the ordinary `scene_material_set`
+ * grammar carries it into the kernel document and a reopened composition
+ * re-opens its field on the SAVED sky. An absent or malformed occasion returns
+ * the journey unchanged; the join never touches another Scene. */
+export function joinOccasion(journey:Journey,sceneId:string|null|undefined,occasion:unknown):Journey{
+  const valid=validOccasion(occasion);
+  if(!valid||!sceneId)return journey;
+  const target=journey.scenes.find(scene=>scene.id===sceneId);
+  if(target)target.native={...(target.native??{}),occasion:valid} as Scene['native'];
+  return journey;
+}
 
 export function compositionProperties(journey:Journey):CompositionProperties {
   return {schema:'oi.journey-properties/v1',description:journey.description,loop:journey.loop,

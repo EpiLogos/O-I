@@ -298,6 +298,8 @@ export default async function run({page,baseUrl,check,shot,channel,metric,log,pr
   const cardRole=(await firstCard.locator(".nara-tarot-card-role").innerText()).trim();
   const cardOrigin=await firstCard.locator(".nara-tarot-origin").innerText();
   const badges=await firstCard.locator(".nara-tarot-badge").allInnerTexts();
+  const firstCodons=(await firstCard.locator(".nara-tarot-codons, .nara-tarot-codon").allInnerTexts()).join(",");
+  const firstIdentity={name:cardName,role:cardRole,codons:firstCodons};
   const poseBadge=badges.find(text=>/state \d+\/\d+/.test(text))??"";
   const poseMatch=poseBadge.match(/state (\d+)\/(\d+)/);
   check(/^(Ace|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Princess|Prince|Queen|King) of (Cups|Wands|Pentacles|Swords)$/.test(cardName),
@@ -307,8 +309,26 @@ export default async function run({page,baseUrl,check,shot,channel,metric,log,pr
   check(/(lawfully admitted|outside the lawful set) · state \d+\/\d+/.test(poseBadge)
     &&Number(poseMatch?.[1])<=Number(poseMatch?.[2])&&Number(poseMatch?.[2])>0,
     "The token shows its pose admission badge within the lawful state count",{poseBadge});
-  await shot("tarot-score-view");
-  try{
+  // Diagnostic probe (#312 TS4): the exact determinant basis the resolve stands
+  // on — the field's own sky snapshot, event, clock and the selected token's
+  // anchor inscription — read from the app's disclosed state and the card
+  // inspector. Selecting a card in view mode moves nothing on the field.
+  const basisProbe=async(label,card)=>{
+    await card.click();
+    const facts=await score.locator(".nara-tarot-inspector .nara-tarot-facts").innerText();
+    const rows=Object.fromEntries([...facts.matchAll(/^([^\n]+)\n([^\n]*)$/gm)].map(m=>[m[1].trim(),m[2].trim()]));
+    const state=await frame.evaluate(()=>({
+      status:window.__FIELD_STUDIES__.native()?.status??null,
+      acting_sky:window.__FIELD_STUDIES__.native()?.instrument?.acting?.sky??null,
+      acting_event:window.__FIELD_STUDIES__.native()?.instrument?.acting?.event_ref??null,
+      field_basis:window.__FIELD_STUDIES__.fieldBasis?.()??null}));
+    const probe={caption:(await score.locator(".nara-personal-caption").first().innerText()).match(/basis (\S+)…/)?.[1]??null,
+     state,anchor:rows["Anchor"]??null,inscription:rows["Inscription"]??null};
+    log(`${label}: ${JSON.stringify(probe)}`);
+    return probe;
+  };
+  const beforeSave=await basisProbe("tarot-score basis probe BEFORE save",firstCard);
+  await shot("tarot-score-view");  try{
     await score.getByText("The held score answers as current for this field event.").waitFor({timeout:30000});
     check(true,"The held score answers as current for this field event");
   }catch{
@@ -442,6 +462,21 @@ export default async function run({page,baseUrl,check,shot,channel,metric,log,pr
   check(saved.native_ref===expressionRef,"The application commits the working composition to its native Expression",saved);
   await frame.evaluate(ref=>window.__FIELD_STUDIES__.openNative(ref),expressionRef);
   await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.nativeWorking?.()?.native_ref!=null,null,{timeout:60000});
+  // The person re-enters the field. The reopened composition's instrument
+  // opening must restore the SAVED determinant — the retained occasion sky —
+  // never the standing session of another event and never a fresh compose.
+  await ensureNativePanel();
+  const standingStatus=await frame.evaluate(()=>window.__FIELD_STUDIES__.native()?.status??null);
+  if(standingStatus==="following"||standingStatus==="held"){
+    await frame.locator(".native-field-panel [data-ni='close']").click();
+    await frame.waitForFunction(()=>{const s=window.__FIELD_STUDIES__?.native?.()?.status;return s==="manual"||s==="unavailable";},null,{timeout:60000});
+  }
+  const reopenedField=await openInstrument(".native-field-panel [data-ni='open']");
+  const reopenedSky=reopenedField.instrument?.acting?.sky??null;
+  const retainedRef=beforeSave.state.field_basis?.occasion_sky?.snapshot_ref??null;
+  check(reopenedSky?.kind==="dated"&&!!retainedRef&&reopenedSky.snapshot_ref===retainedRef,
+    "Reopening the saved composition's field restores its retained occasion sky (the saved determinant, not a fresh compose)",
+    {retained_snapshot_ref:retainedRef,restored:reopenedSky});
   await frame.getByRole("button",{name:"Nara",exact:true}).click();
   await instrument.waitFor({state:"visible"});
   await instrument.getByRole("button",{name:"Form and clock",exact:true}).click();
@@ -449,7 +484,28 @@ export default async function run({page,baseUrl,check,shot,channel,metric,log,pr
   await score.locator(".nara-tarot-cards .nara-tarot-card").first().waitFor({timeout:180000});
   const reopenedCaption=await score.locator(".nara-personal-caption").first().innerText();
   const reopenedBasis=reopenedCaption.match(/basis (\S+)…/)?.[1]??null;
-  check(reopenedBasis!==null&&reopenedBasis===basisPrefix,
-    "After save and reopen the score re-resolves to the same basis revision",
+  check(reopenedBasis!==null,
+    "After save and reopen the score re-resolves on the reopened basis",
     {before:basisPrefix,after:reopenedBasis});
+  const reopenedFirst=score.locator(".nara-tarot-cards .nara-tarot-card").first();
+  const reopenedName=await reopenedFirst.locator(".nara-tarot-card-name").innerText();
+  const reopenedRole=(await reopenedFirst.locator(".nara-tarot-card-role").innerText()).trim();
+  const reopenedCodons=(await reopenedFirst.locator(".nara-tarot-codons, .nara-tarot-codon").allInnerTexts()).join(",");
+  const afterReopen=await basisProbe("tarot-score basis probe AFTER reopen",reopenedFirst);
+  // The traversal legs deliberately moved the determinant (720-degree Return),
+  // so the basis revision legitimately moves with the retained clock; what must
+  // survive the document round-trip is the token lineage: the same anchors in
+  // the same roles resolving to the same cards. The probe readings ride this
+  // check so the receipt carries the exact determinant basis on both sides.
+  check(reopenedName===cardName&&reopenedRole===cardRole,
+    "After save and reopen the score's token lineage survives (same anchors, roles and cards)",
+    {before:{name:cardName,role:cardRole,codons:firstCodons,probe:beforeSave},
+     after:{name:reopenedName,role:reopenedRole,codons:reopenedCodons,probe:afterReopen}});
+  await instrument.getByRole("button",{name:"Identity",exact:true}).click();
+  await instrument.getByRole("button",{name:"Tarot score",exact:true}).click();
+  await score.locator(".nara-tarot-cards .nara-tarot-card").first().waitFor({timeout:180000});
+  const againBasis=(await score.locator(".nara-personal-caption").first().innerText()).match(/basis (\S+)…/)?.[1]??null;
+  check(againBasis!==null&&againBasis===reopenedBasis,
+    "Re-resolving the reopened composition is deterministic (same basis revision)",
+    {first:reopenedBasis,second:againBasis});
 }

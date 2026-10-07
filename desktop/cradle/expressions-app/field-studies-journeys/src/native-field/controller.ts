@@ -1,7 +1,7 @@
 import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit} from './domain';
 import {InstrumentSession} from './ql/instrument-session.mjs';
 import {NativeProjection} from './projection';
-import type {NativePort} from './channel';
+import {COMPOSE_TIMEOUT_MS,type NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
@@ -142,14 +142,27 @@ export class NativeFieldController {
  } as const;}
  private changed(){this.onChange();}
  /** The instrument's primary opening: QL composes a scene binding (`ql scene binding`) for this stage's
-  * own retained texture; the kernel supplies the dated sky. No path, no file. */
- async compose(options:{sky?:NativeSky;event?:unknown}={}){
+  * own retained texture; the kernel supplies the dated sky. No path, no file.
+  * A retained occasion re-opens on its SAVED sky: `skySnapshot` is the exact
+  * admitted `ql.sky-snapshot/v1` the saved composition carries, passed as the
+  * kernel's `sky_snapshot` — the kernel runs no ql-sky and composes no new
+  * sky, so the restored binding stands on the retained event's sky. */
+ async compose(options:{sky?:NativeSky;skySnapshot?:unknown;event?:unknown}={}){
   const topology=this.renderer.retainedTopology?.();
   if(!topology)throw new Error('The retained GPU field must be live before the instrument opens');
-  const sky=options.sky??'now';
-  if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
-  const request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky,...(options.event!==undefined?{event:options.event}:{})};
-  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}));
+  let request:Record<string,unknown>;
+  if(options.skySnapshot!==undefined){
+   const snapshot=options.skySnapshot as {schema?:unknown;snapshot_ref?:unknown}|null|undefined;
+   if(!snapshot||typeof snapshot!=='object'||Array.isArray(snapshot)||snapshot.schema!=='ql.sky-snapshot/v1'
+    ||typeof snapshot.snapshot_ref!=='string'||!snapshot.snapshot_ref
+    ||JSON.stringify(snapshot).length>1024*1024)throw new Error('the retained occasion sky is not one bounded ql.sky-snapshot/v1 owner reading');
+   request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky_snapshot:options.skySnapshot,...(options.event!==undefined?{event:options.event}:{})};
+  }else{
+   const sky=options.sky??'now';
+   if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
+   request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky,...(options.event!==undefined?{event:options.event}:{})};
+  }
+  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request},COMPOSE_TIMEOUT_MS));
  }
  /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){

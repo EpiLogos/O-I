@@ -11,7 +11,17 @@ import type {FieldEngineAdapter} from './engine';
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('T',' ').replace(/\.\d+Z$/,' UTC');
-export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void){
+/** The working composition's occasion, disclosed by the app: when the open
+ * Scene material carries a retained occasion sky, the panel's primary opening
+ * restores that SAVED determinant instead of composing a fresh dated sky. */
+export interface NativeFieldHooks {
+ retainedOccasion?:()=>{schema:string;sky:{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown};event_ref:string;retained_at_unix_ms:number}|null;
+ /** A completed opening, as the person chose it. The app retains the admitted
+  * occasion sky — or, for the explicit no-sky opening, clears the retained
+  * occasion so the composition never claims a sky nobody asked for. */
+ onComposed?:(mode:'retained'|'now'|'epoch'|'none')=>void;
+}
+export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,hooks:NativeFieldHooks={}){
  const port=new NativeChannel();
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
  if(!canRetain){port.dispose();return null;}
@@ -167,6 +177,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   setText('status',statusLine(reading));
   query('[data-ni-closed]').hidden=open;query('[data-ni-open]').hidden=!instrument&&!(composing&&reading.status==='opening');
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="open"],[data-ni="open-default"],[data-ni="open-dated"]'))b.disabled=busy||open;
+  // The primary opening names what it would restore: a composition carrying a
+  // retained occasion sky re-opens on that saved determinant, not a fresh sky.
+  const openButton=query<HTMLButtonElement>('[data-ni="open"]');
+  const openLabel=hooks.retainedOccasion?.()?.sky?'Open live instrument (retained occasion sky)':'Open live instrument (dated sky now)';
+  if(openButton.textContent!==openLabel)openButton.textContent=openLabel;
   // The stage overlay is the supplied-owner reading; the scene surface reads here.
   domainView.update(instrument?null:reading.domain,reading.presented_clock,reading.status,reading.native?.presented?.generation);
   const live=!!instrument&&(reading.status==='following'||reading.status==='held');
@@ -212,7 +227,14 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // Returned values replace the stage's status line, never a raw dump.
  const fail=(error:unknown)=>{controller.reason=controller.status==='following'||controller.status==='held'?controller.reason:String(error instanceof Error?error.message:error);};
  const run=async(action:()=>Promise<unknown>|unknown)=>{if(busy)return;busy=true;update();try{await action();}catch(error){fail(error);}finally{busy=false;update();}};
- const open=(sky:NativeSky)=>run(async()=>{composing=true;try{await controller.compose({sky});onResumeApplication();}finally{composing=false;}});
+ const open=(request:()=>Promise<unknown>,mode:'retained'|'now'|'epoch'|'none')=>run(async()=>{composing=true;try{await request();hooks.onComposed?.(mode);onResumeApplication();}finally{composing=false;}});
+ // The primary opening answers to the composition: when its Scene material
+ // carries a retained occasion sky, that saved determinant is restored — the
+ // kernel re-composes against the exact admitted snapshot, never a fresh sky.
+ const primaryOpen=()=>{
+  const retained=hooks.retainedOccasion?.();
+  return retained?.sky?open(()=>controller.compose({skySnapshot:retained.sky}),'retained'):open(()=>controller.compose({sky:'now'}),'now');
+ };
  const click=async(event:Event)=>{
   const target=event.target as HTMLElement;
   const set=target.closest<HTMLButtonElement>('button[data-ni-set]');
@@ -233,9 +255,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    // A held field suspends the cadence; Resume field continues it.
    if(op==='hold'){controller.hold('held by you');update();return;}
    if(op==='close'){await controller.release();update();return;}
-   if(op==='open')return open('now');
-   if(op==='open-default')return open('none');
-   if(op==='open-dated'){const epoch=query<HTMLInputElement>('[name="ni-epoch"]').value.trim();if(!epoch){controller.reason='Name a dated sky epoch first';update();return;}return open({epoch});}
+   if(op==='open')return primaryOpen();
+   if(op==='open-default')return open(()=>controller.compose({sky:'none'}),'none');
+   if(op==='open-dated'){const epoch=query<HTMLInputElement>('[name="ni-epoch"]').value.trim();if(!epoch){controller.reason='Name a dated sky epoch first';update();return;}return open(()=>controller.compose({sky:{epoch}}),'epoch');}
    if(op==='step')return run(()=>controller.m1Advance(1));
    if(op==='strike')return run(()=>controller.strike());
    if(op==='restore-opening')return run(()=>controller.restoreOpening());

@@ -10,7 +10,7 @@ import {readWorkingCheckpoint,readWorkingDraft,writeWorkingCheckpoint,writeDraft
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import {prepareCompositionEdit} from './kernelComposition.js';
+import {prepareCompositionEdit,acceptCompositionReply,joinOccasion,validOccasion} from './kernelComposition.js';
 import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 import {refreshStep,hasLocalEdits,performedByLiveAct,retainedDraftId} from './nativeFollow.js';
@@ -41,6 +41,15 @@ export interface NativeWorkspaceHost {
  toast:(message:string,duration?:number)=>void;
  summon:(kind:'library'|'verso'|'search',subject?:NativeSubject)=>void;
  correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
+ /** The working draft's retained determinant: the admitted
+  * `ql.sky-snapshot/v1` the field's scene event carried at its last dated
+  * opening (null when none). THE SAVE joins it into the submitted Scene
+  * material, so the kernel document holds the sky the score resolved on and
+  * a reopened composition re-opens its field on the SAVED determinant. */
+ retainedOccasion?:()=>import('./model.js').SceneOccasionSky|null;
+ /** The joined occasion was saved: the working draft mirrors it so its
+  * material matches the owner's document. */
+ occasionSaved?:(occasion:import('./model.js').SceneOccasionSky)=>void;
  /** The working document's truthful standing, shown by the app's own Save
   * control and Studio footer — there is no separate native panel. */
  status?:(state:NativeStatus)=>void;
@@ -129,6 +138,16 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   const generation=restoreGeneration;
   await writeDraft(snapshot.journey);
   if(generation!==restoreGeneration||host.snapshot().journey.id!==snapshot.journey.id)throw new Error('The selected work changed while its draft was being retained. No composition was committed.');
+ };
+ /** The save's determinant join: the field binding's retained occasion sky
+  * enters the submitted working snapshot on the Scene the person is standing
+  * in — labelled and validated by the operation builder, never a hand-authored
+  * material edit; a malformed occasion is refused (never saved). */
+ const occasioned=(snapshot:WorkingSnapshot):WorkingSnapshot=>{
+  const occasion=host.retainedOccasion?.()??null;
+  if(occasion&&!validOccasion(occasion))status('The retained occasion sky is not a ql.sky-snapshot/v1 owner reading; it was not saved.');
+  joinOccasion(snapshot.journey,snapshot.sceneId,occasion);
+  return snapshot;
  };
  const requireAdoption=(current:()=>boolean)=>{if(!current())throw new Error('The working draft changed while opening. It and its native basis were retained; choose Open again when ready.');};
  const adopt=async(raw:KernelExpressionDocument,current:()=>boolean,file?:NativeFile)=>{
@@ -276,9 +295,12 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   /** Page the loaded members of a Scene larger than the render budget. */
   page:(delta:number)=>guarded(()=>changePage(delta)),
   /** Write the working composition to a Central file and read it back. */
-  saveFile:(folder:string,name:string)=>{const snapshot=clone(host.snapshot()),version=host.version();return guarded(async()=>{
+  saveFile:(folder:string,name:string)=>{const version=host.version();return guarded(async()=>{
+   const snapshot=occasioned(clone(host.snapshot()));
+   const occasion=host.retainedOccasion?.()??null;
    await retainSubmitted(snapshot);
    const file=await work.saveFile(snapshot,{parent_path:folder,name});
+   if(occasion)host.occasionSaved?.(occasion);
    status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits are still unsaved.':''}`);
   });},
   status:()=>update(),
@@ -400,7 +422,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    // A focus write may still be acknowledging the click that began editing.
    // Keep this submitted draft and wait for that owner operation; busy is not
    // a failed save. Navigation still invalidates work addressed to the old doc.
-   const snapshot=clone(host.snapshot()),version=host.version();
+   const snapshot=occasioned(clone(host.snapshot())),version=host.version();
    return mutate(async()=>{
     await retainSubmitted(snapshot);
     let destination=work.state?.file;
@@ -414,9 +436,13 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     }
     if(destination){
      const file=await work.saveFile(snapshot,{location:destination.location,revision:destination.revision});
+     const occasion=host.retainedOccasion?.();
+     if(occasion)host.occasionSaved?.(occasion);
      status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
     }else{
      const doc=await work.commit(snapshot);
+     const occasion=host.retainedOccasion?.();
+     if(occasion)host.occasionSaved?.(occasion);
      status(`Saved · native revision ${doc.revision} — ${doc.scenes.length} scene${doc.scenes.length===1?'':'s'}, ${Object.keys(doc.entities).length} member${Object.keys(doc.entities).length===1?'':'s'} in the native Expression.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
     }
    });

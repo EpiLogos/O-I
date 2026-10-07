@@ -1,5 +1,12 @@
 const SCHEMA='oi.native-expression/v1';
-export interface NativePort {request(request:unknown):Promise<any>;dispose():void;readonly available:boolean;onHold?:(reason:string)=>void}
+/** One native compose runs the installed ql-sky and `ql scene binding` inside
+ * the kernel's own budgets (sky 120 s, binding 30 s); under load it answers
+ * well past a generic acknowledgement ceiling. Abandoning it mid-flight does
+ * not cancel the kernel work — the driver then opens to nobody, and the
+ * surface stays owned until the process dies. The compose therefore carries
+ * its own ceiling, inside which the owner's answer is still worth waiting for. */
+export const COMPOSE_TIMEOUT_MS=105000;
+export interface NativePort {request(request:unknown,timeoutMs?:number):Promise<any>;dispose():void;readonly available:boolean;onHold?:(reason:string)=>void}
 /** A fresh epoch is required after reload; stale completions cannot bind a new app. */
 export class NativeChannel implements NativePort {
  private epoch:string|null=null; private seq=0; private dead=false; available=false;
@@ -21,11 +28,11 @@ export class NativeChannel implements NativePort {
   this.pending.delete(data.req);clearTimeout(pending.timer);
   if(data.ok===true)pending.resolve(data.data);else pending.reject(new Error(typeof data.error==='string'?data.error:'native operation refused'));
  };
- request(request:unknown):Promise<any>{
+ request(request:unknown,timeoutMs=15000):Promise<any>{
   if(this.dead || !this.epoch || !this.available)return Promise.reject(new Error('Native QL host channel unavailable. Ordinary Expressions remains usable.'));
   const req=++this.seq;
   return new Promise((resolve,reject)=>{
-   const timer=window.setTimeout(()=>{this.pending.delete(req);this.onHold?.('native acknowledgement unknown; not retried');reject(new Error('native acknowledgement timed out; not retried'));},15000);
+   const timer=window.setTimeout(()=>{this.pending.delete(req);this.onHold?.('native acknowledgement unknown; not retried');reject(new Error('native acknowledgement timed out; not retried'));},timeoutMs);
    this.pending.set(req,{resolve,reject,timer});window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,req,kind:'request',request},'*');
   });
  }

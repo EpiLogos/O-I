@@ -62,6 +62,8 @@ import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/compo
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
+import {sameSceneData} from './sceneCorrespondence.js';
+import type {SceneOccasionSky} from './model.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
 import {openScenePortal} from './scenePortal.js';
@@ -956,7 +958,33 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  }
 });
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
-const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
+// The field binding's retained determinant: the admitted `ql.sky-snapshot/v1`
+// the scene event carried at this session's last dated opening, scoped to the
+// Expression it was composed for. It stands OUTSIDE the working draft — a
+// compose never dirties authored work — and THE SAVE joins it into the
+// submitted Scene material (nativeWorkspace), so the kernel document holds the
+// sky the score resolved on. The composition's own SAVED occasion (the Scene
+// material of a reopened document) is the fallback: the latest binding wins.
+let fieldOccasion:(SceneOccasionSky&{expression_ref:string})|null=null;
+const compositionOccasion=():SceneOccasionSky|null=>{
+ const ref=nativeWorkspace?.nativeView()?.document.expression_ref;
+ if(fieldOccasion&&ref&&fieldOccasion.expression_ref===ref)return fieldOccasion;
+ const saved=(scene() as Scene).native?.occasion;
+ return saved&&saved.schema==='oi.scene-occasion-sky/v1'?saved as SceneOccasionSky:null;
+};
+const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();},{
+ // The panel's primary opening restores the composition's determinant — the
+ // retained occasion sky — never a fresh compose.
+ retainedOccasion:compositionOccasion,
+ // The compose the person chose, admitted by the owner: remember the admitted
+ // occasion sky (validated) for the save to join. The explicit no-sky opening
+ // is session-only exploration and leaves the composition's occasion untouched.
+ onComposed:mode=>{
+  if(mode==='none')return;
+  const basis=nativeField?.controller.scoreBasis,sky=basis?.occasion_sky,ref=nativeWorkspace?.nativeView()?.document.expression_ref;
+  if(!basis||!sky||!ref||typeof sky!=='object'||Array.isArray(sky)||(sky as {schema?:unknown}).schema!=='ql.sky-snapshot/v1'||typeof (sky as {snapshot_ref?:unknown}).snapshot_ref!=='string')return;
+  fieldOccasion={schema:'oi.scene-occasion-sky/v1',sky:clone(sky) as SceneOccasionSky['sky'],event_ref:basis.event_ref,retained_at_unix_ms:Date.now(),expression_ref:ref};
+ }});
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
@@ -1036,7 +1064,13 @@ const mastheadCentre=document.createElement('div');mastheadCentre.className='mas
 const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},
+ retainedOccasion:compositionOccasion,
+ // The saved determinant mirrors into the working draft, so its Scene
+ // material matches the owner's document and no later refresh reads the join
+ // back as an unsaved edit.
+ occasionSaved:occasion=>{const target=scene() as Scene;if(sameSceneData(target.native?.occasion??null,occasion))return;changed(()=>{target.native={...(target.native??{}),occasion:clone(occasion)} as Scene['native'];});},
+ status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 // Acts & reusable material (EXPRESSION-ACT-MATERIAL-V1): roles on this Scene's
 // objects/text, save-as-reusable, the material register and act playback,
 // beside the saved-scene playback.
@@ -1124,7 +1158,7 @@ lensStudio.setMode(hostMode);
 // Save is the primary act: it stays in the masthead at every width, outside
 // the history/capture overflow menu.
 (document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
-Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
+Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path),fieldBasis:()=>nativeField?.controller.scoreBasis??null});
 const qs=new URLSearchParams(location.search);
 const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
  presentForm:reading=>{if(reading)naraFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
