@@ -457,3 +457,46 @@
   --oi-card-glass: rgba(0, 0, 0, 0.42);
   --oi-card-solid: rgba(10, 10, 10, 0.97);
 }
+
+/* ===========================================================================
+ * The hosted field's reading palette (the graph–pages–Expressions field in Base).
+ * The field is the site's own reading surface re-scoped for a window
+ * (desktop/cradle/src/field/field.css is GENERATED from the site's stylesheets
+ * by scripts/port-field-styles.mjs); the site is its visual authority, so its
+ * grounds, inks and the five register hues are carried here as roles and the
+ * generated stylesheet holds only `var(--oi-field-*)`. Role names never change
+ * between themes (law 11): the light values are the default, the dark values
+ * are re-grounded under the desktop's dark theme.
+ * Gold is NOT carried here. The site's golds are drawn from --oi-meta-relation
+ * in the generator (a mix of it toward black or paper), so gold stays one value
+ * with one role.
+ * =========================================================================== */
+:root {
+  /* ===== section: field reading surface — the site palette hosted in Base ===== */
+  --oi-field-paper: #fbfaf6;
+  --oi-field-panel: #f5f3ed;
+  --oi-field-ground: #f1efe8;
+  --oi-field-ink: #111112;
+  --oi-field-muted: #66645f;
+  --oi-field-faint: #8f8c84;
+  --oi-field-register-core: #8a8473;
+  --oi-field-register-matheme: #2a766e;
+  --oi-field-register-mytheme: #a54a31;
+  --oi-field-register-episteme: #3d5c8d;
+  --oi-field-plate: #f5f0e6;
+  --oi-field-black: #000000;
+  --oi-field-on-mark: #111111;
+}
+.oi-desktop[data-theme="dark"] {
+  --oi-field-paper: #0b0b0c;
+  --oi-field-panel: #101011;
+  --oi-field-ground: #0e0e0f;
+  --oi-field-ink: #f4f2ec;
+  --oi-field-muted: #b8b6b0;
+  --oi-field-faint: #7e7c76;
+  --oi-field-register-core: #a8a291;
+  --oi-field-register-matheme: #6fb8ae;
+  --oi-field-register-mytheme: #df8f72;
+  --oi-field-register-episteme: #8eaad6;
+  --oi-field-plate: #ece6d8;
+}

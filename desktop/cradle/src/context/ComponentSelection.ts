@@ -2,6 +2,8 @@
 interface Held {node?:Element;text:string;validate?:()=>Promise<boolean>;mark?:(enabled:boolean)=>void}
 const held=new Map<string,Held>();
 const documentId=typeof crypto!=="undefined"?crypto.randomUUID():"unmounted";
+/** This window's document identity, as a prepared item's observation anchor names it. */
+export const observationDocumentId=documentId;
 export function componentText(node:Element){return (node.getAttribute('aria-label')||node.textContent||node.getAttribute('alt')||node.tagName.toLowerCase()).trim();}
 function retain(key:string,value:Held){held.set(key,value);if(held.size>64){const first=held.keys().next().value!;held.get(first)?.mark?.(false);held.delete(first);}}
 export function observeComponent(node:Element,bindingId:string){

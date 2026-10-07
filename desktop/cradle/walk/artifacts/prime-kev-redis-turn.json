@@ -1,0 +1,289 @@
+{
+  "schema": "oi.prime-kev-redis-turn/v1",
+  "spec_ref": "docs/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md (actual use of Kev, Redis and the QL body; O:I #598)",
+  "grade": "A",
+  "at": "2026-10-06T22:12:52.306Z",
+  "steps": [
+    {
+      "step": "services",
+      "detail": {
+        "kev": {
+          "address": "127.0.0.1:8019",
+          "requests_before": 29,
+          "requests_after": 32
+        },
+        "redis": {
+          "address": "127.0.0.1:6381",
+          "version": "8.10.2"
+        }
+      }
+    },
+    {
+      "step": "ground",
+      "detail": {
+        "root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-prime-kev-redis-d3vq6T/ground",
+        "project_id": "epi-field-20261006t221252-e3rj",
+        "now_ref": "central:now:project:epi-field-20261006t221252-e3rj:ba77bbac35fe97a6ff6ed76b5999c6fa9c5849e97e4df0f0296eedca482930d7"
+      }
+    },
+    {
+      "step": "faculty-config",
+      "detail": {
+        "out": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-prime-kev-redis-d3vq6T/run/faculty.walk.json",
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "coherence": {
+          "probed": true,
+          "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+          "program": "/Users/admin/Central/Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument"
+        }
+      }
+    },
+    {
+      "step": "body",
+      "detail": {
+        "tools_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-prime-kev-redis-d3vq6T/aikit-home/tools",
+        "installed": "9881fbbd9d67503f",
+        "launcher": "/Users/admin/Central/worktrees/env-1/actuation/target/debug/actuation-epi-prime",
+        "row": "epi-prime-ql-candidate",
+        "standing": "configured-not-started"
+      }
+    },
+    {
+      "step": "preflight",
+      "detail": {
+        "ok": true,
+        "mode": "provider",
+        "outcome": "completed",
+        "standing": "local-protocol",
+        "invocation_ref": "invocation/jev/197d527a0836bd66d1bc55d7c86eb8eb710195f0265fcc0e884de04d89490b74",
+        "provider_identity": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+        "selected": 8,
+        "published_version": 1
+      }
+    },
+    {
+      "step": "now-context",
+      "detail": {
+        "configured": true
+      }
+    },
+    {
+      "step": "provision",
+      "detail": {
+        "agent_session": "agent-session/epi-field-20261006t22125-chat-1791324779-c910",
+        "provider": "epi-prime-ql-candidate"
+      }
+    },
+    {
+      "step": "prompt",
+      "detail": {
+        "message": "Use your QL tools, at most three calls. For the passage I am reading (movement 16, The Crossed Zero, with movement 15 open beside it and Dimensional Reframing at Zero and Infinity selected), what is its quaternary / MEF position structure? State only the positions the QL tools returned. End with DONE_FIELD_QL."
+      }
+    },
+    {
+      "step": "turn-landed",
+      "detail": {
+        "assistant_blocks": 1
+      }
+    }
+  ],
+  "model": {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "thinking": "low",
+    "source": "~/.prime/agent/settings.json (Prime's own default; the row adds no override)"
+  },
+  "edition": {
+    "dir": "/private/tmp/claude-501/-Users-admin-Central/2514abd5-9547-470b-8a8f-6b465a1f2645/scratchpad/world-pkg5/edition",
+    "world_revision": "4df2f721dc01",
+    "vault_commit": "4df2f721dc018d1413296b3f1e53c580d442384c",
+    "candidates": [
+      {
+        "role": "primary",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+        "revision": "330f0cf015b2aaae9a137ec9d5e5446b3570b48a4b2d7dff75049ed6f3266944"
+      },
+      {
+        "role": "tangent",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+        "revision": "91c9f3c7a733d92b1bab0cd148650bd79c9ca8ad636005dba20f02f3e32d34d8"
+      },
+      {
+        "role": "selected",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+        "revision": "9bbbb543d7c9b9982a81111a4aa377477b5ce71a3ec18f43ecf773b55b7a6a92"
+      },
+      {
+        "role": "neighbour",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+        "revision": "fd5bc377e38e96138176ef8f8d01ad13c50f7b9b7d436b2748921f0d4d913b44"
+      },
+      {
+        "role": "neighbour",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "revision": "f21d3f39c9c2af0678875c1ff5f99e8698aa6cc408910c26516cfd03fde9fd85"
+      },
+      {
+        "role": "neighbour",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+        "revision": "40365ecd76b32baa3f019e33e0e134739fd1cd277f9b17141e09ea0db0ec59d8"
+      },
+      {
+        "role": "room",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md",
+        "revision": "9846e14916efd644cd78b225ad538a15d155e828a1b57db9659c7d6c914de9fa"
+      },
+      {
+        "role": "concept",
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md",
+        "revision": "7ede75bfd4834ab3ccb17c6554e4fd34fccfb79f36e38fd1d296f395a65ca713"
+      }
+    ]
+  },
+  "kev": {
+    "address": "127.0.0.1:8019",
+    "requests_before": 29,
+    "requests_after": 32
+  },
+  "redis": {
+    "address": "127.0.0.1:6381",
+    "available": true,
+    "database": 0,
+    "key_prefix": "aikit-now",
+    "redis_version": "8.10.2"
+  },
+  "egress_allowance": {
+    "schema": "oi.egress-allowance-record/v1",
+    "authored_for": "the Epi field companion's NOW preparation request (tests/fixtures/prime-kev-redis/candidates.json)",
+    "what": "external_egress = allowed and agent_visibility = payload on the candidate items the scenario lists in `items`, and on no other source.",
+    "why": "These items are pages of the PUBLISHED Return-of-Zero edition, whose own privacy reading is public, so the request states it per item. The default law is untouched: Central-read sources still default to egress denied, the request names no Central-read source (central.source_refs is empty), and AIKit still refuses any item that is not allowed or not payload-visible.",
+    "not_covered": "any private, working, quilt, reference-note or unpublished note; any other item in any other request",
+    "disclosure_revision": "world:4df2f721dc01",
+    "items": [
+      {
+        "role": "primary",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+        "source_revision": "330f0cf015b2aaae9a137ec9d5e5446b3570b48a4b2d7dff75049ed6f3266944"
+      },
+      {
+        "role": "tangent",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+        "source_revision": "91c9f3c7a733d92b1bab0cd148650bd79c9ca8ad636005dba20f02f3e32d34d8"
+      },
+      {
+        "role": "selected",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+        "source_revision": "9bbbb543d7c9b9982a81111a4aa377477b5ce71a3ec18f43ecf773b55b7a6a92"
+      },
+      {
+        "role": "neighbour",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+        "source_revision": "fd5bc377e38e96138176ef8f8d01ad13c50f7b9b7d436b2748921f0d4d913b44"
+      },
+      {
+        "role": "neighbour",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "source_revision": "f21d3f39c9c2af0678875c1ff5f99e8698aa6cc408910c26516cfd03fde9fd85"
+      },
+      {
+        "role": "neighbour",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+        "source_revision": "40365ecd76b32baa3f019e33e0e134739fd1cd277f9b17141e09ea0db0ec59d8"
+      },
+      {
+        "role": "room",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md",
+        "source_revision": "9846e14916efd644cd78b225ad538a15d155e828a1b57db9659c7d6c914de9fa"
+      },
+      {
+        "role": "concept",
+        "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md",
+        "source_revision": "7ede75bfd4834ab3ccb17c6554e4fd34fccfb79f36e38fd1d296f395a65ca713"
+      }
+    ]
+  },
+  "preflight": {
+    "ok": true,
+    "mode": "provider",
+    "outcome": "completed",
+    "standing": "local-protocol",
+    "invocation_ref": "invocation/jev/197d527a0836bd66d1bc55d7c86eb8eb710195f0265fcc0e884de04d89490b74",
+    "provider_identity": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+    "selected": 8,
+    "published_version": 1
+  },
+  "agent_session": "agent-session/epi-field-20261006t22125-chat-1791324779-c910",
+  "assistant_blocks": [
+    "The refraction completed: status `complete`, twelve readings, one at each MEF position, with the scene's three subjects and two relations carried in every derived subgraph. Here is what the QL tools returned.\n\n## Quaternary / MEF position structure — returned by the tools\n\n**Call 1 — `capabilities`**: MEF registry `1.0.0-q2` (revision 1); wiki refraction contract `ql-mef/wiki-refraction/v1`, deterministic, provider available.\n\n**Call 2 — `mef lenses`** returned the twelve MEF lens positions. The quaternary structure: **three squares, each holding four lens positions** (two day/night pairs):\n\n- **Square A — Articulation (4 positions):** L0 Quaternal (day) · L5 Para Vāk (day) · L0′ Archetypal-Numerical (night) · L5′ Divine Logos (night)\n- **Square B — Encounter (4 positions):** L1 Causal (day) · L4 Phenomenological (day) · L1′ Phenomenal (night) · L4′ Scientific (night)\n- **Square C — Becoming (4 positions):** L2 Logical (day) · L3 Processual (day) · L2′ Alchemical-Elemental (night) · L3′ Chronological (night)\n\n**Call 3 — `wiki-refraction`** of the reading scene (target = movement 16 at rev `330f0cf0…`, tangent relation movement 15 → 16, selected relation Dimensional Reframing → 16) returned **status complete at all twelve positions above** — one `MEF-derived` reading per position (provider `ql-mef:provider:registry-disclosure`, confidence 1000), each carrying the same derived subgraph: 3 vertices (movement 16 primary, movement 15 tangent, Dimensional Reframing selected) and 2 relations (tangent, selected).\n\nExecution note: the skill's `cargo run` path for the refraction binary failed to build (source-tree mismatch: `ql-mef` imports absent from `ql-core`). I ran the same prebuilt native `ql-wiki-refraction` binary with the identical request and filed the same evidence and receipt records. Three distinct QL operations were used: capabilities, mef lenses, wiki-refraction.\n\nDONE_FIELD_QL"
+  ],
+  "encounter_use": {
+    "exit": 0,
+    "raw": "{\n  \"absences\": [\n    \"owner faculty receipts are read by schema and session; their content-addressed file names are not re-verified here\",\n    \"addressed deliveries are not segmented as turns; only user messages open a turn\"\n  ],\n  \"agent_session\": \"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\n  \"decision\": {\n    \"from_delivery_receipt\": {\n      \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n      \"jev_invocation_ref\": \"invocation/jev/28c2ebade105b40d3a1a5cefd7351dd2dea93620fa00d2340d79c456a120459d\"\n    },\n    \"note\": \"the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt\",\n    \"selection_readback\": {\n      \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n      \"jev_invocation_ref\": \"invocation/jev/28c2ebade105b40d3a1a5cefd7351dd2dea93620fa00d2340d79c456a120459d\",\n      \"read\": true,\n      \"read_as\": \"local view\",\n      \"selected_source_refs\": [\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md\"\n      ],\n      \"version\": 2,\n      \"view_is_the_delivered_one\": true\n    }\n  },\n  \"prepared_context\": {\n    \"degraded\": [],\n    \"delivered\": [\n      {\n        \"cursor\": 5,\n        \"kind\": \"now-context-delivered\",\n        \"observed_at_ms\": 1791324785632,\n        \"receipt\": {\n          \"agent_session\": \"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\n          \"basis_digest\": \"blake3:d08cd54185807e118437cba347782bcaafa3f51687acc2dd2cf8b6de996cf38c\",\n          \"change_cursor\": 0,\n          \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n          \"delivered_at_unix_ms\": 1791324785632,\n          \"jev_invocation_ref\": \"invocation/jev/28c2ebade105b40d3a1a5cefd7351dd2dea93620fa00d2340d79c456a120459d\",\n          \"participant_ref\": \"agent/epi-field-20261006t221252-e3rj-chat\",\n          \"prepared_digest\": \"blake3:ef70fdd8ef45e0b486b7837e68ebb098da728a21383063bcf0c7e783dc837382\",\n          \"prepared_version\": 2,\n          \"schema\": \"aikit.now-context-delivery/v1\"\n        },\n        \"standing\": \"provider-turn-delivery-accepted; not a claim of model response\"\n      }\n    ],\n    \"source\": \"encounter journal: now-context-* events\",\n    \"state\": \"delivered\",\n    \"uncertain\": []\n  },\n  \"ql_operations\": {\n    \"faculty_receipts\": [\n      {\n        \"declared_locus_ref\": \"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\n        \"error\": null,\n        \"observed_unix_nanos\": \"1791325034314254000\",\n        \"operation\": \"capabilities\",\n        \"ql_mef_revision\": \"6a81fc441e4dda477f4de3a7ebd59c368cb28f37\",\n        \"request_digest\": \"1f8dd61bdd0901a8b39678ae6edeff6da2edfd80061f7ab9e944d676df4c0df6\",\n        \"response_digest\": \"de2c56702fdc9816b28a2657f01e3d1bdfc217730f9e45feab0775898f3b2cc6\",\n        \"success\": true\n      },\n      {\n        \"declared_locus_ref\": \"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\n        \"error\": null,\n        \"observed_unix_nanos\": \"1791325212407434000\",\n        \"operation\": \"mef-lenses\",\n        \"ql_mef_revision\": \"6a81fc441e4dda477f4de3a7ebd59c368cb28f37\",\n        \"request_digest\": \"35d05b69acba1275878cb177257460f442d6e012f77dd4a201b5494b694fd529\",\n        \"response_digest\": \"332ff7373cc16fc0cc26c033dde315c807b878a03ce368b3c82375c65707a78f\",\n        \"success\": true\n      },\n      {\n        \"declared_locus_ref\": \"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\n        \"error\": null,\n        \"observed_unix_nanos\": \"1791325310089897000\",\n        \"operation\": \"wiki-refract\",\n        \"ql_mef_revision\": \"6a81fc441e4dda477f4de3a7ebd59c368cb28f37\",\n        \"request_digest\": \"7beb5fcf48c2e40f44734c9b809d4ac342f2eb76040eb33ed7e6d43644896892\",\n        \"response_digest\": \"28f1a4a7c5de1aae47027f38a8d1eb37c9629afd3ab8966f6a27905f0f450e25\",\n        \"success\": true\n      }\n    ],\n    \"python_faculty_calls\": [\n      {\n        \"cursor\": 152,\n        \"function\": \"ananda_m1_2\",\n        \"tool_call_id\": \"call_9ea0b42b4cb1442a95560ee6\"\n      },\n      {\n        \"cursor\": 307,\n        \"function\": \"_epi_invoke\",\n        \"tool_call_id\": \"call_2e6067ad49444cd59c6d960a\"\n      },\n      {\n        \"cursor\": 307,\n        \"function\": \"epi_faculty\",\n        \"tool_call_id\": \"call_2e6067ad49444cd59c6d960a\"\n      },\n      {\n        \"cursor\": 352,\n        \"function\": \"capabilities\",\n        \"tool_call_id\": \"call_3b235902091b452ea3557b3b\"\n      },\n      {\n        \"cursor\": 392,\n        \"function\": \"techne_reading\",\n        \"tool_call_id\": \"call_20278736a4454cf595c1c652\"\n      },\n      {\n        \"cursor\": 539,\n        \"function\": \"mef_lenses\",\n        \"tool_call_id\": \"call_0589a8ce347349b785fa323f\"\n      },\n      {\n        \"cursor\": 551,\n        \"function\": \"wiki_refract\",\n        \"tool_call_id\": \"call_65439fe9f3e74110b345c4a1\"\n      },\n      {\n        \"cursor\": 637,\n        \"function\": \"_record\",\n        \"tool_call_id\": \"call_b73877a9a521482f935db21e\"\n      },\n      {\n        \"cursor\": 637,\n        \"function\": \"_receipt\",\n        \"tool_call_id\": \"call_b73877a9a521482f935db21e\"\n      }\n    ],\n    \"reconciliation\": {\n      \"faculty_receipts_in_turn\": 3,\n      \"python_calls_recorded\": 9,\n      \"statement\": \"the number of recorded Python faculty calls and owner receipts in the turn window differ; read both lists\"\n    },\n    \"tool_calls\": []\n  },\n  \"schema\": \"aikit.encounter-use-reading/v1\",\n  \"sources\": [\n    \"encounter journal (encounters.sqlite3)\",\n    \"Actuation faculty evidence (actuation.prime-ql-operation/v1)\",\n    \"Redis prepared view\"\n  ],\n  \"turn\": {\n    \"end_cursor_exclusive\": null,\n    \"index\": 1,\n    \"last_event_at_ms\": 1791325329042,\n    \"of\": 1,\n    \"outcome\": \"turn-ended\",\n    \"start_cursor\": 4,\n    \"started_at_ms\": 1791324785631\n  }\n}\n"
+  },
+  "redis_inspect": {
+    "exit": 0,
+    "raw": "{\"context\":{\"context_id\":null,\"project_root\":null,\"session_id\":null},\"data\":{\"ackCursor\":0,\"currentVersion\":2,\"lastDelivery\":{\"agent_session\":\"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\"basis_digest\":\"blake3:d08cd54185807e118437cba347782bcaafa3f51687acc2dd2cf8b6de996cf38c\",\"change_cursor\":0,\"decision_provider\":\"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\"delivered_at_unix_ms\":1791324785632,\"jev_invocation_ref\":\"invocation/jev/28c2ebade105b40d3a1a5cefd7351dd2dea93620fa00d2340d79c456a120459d\",\"participant_ref\":\"agent/epi-field-20261006t221252-e3rj-chat\",\"prepared_digest\":\"blake3:ef70fdd8ef45e0b486b7837e68ebb098da728a21383063bcf0c7e783dc837382\",\"prepared_version\":2,\"schema\":\"aikit.now-context-delivery/v1\"},\"participantRef\":\"agent/epi-field-20261006t221252-e3rj-chat\",\"prepared\":{\"agent_session\":\"agent-session/epi-field-20261006t22125-chat-1791324779-c910\",\"basis\":{\"change_cursor\":0,\"decision_provider\":\"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\"dependency_revisions\":{},\"disclosure_revision\":\"world:4df2f721dc01\",\"factory_revision\":null,\"source_revisions\":{\"central:source:project:epi-field-20261006t221252-e3rj:ProjectCentral/agents/now/clearings/ba77bbac35fe97a6ff6ed76b5999c6fa9c5849e97e4df0f0296eedca482930d7/now.json\":\"central.content-fnv1a64/v1:790:6969b37b9c4f5290\"}},\"basis_digest\":\"blake3:d08cd54185807e118437cba347782bcaafa3f51687acc2dd2cf8b6de996cf38c\",\"concern\":\"A reader of Confronting the Limit is at movement 16, The Crossed Zero (primary), with movement 15 open as a tangent and Dimensional Reframing at Zero and Infinity selected; the companion answers from the essay's own words.\",\"continuation\":null,\"factory\":null,\"items\":[{\"agent_visibility\":\"payload\",\"excerpt\":\"§1 · #3 — The Crossed Zero Movement 16 of 48 · This room · ← Previous · Next → Movement thesis Ø is the first occlusion in the essay’s native recognition-matheme: the mediating stroke is present and fused into the zero it crosses. Typographic history shows the structure in a form small enough to hold. Someone reading a router password cannot tell the zero from the letter O, because the typeface draws both as the same oval; programmers on coding sheets and the designers of early terminals struck the zero through with a diagonal stroke so that no one could read it as a letter; Danish and Norwegian write the vowel Ø; mathematics writes the empty set ∅, a sign Weil proposed to Bourbaki in 1939 because he alone knew the Norwegian alphabet; engineering writes a diameter ⌀. In each case a stroke crosses an empty figure and makes it determinate, a this rather than a that, and the stroke fills nothing: it marks the zero as one kind of thing among others, so that it can be counted, typed, read and told apart. Plate 2 — The crossed zero. The crossed zero Ø fuses the mediating stroke into the zero it crosses: one figure, read twice. On the left the stroke has succeeded so thoroughly that it di\",\"external_egress\":\"allowed\",\"route\":\"section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md\",\"source_revision\":\"330f0cf015b2aaae9a137ec9d5e5446b3570b48a4b2d7dff75049ed6f3266944\",\"title\":\"§1 · #3 — The Crossed Zero (primary)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"§1 · #2 — The Empty Set Generates One Movement 15 of 48 · This room · ← Previous · Next → Movement thesis Von Neumann’s construction of the natural numbers gives the essay’s zero/one relation a precise formal neighbour: 0=\\\\varnothing,\\\\qquad 1=\\\\{0\\\\}=\\\\{\\\\varnothing\\\\},\\\\qquad S(n)=n\\\\cup\\\\{n\\\\}. Nothing is added to the empty set: a relation is formed around it, and the braces show where the one appears. One is the first successor of zero, the void gathered into a unit, and every later number keeps zero inside it as the first member it gathered, so that zero and the operation that holds it are enough to begin the count. A desktop folder that reports “1 item” when it holds one empty folder makes the same count in a dialogue box. Set theory is offered as a rigorous neighbour; it proves nothing about the Subject, consciousness or QL. The construction is Derived (standard mathematics, displayed), and the readings the manuscript attaches to it are Argued. Derivation \\\\begin{aligned} 0 &amp;= \\\\varnothing,\\\\\\\\ 1 &amp;= \\\\{\\\\varnothing\\\\},\\\\\\\\ 2 &amp;= \\\\{\\\\varnothing,\\\\{\\\\varnothing\\\\}\\\\},\\\\\\\\ 3 &amp;= \\\\{\\\\varnothing,\\\\{\\\\varnothing\\\\},\\\\{\\\\varnothing,\\\\{\\\\varnothing\\\\}\\\\}\\\\}. \\\\end{aligned} The manuscript builds the result \",\"external_egress\":\"allowed\",\"route\":\"section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md\",\"source_revision\":\"91c9f3c7a733d92b1bab0cd148650bd79c9ca8ad636005dba20f02f3e32d34d8\",\"title\":\"§1 · #2 — The Empty Set Generates One (tangent)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"Dimensional Reframing at Zero and Infinity The method proposition A mathematical obstruction can disclose which object or operation an account presupposes. Complex extension, projective completion, compactification, quotienting, covering and differential limiting answer different questions by changing particular definitions and permissions. A construction preserves the relation specified by its hypotheses; it does not guarantee a solution to every obstruction. Zero and infinity expose these differences sharply. The return to zero is where a system declares its law: the attempted operation makes its domain, inverse, extension or lost cancellation available for examination. Taylor reads that exposure through the immutable gap, while each mathematical construction retains its own proof. Case ledger Each case names the operation, its hypotheses and the relation it preserves. Signed line → complex plane. Over the real field, x² = −1 has no solution. Define multiplication of pairs by (a,b)(c,d)=(ac−bd,ad+bc) and let i=(0,1). Then i²=(-1,0) represents −1, and multiplication by i rotates a vector by a quarter-turn. Adjoining a coordinate alone would not establish this multiplication. Affin\",\"external_egress\":\"allowed\",\"route\":\"section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md\",\"source_revision\":\"9bbbb543d7c9b9982a81111a4aa377477b5ce71a3ec18f43ecf773b55b7a6a92\",\"title\":\"Dimensional Reframing at Zero and Infinity (selected)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"§1 · #1 — Śūnya Becomes Operational Movement 14 of 48 · This room · ← Previous · Next → Movement thesis Brahmagupta’s Brāhmasphuṭasiddhānta (628, chapter 18) gives śūnya the permissions of a number. It sets the empty beside fortune (dhana) and debt (ṛṇa) and states what happens when any of the three meets another, so that zero stops being the mark of a vacant position and becomes a quantity arithmetic must pass through. Five centuries later Bhāskara II presses the same sign to the edge where division fails, keeps the zero-denominator expression (khahara) unevaluated, and compares its invariance to God, who is neither enlarged by the creation of worlds nor diminished by their destruction. Absence thereby acquires operational force: it changes calculations, and it stays unlike the positive magnitudes among which it operates. Its mathematical history is Derived; the braid with Kashmir Śaivism that closes the movement is Argued. Formal payload Zero has three offices in these verses and the manuscript separates them. As additive identity, a+0=a, it leaves a determination as it was. As multiplicative absorber, a·0=0, it sends every quantity to one result and keeps no record of which went\",\"external_egress\":\"allowed\",\"route\":\"section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md\",\"source_revision\":\"fd5bc377e38e96138176ef8f8d01ad13c50f7b9b7d436b2748921f0d4d913b44\",\"title\":\"§1 · #1 — Śūnya Becomes Operational (neighbour)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"§1 · #4 — Zero Keeps One Foot Outside Mathematics Movement 17 of 48 · This room · ← Previous · Next → Movement thesis Division by zero is the point at which a formal system has to declare its law. A calculator that answers “Error” to one divided by zero has reported that the question has no answer under the rules it was built to follow. In an ordinary field, where zero and one are different numbers, dividing one by zero would require a q with 0\\\\cdot q=1, and the laws rule every such q out. Mathematics has given the quotient a place by changing something else, and each change shows the frame becoming visible at zero: the projective line adjoins a point at infinity, the Riemann sphere closes the complex plane, wheels and meadows keep division total at a price in the familiar laws, floating-point arithmetic signs its zeros, and calculus replaces the vanishing ratio with a limit or an enlarged number system. Completion is always completion within a declared structure, and division pluralisms establish the methodological point: exceptional operations reveal the container. Zero is wholly mathematical, since it is written, counted, operated on and indispensable to every positional notatio\",\"external_egress\":\"allowed\",\"route\":\"section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md\",\"source_revision\":\"f21d3f39c9c2af0678875c1ff5f99e8698aa6cc408910c26516cfd03fde9fd85\",\"title\":\"§1 · #4 — Zero Keeps One Foot Outside Mathematics (neighbour)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"§1 · #5→0 — The Loan Returns Movement 18 of 48 · This room · ← Previous · Next → Movement thesis §0/1 borrowed zero, and the loan is returned with what passed through it. A book lent for a year comes back with a train ticket, a softened spine and pencil in the margins: the same book, carrying the reading it went through. Its pencil marks are interest in the oldest sense, since §0/1 · #4 traced interest to inter-esse, what lies between, and a book returned with its margins full brings back what lay between lender and borrower without pricing it. §0/1 wrote 0 for the pole of knowing that cannot enter its own count as one more object and 0/1 for that pole’s relation to the determinate world, before showing where the sign came from or what it could bear, on the trust that readers knew zero from school. Zero has now been followed from a gap a Babylonian reader filled from context to the term at which every number system declares its laws, and it comes back carrying a history of offices it did not have when it was lent. We have now earned the notation as the essay’s own relational notation: 0/1 \\\\quad\\\\longleftrightarrow\\\\quad 1/0. 0/1 names the indefinite condition becoming available throu\",\"external_egress\":\"allowed\",\"route\":\"section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md\",\"source_revision\":\"40365ecd76b32baa3f019e33e0e134739fd1cd277f9b17141e09ea0db0ec59d8\",\"title\":\"§1 · #5→0 — The Loan Returns (neighbour)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"§1 — The Return of Zero — History, Empty Set, and Symbolic Linkage Write here: sovereign master manuscript Where you are: Reading root · the rooms · §1 · room 3 of 8 · previous §0 · next §2 Open beside it: reading route Arrival a lived horizon which can become partly transparent to the conditions through which it operates; the missing switch. Section wager Differentiation structurally retains a zero, and mathematics supplies exact forms through which absence becomes operative: placeholder, numeral, arithmetic element, empty set, origin, and exceptional boundary. Once zero enters a positional system, the whole field of number changes; once 0 is taken as ∅, one and the natural numbers can be generated from its reiterated marking. Present burden: establish the history precisely enough to carry the philosophical argument, then derive 0/1 as the minimal generative relation before presenting the two ways that relation can be accounted. Six waypoints #0 · A Sign Migrates Between Worlds Incoming pressure: §0 #5→0 · Objective Internality Earned position (Derived): Zero converges several historically distinct inventions (the blank place, placeholder, numeral, arithmetic element, origin, empt\",\"external_egress\":\"allowed\",\"route\":\"section-rooms/02-return-of-zero/ROOM-02-return-of-zero\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md\",\"source_revision\":\"9846e14916efd644cd78b225ad538a15d155e828a1b57db9659c7d6c914de9fa\",\"title\":\"§1 Room — The Return of Zero — History, Empty Set, and Symbolic Linkage (room)\"},{\"agent_visibility\":\"payload\",\"excerpt\":\"Zero Definition Zero is the sign for no-counted-thing. Its several written and operative forms have different tasks: a blank leaves a place unmarked; a placeholder distinguishes positions; a numeral enters a script of numbers; addition and multiplication give zero distinct arithmetic offices; an origin locates a coordinate system; the empty set has no members. Their transmission through scripts, calculating practices and civilisations changes which written distinctions and operations become available; these changes have distinct histories. Philosophical void and QL’s uncounted One address a further register. In the coordinate canon P0 (Why? / Ground / Square A / Aether) names the implicate condition prior to differentiation, and 0/1 retains that ground through its mark. A written zero can refract this relation without becoming identical to all its other uses. In the argument A sign migrates between worlds when a receiving practice gives it a new permission while retaining its written inheritance. Making śūnya calculable gives zero operations without granting every quotient. The empty-set successor produces one as the singleton containing the empty set; the crossed zero retains the \",\"external_egress\":\"allowed\",\"route\":\"section-rooms/arguments/concepts/zero\",\"source_ref\":\"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md\",\"source_revision\":\"7ede75bfd4834ab3ccb17c6554e4fd34fccfb79f36e38fd1d296f395a65ca713\",\"title\":\"Zero (concept)\"}],\"jev_invocation_ref\":\"invocation/jev/28c2ebade105b40d3a1a5cefd7351dd2dea93620fa00d2340d79c456a120459d\",\"knowledge_frames\":[],\"neighbours\":[],\"now_ref\":\"central:now:project:epi-field-20261006t221252-e3rj:ba77bbac35fe97a6ff6ed76b5999c6fa9c5849e97e4df0f0296eedca482930d7\",\"participant_ref\":\"agent/epi-field-20261006t221252-e3rj-chat\",\"practice_refs\":[],\"prepared_at_unix_ms\":1791324785578,\"project_ref\":\"epi-field-20261006t221252-e3rj\",\"schema\":\"aikit.prepared-now-context/v1\",\"version\":2},\"schema\":\"aikit.now-context-inspection/v1\"},\"ok\":true,\"schema\":1,\"warnings\":[]}\n"
+  },
+  "checks": [
+    {
+      "label": "the prepared view was delivered to the turn, with no degradation",
+      "ok": true,
+      "detail": "delivered"
+    },
+    {
+      "label": "the delivery names the participant the ground minted (agent/<project_id>-chat)",
+      "ok": true,
+      "detail": "agent/epi-field-20261006t221252-e3rj-chat"
+    },
+    {
+      "label": "the delivery names the Kev decision invocation and provider identity",
+      "ok": true,
+      "detail": {
+        "invocation": "invocation/jev/28c2ebade105b40d3a1a5cefd7351dd2dea93620fa00d2340d79c456a120459d"
+      }
+    },
+    {
+      "label": "the Redis readback is the delivered view and lists the selected sources",
+      "ok": true,
+      "detail": 8
+    },
+    {
+      "label": "Redis holds the prepared view at the delivered digest",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "label": "Kev's own counters moved",
+      "ok": true,
+      "detail": {
+        "before": 29,
+        "after": 32
+      }
+    },
+    {
+      "label": "the body made QL calls",
+      "ok": true,
+      "detail": {
+        "tool_calls": [],
+        "python": [
+          "ananda_m1_2",
+          "_epi_invoke",
+          "epi_faculty",
+          "capabilities",
+          "techne_reading",
+          "mef_lenses",
+          "wiki_refract",
+          "_record",
+          "_receipt"
+        ]
+      }
+    }
+  ],
+  "ok": true,
+  "redis_view_revoked": true,
+  "ground": {
+    "root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-prime-kev-redis-d3vq6T/ground",
+    "aikit_home": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-prime-kev-redis-d3vq6T/aikit-home",
+    "kept": true
+  }
+}

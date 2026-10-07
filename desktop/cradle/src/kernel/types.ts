@@ -237,6 +237,7 @@ export type KernelOp =
   | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
   | {op:"nara_dialogue";project:string;request:import("../nara/nativeDialogue").NativeDialogueRequest}
   | {op: "native_expression"; request: NativeExpressionRequest}
+  | {op: "world_resolve"; world_id?: string; verify?: boolean}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"hosted_native";source_world_ref:string;request:KernelOp}
@@ -403,6 +404,7 @@ export type KernelOpResult =
   | {result:"presentation_reading";document:PresentationDocument}
   | {result:"nara_decision_recorded";decision:unknown}
   | {result: "native_expression"; data: unknown}
+  | {result: "world_resolve"; resolution: unknown}
   | {result:"nara_epii";data:import("../nara/epiiTypes").NativeEpiiResult}
   | {result:"nara_expressive_act";data:import("../nara/nativeExpressiveAct").NativeActReview|import("../nara/nativeExpressiveAct").NativeActEffect|import("../nara/nativeExpressiveAct").NativeActStatus}
   | {result:"nara_current";data:import("../nara/nativeCurrent").NativeCurrentReading}

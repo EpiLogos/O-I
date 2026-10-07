@@ -1,0 +1,24 @@
+{
+  "schema": "oi.prime-kev-redis-candidates/v1",
+  "about": "What the Epi field companion's NOW preparation request carries for a reader at movement 16 of Confronting the Limit. Paths are pages of the PUBLISHED edition (World package epi-logos/confronting-the-limit); revisions and excerpts are read from the edition the scenario is given, never written here.",
+  "edition_path_prefix": "submission-package/essay/",
+  "items": [
+    { "role": "primary",   "path": "section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md" },
+    { "role": "tangent",   "path": "section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md" },
+    { "role": "selected",  "path": "section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md" },
+    { "role": "neighbour", "path": "section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md" },
+    { "role": "neighbour", "path": "section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md" },
+    { "role": "neighbour", "path": "section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md" },
+    { "role": "room",      "path": "section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md" },
+    { "role": "concept",   "path": "section-rooms/arguments/concepts/zero.md" }
+  ],
+  "concern": "A reader of Confronting the Limit is at movement 16, The Crossed Zero (primary), with movement 15 open as a tangent and Dimensional Reframing at Zero and Infinity selected; the companion answers from the essay's own words.",
+  "selection": {
+    "mode": "provider",
+    "state_undertaking": "answer the reader from the essay's own words, grounded where they are reading",
+    "relevance_threshold": 0.5
+  },
+  "excerpt_chars": 1200,
+  "message": "Use your QL tools, at most three calls. For the passage I am reading (movement 16, The Crossed Zero, with movement 15 open beside it and Dimensional Reframing at Zero and Infinity selected), what is its quaternary / MEF position structure? State only the positions the QL tools returned. End with DONE_FIELD_QL.",
+  "done_marker": "DONE_FIELD_QL"
+}

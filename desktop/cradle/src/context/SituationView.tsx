@@ -1,5 +1,8 @@
 import {MODE_CURATION} from "../workspace/mode";
 import {useSituation} from "./SituationContext";
+import {useSyncExternalStore} from "react";
+import {fieldContextLines} from "../field/fieldHost";
+import {fieldContextMode,setFieldContextMode,subscribeFieldContextMode,type FieldContextMode} from "./fieldContext";
 import {RawDisclosure} from "../shared/contributionPresentation";
 // @ts-ignore -- names from the composed reading, without changing its identity.
 import {subjectLabel} from "../../../../shared-field/presentation-text.mjs";
@@ -26,7 +29,19 @@ export function SituationView() {
     </button>}
     {recent.length>0&&<details className="situation-depth"><summary>Recent places · {recent.length}</summary><ul>{recent.map((place,index)=><li key={place.key}><button type="button" className="oi-action" disabled={!place.location} onClick={()=>open(place)}>{subjectLabel(place,`Unnamed place ${index+1}`)}</button><small>{place.path}</small></li>)}</ul></details>}
     {enabled.length>0&&<details className="situation-depth"><summary>Surface capabilities · {enabled.length}</summary><ul>{enabled.map(action=><li key={action.action_ref}><span>{action.title}</span><code>{action.action_ref}</code></li>)}</ul><p className="oi-note">These are Cradle presentation actions. Native semantic actions remain owned and disclosed by their product.</p></details>}
+    {situation.field&&<FieldPresent reading={situation.field}/>}
     <p className="situation-law">Present here is not automatically prepared for the Agent.</p>
     <RawDisclosure value={situation} label="Inspect exact situation and sources"/>
+  </section>;
+}
+
+/** The field's present encounter, as the companion's next turn would name it — with the one switch that decides whether it is
+ * prepared for the turn at all. Present here is not prepared; "keep current" is the person's explicit choice. */
+function FieldPresent({reading}:{reading:NonNullable<ReturnType<typeof useSituation>>["field"] & object}){
+  const mode=useSyncExternalStore(subscribeFieldContextMode,fieldContextMode,fieldContextMode);
+  return <section className="situation-field" aria-label="Field encounter" data-field-generation={reading.generation}>
+    <ul>{fieldContextLines(reading).map(line=><li key={line}><small>{line}</small></li>)}</ul>
+    <label className="oi-note">In the Agent's prepared context <select aria-label="Field encounter in the prepared context" value={mode} onChange={e=>setFieldContextMode(e.target.value as FieldContextMode)}>
+      <option value="off">not prepared (present only)</option><option value="follow">follows the active locus, current at each turn</option><option value="pin">pinned at this generation</option></select></label>
   </section>;
 }

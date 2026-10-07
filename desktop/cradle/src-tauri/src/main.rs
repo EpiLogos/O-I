@@ -42,6 +42,9 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         if let KernelOp::NaraCoordinate { request } = op {
             return oi_cradle_kernel::nara_coordinate::execute(request);
         }
+        if let KernelOp::WorldResolve { world_id, verify } = op {
+            return oi_cradle_kernel::world_resolve::execute(oi_cradle_kernel::world_resolve::Request { world_id, verify });
+        }
         let host = app.state::<KernelHost>();
         let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
         if let Some(prepared) = epii {

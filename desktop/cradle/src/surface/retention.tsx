@@ -31,10 +31,11 @@
  *
  * Per surface KIND (the tier law): engines and hosted applications retain —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
- * `system`, and `factory`. Factory's Desk/Tasks body composes the frame-built
- * chat node (`CradleFrame.factoryCentre`), so the frame passes that node —
- * with its Desk/Tasks context — down through the shell to the stage slots
- * and the workbench's centre arm alike.
+ * `system`, and `factory`. A hosted surface that relocates the conversation
+ * (Factory's Desk/Tasks) composes the frame-built chat node
+ * (`CradleFrame.centreConversation`), so the frame passes that node — with the
+ * host operations — down through the shell to the stage slots and the
+ * workbench's centre arm alike.
  *
  * Retention keys on the workspace: the warm set is derived only from the
  * ACTIVE workspace's trees, so switching workspaces releases the others'
@@ -50,7 +51,7 @@ import type {Workspace} from "../workspace/store";
 
 import {hostedSurfaceFor} from "../contributions/registry";
 import type {HostedMountProps} from "../contributions/contracts";
-export type {FactoryCentreContext} from "../contributions/contracts";
+export type {HostedHostContext} from "../contributions/contracts";
 
 function presentedBindingOfKind(layout: LayoutState, kind: string): SurfaceBinding | undefined {
   for (const group of groupsOf(layout.root)) {

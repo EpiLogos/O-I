@@ -1,0 +1,134 @@
+/**
+ * The field's encounter as a contribution to the companion's PREPARED turn.
+ *
+ * The seam is the one every prepared selection already uses (AIKit's `aikit.prepared-context/v1`, reached through
+ * `nativeContext`): the field's present encounter becomes ONE prepared item — an observation of the field — whose
+ * text names the roles and refs (primary with revision and span, tangent, selected, constellation, scene) and whose
+ * anchor carries the exact `generation` it was read at. Because it is an ordinary prepared item:
+ *
+ *   - it reaches the participant only when the person sends (nothing here sends, nothing here is automatic unless the
+ *     person turned "keep current" on — "present here is not automatically prepared for the Agent");
+ *   - the owner records it in the context digest the turn is dispatched against, so a turn keeps the basis it was
+ *     prepared with while later selections only affect the NEXT turn;
+ *   - a held generation that no longer matches the live field is detectable (`fieldItemStatus`) and refused by the
+ *     same validation every observation passes before a send (`observationIsCurrent` → the registered validator).
+ *
+ * This module owns no state about the encounter and no session: the field host holds the encounter, AIKit holds the
+ * prepared context; this only reads one and writes the other through their own operations.
+ */
+import type {KernelTransportStatus} from "../kernel/types";
+import {fieldContextLines, currentFieldContext, type FieldContextReading} from "../field/fieldHost";
+import {observationDocumentId, registerPageObservation, releaseObservation} from "./ComponentSelection";
+import {nativeContext, type ContextProvider, type PreparedContext, type PreparedItem, type SelectionSnapshot} from "./nativeContext";
+
+export const FIELD_CONTEXT_OWNER = "Field";
+export const FIELD_ROLE = "field-encounter";
+
+/** The anchor selector names the field binding and the generation: `field-encounter:<binding>#<generation>`. */
+export const fieldSelector = (binding: string, generation: number) => `${FIELD_ROLE}:${binding}#${generation}`;
+export function parseFieldSelector(selector: string): { binding: string; generation: number } | undefined {
+  const m = /^field-encounter:(.+)#(\d+)$/.exec(selector);
+  return m ? { binding: m[1], generation: Number(m[2]) } : undefined;
+}
+export const isFieldItem = (item: PreparedItem) => item.selection.anchor.kind === "observation" && item.selection.anchor.role === FIELD_ROLE && parseFieldSelector(item.selection.anchor.selector) !== undefined;
+export const fieldItemGeneration = (item: PreparedItem) => (isFieldItem(item) && item.selection.anchor.kind === "observation" ? parseFieldSelector(item.selection.anchor.selector)?.generation : undefined);
+
+export type FieldItemStatus = { state: "current"; generation: number } | { state: "stale"; held: number; live: number | undefined; reason: string };
+/** Is the field context a prepared turn holds still what the field stands on? */
+export function fieldItemStatus(item: PreparedItem, live: FieldContextReading | undefined): FieldItemStatus {
+  const held = fieldItemGeneration(item);
+  if (held === undefined) throw new Error("not a field context item");
+  const sel = item.selection.anchor.kind === "observation" ? parseFieldSelector(item.selection.anchor.selector)! : undefined;
+  if (!live) return { state: "stale", held, live: undefined, reason: "The field is closed; this was the encounter when it was prepared." };
+  if (sel && sel.binding !== live.binding_id) return { state: "stale", held, live: live.generation, reason: "Another field is now in view." };
+  if (held !== live.generation) return { state: "stale", held, live: live.generation, reason: `The field moved on (generation ${held} → ${live.generation}).` };
+  return { state: "current", generation: held };
+}
+
+/** The prepared selection for one reading of the field. `key` is the observation the validator checks. */
+export function fieldSelection(r: FieldContextReading, key: string, project: string | null, now = new Date()): SelectionSnapshot {
+  const text = [...fieldContextLines(r), "", "refs by role:", ...r.roles.map(x => `- ${x.role}: ${x.ref}`)].join("\n");
+  return {
+    source_ref: r.primary.ref, source_revision: r.primary.revision ?? null, source_project: project, title: `Field · ${r.primary.title ?? r.primary.ref}`,
+    owner: FIELD_CONTEXT_OWNER, binding_id: r.binding_id, text, working_copy: false, captured_at: now.toISOString(),
+    anchor: { kind: "observation", document_id: observationDocumentId, key, selector: fieldSelector(r.binding_id, r.generation), role: FIELD_ROLE, node_ref: r.primary.ref, url: null },
+  };
+}
+
+/** Bring the prepared context to the field's present encounter: any earlier field item is removed, one fresh item is
+ * added. Returns the context as the owner now holds it. Throws the owner's own refusal. */
+export async function prepareFieldContext(transport: KernelTransportStatus, project: string, session: string | undefined, live: FieldContextReading | undefined = currentFieldContext(), sourceWorldRef?: string, pinned = false): Promise<PreparedContext> {
+  if (!live) throw new Error("No field is open, so there is no encounter to prepare.");
+  let context = await nativeContext(transport, project, session, { operation: "read" }, sourceWorldRef);
+  // an unchanged generation is already what the turn would carry: nothing to write
+  const same = context.items.find(i => isFieldItem(i) && fieldItemGeneration(i) === live.generation && parseFieldSelector((i.selection.anchor as {selector: string}).selector)?.binding === live.binding_id);
+  if (same && context.items.filter(isFieldItem).length === 1) return context;
+  for (const old of context.items.filter(isFieldItem)) {
+    context = await nativeContext(transport, project, session, { operation: "edit", basis: context.revision, mutation: { operation: "remove", id: old.id } }, sourceWorldRef);
+  }
+  const text = fieldContextLines(live).join("\n");
+  // a pinned reading is an explicit snapshot (it stays what it was); a followed one is only current while the field is
+  const key = registerPageObservation(text, async () => pinned || (currentFieldContext()?.generation === live.generation && currentFieldContext()?.binding_id === live.binding_id));
+  try {
+    return await nativeContext(transport, project, session, { operation: "edit", basis: context.revision, mutation: { operation: "add", selection: fieldSelection(live, key, project) } }, sourceWorldRef);
+  } catch (error) { releaseObservation(key); throw error; }
+}
+
+/** Remove the field's items from the prepared context (turning the contribution off). */
+export async function withdrawFieldContext(transport: KernelTransportStatus, project: string, session: string | undefined, sourceWorldRef?: string): Promise<PreparedContext> {
+  let context = await nativeContext(transport, project, session, { operation: "read" }, sourceWorldRef);
+  for (const old of context.items.filter(isFieldItem)) {
+    context = await nativeContext(transport, project, session, { operation: "edit", basis: context.revision, mutation: { operation: "remove", id: old.id } }, sourceWorldRef);
+  }
+  return context;
+}
+
+/* ── the person's one choice about the field in the companion's turns ──
+ *   off     the field is present, not prepared (default).
+ *   follow  the prepared context follows the active locus: refreshed at each turn to the generation then live.
+ *   pin     an explicit pin: the reading taken at the moment of pinning stays the prepared basis until it is changed. */
+export type FieldContextMode = "off" | "follow" | "pin";
+const KEY = "oi-cradle.field.context.mode";
+const read = (): FieldContextMode => { try { const v = typeof window !== "undefined" ? window.localStorage.getItem(KEY) : null; return v === "follow" || v === "pin" ? v : v === "1" ? "follow" : "off"; } catch { return "off"; } };
+const PIN_KEY = "oi-cradle.field.context.pin";
+/** The pinned reading survives a restart with the choice (the owner's prepared item is durable on its own side; this is what the
+ * keeper re-prepares from). A stored reading that does not parse is dropped, and the pin with it. */
+const readPin = (): FieldContextReading | undefined => {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(PIN_KEY) ?? "null");
+    return v && v.schema === "oi.field-context/v1" && typeof v.binding_id === "string" && Number.isSafeInteger(v.generation) && v.primary && typeof v.primary.ref === "string" && Array.isArray(v.roles) ? v as FieldContextReading : undefined;
+  } catch { return undefined; }
+};
+let mode: FieldContextMode = read();
+let pinnedReading: FieldContextReading | undefined = mode === "pin" ? readPin() : undefined;
+if (mode === "pin" && !pinnedReading) mode = "off";
+const modeListeners = new Set<() => void>();
+export const fieldContextMode = () => mode;
+export const fieldContextPinned = () => pinnedReading;
+export function setFieldContextMode(next: FieldContextMode) {
+  mode = next;
+  pinnedReading = next === "pin" ? currentFieldContext() : undefined;
+  if (next === "pin" && !pinnedReading) mode = "off";
+  try { window.localStorage.setItem(KEY, mode); if (pinnedReading) window.localStorage.setItem(PIN_KEY, JSON.stringify(pinnedReading)); else window.localStorage.removeItem(PIN_KEY); } catch { /* per-viewer convenience */ }
+  for (const l of [...modeListeners]) l();
+}
+export const subscribeFieldContextMode = (l: () => void) => { modeListeners.add(l); return () => { modeListeners.delete(l); }; };
+/** Kept for callers that only know the two-state switch. */
+export const fieldContextKept = () => mode === "follow";
+export const setFieldContextKept = (on: boolean) => setFieldContextMode(on ? "follow" : "off");
+export const subscribeFieldContextKept = subscribeFieldContextMode;
+
+/** The reading the companion's next turn is prepared against, by the person's choice: the live one, the pinned one, or none. */
+export function fieldContextTarget(): { reading: FieldContextReading; pinned: boolean } | undefined {
+  if (mode === "follow") { const r = currentFieldContext(); return r ? { reading: r, pinned: false } : undefined; }
+  if (mode === "pin" && pinnedReading) return { reading: pinnedReading, pinned: true };
+  return undefined;
+}
+
+/** The provider the context seam runs just before a turn reads the prepared context: bring the field's item to the basis the
+ * person chose (the live generation, or the pinned one) first. */
+export const fieldContextProvider: ContextProvider = async ({transport, project, session, sourceWorldRef}) => {
+  if (sourceWorldRef) return;
+  const t = fieldContextTarget();
+  if (t) await prepareFieldContext(transport, project, session, t.reading, undefined, t.pinned);
+};

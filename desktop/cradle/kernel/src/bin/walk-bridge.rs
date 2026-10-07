@@ -17,6 +17,12 @@
 //!                          protocol (FND-04), same resolution rules
 //!                          (`oi_cradle_kernel::files::resolve_material`):
 //!                          raw bytes, real Content-Type, never JSON.
+//!   GET  /world/<world id, one percent-encoded segment>/<revision>/<listed path>
+//!                          dev-only mirror of the `__world` route of
+//!                          `oi-material://` (Essay #78): a file of the
+//!                          installed World, served only if that revision's
+//!                          `world.files.json` lists it and its bytes match
+//!                          the listed digest (`oi_cradle_kernel::world_resolve::serve`).
 //!
 //! Usage: cargo run --bin walk-bridge [--bind 127.0.0.1:4179]
 
@@ -454,6 +460,11 @@ fn handle_with_diagnostic(
                 if let KernelOp::NaraCoordinate { request } = op {
                     return oi_cradle_kernel::nara_coordinate::execute(request);
                 }
+                if let KernelOp::WorldResolve { world_id, verify } = op {
+                    return oi_cradle_kernel::world_resolve::execute(
+                        oi_cradle_kernel::world_resolve::Request { world_id, verify },
+                    );
+                }
                 let epii = kernel
                     .lock()
                     .expect("kernel mutex")
@@ -618,6 +629,14 @@ fn handle_with_diagnostic(
                 trace.phase("bridge_outcome_serialization", started);
             }
             response
+        }
+        _ if request.method == "GET" && path.starts_with("/world/") => {
+            let served = oi_cradle_kernel::world_resolve::serve(&path["/world/".len()..]);
+            BridgeResponse::Binary {
+                status: served.status,
+                content_type: served.content_type,
+                body: served.body,
+            }
         }
         _ if request.method == "GET" && path.starts_with("/material/") => {
             material(kernel, &path["/material/".len()..])

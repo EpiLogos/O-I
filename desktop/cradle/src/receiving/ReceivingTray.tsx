@@ -40,6 +40,7 @@ export const WAITING=new Set(["pending","needs-review","accepted","including","u
 /** Whether a row still waits for the person: the owner's word when given. */
 export const isWaiting=(row:Pick<ReturnRow,"settled"|"status">)=>typeof row.settled==="boolean"?!row.settled:WAITING.has(row.status);
 const PAGE=20;
+const MIN_GAP_MS=15_000;
 const REVIEW_STATUS:Record<string,string>={pending:"Waiting for review","needs-review":"Needs review",accepted:"Accepted for inclusion",rejected:"Rejected",including:"Including…",uncertain:"Needs recovery",included:"Included"};
 const reviewStatus=(status:string)=>REVIEW_STATUS[status]??"Review status unavailable";
 /** What a request's status means to the person who decides it. */
@@ -92,12 +93,21 @@ export function useInbox(registers:InboxRegister[],refresh:number):InboxReading&
  const key=registers.map(r=>r.project??"").join("|");
  const held=useRef(registers);held.current=registers;
  useEffect(()=>{
-  let live=true;
-  const read=async()=>{
-   const pages=await Promise.all(held.current.map(async register=>{
-    try{return {register,page:await receiving<ReceivingPage>(kernel.transport,register.project??null,{kind:"list",limit:PAGE,open:true})};}
-    catch{return {register,page:undefined};}
-   }));
+  let live=true,inflight=false,lastAt=0;
+  // Each register read is a `ctrl central.receiving.list`, and Central rescans its whole source horizon under one lock per call: reads
+  // run one register at a time, never overlap (a read in flight absorbs the next trigger), and a focus event cannot re-read within
+  // MIN_GAP_MS of the last. Overlapping parallel reads once queued ~80 ctrl processes behind that lock and saturated the machine.
+  const read=async(force=false)=>{
+   if(inflight||(!force&&Date.now()-lastAt<MIN_GAP_MS))return;
+   inflight=true;
+   const pages:{register:InboxRegister;page:ReceivingPage|undefined}[]=[];
+   try{
+    for(const register of held.current){
+     if(!live)return;
+     try{pages.push({register,page:await receiving<ReceivingPage>(kernel.transport,register.project??null,{kind:"list",limit:PAGE,open:true})});}
+     catch{pages.push({register,page:undefined});}
+    }
+   }finally{inflight=false;lastAt=Date.now();}
    if(!live)return;
    const served=pages.filter(entry=>!!entry.page);
    const rows=served.flatMap(({register,page})=>page!.returns.map(row=>({...row,register})));
@@ -108,7 +118,7 @@ export function useInbox(registers:InboxRegister[],refresh:number):InboxReading&
    const lowerBound=!exact&&served.some(({page})=>page!.more);
    setReading({rows,waiting,count,lowerBound,state:served.length?"ready":"unavailable",readAt:Date.now()});
   };
-  void read();
+  void read(true);
   // The queue is live: re-read on a quiet cadence and whenever the window
   // regains focus (an agent may have delivered while the person was away).
   const timer=setInterval(()=>{if(document.visibilityState==="visible")void read();},60_000);

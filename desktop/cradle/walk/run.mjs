@@ -567,10 +567,12 @@ async function runScenario(name, { baseUrl }) {
     let bridgeUrl = null;
     if (spec.kernel) {
       stage = "bridge";
+      // WALK_BRIDGE_BIN runs an already-built bridge binary instead of `cargo run` (no build on a busy machine).
+      const prebuilt = process.env.WALK_BRIDGE_BIN;
       const bridgeService = spawnService(
         "walk-bridge",
-        "cargo",
-        [
+        prebuilt ?? "cargo",
+        prebuilt ? [`127.0.0.1:${BRIDGE_PORT}`] : [
           "run",
           "--quiet",
           "--manifest-path",
@@ -622,6 +624,9 @@ async function runScenario(name, { baseUrl }) {
         // access entirely — the touch must not throw there; only the top
         // document's stand-down matters.
         try {
+          // Base opens on the field by default (src/field); walks of the other Base surfaces start without it
+          // unless they ask for it with ?field.
+          if (!new URLSearchParams(location.search).has("field")) sessionStorage.setItem("oi-cradle.field-default", "off");
           sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
         } catch { /* opaque frame: no storage authority, no stand-down needed */ }
       }

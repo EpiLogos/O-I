@@ -26,6 +26,7 @@ import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import {EncounterList,type EncounterRow} from "./encounter/EncounterList";
+import type {HostedHostContext} from "./contributions/contracts";
 import {AgentLayer} from "./agent/AgentLayer";
 import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
@@ -67,7 +68,8 @@ import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
  * bundles by the build gate above.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import { currentFieldContext, subscribeField } from "./field/fieldHost";
 // Technē summon seam (T2): the HUD's summon CustomEvents present the Library,
 // the gallery search and the current subject's verso through the existing
 // surfaces — see src/library/techneSummon.tsx (the parent reconciles the
@@ -971,6 +973,27 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // so no encounter-tab relocation happens here.
   };
   const enterModeRef=useRef(enterMode);enterModeRef.current=enterMode;
+  // BASE'S DEFAULT CENTRE is the field (src/field, the contribution oi.surface/field): the first time a workspace
+  // stands in Base with nothing open, the field opens as its only surface — in a pane whose own tab strip is folded
+  // to the reveal edge (the field carries its own page-over-page tabs; the pane strip is not a second stack) and the
+  // left navigator stood down (the field carries its own explorer; the companion on the right stays summonable). A
+  // restored arrangement stands untouched; closing the field returns to rest and does not reopen it.
+  const fieldDefaulted=useRef(new Set<string>());
+  useEffect(()=>{
+    const id=workspace.current.id;
+    if(fieldDefaulted.current.has(id)||(stateRef.current.mode??"base")!=="base")return;
+    if(stateRef.current.root){fieldDefaulted.current.add(id);return;}
+    if(!hostedSurfaceFor({kind:"field"}))return;
+    // An explicit start that opts out (walks that exercise the other Base surfaces; a person who wants Rest):
+    // sessionStorage or localStorage "oi-cradle.field-default" = "off".
+    try{if(window.sessionStorage.getItem("oi-cradle.field-default")==="off"||window.localStorage.getItem("oi-cradle.field-default")==="off"){fieldDefaulted.current.add(id);return;}}catch{/* storage refused: the default stands */}
+    fieldDefaulted.current.add(id);
+    setState(s=>{
+      if(s.root)return s;
+      const next=openBinding(s,withHostedDescriptor({id:crypto.randomUUID(),kind:"field",title:hostedSurfaceFor({kind:"field"})?.descriptor.title??"Field"}));
+      return next.root?.type==="group"?{...next,agencyDepth:"collapsed" as const,root:{...next.root,tabPresentation:"unpinned" as const}}:next;
+    });
+  },[workspace.current.id,state.root]);
   // The hosted application's deep cut can ask for the lived cut back: the
   // request lands in the shell's OWN mode pipeline — one mode system.
   useEffect(() => {
@@ -1727,18 +1750,19 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     }catch(error){setWindowError(String(error));}
     finally{setFactoryChoosing(false);}
   };
-  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onMessage:(message:string)=>void}={
+  const hostOperations:HostedHostContext={
     project:workspace.current.project??state.accompanying?.project,
     accompanying:state.accompanying??undefined,
-    onOpenTask:row=>factoryChoose(row),
-    onNewTask:()=>setState(s=>({...s,accompanying:undefined})),
-    onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
+    openEncounter:row=>factoryChoose(row),
+    newEncounter:()=>setState(s=>({...s,accompanying:undefined})),
+    openActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
+    companion:{depth:state.rightDepth??"strip",setDepth:depth=>setState(s=>({...s,rightDepth:depth}))},
     onMessage:message=>setWindowError(message),
   };
   const [chosenAgentRef]=useChosenAgent(workspace.current.project);
   const centreRoster=useAgentRoster(workspace.current.project,!!chosenAgentRef);
   const centreAgent=centreRoster.agents.find(agent=>agent.ref===chosenAgentRef);
-  const factoryCentre=
+  const centreConversation=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
       project={workspace.current.project??state.accompanying?.project}
       agentName={centreAgent?.name}
@@ -1960,14 +1984,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         openExplore={select=>openExplore(select,"side")}
         onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
         openEncounter={row=>openEncounter(row,"side").catch(report)}
-        factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
+        conversation={centreConversation} host={hostOperations}
         subject={workspace.current.context?.subject}
         nativeWindows={kernel.transport.kind==="tauri"}
         workspaceName={workspace.current.name}
         insertMenu={close=>contextInsertMenu(close)}
         stripTools={<ContextPreparationButton project={workspace.current.project} session={state.accompanying?.ref} tabs={contextSideTabs} onActivateTab={activateContextTab}/>}/>);})(),
   };
-  const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current}),[workspace.current,kernel.snapshot]);
+  const fieldNow=useSyncExternalStore(subscribeField,currentFieldContext,currentFieldContext);
+  const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current,field:fieldNow}),[workspace.current,kernel.snapshot,fieldNow]);
   const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
@@ -2022,7 +2047,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         return (
           <CanvasStage key={`mode-stage-${stageMode}`} data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
-            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
+            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} conversation={centreConversation} host={hostOperations} onView={view=>workspace.surfaceView(workspace.current.id,binding.id,view)} onHostedState={engineCallbackFor(binding.id)}/>}
           </CanvasStage>
         );
       })}
@@ -2080,8 +2105,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             openPresentation={openPresentation}
             openExplore={openExplore}
             openEncounter={row=>openEncounter(row).catch(report)}
-            factoryCentre={factoryCentre}
-            factoryTasks={factoryCentreProps}
+            conversation={centreConversation}
+            host={hostOperations}
             subject={workspace.current.context?.subject}
             nativeWindows={kernel.transport.kind==="tauri"}
           />

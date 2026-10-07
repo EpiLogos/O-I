@@ -41,7 +41,13 @@ const approvalKey=(context:PreparedContext,item:PreparedItem,sourceWorldRef?:str
 export function registerSelectionValidator(next:Validator){validator=next;return()=>{if(validator===next)validator=undefined;};}
 export function approveCapturedSnapshot(context:PreparedContext,item:PreparedItem,sourceWorldRef?:string){if(snapshotApprovals.size>=64)snapshotApprovals.clear();snapshotApprovals.add(approvalKey(context,item,sourceWorldRef));}
 export async function validatePreparedItem(item:PreparedItem,context?:PreparedContext,sourceWorldRef?:string){if(context&&snapshotApprovals.has(approvalKey(context,item,sourceWorldRef)))return;if(sourceWorldRef)throw new Error("Review this captured snapshot in its source World before sending");if(!validator)throw new Error("Open the source or explicitly review its captured snapshot in Context before sending");await validator(item);}
+/** Contributors that bring the prepared context up to date just before a turn reads it (e.g. the field's encounter when the
+ * person asked for it to be kept current). They write through the owner's own context operations; they never send. */
+export type ContextProvider=(scope:{transport:KernelTransportStatus;project:string;session:string;sourceWorldRef?:string})=>Promise<void>;
+const providers=new Set<ContextProvider>();
+export function registerContextProvider(provider:ContextProvider){providers.add(provider);return()=>{providers.delete(provider);};}
 export async function reviewedContext(transport:KernelTransportStatus,project:string,session:string,sourceWorldRef?:string):Promise<ContextExpectation>{
+ for(const provider of providers)await provider({transport,project,session,sourceWorldRef});
  const value=await nativeContext(transport,project,session,{operation:"read"},sourceWorldRef);for(const item of value.items)await validatePreparedItem(item,value,sourceWorldRef);return contextExpectation(value);
 }
 export function clearSnapshotApprovals(sourceWorldRef?:string){for(const key of snapshotApprovals)if(JSON.parse(key)[0]===(sourceWorldRef??null))snapshotApprovals.delete(key);}

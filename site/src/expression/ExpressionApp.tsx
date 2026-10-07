@@ -21,7 +21,15 @@ type Failure = { kind: 'no-expression' | 'not-published' | 'index' | 'journey' |
 type Loaded = { entry: Entry; journey: Journey; collection: string };
 type Load = { status: 'loading' } | { status: 'ready'; data: Loaded } | { status: 'failed'; failure: Failure };
 
-const BASE = './essay/expressions/';
+/** Where the edition lives, relative to this page. The site serves the page beside `essay/`; a packaged World serves it from `renderer/` beside
+ * `edition/` and says so in a meta tag, so the same renderer reads the same index and bodies from the same route. */
+const EDITION = (() => {
+  try {
+    const declared = document.querySelector('meta[name="oi-edition-base"]')?.getAttribute('content');
+    return declared && /^[./A-Za-z0-9_-]+\/$/.test(declared) ? declared : './essay/';
+  } catch { return './essay/'; }
+})();
+const BASE = `${EDITION}expressions/`;
 const NODE_CAP = 12;
 const MAX_ZOOM = 5;
 const MIN_ZOOM = 0.25;
@@ -360,7 +368,7 @@ function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: st
   );
 }
 
-const slugHref = (slug: string) => `./essay/${slug.split('/').map(encodeURIComponent).join('/')}`;
+const slugHref = (slug: string) => `${EDITION}${slug.split('/').map(encodeURIComponent).join('/')}`;
 const slugLabel = (slug: string) => { const last = slug.split('/').pop() || slug; try { return decodeURIComponent(last).replace(/-/g, ' '); } catch { return last; } };
 
 function InTheEssay({ nodes }: { nodes: string[] }) {
@@ -387,7 +395,7 @@ function State({ failure }: { failure: Failure }) {
       <p className="xp-kicker">Expression</p>
       <h1>{failure.title}</h1>
       <p>{failure.detail}</p>
-      <p><a href="./essay/" target="_top">Back to the essay</a></p>
+      <p><a href={EDITION} target="_top">Back to the essay</a></p>
     </main>
   );
 }
@@ -421,7 +429,7 @@ export function ExpressionApp() {
       {data && scene && (
         <>
           <header className="xp-head">
-            {!embed && <div className="xp-nav"><a className="xp-mark" href="./" aria-label="O:I home">O:I</a><a className="xp-back" href="./essay/">← The essay</a></div>}
+            {!embed && <div className="xp-nav"><a className="xp-mark" href="./" aria-label="O:I home">O:I</a><a className="xp-back" href={EDITION}>← The essay</a></div>}
             <h1 title={data.entry.title}>{data.entry.title}</h1>
             <div className="xp-step">
               <button type="button" aria-label="Previous scene" disabled={index === 0} data-control="prev" onClick={() => step(scenes[index - 1].id)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg></button>

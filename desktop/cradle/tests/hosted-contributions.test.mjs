@@ -50,3 +50,37 @@ test('a removed contribution remains a saved unavailable binding and warm tree w
   assert.equal(kept.presented, false);
   assert.equal(hostedSurfaceFor({...binding,kind:'factory'}), undefined, 'a familiar kind cannot replace a missing owner descriptor');
 });
+
+// ---- #598: the common host contract carries no product's domain context -----
+import {readFileSync} from 'node:fs';
+
+const interfaceKeys = (source, name) => {
+  const body = source.match(new RegExp(`export interface ${name}[^{]*\\{([\\s\\S]*?)\\n\\}`))?.[1] ?? '';
+  const keys = [...body.replace(/\/\*\*[\s\S]*?\*\//g, '').matchAll(/^\s{2}(\w+)\??:/gm)].map(match => match[1]);
+  assert.ok(keys.length > 0, `${name} not found in contracts.ts`);
+  return keys;
+};
+
+test('the hosted mount contract and the host context are domain-neutral', () => {
+  const source = readFileSync(new URL('../src/contributions/contracts.ts', import.meta.url), 'utf8');
+  const keys = [...interfaceKeys(source, 'HostedMountProps'), ...interfaceKeys(source, 'HostedHostContext')];
+  assert.deepEqual(keys.filter(key => /factory|workcell|run|task/i.test(key)), [], `product-specific keys in the common contract: ${keys}`);
+  assert.ok(!/\binterface\s+Factory\w*/.test(source), 'no Factory-named type in the common contract');
+  for (const key of ['conversation', 'host', 'binding', 'subject', 'onHostedState']) assert.ok(keys.includes(key), key);
+});
+
+test('a small non-essay, non-Factory contribution mounts through the same public contract and its removal stays unavailable', () => {
+  const descriptor = {descriptor_ref: 'specimen.surface/note', contribution_ref: 'specimen.contribution/note', owner: 'specimen', revision: 1, kind: 'specimen-note', title: 'Specimen note', retention: 'mounted', region: 'canvas'};
+  const Component = props => `${props.binding.title}|${props.host?.project ?? '-'}|${typeof props.host?.openEncounter}`;
+  const registry = [{descriptor, Component}];
+  const binding = {id: 'specimen-1', kind: 'specimen-note', title: 'A note', hosted: {descriptor_ref: descriptor.descriptor_ref, contribution_ref: descriptor.contribution_ref}};
+  const mount = hostedSurfaceFor(binding, registry);
+  assert.equal(mount.Component, Component);
+  assert.equal(mount.Component({binding, host: {project: 'P', openEncounter: () => {}}}), 'A note|P|function');
+  assert.equal(mount.Component({binding}), 'A note|-|undefined', 'no host context is required');
+  // The compiled-in registry is unchanged by the specimen, and with the specimen removed the saved binding stays unavailable.
+  assert.equal(hostedSurfaceFor(binding), undefined);
+  const restored = decodeLayout(JSON.parse(JSON.stringify(openBinding(freshLayout(), binding)))).surfaces[binding.id];
+  assert.deepEqual(restored.hosted, binding.hosted);
+  assert.equal(hostedSurfaceFor(restored, []), undefined);
+});

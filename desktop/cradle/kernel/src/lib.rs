@@ -113,6 +113,7 @@ pub mod shared_field;
 pub mod system_composition;
 pub mod working_surface;
 pub mod world;
+pub mod world_resolve;
 // --- expression_world (ES1 knowledge side + ES4 joint focus/deixis/portals),
 // lane aikit/es-one-state-relation: the shared selection relation, Surface
 // portals, ExpressiveAct and bounded local-whole bindings over exact refs.
@@ -332,6 +333,14 @@ pub enum KernelOp {
     },
     ExpressionRecovery {
         request: expression_recovery::Request,
+    },
+    /// Resolve the installed World (Essay #78): its state, edition directory, source
+    /// addressing, counts and verification. Reads the worlds root only; no kernel state.
+    WorldResolve {
+        #[serde(default)]
+        world_id: Option<String>,
+        #[serde(default)]
+        verify: bool,
     },
     NativeExpression {
         request: native_expression::Request,
@@ -1008,6 +1017,9 @@ pub enum KernelOpResult {
     },
     ExpressionRecovery {
         data: serde_json::Value,
+    },
+    WorldResolve {
+        resolution: world_resolve::Resolution,
     },
     NativeExpression {
         data: serde_json::Value,
@@ -2483,6 +2495,9 @@ impl Kernel {
                 })
             }
             KernelOp::ExpressionRecovery { request } => expression_recovery::execute(request),
+            KernelOp::WorldResolve { world_id, verify } => {
+                world_resolve::execute(world_resolve::Request { world_id, verify })
+            }
             KernelOp::HostedNative {
                 source_world_ref,
                 request,

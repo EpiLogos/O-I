@@ -5,6 +5,6 @@ const FactoryCentre = lazy(() => import("./FactoryCentre").then(module => ({defa
 
 /** Host-owned wiring over the native Factory contribution. All actions still
  * enter the existing owner seams; the descriptor supplies no authority. */
-export function FactoryHostedSurface({factoryCentre, factoryTasks}: HostedMountProps) {
-  return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onNewTask={factoryTasks?.onNewTask} onOpenActivity={factoryTasks?.onOpenActivity} onMessage={factoryTasks?.onMessage}/>;
+export function FactoryHostedSurface({conversation, host}: HostedMountProps) {
+  return <FactoryCentre chat={conversation} project={host?.project} accompanying={host?.accompanying} onOpenTask={host?.openEncounter} onNewTask={host?.newEncounter} onOpenActivity={host?.openActivity} onMessage={host?.onMessage}/>;
 }

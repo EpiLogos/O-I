@@ -1,0 +1,81 @@
+{
+  "absences": [
+    "no faculty evidence directory given, so owner receipts for Python faculty calls were not read",
+    "addressed deliveries are not segmented as turns; only user messages open a turn"
+  ],
+  "agent_session": "agent-session/field-turn",
+  "decision": {
+    "from_delivery_receipt": {
+      "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+      "jev_invocation_ref": "invocation/jev/b7408fda15a70493cf0aaf6badfe6e9463ce6b551dc3d9995e05c0ccba850df9"
+    },
+    "note": "the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt",
+    "selection_readback": {
+      "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+      "jev_invocation_ref": "invocation/jev/b7408fda15a70493cf0aaf6badfe6e9463ce6b551dc3d9995e05c0ccba850df9",
+      "read": true,
+      "read_as": "local view",
+      "selected_source_refs": [
+        "context-source/field-walk-1",
+        "context-source/field-walk-2",
+        "context-source/field-walk-3",
+        "context-source/field-walk-4",
+        "context-source/field-walk-5",
+        "context-source/field-walk-6"
+      ],
+      "version": 1,
+      "view_is_the_delivered_one": true
+    }
+  },
+  "prepared_context": {
+    "degraded": [],
+    "delivered": [
+      {
+        "cursor": 5,
+        "kind": "now-context-delivered",
+        "observed_at_ms": 1791322625094,
+        "receipt": {
+          "agent_session": "agent-session/field-turn",
+          "basis_digest": "blake3:1764908c0d65f6714094a918adb91a1e74c02f9f35192d083197d25617a52ee7",
+          "change_cursor": 0,
+          "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+          "delivered_at_unix_ms": 1791322625093,
+          "jev_invocation_ref": "invocation/jev/b7408fda15a70493cf0aaf6badfe6e9463ce6b551dc3d9995e05c0ccba850df9",
+          "participant_ref": "agent-session/field-turn",
+          "prepared_digest": "blake3:03a11201a6601a93164704ee64ce2abf1040e93df1aeb7bfd6c7c8de680ba2d0",
+          "prepared_version": 1,
+          "schema": "aikit.now-context-delivery/v1"
+        },
+        "standing": "provider-turn-delivery-accepted; not a claim of model response"
+      }
+    ],
+    "source": "encounter journal: now-context-* events",
+    "state": "delivered",
+    "uncertain": []
+  },
+  "ql_operations": {
+    "faculty_receipts": [],
+    "python_faculty_calls": [],
+    "reconciliation": {
+      "faculty_receipts_in_turn": 0,
+      "python_calls_recorded": 0,
+      "statement": "no Python faculty call and no faculty receipt in this turn"
+    },
+    "tool_calls": []
+  },
+  "schema": "aikit.encounter-use-reading/v1",
+  "sources": [
+    "encounter journal (encounters.sqlite3)",
+    "Actuation faculty evidence (actuation.prime-ql-operation/v1)",
+    "Redis prepared view"
+  ],
+  "turn": {
+    "end_cursor_exclusive": null,
+    "index": 1,
+    "last_event_at_ms": 1791322679961,
+    "of": 1,
+    "outcome": "turn-ended",
+    "start_cursor": 4,
+    "started_at_ms": 1791322625093
+  }
+}

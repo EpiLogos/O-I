@@ -1,0 +1,387 @@
+{
+  "scenario": "field-ux-transfer",
+  "at": "2026-10-06T23:17:50.950Z",
+  "record": {
+    "hide": {
+      "group": "essay",
+      "n": 7,
+      "before": 17,
+      "after": 10
+    },
+    "crumbs": [
+      {
+        "label": "Essay",
+        "tag": "A",
+        "sib": true,
+        "cur": false
+      },
+      {
+        "label": "Section-rooms",
+        "tag": "A",
+        "sib": true,
+        "cur": false
+      },
+      {
+        "label": "Arguments",
+        "tag": "A",
+        "sib": true,
+        "cur": false
+      },
+      {
+        "label": "Concepts",
+        "tag": "A",
+        "sib": true,
+        "cur": false
+      },
+      {
+        "label": "Dimensional Reframing at Zero and Infinity",
+        "tag": "SPAN",
+        "sib": false,
+        "cur": true
+      }
+    ],
+    "marks": {
+      "chips": [
+        "expression:roz-essay-reading"
+      ],
+      "tree": 117,
+      "rings": 11,
+      "conn": 11
+    }
+  },
+  "passed": true,
+  "counts": {
+    "passed": 52,
+    "total": 52
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "UX4 graph and connections list show the same neighbourhood (same refs)",
+      "detail": {
+        "graph": 17,
+        "connections": 17
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX4 no filter is active at first (no dot on the filter button)"
+    },
+    {
+      "ok": true,
+      "label": "UX4 the filter is one icon that opens one menu"
+    },
+    {
+      "ok": true,
+      "label": "UX4 hiding a register removes its nodes from the graph AND the connections list, and they still agree",
+      "detail": {
+        "hidden": "essay",
+        "removed": 7,
+        "menuCount": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX4 a dot says a filter is active"
+    },
+    {
+      "ok": true,
+      "label": "UX4 'Show everything' restores both lists to the first neighbourhood"
+    },
+    {
+      "ok": true,
+      "label": "UX4 two hops reaches further in the graph (a superset of the direct neighbourhood)",
+      "detail": {
+        "one": 17,
+        "two": 53
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX4 reach changes what the graph draws, never the direct connections: the list and the header count stay the direct neighbourhood (as on the site)",
+      "detail": {
+        "list": 17,
+        "count": "17"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX4 keyboard: Escape closes the filter menu and returns to the filter button"
+    },
+    {
+      "ok": true,
+      "label": "UX4 keyboard: Enter on the filter button opens the menu"
+    },
+    {
+      "ok": true,
+      "label": "UX4 keyboard: Space on a register's checkbox hides it everywhere, and the two lists agree",
+      "detail": {
+        "graph": 10,
+        "connections": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX4 keyboard: Enter on 'Show everything' restores both"
+    },
+    {
+      "ok": true,
+      "label": "UX5 breadcrumbs are structural labels, not slugs or paths",
+      "detail": [
+        "Essay",
+        "Section-rooms",
+        "Arguments",
+        "Concepts",
+        "Dimensional Reframing at Zero and Infinity"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "UX5 every crumb but the last is a way back (a link, or a button that opens what is in the folder)"
+    },
+    {
+      "ok": true,
+      "label": "UX5 a separator opens that level's siblings (the sibling menu lists the folders beside it)",
+      "detail": {
+        "n": 39,
+        "head": "Arguments 39",
+        "items": [
+          "A01Subject, God and Faithful Definition",
+          "A02Copula / Self-Identity through Difference",
+          "A03Immutable Gap / Formal Limit",
+          "A04Diaphaneity / Contextual Transparency",
+          "A05Prakāśa–Vimarśa"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 keyboard: Escape puts the sibling menu away"
+    },
+    {
+      "ok": true,
+      "label": "UX5 keyboard: Enter on a separator opens the sibling menu"
+    },
+    {
+      "ok": true,
+      "label": "UX5 keyboard: Enter on a sibling turns the main page to it and puts the menu away",
+      "detail": {
+        "to": "A01Subject, God and Faithful Definition"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 clicking back (Alt+Left) returns through the pages the crumbs took"
+    },
+    {
+      "ok": true,
+      "label": "UX5 clicking a crumb goes back up the structure (the main page turns to that level)",
+      "detail": {
+        "title": "The Return of Zero — The Rooms"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 pointer: a sibling in the menu turns the main page to it"
+    },
+    {
+      "ok": true,
+      "label": "UX5 a folder crumb opens its contents (the movements/pages inside it)",
+      "detail": {
+        "items": 3
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 a room page has a pager with a next link",
+      "detail": {
+        "title": "The Integral Threshold"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 pointer: the pager turns the main page to the next room (and the old page goes on the trail)",
+      "detail": {
+        "from": "The Integral Threshold",
+        "to": "Differentiating Mind"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 after the turn the pager offers the way back (prev)"
+    },
+    {
+      "ok": true,
+      "label": "UX5 pointer: prev returns to the first room"
+    },
+    {
+      "ok": true,
+      "label": "UX5 keyboard: Enter on the pager's next link turns the page the same way",
+      "detail": {
+        "to": "Differentiating Mind"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX5 keyboard: Enter on prev returns"
+    },
+    {
+      "ok": true,
+      "label": "UX7 a page with an Expression says so under its title (a chip per Expression)",
+      "detail": [
+        "expression:roz-essay-reading"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "UX7 explorer rows mark the pages that have an Expression",
+      "detail": {
+        "rows": 117
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 the graph rings the nodes that have an Expression",
+      "detail": {
+        "rings": 11
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 the connections list marks exactly the nodes the graph rings",
+      "detail": {
+        "graph": 11,
+        "list": 11
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 pointer: the chip opens its Expression as a tab",
+      "detail": {
+        "ref": "expression:roz-essay-reading"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 keyboard: Enter on the chip opens the Expression the same way"
+    },
+    {
+      "ok": true,
+      "label": "UX7 'Here' counts the Expressions about this page and its neighbourhood, narrows the gallery to exactly them, and marks them",
+      "detail": {
+        "label": "Here · 4",
+        "cards": 4,
+        "said": "4 Expressions here"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 the count line says the gallery is narrowed (\"here\")",
+      "detail": {
+        "all": 135,
+        "here": 4
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 a collection filters the gallery to its members",
+      "detail": {
+        "label": "The essay · 1",
+        "cards": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 search finds an Expression by what it says",
+      "detail": {
+        "query": "Return",
+        "cards": 58
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX7 keyboard: Enter on a Library card opens the Expression as a tab, leaving the Library",
+      "detail": {
+        "ref": "expression:roz-essay-reading"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX2 a tangent is open as a preview (italic)"
+    },
+    {
+      "ok": true,
+      "label": "UX2 keyboard: K keeps the tangent in view (no longer a preview)"
+    },
+    {
+      "ok": true,
+      "label": "UX2 a new tangent opens beside the kept one",
+      "detail": {
+        "tabs": 2
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX2 keyboard: K on a focused preview tab keeps it"
+    },
+    {
+      "ok": true,
+      "label": "UX2 keyboard: Shift+Enter on a tab opens it as the main page (the old page goes on the trail)",
+      "detail": {
+        "primary": "zero.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX2 Alt+Left returns to the previous main page after a keyboard promote"
+    },
+    {
+      "ok": true,
+      "label": "UX2 keyboard: P with a tangent in view opens it as the main page"
+    },
+    {
+      "ok": true,
+      "label": "UX2 keyboard: Delete on a focused tab closes it (middle-click, by keyboard)",
+      "detail": {
+        "before": 2,
+        "after": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX3 dragging a node moves it under the pointer",
+      "detail": {
+        "px": 86
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX3 dragging a node moves what it is linked to (live re-simulation)",
+      "detail": {
+        "others": 17
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX3 a dropped node stays where it was dropped",
+      "detail": {
+        "px": 2
+      }
+    },
+    {
+      "ok": true,
+      "label": "UX3 a drag neither selects nor navigates nor changes the encounter (generation unchanged)",
+      "detail": {
+        "generation": [
+          47,
+          47
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}
