@@ -82,7 +82,7 @@
         "oi:window-redock",
         "oi:workspace-message"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Removes an unplaced writing draft only after its owner has saved it.",
       "keys": [
         {
@@ -127,7 +127,7 @@
       "key_literals": [
         "oi-panel-agent.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Selected agent/profile reference for a view; not admission or authority.",
       "keys": [
         {
@@ -181,7 +181,7 @@
         "oi-tool chat-history-open",
         "oi-tool chat-new"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Unsent composer text; sending still requires the native encounter operation.",
       "keys": [
         {
@@ -247,7 +247,7 @@
         "oi-note chat-chip-note",
         "oi-refusal chat-chip-note"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71"
     },
     {
       "owner": "src/browser/BrowserSurface.tsx",
@@ -285,15 +285,15 @@
         }
       ],
       "key_literals": [
-        "oi-browser-profile:${…}",
-        "oi-browser-url:${…}",
+        "oi-browser-profile:${\u2026}",
+        "oi-browser-url:${\u2026}",
         "oi:browser-attached",
         "oi:browser-focus",
         "oi:browser-pane-focus",
         "oi:browser-reading",
         "oi:browser-title"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Restorable pane URL and browser profile choice; native lease controls the actual browser.",
       "keys": [
         {
@@ -337,10 +337,10 @@
         }
       ],
       "key_literals": [
-        "oi-flow-instance-draft:${…}",
+        "oi-flow-instance-draft:${\u2026}",
         "oi:context-options"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Selected text held as an unsaved Flow draft until an owner operation accepts it.",
       "keys": [
         {
@@ -423,7 +423,7 @@
         }
       ],
       "rationale": "Whether the field is offered to the companion (not prepared / follows locus / pinned) and the pinned snapshot: a per-device convenience; the prepared context of record lives in AIKit.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/cradle/CENTRAL-FIELD-CONTRACT.md §1 (continuity: reader-owned results live with their owners, presentation state is not source)"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/cradle/CENTRAL-FIELD-CONTRACT.md \u00a71 (continuity: reader-owned results live with their owners, presentation state is not source)"
     },
     {
       "owner": "src/contributions/factory/desk/deskModel.ts",
@@ -472,7 +472,7 @@
         "oi-factory-centre-view.v1",
         "oi-factory-desk-sources.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "View/filter/detail and last-run/source references; live Factory read supplies semantic state.",
       "keys": [
         {
@@ -572,7 +572,7 @@
         "oi-factory-desk-board.v1",
         "oi-factory-desk-selection.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71"
     },
     {
       "owner": "src/editor/TextEditor.tsx",
@@ -600,7 +600,7 @@
         }
       ],
       "key_literals": [
-        "oi-editor-view:${…}",
+        "oi-editor-view:${\u2026}",
         "oi:attach-selection",
         "oi:context-candidate",
         "oi:context-reveal",
@@ -610,7 +610,7 @@
         "oi:selection-anchor",
         "oi:selection-preview"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Caret and scroll restore per editor binding; no source mutation.",
       "keys": [
         {
@@ -649,7 +649,7 @@
       "key_literals": [
         "oi-cradle.epilogos.annotations.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Viewer-authored local annotation drafts, explicitly outside the source corpus.",
       "keys": [
         {
@@ -688,7 +688,7 @@
       "key_literals": [
         "oi-cradle.epilogos.reading.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Passage/reading location by place, not the content of the corpus.",
       "keys": [
         {
@@ -721,10 +721,10 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.knowledge.${…}",
+        "oi-cradle.knowledge.${\u2026}",
         "oi.cradle.knowledge-encounter-view/v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Presentation mode, pinned refs and held locus; material is reread from the owner. The knowledge-encounter-view/v1 literal discriminates disposable camera, selection and mode in existing Explore travel state; it is not a browser-storage key or source body.",
       "keys": [
         {
@@ -760,7 +760,7 @@
         "oi.cradle.knowledge-encounter-view/v1",
         "oi:explore-navigate"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Explore travel history and exact refs for restoration, not authoritative focus. The knowledge-encounter-view/v1 type discriminator belongs to this existing presentation checkpoint and introduces no storage key.",
       "keys": [
         {
@@ -793,7 +793,7 @@
         }
       ],
       "key_literals": [],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Dock open state and bounded geometry; caller keys are separately enumerated.",
       "keys": [
         {
@@ -830,7 +830,7 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.field.visited.${…}",
+        "oi-cradle.field.visited.${\u2026}",
         "oi-scene"
       ],
       "keys": [
@@ -842,7 +842,7 @@
         }
       ],
       "rationale": "The pages the reader has visited in a world, drawn as visited marks: a per-device presentation convenience; never source identity or reader-owned work.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/cradle/CENTRAL-FIELD-CONTRACT.md §1 (continuity: reader-owned results live with their owners, presentation state is not source)"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/cradle/CENTRAL-FIELD-CONTRACT.md \u00a71 (continuity: reader-owned results live with their owners, presentation state is not source)"
     },
     {
       "owner": "src/field/epi/essaySource.ts",
@@ -881,7 +881,7 @@
       "key_literals": [
         "oi-cradle.essay-edition",
         "oi-material:",
-        "oi-material://localhost/${…}"
+        "oi-material://localhost/${\u2026}"
       ],
       "keys": [
         {
@@ -892,7 +892,7 @@
         }
       ],
       "rationale": "A manually configured address of the essay edition (development override and the manual form); the installed World, resolved by the kernel, is the source of record.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/cradle/CENTRAL-FIELD-CONTRACT.md §1 (continuity: reader-owned results live with their owners, presentation state is not source)"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/cradle/CENTRAL-FIELD-CONTRACT.md \u00a71 (continuity: reader-owned results live with their owners, presentation state is not source)"
     },
     {
       "owner": "src/field/generic/useGenericSource.tsx",
@@ -931,7 +931,7 @@
         }
       ],
       "rationale": "Which linked project the field reads when the scope names none: a per-device convenience over Central's own project list.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/cradle/CENTRAL-FIELD-CONTRACT.md §1 (continuity: reader-owned results live with their owners, presentation state is not source)"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/cradle/CENTRAL-FIELD-CONTRACT.md \u00a71 (continuity: reader-owned results live with their owners, presentation state is not source)"
     },
     {
       "owner": "src/files/FileSurface.tsx",
@@ -977,14 +977,14 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.draft.v1:${…}",
-        "oi-cradle.file-caret:${…}",
-        "oi-cradle.file-scroll:${…}",
+        "oi-cradle.draft.v1:${\u2026}",
+        "oi-cradle.file-caret:${\u2026}",
+        "oi-cradle.file-scroll:${\u2026}",
         "oi:file-draft-changed",
         "oi:file-reading-changed",
         "oi:recover-device-copy"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Only caret and scroll remain browser presentation state. Actual last readings are bounded native retained resources, revalidated by Central before recovery.",
       "keys": [
         {
@@ -1027,9 +1027,9 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.file-last-reading.v1:${…}"
+        "oi-cradle.file-last-reading.v1:${\u2026}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/experience/WORKSPACE-CONTINUITY.md §WF2; 2026-09-24 commissioned native recovery migration",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/experience/WORKSPACE-CONTINUITY.md \u00a7WF2; 2026-09-24 commissioned native recovery migration",
       "rationale": "Read/remove only, explicit one-time conversion of an older browser copy into an acknowledged detached unverified device draft. Native recovery must freshly allow it. No source identity or revision imported; no cache writes, no source writes/history, original preserved until acknowledgement.",
       "keys": [
         {
@@ -1122,14 +1122,14 @@
       "key_literals": [
         "oi-action",
         "oi-action oi-action-primary",
-        "oi-flow-answer:${…}",
-        "oi-flow-instance-draft:${…}",
-        "oi-flow-work-project:${…}",
+        "oi-flow-answer:${\u2026}",
+        "oi-flow-instance-draft:${\u2026}",
+        "oi-flow-work-project:${\u2026}",
         "oi-note",
         "oi:context-candidate",
         "oi:file-draft-changed"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Unsaved Flow instance draft and the working project chosen for asking agents from a personal-ground flow; owner save and owner sessions remain the durable state.",
       "keys": [
         {
@@ -1183,7 +1183,7 @@
       "key_literals": [
         "oi-writing-identity.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71"
     },
     {
       "owner": "src/flow/unplacedDrafts.ts",
@@ -1211,9 +1211,9 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.unplaced-draft.v1:${…}"
+        "oi-cradle.unplaced-draft.v1:${\u2026}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; docs/experience/WORKSPACE-CONTINUITY.md §WF2; 2026-09-24 commissioned native recovery migration",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/experience/WORKSPACE-CONTINUITY.md \u00a7WF2; 2026-09-24 commissioned native recovery migration",
       "rationale": "Existing unplaced human writing and explicitly recovered unverified text only; acknowledged device-draft persistence. No native source binding, revision, write or history authority.",
       "keys": [
         {
@@ -1261,12 +1261,12 @@
       ],
       "key_literals": [
         "oi-action",
-        "oi-cradle.knowledge-travel.v1:${…}",
-        "oi-cradle.knowledge-view.v1:${…}",
+        "oi-cradle.knowledge-travel.v1:${\u2026}",
+        "oi-cradle.knowledge-view.v1:${\u2026}",
         "oi-tool",
         "oi:graph-release"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Graph visit history, view/camera and pending draft restoration; owner readings remain native.",
       "keys": [
         {
@@ -1321,9 +1321,9 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.knowledge-detail.v1:${…}"
+        "oi-cradle.knowledge-detail.v1:${\u2026}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Detail panel bounds and size only.",
       "keys": [
         {
@@ -1360,10 +1360,10 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.knowledge-travel.v1:${…}",
+        "oi-cradle.knowledge-travel.v1:${\u2026}",
         "oi:graph-release"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Clears the selected presentation ref on remembered graph travel; not semantic focus authority.",
       "keys": [
         {
@@ -1398,7 +1398,7 @@
       "key_literals": [
         "oi.search-leader.shift"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Device search shortcut preference.",
       "keys": [
         {
@@ -1444,7 +1444,7 @@
         "oi-tool-row lib-search-row",
         "oi:library-view"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Library list/tile presentation selection.",
       "keys": [
         {
@@ -1477,16 +1477,14 @@
         }
       ],
       "key_literals": [
-        "oi-material://localhost/${…}",
-        "oi.cradle.page-working-copy/v1",
-        "oi:document-host-changed",
+        "oi-material://localhost/${\u2026}",
         "oi:file-draft-changed",
         "oi:file-reading-changed",
         "oi:page-expression-host",
         "oi:page-expression-host-invalidated",
         "oi:page-expression-host-response"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Material view caret and scroll; no material content mutation.",
       "keys": [
         {
@@ -1525,7 +1523,7 @@
       "key_literals": [
         "oi.ui-study.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Explicit design-study local workspace and drafts, no live native claims; never native acceptance evidence.",
       "keys": [
         {
@@ -1558,9 +1556,9 @@
         }
       ],
       "key_literals": [
-        "oi.study.round2.${…}"
+        "oi.study.round2.${\u2026}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Explicit design-study arrangement and unsent draft persistence; never native acceptance evidence.",
       "keys": [
         {
@@ -1597,9 +1595,9 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.source-view:${…}"
+        "oi-cradle.source-view:${\u2026}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Caret and scroll restoration; source truth and working buffer remain kernel-owned.",
       "keys": [
         {
@@ -1638,7 +1636,7 @@
       "key_literals": [
         "oi-cradle.layout.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Versioned legacy layout/focus-reference checkpoint, not authoritative source/identity state.",
       "keys": [
         {
@@ -1690,7 +1688,7 @@
         "oi-tool",
         "oi-tool tn-nav-add"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Expanded navigation rows only.",
       "keys": [
         {
@@ -1729,7 +1727,7 @@
       "key_literals": [
         "oi-cradle.techne.instrument-rail.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Instrument rail presentation order/selection.",
       "keys": [
         {
@@ -1768,7 +1766,7 @@
       "key_literals": [
         "oi-cradle.techne-journey.presence.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Traversal refs and local composition draft; scene contents remain in the Expression owner.",
       "keys": [
         {
@@ -1808,7 +1806,7 @@
         "oi-cradle.techne.material.v1",
         "oi:techne-open-file"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Material reference arrangement only; current content is read through native owners.",
       "keys": [
         {
@@ -1866,7 +1864,7 @@
         "oi-cradle.techne.m0-entry.v1",
         "oi-cradle.techne.m0-register.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Projection entry refs and chosen register ref only; never stored wiki data or permission.",
       "keys": [
         {
@@ -1917,7 +1915,7 @@
         "oi-welcome-hint",
         "oi-welcome-logo"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Per-window welcome already-shown marker; no native appearance authority.",
       "keys": [
         {
@@ -1957,7 +1955,7 @@
         "oi-cradle.visuals.v1",
         "oi:visuals-snapshot"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Browser preference retains particle geometry/motion only; validated theme choice and imports are native kernel state.",
       "keys": [
         {
@@ -2009,7 +2007,7 @@
         "oi-shell-footer.v2",
         "oi:toggle-central"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Footer pin state and removal of its obsolete prior key.",
       "keys": [
         {
@@ -2036,7 +2034,7 @@
           "owner": "src/workspace/DetachedFrame.tsx",
           "receiver": "localStorage",
           "method": "getItem",
-          "key": "workspaceStorageKey",
+          "key": "\"oi-cradle.workspaces.v1\"",
           "basis": []
         }
       ],
@@ -2048,7 +2046,7 @@
         "oi:window-navigate",
         "oi:window-navigate-result"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Reads the shared workspace checkpoint for detached presentation restoration.",
       "keys": [
         {
@@ -2069,21 +2067,25 @@
           "owner": "src/workspace/checkpoints.ts",
           "receiver": "localStorage",
           "method": "getItem",
-          "key": "journalKey",
-          "basis": []
+          "key": "STAGE_KEY",
+          "basis": [
+            "STAGE_KEY = \"oi-cradle.book.stage.v1\""
+          ]
         },
         {
           "owner": "src/workspace/checkpoints.ts",
           "receiver": "localStorage",
           "method": "setItem",
-          "key": "journalKey",
-          "basis": []
+          "key": "STAGE_KEY",
+          "basis": [
+            "STAGE_KEY = \"oi-cradle.book.stage.v1\""
+          ]
         }
       ],
       "key_literals": [
         "oi-cradle.book.stage.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Presentation draft checkpoint journal; no Central source mutation.",
       "keys": [
         {
@@ -2106,21 +2108,8 @@
           "method": "getItem",
           "key": "key(ref)",
           "basis": [
-            "dayPage = {\n    if (!value || typeof value !== 'object')\n        return null;\n    const draft = value as HeldDayPageDraft;\n    if (draft.schema !== 'oi.cradle.native-day-working-copy/v1' || typeof draft.basis?.sourceRef !== 'string' || typeof draft.basis.documentId !== 'string' || typeof draft.basis.revision !== 'string' || !Array.isArray(draft.basis.fields) || draft.template?.location?.schema !== 'central.path-ref/v1' || typeof draft.template.location.ref !== 'string' || typeof draft.template.location.root !== 'string' || typeof draft.template.location.path !== 'string' || typeof draft.template.revision !== 'string' || typeof draft.template.content !== 'string')\n        return null;\n    if (draft.scope !== null && (!draft.scope || ['owner', 'world', 'workcell', 'accessEpoch'].some(field => typeof (draft.scope as unknown as RecordValue)[field] !== 'string')))\n        return null;\n    formEdits(draft.basis, draft.snapshot);\n    if (!projectDieDocument(draft.template.content, draft.snapshot))\n        return null;\n    return draft;\n}",
-            "key = (ref: string) => 'oi-cradle.draft.v1:' + ref",
-            "name = localStorage.key(i)",
-            "page = {\n    if (!value || typeof value !== 'object' || Array.isArray(value))\n        return null;\n    const held = value as HeldPageDraft;\n    if (held.schema !== 'oi.cradle.page-working-copy/v1' || held.location?.schema !== 'central.path-ref/v1' || typeof held.location.ref !== 'string' || typeof held.location.root !== 'string' || typeof held.location.path !== 'string' || typeof held.base_revision !== 'string' || typeof held.saved_content !== 'string' || typeof held.frame_content !== 'string' || held.document?.payload !== 'ql-doc' || typeof held.island?.text !== 'string')\n        return null;\n    if (held.scope !== null && (!held.scope || ['owner', 'world', 'workcell', 'accessEpoch'].some(field => typeof (held.scope as unknown as RecordValue)[field] !== 'string')))\n        return null;\n    const identity = readDocumentIdentity(held.saved_content);\n    if (identity?.payload !== 'ql-doc' || identity.documentId !== held.document.documentId || identity.family !== held.document.family || identity.documentRevision !== held.document.documentRevision)\n        return null;\n    const frame = JSON.parse(held.island.text), meta = frame?.meta;\n    const id = typeof meta?.documentId === 'string' ? meta.documentId : typeof meta?.uuid === 'string' ? meta.uuid : null;\n    const revision = Number.isSafeInteger(meta?.revision) ? meta.revision : null;\n    if (id !== held.island.documentId || id !== identity.documentId || revision !== held.island.revision || !islandSpan(held.frame_content, 'ql-doc'))\n        return null;\n    return held;\n}",
-            "raw = localStorage.getItem(key(ref))",
-            "record = {\n    const raw = localStorage.getItem(key(ref));\n    if (raw === null)\n        return {};\n    const value: unknown = JSON.parse(raw);\n    if (!value || typeof value !== 'object' || Array.isArray(value))\n        throw Error('The existing device draft record is unreadable; keep this view open.');\n    return value as RecordValue;\n}",
-            "validatePrivateNativeInput = {\n    inputJson(raw);\n    if (!inputObject(raw))\n        throw Error('The private input record is invalid');\n    inputFields(raw, ['schema', 'writer_id', 'copy_id', 'scope', 'writer_scope', 'basis', 'target', 'input'], ['refusal']);\n    if (raw.schema !== 'oi.cradle.private-native-input/v1' || !inputId(raw.writer_id) || !inputId(raw.copy_id))\n        throw Error('The private input has no exact writer/copy identity');\n    const scope = validateNativeInputScope(raw.scope), writerScope = validateNativeInputScope(raw.writer_scope);\n    if (!sameNativeInputOwner(scope, writerScope))\n        throw Error('The private input writer belongs to another owner/workspace/surface');\n    if (!inputObject(raw.basis))\n        throw Error('The private input has no captured native basis');\n    inputFields(raw.basis, ['expression_ref', 'scene_ref', 'revision', 'authored_revision']);\n    if (!inputText(raw.basis.expression_ref, 160) || !/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(raw.basis.expression_ref)\n        || !inputText(raw.basis.scene_ref) || !Number.isSafeInteger(raw.basis.revision) || (raw.basis.revision as number) < 0\n        || !Number.isSafeInteger(raw.basis.authored_revision) || (raw.basis.authored_revision as number) < 0)\n        throw Error('The private input native basis is invalid');\n    if (!inputObject(raw.target))\n        throw Error('The private input has no exact target');\n    const inputTarget = raw.target;\n    inputFields(inputTarget, ['scope', 'entity_id', 'entity_ref', 'step_id', 'parameter', 'family', 'axis']);\n    if (!['entity', 'field'].includes(String(inputTarget.scope)) || !['y', 'z', null].includes(inputTarget.axis as 'y' | 'z' | null)\n        || ['entity_id', 'entity_ref', 'step_id', 'parameter', 'family'].some(field => inputTarget[field] !== null && !inputText(inputTarget[field])))\n        throw Error('The private input target is invalid');\n    if (inputTarget.scope === 'field' && (inputTarget.entity_id !== null || inputTarget.entity_ref !== null || inputTarget.step_id !== null)\n        || inputTarget.scope === 'entity' && inputTarget.entity_id === null)\n        throw Error('The private input confuses shared Field and entity custody');\n    if (!inputObject(raw.input))\n        throw Error('The private input payload is invalid');\n    if (raw.input.kind === 'text') {\n        inputFields(raw.input, ['kind', 'text', 'initial']);\n        if (typeof raw.input.text !== 'string' || typeof raw.input.initial !== 'string')\n            throw Error('Retain the exact text and its initial value');\n    }\n    else if (raw.input.kind === 'gesture') {\n        inputFields(raw.input, ['kind', 'gesture', 'changes']);\n        if (!inputObject(raw.input.gesture) || !Array.isArray(raw.input.changes) || raw.input.changes.length > 256 || raw.input.changes.some(value => !inputObject(value)))\n            throw Error('Retain the complete serializable gesture and intended changes');\n    }\n    else\n        throw Error('Unsupported private native input kind');\n    if (raw.refusal !== undefined && typeof raw.refusal !== 'string')\n        throw Error('The private input refusal must be exact text');\n    const encoded = JSON.stringify(raw);\n    if (encoded.length > 16 * 1024 * 1024)\n        throw Error('The private input exceeds the device recovery bound; keep the editor open');\n    return JSON.parse(encoded) as HeldPrivateNativeInput;\n}"
+            "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
           ]
-        },
-        {
-          "owner": "src/workspace/drafts.ts",
-          "receiver": "localStorage",
-          "method": "key",
-          "key": "i",
-          "basis": []
         },
         {
           "owner": "src/workspace/drafts.ts",
@@ -2128,13 +2117,7 @@
           "method": "removeItem",
           "key": "key(ref)",
           "basis": [
-            "dayPage = {\n    if (!value || typeof value !== 'object')\n        return null;\n    const draft = value as HeldDayPageDraft;\n    if (draft.schema !== 'oi.cradle.native-day-working-copy/v1' || typeof draft.basis?.sourceRef !== 'string' || typeof draft.basis.documentId !== 'string' || typeof draft.basis.revision !== 'string' || !Array.isArray(draft.basis.fields) || draft.template?.location?.schema !== 'central.path-ref/v1' || typeof draft.template.location.ref !== 'string' || typeof draft.template.location.root !== 'string' || typeof draft.template.location.path !== 'string' || typeof draft.template.revision !== 'string' || typeof draft.template.content !== 'string')\n        return null;\n    if (draft.scope !== null && (!draft.scope || ['owner', 'world', 'workcell', 'accessEpoch'].some(field => typeof (draft.scope as unknown as RecordValue)[field] !== 'string')))\n        return null;\n    formEdits(draft.basis, draft.snapshot);\n    if (!projectDieDocument(draft.template.content, draft.snapshot))\n        return null;\n    return draft;\n}",
-            "key = (ref: string) => 'oi-cradle.draft.v1:' + ref",
-            "name = localStorage.key(i)",
-            "page = {\n    if (!value || typeof value !== 'object' || Array.isArray(value))\n        return null;\n    const held = value as HeldPageDraft;\n    if (held.schema !== 'oi.cradle.page-working-copy/v1' || held.location?.schema !== 'central.path-ref/v1' || typeof held.location.ref !== 'string' || typeof held.location.root !== 'string' || typeof held.location.path !== 'string' || typeof held.base_revision !== 'string' || typeof held.saved_content !== 'string' || typeof held.frame_content !== 'string' || held.document?.payload !== 'ql-doc' || typeof held.island?.text !== 'string')\n        return null;\n    if (held.scope !== null && (!held.scope || ['owner', 'world', 'workcell', 'accessEpoch'].some(field => typeof (held.scope as unknown as RecordValue)[field] !== 'string')))\n        return null;\n    const identity = readDocumentIdentity(held.saved_content);\n    if (identity?.payload !== 'ql-doc' || identity.documentId !== held.document.documentId || identity.family !== held.document.family || identity.documentRevision !== held.document.documentRevision)\n        return null;\n    const frame = JSON.parse(held.island.text), meta = frame?.meta;\n    const id = typeof meta?.documentId === 'string' ? meta.documentId : typeof meta?.uuid === 'string' ? meta.uuid : null;\n    const revision = Number.isSafeInteger(meta?.revision) ? meta.revision : null;\n    if (id !== held.island.documentId || id !== identity.documentId || revision !== held.island.revision || !islandSpan(held.frame_content, 'ql-doc'))\n        return null;\n    return held;\n}",
-            "raw = localStorage.getItem(key(ref))",
-            "record = {\n    const raw = localStorage.getItem(key(ref));\n    if (raw === null)\n        return {};\n    const value: unknown = JSON.parse(raw);\n    if (!value || typeof value !== 'object' || Array.isArray(value))\n        throw Error('The existing device draft record is unreadable; keep this view open.');\n    return value as RecordValue;\n}",
-            "validatePrivateNativeInput = {\n    inputJson(raw);\n    if (!inputObject(raw))\n        throw Error('The private input record is invalid');\n    inputFields(raw, ['schema', 'writer_id', 'copy_id', 'scope', 'writer_scope', 'basis', 'target', 'input'], ['refusal']);\n    if (raw.schema !== 'oi.cradle.private-native-input/v1' || !inputId(raw.writer_id) || !inputId(raw.copy_id))\n        throw Error('The private input has no exact writer/copy identity');\n    const scope = validateNativeInputScope(raw.scope), writerScope = validateNativeInputScope(raw.writer_scope);\n    if (!sameNativeInputOwner(scope, writerScope))\n        throw Error('The private input writer belongs to another owner/workspace/surface');\n    if (!inputObject(raw.basis))\n        throw Error('The private input has no captured native basis');\n    inputFields(raw.basis, ['expression_ref', 'scene_ref', 'revision', 'authored_revision']);\n    if (!inputText(raw.basis.expression_ref, 160) || !/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(raw.basis.expression_ref)\n        || !inputText(raw.basis.scene_ref) || !Number.isSafeInteger(raw.basis.revision) || (raw.basis.revision as number) < 0\n        || !Number.isSafeInteger(raw.basis.authored_revision) || (raw.basis.authored_revision as number) < 0)\n        throw Error('The private input native basis is invalid');\n    if (!inputObject(raw.target))\n        throw Error('The private input has no exact target');\n    const inputTarget = raw.target;\n    inputFields(inputTarget, ['scope', 'entity_id', 'entity_ref', 'step_id', 'parameter', 'family', 'axis']);\n    if (!['entity', 'field'].includes(String(inputTarget.scope)) || !['y', 'z', null].includes(inputTarget.axis as 'y' | 'z' | null)\n        || ['entity_id', 'entity_ref', 'step_id', 'parameter', 'family'].some(field => inputTarget[field] !== null && !inputText(inputTarget[field])))\n        throw Error('The private input target is invalid');\n    if (inputTarget.scope === 'field' && (inputTarget.entity_id !== null || inputTarget.entity_ref !== null || inputTarget.step_id !== null)\n        || inputTarget.scope === 'entity' && inputTarget.entity_id === null)\n        throw Error('The private input confuses shared Field and entity custody');\n    if (!inputObject(raw.input))\n        throw Error('The private input payload is invalid');\n    if (raw.input.kind === 'text') {\n        inputFields(raw.input, ['kind', 'text', 'initial']);\n        if (typeof raw.input.text !== 'string' || typeof raw.input.initial !== 'string')\n            throw Error('Retain the exact text and its initial value');\n    }\n    else if (raw.input.kind === 'gesture') {\n        inputFields(raw.input, ['kind', 'gesture', 'changes']);\n        if (!inputObject(raw.input.gesture) || !Array.isArray(raw.input.changes) || raw.input.changes.length > 256 || raw.input.changes.some(value => !inputObject(value)))\n            throw Error('Retain the complete serializable gesture and intended changes');\n    }\n    else\n        throw Error('Unsupported private native input kind');\n    if (raw.refusal !== undefined && typeof raw.refusal !== 'string')\n        throw Error('The private input refusal must be exact text');\n    const encoded = JSON.stringify(raw);\n    if (encoded.length > 16 * 1024 * 1024)\n        throw Error('The private input exceeds the device recovery bound; keep the editor open');\n    return JSON.parse(encoded) as HeldPrivateNativeInput;\n}"
+            "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
           ]
         },
         {
@@ -2143,23 +2126,14 @@
           "method": "setItem",
           "key": "key(ref)",
           "basis": [
-            "dayPage = {\n    if (!value || typeof value !== 'object')\n        return null;\n    const draft = value as HeldDayPageDraft;\n    if (draft.schema !== 'oi.cradle.native-day-working-copy/v1' || typeof draft.basis?.sourceRef !== 'string' || typeof draft.basis.documentId !== 'string' || typeof draft.basis.revision !== 'string' || !Array.isArray(draft.basis.fields) || draft.template?.location?.schema !== 'central.path-ref/v1' || typeof draft.template.location.ref !== 'string' || typeof draft.template.location.root !== 'string' || typeof draft.template.location.path !== 'string' || typeof draft.template.revision !== 'string' || typeof draft.template.content !== 'string')\n        return null;\n    if (draft.scope !== null && (!draft.scope || ['owner', 'world', 'workcell', 'accessEpoch'].some(field => typeof (draft.scope as unknown as RecordValue)[field] !== 'string')))\n        return null;\n    formEdits(draft.basis, draft.snapshot);\n    if (!projectDieDocument(draft.template.content, draft.snapshot))\n        return null;\n    return draft;\n}",
-            "key = (ref: string) => 'oi-cradle.draft.v1:' + ref",
-            "name = localStorage.key(i)",
-            "page = {\n    if (!value || typeof value !== 'object' || Array.isArray(value))\n        return null;\n    const held = value as HeldPageDraft;\n    if (held.schema !== 'oi.cradle.page-working-copy/v1' || held.location?.schema !== 'central.path-ref/v1' || typeof held.location.ref !== 'string' || typeof held.location.root !== 'string' || typeof held.location.path !== 'string' || typeof held.base_revision !== 'string' || typeof held.saved_content !== 'string' || typeof held.frame_content !== 'string' || held.document?.payload !== 'ql-doc' || typeof held.island?.text !== 'string')\n        return null;\n    if (held.scope !== null && (!held.scope || ['owner', 'world', 'workcell', 'accessEpoch'].some(field => typeof (held.scope as unknown as RecordValue)[field] !== 'string')))\n        return null;\n    const identity = readDocumentIdentity(held.saved_content);\n    if (identity?.payload !== 'ql-doc' || identity.documentId !== held.document.documentId || identity.family !== held.document.family || identity.documentRevision !== held.document.documentRevision)\n        return null;\n    const frame = JSON.parse(held.island.text), meta = frame?.meta;\n    const id = typeof meta?.documentId === 'string' ? meta.documentId : typeof meta?.uuid === 'string' ? meta.uuid : null;\n    const revision = Number.isSafeInteger(meta?.revision) ? meta.revision : null;\n    if (id !== held.island.documentId || id !== identity.documentId || revision !== held.island.revision || !islandSpan(held.frame_content, 'ql-doc'))\n        return null;\n    return held;\n}",
-            "raw = localStorage.getItem(key(ref))",
-            "record = {\n    const raw = localStorage.getItem(key(ref));\n    if (raw === null)\n        return {};\n    const value: unknown = JSON.parse(raw);\n    if (!value || typeof value !== 'object' || Array.isArray(value))\n        throw Error('The existing device draft record is unreadable; keep this view open.');\n    return value as RecordValue;\n}",
-            "validatePrivateNativeInput = {\n    inputJson(raw);\n    if (!inputObject(raw))\n        throw Error('The private input record is invalid');\n    inputFields(raw, ['schema', 'writer_id', 'copy_id', 'scope', 'writer_scope', 'basis', 'target', 'input'], ['refusal']);\n    if (raw.schema !== 'oi.cradle.private-native-input/v1' || !inputId(raw.writer_id) || !inputId(raw.copy_id))\n        throw Error('The private input has no exact writer/copy identity');\n    const scope = validateNativeInputScope(raw.scope), writerScope = validateNativeInputScope(raw.writer_scope);\n    if (!sameNativeInputOwner(scope, writerScope))\n        throw Error('The private input writer belongs to another owner/workspace/surface');\n    if (!inputObject(raw.basis))\n        throw Error('The private input has no captured native basis');\n    inputFields(raw.basis, ['expression_ref', 'scene_ref', 'revision', 'authored_revision']);\n    if (!inputText(raw.basis.expression_ref, 160) || !/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(raw.basis.expression_ref)\n        || !inputText(raw.basis.scene_ref) || !Number.isSafeInteger(raw.basis.revision) || (raw.basis.revision as number) < 0\n        || !Number.isSafeInteger(raw.basis.authored_revision) || (raw.basis.authored_revision as number) < 0)\n        throw Error('The private input native basis is invalid');\n    if (!inputObject(raw.target))\n        throw Error('The private input has no exact target');\n    const inputTarget = raw.target;\n    inputFields(inputTarget, ['scope', 'entity_id', 'entity_ref', 'step_id', 'parameter', 'family', 'axis']);\n    if (!['entity', 'field'].includes(String(inputTarget.scope)) || !['y', 'z', null].includes(inputTarget.axis as 'y' | 'z' | null)\n        || ['entity_id', 'entity_ref', 'step_id', 'parameter', 'family'].some(field => inputTarget[field] !== null && !inputText(inputTarget[field])))\n        throw Error('The private input target is invalid');\n    if (inputTarget.scope === 'field' && (inputTarget.entity_id !== null || inputTarget.entity_ref !== null || inputTarget.step_id !== null)\n        || inputTarget.scope === 'entity' && inputTarget.entity_id === null)\n        throw Error('The private input confuses shared Field and entity custody');\n    if (!inputObject(raw.input))\n        throw Error('The private input payload is invalid');\n    if (raw.input.kind === 'text') {\n        inputFields(raw.input, ['kind', 'text', 'initial']);\n        if (typeof raw.input.text !== 'string' || typeof raw.input.initial !== 'string')\n            throw Error('Retain the exact text and its initial value');\n    }\n    else if (raw.input.kind === 'gesture') {\n        inputFields(raw.input, ['kind', 'gesture', 'changes']);\n        if (!inputObject(raw.input.gesture) || !Array.isArray(raw.input.changes) || raw.input.changes.length > 256 || raw.input.changes.some(value => !inputObject(value)))\n            throw Error('Retain the complete serializable gesture and intended changes');\n    }\n    else\n        throw Error('Unsupported private native input kind');\n    if (raw.refusal !== undefined && typeof raw.refusal !== 'string')\n        throw Error('The private input refusal must be exact text');\n    const encoded = JSON.stringify(raw);\n    if (encoded.length > 16 * 1024 * 1024)\n        throw Error('The private input exceeds the device recovery bound; keep the editor open');\n    return JSON.parse(encoded) as HeldPrivateNativeInput;\n}"
+            "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
           ]
         }
       ],
       "key_literals": [
-        "oi-cradle.draft.v1:",
-        "oi.cradle.native-day-working-copy/v1",
-        "oi.cradle.page-working-copy/v1",
-        "oi.cradle.private-native-input/v1"
+        "oi-cradle.draft.v1:${\u2026}"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Shared source working-copy recovery with base revision and acknowledgment, not authoritative source bytes.",
       "keys": [
         {
@@ -2200,7 +2174,7 @@
         "oi-left-sections.v1",
         "oi-menu-item"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Sidebar row collapse state.",
       "keys": [
         {
@@ -2239,7 +2213,7 @@
       "key_literals": [
         "oi-left-seen.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Seen/unseen presentation markers, not session completion or native activity state.",
       "keys": [
         {
@@ -2262,6 +2236,7 @@
           "method": "getItem",
           "key": "k",
           "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\"",
             "k = localStorage.key(i)"
           ]
         },
@@ -2270,14 +2245,18 @@
           "receiver": "localStorage",
           "method": "getItem",
           "key": "key",
-          "basis": []
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\""
+          ]
         },
         {
           "owner": "src/workspace/recovery.ts",
           "receiver": "localStorage",
           "method": "getItem",
-          "key": "namespace.pointer",
-          "basis": []
+          "key": "POINTER",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\""
+          ]
         },
         {
           "owner": "src/workspace/recovery.ts",
@@ -2299,6 +2278,7 @@
           "method": "removeItem",
           "key": "k",
           "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\"",
             "k = localStorage.key(i)"
           ]
         },
@@ -2306,8 +2286,10 @@
           "owner": "src/workspace/recovery.ts",
           "receiver": "localStorage",
           "method": "setItem",
-          "key": "namespace.pointer",
-          "basis": []
+          "key": "POINTER",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\""
+          ]
         },
         {
           "owner": "src/workspace/recovery.ts",
@@ -2315,8 +2297,11 @@
           "method": "setItem",
           "key": "record.key",
           "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\"",
+            "PREFIX = \"oi-cradle.recovery.\"",
             "k = localStorage.key(i)",
-            "listRecovery = {\n    const keys: string[] = [];\n    for (let i = 0; i < localStorage.length; i++) {\n        const k = localStorage.key(i);\n        if (k && k.startsWith(namespace.prefix) && k !== namespace.pointer)\n            keys.push(k);\n    }\n    return keys.map(k => parseRecord(localStorage.getItem(k))).filter((r): r is PresentationRecovery => !!r).sort((a, b) => (b.seq ?? 0) - (a.seq ?? 0) || b.savedAt.localeCompare(a.savedAt));\n}"
+            "listRecovery = {\n    const keys: string[] = [];\n    for (let i = 0; i < localStorage.length; i++) {\n        const k = localStorage.key(i);\n        if (k && k.startsWith(PREFIX) && k !== POINTER)\n            keys.push(k);\n    }\n    return keys.map(k => parseRecord(localStorage.getItem(k))).filter((r): r is PresentationRecovery => !!r).sort((a, b) => (b.seq ?? 0) - (a.seq ?? 0) || b.savedAt.localeCompare(a.savedAt));\n}",
+            "record = { key: `${PREFIX}${crypto.randomUUID()}`, sourceKey, raw, reason, savedAt: new Date().toISOString(), seq }"
           ]
         }
       ],
@@ -2324,7 +2309,7 @@
         "oi-cradle.recovery.",
         "oi-cradle.recovery.latest"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
       "keys": [
         {
@@ -2402,7 +2387,7 @@
       "key_literals": [
         "oi-settings.staged-connection.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Staged new-chat provider intent before native apply; not active/effective owner state.",
       "keys": [
         {
@@ -2441,7 +2426,7 @@
       "key_literals": [
         "oi-settings.place.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Within-window Settings navigation only.",
       "keys": [
         {
@@ -2462,6 +2447,13 @@
           "owner": "src/workspace/store.ts",
           "receiver": "localStorage",
           "method": "getItem",
+          "key": "\"oi-cradle.layout.v1\"",
+          "basis": []
+        },
+        {
+          "owner": "src/workspace/store.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
           "key": "KEY",
           "basis": [
             "KEY = \"oi-cradle.workspaces.v1\""
@@ -2470,20 +2462,12 @@
         {
           "owner": "src/workspace/store.ts",
           "receiver": "localStorage",
-          "method": "getItem",
-          "key": "legacyKey",
-          "basis": []
-        },
-        {
-          "owner": "src/workspace/store.ts",
-          "receiver": "localStorage",
           "method": "setItem",
-          "key": "`${draftPrefix}${id}`",
+          "key": "`oi-cradle.unplaced-draft.v1:${id}`",
           "basis": [
             "KEY = \"oi-cradle.workspaces.v1\"",
-            "key = options.storageKey ?? KEY",
-            "raw = localStorage.getItem(KEY)",
-            "record = preserve(localStorage.getItem(KEY) ? KEY : (legacyKey ?? KEY), String(error))"
+            "legacyRaw = localStorage.getItem(\"oi-cradle.layout.v1\")",
+            "raw = localStorage.getItem(KEY)"
           ]
         },
         {
@@ -2497,14 +2481,11 @@
         }
       ],
       "key_literals": [
-        "oi-cradle.book.stage.v1",
         "oi-cradle.layout.v1",
-        "oi-cradle.recovery.",
-        "oi-cradle.recovery.latest",
-        "oi-cradle.unplaced-draft.v1:",
+        "oi-cradle.unplaced-draft.v1:${\u2026}",
         "oi-cradle.workspaces.v1"
       ],
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
       "rationale": "Workspace arrangement book, legacy migration and unsaved drafts. Classification provisional pending Lane B disclosure, not semantic ownership.",
       "keys": [
         {
@@ -2596,7 +2577,7 @@
         "eviction": "none; refuse excess without deleting retained work"
       },
       "authority": "Private local working material and interrupted-operation checkpoints only. No canonical Central file, source/publication authority, automatic replay or permission grant. Reopen and mutation still use the ordinary native Expression owner with its exact basis.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5–6/§12; canonical desktop-agent-conformance-rectification-2026-09-23-1756.md Lane A–B; 2026-09-24 commissioned native Expression restart recovery",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75\u20136/\u00a712; canonical desktop-agent-conformance-rectification-2026-09-23-1756.md Lane A\u2013B; 2026-09-24 commissioned native Expression restart recovery",
       "rationale": "Hosted macOS WebKit third-party IndexedDB does not reliably survive app restart; native private storage retains the working draft independently of the canonical document.",
       "verification": {
         "status": "unverified",

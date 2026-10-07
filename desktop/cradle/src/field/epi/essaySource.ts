@@ -13,7 +13,7 @@
  */
 import {CorpusIndex} from "../corpusIndex";
 import {detectTransport, kernelOp} from "../../kernel/bridge";
-import type {KernelOp, KernelTransportStatus} from "../../kernel/types";
+import type {KernelTransportStatus} from "../../kernel/types";
 import {
   FieldStaleRevision, parseSourceRef,
   type FieldExpression, type FieldExpressionIndex, type FieldReading, type FieldSource, type FieldStanding,
@@ -78,11 +78,11 @@ export async function resolvePackagedEssayEdition(deps: PackagedDeps = {}): Prom
   // is asked again a couple of times before the World is called unreachable; a kernel that answers is believed at once.
   const ask = deps.op ?? kernelOp;
   const delays = deps.retryDelaysMs ?? [400, 1200];
-  let call = await ask(transport, { op: "world_resolve" } as unknown as KernelOp);
+  let call = await ask(transport, { op: "world_resolve" });
   for (const delay of delays) {
     if (call.outcome) break;
     await new Promise(r => setTimeout(r, delay));
-    call = await ask(transport, { op: "world_resolve" } as unknown as KernelOp);
+    call = await ask(transport, { op: "world_resolve" });
   }
   if (!call.outcome) return { unavailable: `The kernel could not resolve the installed Return-of-Zero World: ${call.error ?? "no answer"}`, state: "unreachable" };
   const resolution = (call.outcome as unknown as { resolution?: WorldResolution }).resolution;
@@ -120,7 +120,15 @@ function clean(root: Element) {
 export function createEssayFieldSource(edition: EssayEdition): FieldSource & { model(): Promise<EssayModel>; edition: EssayEdition } {
   const base = new URL(withSlash(edition.baseUrl), typeof location !== "undefined" ? location.href : undefined);
   const addressing = edition.addressing ?? DEFAULT_ADDRESSING;
-  const doFetch: typeof fetch = edition.fetchImpl ?? ((...a) => fetch(...a));
+  // The renderer has no general network authority (tests/conformance/authority-registry.json): this one site reads the essay edition
+  // from the kernel-resolved installed World route (`oi-material:` natively, the bridge's /world mirror in walks) or, as a development
+  // override, a loopback address. Anything else is refused here rather than fetched.
+  const doFetch: typeof fetch = edition.fetchImpl ?? ((input, init) => {
+    const target = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url, typeof location !== "undefined" ? location.href : undefined);
+    const loopback = /^(127\.0\.0\.1|localhost|\[::1\]|.*\.localhost)$/.test(target.hostname);
+    if (target.protocol !== "oi-material:" && !loopback) throw new Error(`the essay edition is read only from the installed World or a loopback address, not ${target.origin}`);
+    return fetch(input, init);
+  });
   const url = (rel: string) => new URL(rel, base).href;
   const json = async <T,>(rel: string, optional = false): Promise<T | null> => {
     const res = await doFetch(url(rel));

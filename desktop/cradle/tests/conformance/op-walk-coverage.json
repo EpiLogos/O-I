@@ -111,24 +111,6 @@
       "reason": "No directly attributable executed native walk is recorded here for config_apply; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "config_apply_reviewed",
-      "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for config_apply_reviewed; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "config_capabilities_read",
-      "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for config_capabilities_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
       "op": "config_desired_discard",
       "native_owner": "kernel/src/configuration.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -165,15 +147,6 @@
       "reason": "No directly attributable executed native walk is recorded here for config_plan; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "config_plan_reviewed",
-      "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for config_plan_reviewed; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
       "op": "config_receipts",
       "native_owner": "kernel/src/configuration.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -190,15 +163,6 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for config_registry_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "config_reset",
-      "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "No directly attributable executed native walk is recorded here for config_reset; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "config_resolutions_read",
@@ -610,24 +574,6 @@
       "reason": "No directly attributable executed native walk is recorded here for ground; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "harness_agent_control",
-      "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "gateway-parity convergence r2; Hermes session lifecycle parity routed through the owner's own gateway",
-      "status": "unverified",
-      "owner_lane": "gateway-parity-convergence",
-      "reason": "Implementation added; canonical verb routing proven at the kernel crate level. Native UX acceptance evidence still required before verification.",
-      "scenarios": []
-    },
-    {
-      "op": "harness_agent_read",
-      "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "gateway-parity convergence r2; Hermes session.list parity routed through the owner's own gateway",
-      "status": "unverified",
-      "owner_lane": "gateway-parity-convergence",
-      "reason": "Implementation added; refusal-as-named-data and verbatim pass-through proven at the kernel crate level. Native UX acceptance evidence still required before verification.",
-      "scenarios": []
-    },
-    {
       "op": "harness_auth_describe",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -644,17 +590,6 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for harness_status; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "hosted_native",
-      "native_owner": "kernel/src/native_owner_transport.rs",
-      "spec_ref": "docs/experience/SHARED-FIELD-DESKTOP.md; docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
-      "status": "referenced",
-      "scenarios": [
-        "kernel/tests/native_owner_transport.rs"
-      ],
-      "owner_lane": "SharedField native-owner verification",
-      "reason": "Real native Kernel operations across a Unix owner socket exercise exact World/process identity, concurrent Expression CAS, scoped offers, privacy refusal and restart fencing. This references native execution coverage; installed visual acceptance has its own episode receipts."
     },
     {
       "op": "inhabitation_read",
@@ -693,15 +628,6 @@
       "reason": "No directly attributable executed native walk is recorded here for knowledge; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "m3_reception",
-      "native_owner": "kernel/src/m3_reception.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
       "op": "material_read",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -729,24 +655,6 @@
       "reason": "Native ranked roster read added; candidate build and real native no-inference replay still required."
     },
     {
-      "op": "nara_coordinate",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "nara_current",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
       "op": "nara_decision_record",
       "native_owner": "kernel/src/presentation.rs",
       "spec_ref": "canonical conformance plan Lane B",
@@ -756,60 +664,6 @@
       "scenarios": []
     },
     {
-      "op": "nara_dialogue",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "nara_epii",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "nara_expressive_act",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "nara_identity",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "nara_presence",
-      "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
-      "op": "nara_voice",
-      "native_owner": "kernel/src/nara_voice.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
-      "status": "unverified",
-      "scenarios": [],
-      "owner_lane": "A/native verification",
-      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
-    },
-    {
       "op": "native_expression",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -817,6 +671,17 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for native_expression; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "world_resolve",
+      "native_owner": "kernel/src/world_resolve.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md \u00a74",
+      "status": "referenced",
+      "scenarios": [
+        "walk/scenarios/field-world-packaged.mjs"
+      ],
+      "owner_lane": "A/native verification",
+      "reason": "world_resolve is directly named in this existing scenario source (the packaged edition is resolved through the kernel op; every edition request goes through the served route); no run is claimed by this register."
     },
     {
       "op": "now",
@@ -927,15 +792,6 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for project_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
-    },
-    {
-      "op": "protocol_read",
-      "native_owner": "kernel/src/protocol.rs",
-      "spec_ref": "gateway-parity convergence r1; the kernel's contract disclosure (oi.kernel-protocol/v1)",
-      "status": "unverified",
-      "owner_lane": "gateway-parity-convergence",
-      "reason": "Implementation added; enforcement proven at the kernel crate level (advertised contract refused one version ahead). Native UX acceptance evidence still required before verification.",
-      "scenarios": []
     },
     {
       "op": "receiving",
@@ -1107,15 +963,6 @@
       "reason": "No directly attributable executed native walk is recorded here for system_composition_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "temporal_events_read",
-      "native_owner": "kernel/src/temporal_sources.rs",
-      "spec_ref": "agent shell arrangement needles; civil temporal field over now, thoughts, wiki returns, kernel log, aikit history",
-      "status": "unverified",
-      "owner_lane": "agent-native-live-shell",
-      "reason": "Kernel route wired for live-shell arrangement needles; native UX acceptance evidence still required before verification.",
-      "scenarios": []
-    },
-    {
       "op": "theme_apply",
       "native_owner": "kernel/src/presentation.rs",
       "spec_ref": "canonical conformance plan Lane B",
@@ -1215,15 +1062,96 @@
       "reason": "No directly attributable executed native walk is recorded here for world_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
-      "op": "world_resolve",
-      "native_owner": "kernel/src/world_resolve.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md \u00a74",
+      "op": "m3_reception",
+      "native_owner": "kernel/src/m3_reception.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_coordinate",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_current",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_dialogue",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_epii",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_expressive_act",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_identity",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_presence",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "nara_voice",
+      "native_owner": "kernel/src/nara_voice.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Nara M4 operation integrated with the #135 scene lane (O:I #557); no directly attributable executed native walk scenario yet. Named here as explicit debt, not as coverage."
+    },
+    {
+      "op": "hosted_native",
+      "native_owner": "kernel/src/native_owner_transport.rs",
+      "spec_ref": "docs/experience/SHARED-FIELD-DESKTOP.md; docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
       "status": "referenced",
       "scenarios": [
-        "walk/scenarios/field-world-packaged.mjs"
+        "kernel/tests/native_owner_transport.rs"
       ],
-      "owner_lane": "A/native verification",
-      "reason": "world_resolve is directly named in this existing scenario source (the packaged edition is resolved through the kernel op; every edition request goes through the served route); no run is claimed by this register."
+      "owner_lane": "SharedField native-owner verification",
+      "reason": "Real native Kernel operations across a Unix owner socket exercise exact World/process identity, concurrent Expression CAS, scoped offers, privacy refusal and restart fencing. This references native execution coverage; installed visual acceptance has its own episode receipts."
     }
   ]
 }
