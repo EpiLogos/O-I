@@ -231,37 +231,48 @@ fn main() {
         let Ok(stream) = stream else { continue };
         let kernel = Arc::clone(&kernel);
         let recovery_diagnostics = recovery_diagnostics.clone();
-        std::thread::spawn(move || {
-            let mut stream = stream;
-            // Bytes read past this request's body (the next request arriving
-            // in the same TCP segment) must survive to the next iteration —
-            // discarding them wedged the connection forever.
-            let mut leftover: Vec<u8> = Vec::new();
-            loop {
-                let Some(request) = read_request(&mut stream, &mut leftover) else {
-                    eprintln!("[bridge] conn end ({})", std::process::id());
-                    return;
-                };
-                eprintln!(
-                    "[bridge] {} {} ({} bytes)",
-                    request.method,
-                    request.path,
-                    request.body.len()
-                );
-                let diagnostic = recovery_diagnostics
-                    .clone()
-                    .filter(|_| {
-                        request.method == "POST" && request.path.split('?').next() == Some("/op")
-                    })
-                    .map(RecoveryDiagnostic::new);
-                let outcome = handle_with_diagnostic(&kernel, &request, diagnostic.as_ref());
-                eprintln!("[bridge] -> answered {} {}", request.method, request.path);
-                respond_with_diagnostic(&mut stream, outcome, diagnostic.as_ref());
-                if !request.keep_alive {
-                    return;
-                }
-            }
-        });
+        std::thread::spawn(move || serve_connection(stream, &kernel, recovery_diagnostics));
+    }
+}
+
+/// One connection's serial request/response loop. The bridge never initiates
+/// a close: a connection ends only when the peer asks (`Connection: close`,
+/// HTTP/1.0) or goes away (EOF, read error). Every response is delimited by
+/// an exact Content-Length, so a poll's fetch resolves on the framed body —
+/// no close is ever needed to complete it, and the app's live poll channel
+/// never lands on a connection the bridge tore down. (The 2026-10-06 held
+/// increment closed per /events poll; that churn deterministically broke
+/// shell-recovery under WebKit — the channel must not be churned.)
+fn serve_connection(
+    mut stream: TcpStream,
+    kernel: &Mutex<Kernel>,
+    recovery_diagnostics: Option<Arc<RecoveryDiagnosticOutput>>,
+) {
+    // Bytes read past this request's body (the next request arriving
+    // in the same TCP segment) must survive to the next iteration —
+    // discarding them wedged the connection forever.
+    let mut leftover: Vec<u8> = Vec::new();
+    loop {
+        let Some(request) = read_request(&mut stream, &mut leftover) else {
+            eprintln!("[bridge] conn end ({})", std::process::id());
+            return;
+        };
+        eprintln!(
+            "[bridge] {} {} ({} bytes)",
+            request.method,
+            request.path,
+            request.body.len()
+        );
+        let diagnostic = recovery_diagnostics
+            .clone()
+            .filter(|_| request.method == "POST" && request.path.split('?').next() == Some("/op"))
+            .map(RecoveryDiagnostic::new);
+        let outcome = handle_with_diagnostic(kernel, &request, diagnostic.as_ref());
+        eprintln!("[bridge] -> answered {} {}", request.method, request.path);
+        respond_with_diagnostic(&mut stream, outcome, diagnostic.as_ref());
+        if !request.keep_alive {
+            return;
+        }
     }
 }
 
@@ -913,6 +924,172 @@ mod native_op_json_tests {
         assert_eq!(post(&kernel, duplicate).0, 400);
         assert_eq!(post(&kernel, &[b'{', 0xff, b'}']).0, 400);
         assert_eq!(post(&kernel, read).1, before);
+    }
+}
+
+#[cfg(test)]
+mod poll_channel_tests {
+    use super::*;
+
+    /// Read one complete Content-Length-framed response. Fails the moment the
+    /// connection ends early — an aborted poll, the exact 2026-10-06 defect
+    /// (close-per-events-poll) this file's design forbids: a poll's fetch
+    /// must resolve on its framed body, never depend on a close.
+    fn read_framed_response(stream: &mut TcpStream) -> (u16, String, Vec<u8>) {
+        let mut buffer: Vec<u8> = Vec::new();
+        let mut chunk = [0u8; 4096];
+        let header_end = loop {
+            if let Some(split) = buffer.windows(4).position(|w| w == b"\r\n\r\n") {
+                break split;
+            }
+            let read = stream
+                .read(&mut chunk)
+                .expect("poll transport error while reading response headers");
+            assert!(
+                read > 0,
+                "connection closed before response headers — an aborted poll"
+            );
+            buffer.extend_from_slice(&chunk[..read]);
+        };
+        let head = String::from_utf8(buffer[..header_end].to_vec()).unwrap();
+        let status_line = head.split("\r\n").next().unwrap();
+        assert!(
+            status_line.starts_with("HTTP/1.1 "),
+            "response must be HTTP/1.1 framed: {status_line}"
+        );
+        let status: u16 = status_line
+            .split_whitespace()
+            .nth(1)
+            .expect("status line carries a code")
+            .parse()
+            .expect("status code is numeric");
+        let content_length: usize = head
+            .split("\r\n")
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                name.eq_ignore_ascii_case("content-length")
+                    .then(|| value.trim().parse().ok())?
+            })
+            .unwrap_or_else(|| panic!("every poll response must frame its body: {head}"));
+        let mut body = buffer[header_end + 4..].to_vec();
+        while body.len() < content_length {
+            let read = stream
+                .read(&mut chunk)
+                .expect("poll transport error while reading response body");
+            assert!(
+                read > 0,
+                "connection closed mid-body at {}/{} bytes — an aborted poll",
+                body.len(),
+                content_length
+            );
+            body.extend_from_slice(&chunk[..read]);
+        }
+        assert_eq!(body.len(), content_length, "framed body must be exact");
+        (status, head, body)
+    }
+
+    fn get(path: &str) -> Vec<u8> {
+        format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n").into_bytes()
+    }
+
+    /// The held #597 increment answered each /events poll with
+    /// `Connection: close` and closed the connection. This pin says the
+    /// opposite: hundreds of rapid polls — the retired legacy route and the
+    /// app's live /event-replay channel alternating — ride ONE keep-alive
+    /// connection, each answered framed and promised keep-alive, and the
+    /// connection is still alive at the end.
+    #[test]
+    fn six_hundred_rapid_polls_over_one_keep_alive_connection_complete_framed() {
+        let kernel = Mutex::new(Kernel::discover());
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::scope(|scope| {
+            let server = scope.spawn(|| {
+                let (stream, _) = listener.accept().unwrap();
+                serve_connection(stream, &kernel, None);
+            });
+            let mut stream = TcpStream::connect(addr).unwrap();
+            for poll in 0..600 {
+                let path = if poll % 2 == 0 {
+                    "/events"
+                } else {
+                    "/event-replay?cursor=1&limit=128"
+                };
+                stream.write_all(&get(path)).unwrap();
+                let (status, head, _) = read_framed_response(&mut stream);
+                assert_eq!(
+                    status,
+                    if poll % 2 == 0 { 410 } else { 200 },
+                    "poll {poll} ({path}) must complete framed"
+                );
+                assert!(
+                    head.to_ascii_lowercase().contains("connection: keep-alive"),
+                    "poll {poll} must be answered with keep-alive, not a close"
+                );
+            }
+            // The same connection answers one more poll after the hammer.
+            stream.write_all(&get("/events")).unwrap();
+            let (status, _, _) = read_framed_response(&mut stream);
+            assert_eq!(status, 410, "the channel survives 601 polls undisturbed");
+            drop(stream);
+            server.join().unwrap();
+        });
+    }
+
+    /// The walk client also recycles its connection pool: fresh connections
+    /// must each answer their polls framed, with the bridge ending each
+    /// connection only when the peer goes away.
+    #[test]
+    fn polls_across_fresh_connections_never_abort() {
+        let kernel = Mutex::new(Kernel::discover());
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::scope(|scope| {
+            let server = scope.spawn(move || {
+                for _ in 0..25 {
+                    let (stream, _) = listener.accept().unwrap();
+                    serve_connection(stream, &kernel, None);
+                }
+            });
+            for _ in 0..25 {
+                let mut stream = TcpStream::connect(addr).unwrap();
+                for _ in 0..4 {
+                    stream.write_all(&get("/events")).unwrap();
+                    let (status, _, _) = read_framed_response(&mut stream);
+                    assert_eq!(status, 410);
+                }
+            }
+            server.join().unwrap();
+        });
+    }
+
+    /// The bridge's ONLY self-initiated close is the peer-requested one: an
+    /// explicit `Connection: close` is answered once, framed, and then the
+    /// connection ends. A close the peer never asked for is the defect.
+    #[test]
+    fn an_explicit_close_request_is_answered_framed_then_closed() {
+        let kernel = Mutex::new(Kernel::discover());
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::scope(|scope| {
+            let server = scope.spawn(|| {
+                let (stream, _) = listener.accept().unwrap();
+                serve_connection(stream, &kernel, None);
+            });
+            let mut stream = TcpStream::connect(addr).unwrap();
+            stream
+                .write_all(b"GET /events HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+                .unwrap();
+            let (status, _, _) = read_framed_response(&mut stream);
+            assert_eq!(status, 410);
+            let mut chunk = [0u8; 64];
+            let read = stream.read(&mut chunk).expect("read after close answer");
+            assert_eq!(
+                read, 0,
+                "the peer-requested close must end the connection cleanly"
+            );
+            server.join().unwrap();
+        });
     }
 }
 
