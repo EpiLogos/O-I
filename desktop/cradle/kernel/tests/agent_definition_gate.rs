@@ -9,7 +9,6 @@ use oi_cradle_kernel::{
     flow::CentralClient,
 };
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::{
     fs,
@@ -54,6 +53,19 @@ if 'action' in args:
   else:
    accepted=(root/'accepted').exists() and (root/'accepted').read_text()==profile['revision']
    value={'schema':'central.agent-profile-review/v1','scope_ref':'control:root','profile':profile,'accepted':accepted,'execution_authority_granted':False,'content_digest':'sha256:'+profile['revision']}
+ elif op=='projectcentral.source.read':
+  ref=req.get('source_ref','')
+  member=ref.split('Control/self/',1)[-1] if 'Control/self/' in ref else ''
+  f=root/'self-sources'/member if member else None
+  if not f or not f.exists():
+   print(json.dumps({'ok':False,'error':{'code':'source_or_scope_unavailable','message':'self source is absent'}})); sys.exit(1)
+  sref=ref
+  if (root/'redirect.json').exists(): sref='central:source:control:root:redirected.md'
+  value={'schema':'central.project-world-source-reading/v1','world_ref':'control:root','source':{'ref':sref,'path':'Control/self/'+member,'exists':True,'provenance':'human-authored','standing':'authored-human-position','agent_retrieval_allowed':True},'revision':{'revision':'central.content-fnv1a64/v1:1:0000000000000000','byte_len':f.stat().st_size},'content':f.read_text(),'content_encoding':'utf-8','automatic_agent_or_model_invocation':False}
+ elif op=='central.self.source.create':
+  d=root/'self-sources'; d.mkdir(exist_ok=True)
+  f=d/req.get('path','x'); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(req.get('content',''))
+  value={'schema':'oi.development-field/v1','scope_ref':'control:root','self_aperture':{}}
  else: value={'operation':op,'input':req}
  print(json.dumps({'ok':True,'data':value}))
 elif 'agent-session-scope' in args:
@@ -117,9 +129,8 @@ fn root_does_not_fallback_to_a_configured_child_and_no_acceptance_is_implied() {
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
             expressive_character_ref: None,
-            self_source_ref: None,
-            logos_ref: None,
             skill_set_refs: vec![],
+            self_definition: None,
         })
         .unwrap();
     assert_eq!(value["operation"], "agent-profile.review");
@@ -160,9 +171,8 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         expected_scope_ref: "control:root".into(),
         skill_refs: vec![],
         skill_set_refs: vec![],
+        self_definition: None,
         expressive_character_ref: Some(character.into()),
-        self_source_ref: None,
-        logos_ref: None,
     })
     .unwrap();
     let calls = rig.calls();
@@ -185,9 +195,8 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         expected_scope_ref: "control:root".into(),
         skill_refs: vec![],
         skill_set_refs: vec![],
+        self_definition: None,
         expressive_character_ref: None,
-        self_source_ref: None,
-        logos_ref: None,
     })
     .unwrap();
     let calls = bare.calls();
@@ -212,9 +221,8 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
                 expected_scope_ref: "control:root".into(),
                 skill_refs: vec![],
                 skill_set_refs: vec![],
+                self_definition: None,
                 expressive_character_ref: Some(bad.into()),
-                self_source_ref: None,
-                logos_ref: None,
             })
             .is_err());
     }
@@ -227,262 +235,6 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         wire,
         Request::Propose {
             expressive_character_ref: Some(_),
-            ..
-        }
-    ));
-}
-
-/// The authored self-definition pins ride the proposal as exact-byte digests
-/// resolved under the confirmed scope root, and the read-back must carry
-/// exactly what was submitted.
-#[test]
-fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_proposal() {
-    let rig = Rig::new();
-    let self_text = b"I am the reading colleague; my ground is held, not claimed.\n";
-    let logos_text = b"You act from within a relation.\n";
-    fs::create_dir_all(rig.root.join("Control/self/agents/colleague")).unwrap();
-    fs::write(
-        rig.root.join("Control/self/agents/colleague/self.md"),
-        self_text,
-    )
-    .unwrap();
-    fs::write(
-        rig.root.join("Control/self/agents/colleague/logos.md"),
-        logos_text,
-    )
-    .unwrap();
-    let self_ref = "central:source:control:root:Control/self/agents/colleague/self.md";
-    let logos_ref = "central:source:control:root:Control/self/agents/colleague/logos.md";
-    let expected = json!({
-        "source": {
-            "reference": self_ref,
-            "content_digest": format!("sha256:{:x}", Sha256::digest(self_text))
-        },
-        "relational_logos": {
-            "reference": logos_ref,
-            "content_digest": format!("sha256:{:x}", Sha256::digest(logos_text))
-        }
-    });
-    // The read-back (the stub serves `profile.json` for `agent-profile.review`)
-    // carries exactly the composed pins, so the echo check passes.
-    fs::write(
-        rig.root.join("profile.json"),
-        json!({"schema":"central.agent-profile/v1","ref":"agent-profile:allocated","revision":"r1",
-            "agent_ref":"agent:native","scope":"personal","world_ref":"control:root","name":"Colleague",
-            "self_definition": expected})
-            .to_string(),
-    )
-    .unwrap();
-    let review = rig
-        .call(Request::Propose {
-            name: "Colleague".into(),
-            purpose: "Keep my exact words.".into(),
-            expected_scope_ref: "control:root".into(),
-            skill_refs: vec![],
-            skill_set_refs: vec![],
-            expressive_character_ref: None,
-            self_source_ref: Some(self_ref.into()),
-            logos_ref: Some(logos_ref.into()),
-        })
-        .unwrap();
-    let calls = rig.calls();
-    let express: Value = serde_json::from_str(
-        calls[1]
-            .as_array()
-            .unwrap()
-            .last()
-            .unwrap()
-            .as_str()
-            .unwrap(),
-    )
-    .unwrap();
-    assert_eq!(
-        express["self_definition"], expected,
-        "the exact bytes under the confirmed scope root are digested and pinned"
-    );
-    assert_eq!(
-        review["profile"]["self_definition"], expected,
-        "the read-back shows the profile carries the submitted pins"
-    );
-    // A changed byte is a different pin: the digest follows the exact file.
-    fs::write(
-        rig.root.join("Control/self/agents/colleague/self.md"),
-        b"changed\n",
-    )
-    .unwrap();
-    let changed = rig
-        .call(Request::Propose {
-            name: "Colleague".into(),
-            purpose: "Keep my exact words.".into(),
-            expected_scope_ref: "control:root".into(),
-            skill_refs: vec![],
-            skill_set_refs: vec![],
-            expressive_character_ref: None,
-            self_source_ref: Some(self_ref.into()),
-            logos_ref: Some(logos_ref.into()),
-        })
-        .unwrap_err();
-    assert!(
-        changed.contains("self_definition_echo_mismatch"),
-        "the read-back no longer matches the freshly digested pin: {changed}"
-    );
-    fs::write(
-        rig.root.join("Control/self/agents/colleague/self.md"),
-        self_text,
-    )
-    .unwrap();
-
-    // A missing source refuses by name, before `agent-profile.express` runs.
-    let missing = Rig::new();
-    let error = missing
-        .call(Request::Propose {
-            name: "Colleague".into(),
-            purpose: "Keep my exact words.".into(),
-            expected_scope_ref: "control:root".into(),
-            skill_refs: vec![],
-            skill_set_refs: vec![],
-            expressive_character_ref: None,
-            self_source_ref: Some(self_ref.into()),
-            logos_ref: Some(logos_ref.into()),
-        })
-        .unwrap_err();
-    assert!(error.contains("self_source_unreadable"), "{error}");
-    assert!(error.contains(self_ref), "{error}");
-    assert!(!missing.calls().iter().any(|c| c
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|v| v == "agent-profile.express")));
-    // A ref from another world is not resolvable inside this confirmed scope.
-    let foreign = Rig::new();
-    fs::create_dir_all(foreign.root.join("Control/self/agents/colleague")).unwrap();
-    fs::write(
-        foreign.root.join("Control/self/agents/colleague/self.md"),
-        self_text,
-    )
-    .unwrap();
-    let error = foreign
-        .call(Request::Propose {
-            name: "Colleague".into(),
-            purpose: "Keep my exact words.".into(),
-            expected_scope_ref: "control:root".into(),
-            skill_refs: vec![],
-            skill_set_refs: vec![],
-            expressive_character_ref: None,
-            self_source_ref: Some("central:source:project:project:elsewhere:self.md".into()),
-            logos_ref: Some(logos_ref.into()),
-        })
-        .unwrap_err();
-    assert!(error.contains("self_source_unreadable"), "{error}");
-    assert!(!foreign.calls().iter().any(|c| c
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|v| v == "agent-profile.express")));
-
-    // Exactly one pin is refused before any owner call.
-    let half = Rig::new();
-    let error = half
-        .call(Request::Propose {
-            name: "Colleague".into(),
-            purpose: "Keep my exact words.".into(),
-            expected_scope_ref: "control:root".into(),
-            skill_refs: vec![],
-            skill_set_refs: vec![],
-            expressive_character_ref: None,
-            self_source_ref: Some(self_ref.into()),
-            logos_ref: None,
-        })
-        .unwrap_err();
-    assert!(
-        error.contains("self_definition_requires_both_refs"),
-        "{error}"
-    );
-    assert!(half.calls().is_empty());
-
-    // A padded or non-Central ref never reaches the owner.
-    let malformed = Rig::new();
-    for bad in [
-        (" central:source:control:root:self.md", logos_ref),
-        (self_ref, "Work/notes.md"),
-    ] {
-        let error = malformed
-            .call(Request::Propose {
-                name: "Colleague".into(),
-                purpose: "Keep my exact words.".into(),
-                expected_scope_ref: "control:root".into(),
-                skill_refs: vec![],
-                skill_set_refs: vec![],
-                expressive_character_ref: None,
-                self_source_ref: Some(bad.0.into()),
-                logos_ref: Some(bad.1.into()),
-            })
-            .unwrap_err();
-        assert!(
-            !error.contains("self_definition_requires_both_refs"),
-            "{error}"
-        );
-    }
-    assert!(malformed.calls().is_empty());
-
-    // A path that leaves the confirmed scope is not a source inside it.
-    let escaping = Rig::new();
-    let error = escaping
-        .call(Request::Propose {
-            name: "Colleague".into(),
-            purpose: "Keep my exact words.".into(),
-            expected_scope_ref: "control:root".into(),
-            skill_refs: vec![],
-            skill_set_refs: vec![],
-            expressive_character_ref: None,
-            self_source_ref: Some(
-                "central:source:control:root:Control/self/../agents/colleague/self.md".into(),
-            ),
-            logos_ref: Some(logos_ref.into()),
-        })
-        .unwrap_err();
-    assert!(error.contains("self_source_unreadable"), "{error}");
-    assert!(!escaping.calls().iter().any(|c| c
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|v| v == "agent-profile.express")));
-
-    // No-self proposals stay byte-compatible: nothing is invented.
-    let bare = Rig::new();
-    bare.call(Request::Propose {
-        name: "Reader".into(),
-        purpose: "Keep my exact words.".into(),
-        expected_scope_ref: "control:root".into(),
-        skill_refs: vec![],
-        skill_set_refs: vec![],
-        expressive_character_ref: None,
-        self_source_ref: None,
-        logos_ref: None,
-    })
-    .unwrap();
-    let calls = bare.calls();
-    let express: Value = serde_json::from_str(
-        calls[1]
-            .as_array()
-            .unwrap()
-            .last()
-            .unwrap()
-            .as_str()
-            .unwrap(),
-    )
-    .unwrap();
-    assert!(express.get("self_definition").is_none());
-
-    // The wire spelling the renderer sends deserializes, both pins on.
-    let wire: Request = serde_json::from_value(json!({"action":"propose","name":"R","purpose":"P",
-        "expected_scope_ref":"control:root","self_source_ref":self_ref,"logos_ref":logos_ref}))
-    .unwrap();
-    assert!(matches!(
-        wire,
-        Request::Propose {
-            self_source_ref: Some(_),
-            logos_ref: Some(_),
             ..
         }
     ));
@@ -576,9 +328,8 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             expected_scope_ref: "project:other".into(),
             skill_refs: vec![],
             expressive_character_ref: None,
-            self_source_ref: None,
-            logos_ref: None,
             skill_set_refs: vec![],
+            self_definition: None,
         })
         .is_err());
     assert_eq!(rig.calls().len(), 1);
@@ -589,9 +340,8 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
             expressive_character_ref: None,
-            self_source_ref: None,
-            logos_ref: None,
             skill_set_refs: vec![],
+            self_definition: None,
         })
         .is_err());
     assert_eq!(rig.calls().len(), 1);
@@ -734,9 +484,8 @@ fn skillset_readings_use_the_owner_set_surface_and_propose_carries_set_refs() {
             expected_scope_ref: "control:root".into(),
             skill_refs: vec!["skill/one".into()],
             skill_set_refs: vec!["skill-set:research".into()],
+            self_definition: None,
             expressive_character_ref: None,
-            self_source_ref: None,
-            logos_ref: None,
         })
         .unwrap();
     assert_eq!(value["operation"], "agent-profile.review");
@@ -842,5 +591,343 @@ fn renderer_skillset_actions_reach_the_owner_requests() {
         Request::SkillSet {
             name: "anima".into()
         }
+    );
+}
+
+// --- authored self definition (particular self + shared Relational Logos) --
+
+fn pinned_definition() -> Value {
+    json!({
+        "source": {
+            "reference": "central:source:control:root:Control/self/agents/kite/self.md",
+            "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "relational_logos": {
+            "reference": "central:source:control:root:Control/self/agents/relational-logos.md",
+            "content_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+    })
+}
+fn propose_with(definition: Option<Value>) -> Request {
+    Request::Propose {
+        name: "Kite".into(),
+        purpose: "Keep my exact words.".into(),
+        expected_scope_ref: "control:root".into(),
+        skill_refs: vec![],
+        skill_set_refs: vec![],
+        expressive_character_ref: None,
+        self_definition: definition,
+    }
+}
+#[test]
+fn the_authored_self_definition_is_forwarded_verbatim_to_the_profile_proposal() {
+    let rig = Rig::new();
+    let definition = pinned_definition();
+    let value = rig.call(propose_with(Some(definition.clone()))).unwrap();
+    assert_eq!(value["operation"], "agent-profile.review");
+    let express = rig
+        .calls()
+        .iter()
+        .find(|c| {
+            c.as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "agent-profile.express")
+        })
+        .unwrap()
+        .clone();
+    let request: Value = serde_json::from_str(
+        express
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        request["self_definition"], definition,
+        "the exact wire object the renderer submitted is what the express input carries"
+    );
+    // Absent stays absent: nothing is invented for an Agent without a self.
+    let bare = Rig::new();
+    bare.call(propose_with(None)).unwrap();
+    let express = bare
+        .calls()
+        .iter()
+        .find(|c| {
+            c.as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "agent-profile.express")
+        })
+        .unwrap()
+        .clone();
+    let request: Value = serde_json::from_str(
+        express
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(request.get("self_definition").is_none());
+    // Pin grammar is checked before any owner call: references must be
+    // `central:source:` refs and digests must be `sha256:` + 64 lowercase hex.
+    let refused = Rig::new();
+    for bad in [
+        json!({"source": {"reference": "https://elsewhere/self.md", "content_digest": format!("sha256:{}", "a".repeat(64))}}),
+        json!({"source": {"reference": "central:source:control:root:Control/self/x.md", "content_digest": "sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}}),
+        json!({"source": {"reference": "central:source:control:root:Control/self/x.md", "content_digest": "sha256:short"}}),
+        json!({"source": {"reference": "central:source:control:root:Control/self/../secrets.md", "content_digest": format!("sha256:{}", "a".repeat(64))}}),
+        json!({"source": {"reference": "central:source:control:root:Control/self/x.md", "content_digest": format!("sha256:{}", "a".repeat(64)), "actor": "forged"}}),
+        json!({"unknown_member": {}}),
+    ] {
+        assert!(
+            refused.call(propose_with(Some(bad))).is_err(),
+            "a malformed pin set must be refused"
+        );
+    }
+    assert!(
+        refused.calls().is_empty(),
+        "refusals happen before any owner call"
+    );
+    // The wire spelling the renderer sends deserializes.
+    let wire: Request = serde_json::from_value(json!({
+        "action": "propose", "name": "K", "purpose": "P", "expected_scope_ref": "control:root",
+        "self_definition": pinned_definition()
+    }))
+    .unwrap();
+    assert!(matches!(
+        wire,
+        Request::Propose {
+            self_definition: Some(_),
+            ..
+        }
+    ));
+}
+#[test]
+fn an_existing_agent_changes_its_self_definition_through_central_cas_and_must_be_re_accepted() {
+    let rig = Rig::new();
+    let definition = pinned_definition();
+    fs::write(
+        rig.root.join("profile.json"),
+        json!({"schema":"central.agent-profile/v1","ref":"agent-profile:allocated","revision":"r3",
+            "agent_ref":"agent:native","scope":"personal","world_ref":"control:root","name":"Reader"})
+            .to_string(),
+    )
+    .unwrap();
+    fs::write(rig.root.join("accepted"), "r3").unwrap();
+    let set = |definition: Option<Value>, expected: &str| {
+        rig.call(Request::SetSelf {
+            profile_ref: "agent-profile:allocated".into(),
+            expected_revision: expected.into(),
+            self_definition: definition,
+        })
+    };
+    let changed = set(Some(definition.clone()), "r3").unwrap();
+    assert_eq!(changed["profile"]["self_definition"], definition);
+    assert_eq!(changed["profile"]["revision"], "r4");
+    assert_eq!(
+        changed["profile"]["name"], "Reader",
+        "the rest of the source is kept"
+    );
+    assert_eq!(changed["self_change"]["state"], "saved");
+    assert_eq!(changed["self_change"]["re_acceptance_required"], true);
+    let saves: Vec<Value> = rig
+        .calls()
+        .into_iter()
+        .filter(|c| {
+            c.as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "agent-profile.save")
+        })
+        .collect();
+    assert_eq!(saves.len(), 1);
+    let save: Value = serde_json::from_str(
+        saves[0]
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        save["expected_revision"], "r3",
+        "compare-and-swap on the read revision"
+    );
+    // A stale basis is refused before any write.
+    let error = set(Some(definition.clone()), "r3").unwrap_err();
+    assert!(error.contains("revision_conflict"), "{error}");
+    // Setting the same pins is a no-op; clearing removes the field.
+    assert_eq!(
+        set(Some(definition.clone()), "r4").unwrap()["self_change"]["state"],
+        "unchanged"
+    );
+    let cleared = set(None, "r4").unwrap();
+    assert!(cleared["profile"].get("self_definition").is_none());
+    assert_eq!(cleared["profile"]["revision"], "r5");
+    assert_eq!(cleared["self_change"]["re_acceptance_required"], false);
+    // A malformed pin set is refused before any owner call.
+    let refused = Rig::new();
+    assert!(refused
+        .call(Request::SetSelf {
+            profile_ref: "p".into(),
+            expected_revision: "r1".into(),
+            self_definition: Some(json!({"source": {"reference": "ftp:x"}})),
+        })
+        .is_err());
+    assert!(refused.calls().is_empty());
+    // Wire spelling from the renderer.
+    let wire: Request = serde_json::from_value(
+        json!({"action":"set-self","profile_ref":"p","expected_revision":"r1","self_definition":null}),
+    )
+    .unwrap();
+    assert!(matches!(
+        wire,
+        Request::SetSelf {
+            self_definition: None,
+            ..
+        }
+    ));
+}
+#[test]
+fn self_source_read_pins_the_exact_resolved_bytes_and_refuses_non_references() {
+    use sha2::{Digest, Sha256};
+    let rig = Rig::new();
+    fs::create_dir(rig.root.join("self-sources")).unwrap();
+    let content = "I am Kite, an authored self, 30 September 2026.\n";
+    fs::write(rig.root.join("self-sources/fixture.md"), content).unwrap();
+    let reference = "central:source:control:root:Control/self/fixture.md";
+    let value = rig
+        .call(Request::SelfSourceRead {
+            reference: reference.into(),
+        })
+        .unwrap();
+    assert_eq!(value["reference"], reference);
+    assert_eq!(
+        value["content_digest"],
+        format!("sha256:{:x}", Sha256::digest(content.as_bytes()))
+    );
+    assert_eq!(value["size_bytes"], content.len());
+    assert_eq!(value["text"], content);
+    assert_eq!(value["truncated"], false);
+    // A long source is previewed within the bound, digest over the exact bytes.
+    let long = "a".repeat(25_000);
+    fs::write(rig.root.join("self-sources/long.md"), &long).unwrap();
+    let value = rig
+        .call(Request::SelfSourceRead {
+            reference: "central:source:control:root:Control/self/long.md".into(),
+        })
+        .unwrap();
+    assert_eq!(value["size_bytes"], 25_000);
+    assert_eq!(value["text"].as_str().unwrap().len(), 20_000);
+    assert_eq!(value["truncated"], true);
+    // Absent sources and redirected readings are refused as they stand.
+    assert!(rig
+        .call(Request::SelfSourceRead {
+            reference: "central:source:control:root:Control/self/absent.md".into()
+        })
+        .is_err());
+    fs::write(rig.root.join("redirect.json"), "{}").unwrap();
+    assert!(rig
+        .call(Request::SelfSourceRead {
+            reference: reference.into()
+        })
+        .is_err());
+    fs::remove_file(rig.root.join("redirect.json")).unwrap();
+    // Non-references and traversal members are refused before any owner call.
+    let refused = Rig::new();
+    for bad in [
+        "central:Control/self/fixture.md",
+        "https://elsewhere/self.md",
+        "central:source:control:root:Control/self/../secrets.md",
+        "central:source:control:root:Control/self/./fixture.md",
+        "central:source:control:root:Control/self/ ",
+    ] {
+        assert!(
+            refused
+                .call(Request::SelfSourceRead {
+                    reference: bad.into()
+                })
+                .is_err(),
+            "{bad} must be refused"
+        );
+    }
+    assert!(
+        refused.calls().is_empty(),
+        "refusals happen before any owner call"
+    );
+}
+#[test]
+fn pasted_self_prose_is_created_through_the_native_human_door_and_pinned_from_resolved_bytes() {
+    use sha2::{Digest, Sha256};
+    let rig = Rig::new();
+    let content = "Written here, once, by the person.";
+    let value = rig
+        .call(Request::SelfSourceCreate {
+            name: "agents/kite/self.md".into(),
+            content: content.into(),
+        })
+        .unwrap();
+    let reference = "central:source:control:root:Control/self/agents/kite/self.md";
+    assert_eq!(value["reference"], reference);
+    assert_eq!(value["path"], "Control/self/agents/kite/self.md");
+    assert_eq!(
+        value["content_digest"],
+        format!("sha256:{:x}", Sha256::digest(content.as_bytes())),
+        "the pin comes from the resolved bytes, never hand-typed"
+    );
+    let create = rig
+        .calls()
+        .iter()
+        .find(|c| {
+            c.as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "central.self.source.create")
+        })
+        .unwrap()
+        .clone();
+    let request: Value =
+        serde_json::from_str(create.as_array().unwrap().last().unwrap().as_str().unwrap()).unwrap();
+    assert_eq!(request["path"], "agents/kite/self.md");
+    assert_eq!(request["content"], content);
+    assert_eq!(request["provenance"], "human-authored");
+    assert_eq!(request["standing"], "authored-human-position");
+    assert_eq!(request["actor_kind"], "human");
+    assert_eq!(request["acceptance"], "human-accepted");
+    assert!(request.get("actor").is_none());
+    assert!(request.get("agent_session_ref").is_none());
+    // Traversal-shaped or padded names are refused before any owner call.
+    let refused = Rig::new();
+    for bad in [
+        "/etc/passwd",
+        "../x.md",
+        "agents/../../x.md",
+        "agents//self.md",
+        " x.md",
+        "x.md\ny",
+        "x.md\0",
+    ] {
+        assert!(
+            refused
+                .call(Request::SelfSourceCreate {
+                    name: bad.into(),
+                    content: "t".into(),
+                })
+                .is_err(),
+            "{bad} must be refused"
+        );
+    }
+    assert!(
+        refused.calls().is_empty(),
+        "refusals happen before any owner call"
     );
 }

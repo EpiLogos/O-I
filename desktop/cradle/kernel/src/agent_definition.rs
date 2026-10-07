@@ -3,7 +3,6 @@
 use crate::{agency, flow::CentralClient};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -37,16 +36,15 @@ pub enum Request {
         /// `expressive_character_ref`. The material itself never travels here.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         expressive_character_ref: Option<String>,
-        /// Central source refs pinning the Agent's authored self-definition
-        /// and its Relational Logos — both or neither. The exact bytes at the
-        /// confirmed scope root are digested here and the pins are forwarded
-        /// as the profile's `self_definition`; the text itself never travels.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        self_source_ref: Option<String>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        logos_ref: Option<String>,
         #[serde(default)]
         skill_set_refs: Vec<String>,
+        /// The authored self definition: two exact Central source pins
+        /// (particular self + shared Relational Logos), carried verbatim into
+        /// the express input. The wire object is Central's snake_case shape
+        /// (`source` / `relational_logos`, each `{reference, content_digest}`);
+        /// only shape and pin grammar are checked here, never the prose.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        self_definition: Option<Value>,
     },
     Review {
         profile_ref: String,
@@ -60,6 +58,34 @@ pub enum Request {
         expected_revision: String,
         #[serde(default)]
         expressive_character_ref: Option<String>,
+    },
+    /// Replace (or remove, with `None`) an existing Agent's authored self
+    /// definition through Central's compare-and-swap save — the same CAS
+    /// discipline as `SetCharacter`: the profile advances one revision, so
+    /// a prior acceptance needs the human's acceptance again.
+    SetSelf {
+        profile_ref: String,
+        expected_revision: String,
+        #[serde(default)]
+        self_definition: Option<Value>,
+    },
+    /// Resolve one `central:source:` reference to the exact source bytes
+    /// and their sha256 digest, for pinning. Resolution goes through
+    /// Central's own source read (`projectcentral.source.read`): Central
+    /// owns the retrieval gate, symlinks, traversal and redirections;
+    /// nothing is resolved from the filesystem here.
+    SelfSourceRead {
+        reference: String,
+    },
+    /// Save pasted prose as a NEW root self-description source through
+    /// Central's own human creation door (`central.self.source.create`:
+    /// declared human attribution, atomic no-overwrite admission,
+    /// `Control/self` aperture only), then read the created source back so
+    /// the pin carries the exact resolved bytes and digest — never a
+    /// hand-typed digest.
+    SelfSourceCreate {
+        name: String,
+        content: String,
     },
     Accept {
         profile_ref: String,
@@ -99,51 +125,136 @@ fn character_ref(value: &str) -> Result<(), String> {
     }
     Ok(())
 }
-/// A pinned self-definition pin: a single-line Central source ref, exactly as
-/// the creator gave it (the composer never rewrites an identity).
-fn pinned_ref(value: &str) -> Result<(), String> {
-    exact(value, 1024, "Self-definition source reference")?;
-    if value.contains('\n') || value.contains('\t') {
-        return Err("Self-definition source reference must be a single-line ref".into());
-    }
+/// A Central source reference in the pinned-self grammar: single-line,
+/// bounded, and explicitly a `central:source:` reference. Resolution,
+/// traversal and symlink law stay Central's; this only keeps obvious
+/// non-references from reaching the owner.
+fn source_reference(value: &str) -> Result<(), String> {
+    exact(value, 1024, "Self source reference")?;
     if !value.starts_with("central:source:") {
-        return Err(
-            "Self-definition source reference must name a Central source (central:source:…)".into(),
-        );
+        return Err("Self source references must be `central:source:` references".into());
+    }
+    if value
+        .split('/')
+        .any(|member| member == ".." || member == ".")
+    {
+        return Err("Self source references cannot carry traversal members".into());
     }
     Ok(())
 }
-/// Resolve `central:source:{world_ref}:{relpath}` to the digest of its exact
-/// bytes under the proposal's confirmed scope root: `cwd` is already exactly
-/// that location — the Central root for the root scope, the project directory
-/// for a project scope (the kernel's `agent_location`). A pinned source must
-/// live inside the confirmed scope; anything else is unreadable here.
-fn pinned_source_digest(cwd: &Path, scope: &str, reference: &str) -> Result<String, String> {
-    const MAX_SOURCE: u64 = 4 * 1024 * 1024;
-    let unreadable = |why: &str| format!("self_source_unreadable: {reference} {why}");
-    let relpath = reference
-        .strip_prefix(&format!("central:source:{scope}:"))
-        .ok_or_else(|| {
-            unreadable("does not name a source inside the confirmed scope of this proposal")
-        })?;
-    if relpath.is_empty() || relpath.starts_with('/') || relpath.split('/').any(|s| s == "..") {
-        return Err(unreadable(
-            "does not name a relative path inside the confirmed scope",
-        ));
+fn is_sha256_digest(value: &str) -> bool {
+    match value.strip_prefix("sha256:") {
+        Some(hex) => {
+            hex.len() == 64
+                && hex
+                    .bytes()
+                    .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
+        }
+        None => false,
     }
-    let path = cwd.join(relpath);
-    let meta = std::fs::metadata(&path)
-        .map_err(|_| unreadable("is not present in the confirmed scope"))?;
-    if !meta.is_file() {
-        return Err(unreadable("is not a regular file in the confirmed scope"));
-    }
-    let bytes =
-        std::fs::read(&path).map_err(|_| unreadable("is not readable in the confirmed scope"))?;
-    if bytes.len() as u64 > MAX_SOURCE {
-        return Err(unreadable("exceeds the 4 MiB pinned-source bound"));
-    }
-    Ok(format!("sha256:{:x}", Sha256::digest(&bytes)))
 }
+/// One pin of the self definition (`source` or `relational_logos`): the
+/// exact wire members only, with the reference and digest grammar checked.
+fn source_pin(value: &Value, field: &str) -> Result<(), String> {
+    let object = value
+        .as_object()
+        .ok_or_else(|| format!("Self definition {field} pin must be an object"))?;
+    for (key, value) in object {
+        match key.as_str() {
+            "reference" => {
+                let reference = value
+                    .as_str()
+                    .ok_or_else(|| format!("Self definition {field} reference must be a string"))?;
+                source_reference(reference)?;
+            }
+            "content_digest" => {
+                let digest = value.as_str().ok_or_else(|| {
+                    format!("Self definition {field} content digest must be a string")
+                })?;
+                exact(digest, 71, "Self source content digest")?;
+                if !is_sha256_digest(digest) {
+                    return Err(
+                        "Self source digests must be `sha256:` plus 64 lowercase hex digits".into(),
+                    );
+                }
+            }
+            other => {
+                return Err(format!(
+                    "Self definition {field} pin carries an unknown member `{other}`"
+                ))
+            }
+        }
+    }
+    Ok(())
+}
+/// The authored self definition wire object: at most the two named pins,
+/// each carrying only reference/digest members. The value is forwarded
+/// byte-faithfully; this checks its grammar without rewriting it.
+fn validate_self_definition(value: &Value) -> Result<(), String> {
+    let object = value
+        .as_object()
+        .ok_or("Self definition must be an object with `source` and `relational_logos` pins")?;
+    for (key, value) in object {
+        match key.as_str() {
+            "source" | "relational_logos" => source_pin(value, key)?,
+            other => {
+                return Err(format!(
+                    "Self definition carries an unknown member `{other}`"
+                ))
+            }
+        }
+    }
+    Ok(())
+}
+/// sha256 of the exact source bytes, in the pinned digest grammar.
+fn source_digest(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    format!("sha256:{:x}", Sha256::digest(bytes))
+}
+/// The bounded preview boundary: at most `limit` bytes, never inside a
+/// UTF-8 character.
+fn preview_boundary(text: &str, limit: usize) -> usize {
+    let mut end = limit.min(text.len());
+    while end < text.len() && !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    end
+}
+/// One self source reading through Central's own source owner: the exact
+/// bytes, their digest for pinning, and a bounded preview of the text.
+fn self_source_reading(
+    client: &CentralClient,
+    project: Option<&str>,
+    reference: &str,
+) -> Result<Value, String> {
+    let reading = client
+        .source_read(project, reference)
+        .map_err(|error| error.to_string())?;
+    if !reading.source.exists {
+        return Err(
+            "Central holds no such self source; the reference resolves to an absent file".into(),
+        );
+    }
+    if reading.source.source_ref != reference {
+        return Err("Central redirected the requested self source reference".into());
+    }
+    if reading.content_encoding != "utf-8" {
+        return Err(
+            "Self sources resolve as exact UTF-8 bytes; the owner returned another encoding".into(),
+        );
+    }
+    let bytes = reading.content.as_bytes();
+    let end = preview_boundary(&reading.content, SELF_SOURCE_PREVIEW_BYTES);
+    Ok(json!({
+        "reference": reference,
+        "content_digest": source_digest(bytes),
+        "size_bytes": bytes.len(),
+        "text": &reading.content[..end],
+        "truncated": end < reading.content.len(),
+    }))
+}
+/// The maximum preview bytes of a pinned self source shown to the author.
+const SELF_SOURCE_PREVIEW_BYTES: usize = 20_000;
 /// The next authored revision: the trailing number advances (`r3` → `r4`),
 /// otherwise a counter is appended (`p` → `p-1`).
 pub fn next_revision(revision: &str) -> String {
@@ -274,29 +385,16 @@ pub fn execute(
             expected_scope_ref,
             skill_refs,
             expressive_character_ref,
-            self_source_ref,
-            logos_ref,
             skill_set_refs,
+            self_definition,
         } => {
             exact(name, 256, "Agent name")?;
             if let Some(character) = expressive_character_ref {
                 character_ref(character)?;
             }
-            // Both or neither: a half-pinned self-definition is refused before
-            // any owner call, with its own name.
-            let pins = match (self_source_ref, logos_ref) {
-                (None, None) => None,
-                (Some(source), Some(logos)) => {
-                    pinned_ref(source)?;
-                    pinned_ref(logos)?;
-                    Some((source, logos))
-                }
-                _ => {
-                    return Err(
-                        "self_definition_requires_both_refs: an authored self-definition is pinned with both the self source and the Relational Logos ref; exactly one was given".into(),
-                    )
-                }
-            };
+            if let Some(definition) = self_definition {
+                validate_self_definition(definition)?;
+            }
             exact(purpose, 16_384, "Human purpose")?;
             exact(
                 expected_scope_ref,
@@ -348,41 +446,17 @@ pub fn execute(
             if let Some(character) = expressive_character_ref {
                 input["expressive_character_ref"] = json!(character);
             }
-            // Pin the authored self-definition before anything is expressed:
-            // each ref is resolved to the exact bytes at the confirmed scope
-            // root and only the digest travels. An unreadable source refuses
-            // here, before `agent-profile.express` is ever called.
-            let self_definition = match pins {
-                Some((source, logos)) => {
-                    let source_digest = pinned_source_digest(cwd, expected_scope_ref, source)?;
-                    let logos_digest = pinned_source_digest(cwd, expected_scope_ref, logos)?;
-                    Some(json!({
-                        "source": {"reference": source, "content_digest": source_digest},
-                        "relational_logos": {"reference": logos, "content_digest": logos_digest},
-                    }))
-                }
-                None => None,
-            };
-            if let Some(pins) = &self_definition {
-                input["self_definition"] = pins.clone();
+            if let Some(definition) = self_definition {
+                // Verbatim: the exact wire object the renderer submitted is
+                // what Central's express input carries.
+                input["self_definition"] = definition.clone();
             }
             input["skill_set_refs"] = json!(skill_set_refs);
             let proposal = owner(client, "agent-profile.express", input)?;
             let reference = proposal["profile"]["ref"].as_str().ok_or("Native proposal returned no profile reference; read the roster before proposing again")?;
             let mut read = scoped(project);
             read["profile_ref"] = json!(reference);
-            let review = owner(client, "agent-profile.review", read)?;
-            // The read-back must show the profile carries exactly the pins
-            // that were submitted; a source that silently dropped or altered
-            // them is not the proposed Agent. The held draft stays held.
-            if let Some(pins) = &self_definition {
-                if review["profile"]["self_definition"] != *pins {
-                    return Err(
-                        "self_definition_echo_mismatch: Central's read-back does not carry the submitted self-definition pins; re-read the roster before proposing again".into(),
-                    );
-                }
-            }
-            Ok(review)
+            owner(client, "agent-profile.review", read)
         }
         Request::Review { profile_ref } => {
             exact(profile_ref, 1024, "Profile reference")?;
@@ -453,6 +527,114 @@ pub fn execute(
                 "re_acceptance_required": was_accepted && after["accepted"] != true,
             });
             Ok(after)
+        }
+        Request::SetSelf {
+            profile_ref,
+            expected_revision,
+            self_definition,
+        } => {
+            exact(profile_ref, 1024, "Profile reference")?;
+            exact(expected_revision, 1024, "Revision")?;
+            if let Some(definition) = self_definition {
+                validate_self_definition(definition)?;
+            }
+            let mut review_input = scoped(project);
+            review_input["profile_ref"] = json!(profile_ref);
+            let before = owner(client, "agent-profile.review", review_input.clone())?;
+            let mut read = scoped(project);
+            read["profile_ref"] = json!(profile_ref);
+            let reading = owner(client, "agent-profile.read", read)?;
+            let mut profile = reading["profile"].clone();
+            if profile["ref"].as_str() != Some(profile_ref.as_str()) {
+                return Err("Central read a different Agent definition".into());
+            }
+            let current = profile["revision"].as_str().unwrap_or_default().to_owned();
+            if current != *expected_revision {
+                return Err(format!(
+                    "revision_conflict: the Agent definition is at revision {current}, not {expected_revision}; re-read it before changing its self definition"
+                ));
+            }
+            if profile.get("self_definition") == self_definition.as_ref() {
+                let mut unchanged = before;
+                unchanged["self_change"] =
+                    json!({"state":"unchanged","revision":current,"re_acceptance_required":false});
+                return Ok(unchanged);
+            }
+            let object = profile
+                .as_object_mut()
+                .ok_or("Central returned no Agent definition object")?;
+            match self_definition {
+                Some(definition) => {
+                    object.insert("self_definition".into(), definition.clone());
+                }
+                None => {
+                    object.remove("self_definition");
+                }
+            }
+            let revision = next_revision(&current);
+            object.insert("revision".into(), json!(revision));
+            let mut save = scoped(project);
+            save["profile"] = profile;
+            save["expected_revision"] = json!(expected_revision);
+            owner(client, "agent-profile.save", save)?;
+            let mut after = owner(client, "agent-profile.review", review_input)?;
+            let was_accepted = before["accepted"] == true;
+            after["self_change"] = json!({
+                "state": "saved",
+                "previous_revision": current,
+                "revision": revision,
+                // Acceptance is bound to the exact revision and digest it
+                // reviewed; a changed source needs the human's acceptance again.
+                "re_acceptance_required": was_accepted && after["accepted"] != true,
+            });
+            Ok(after)
+        }
+        Request::SelfSourceRead { reference } => {
+            source_reference(reference)?;
+            self_source_reading(client, project, reference)
+        }
+        Request::SelfSourceCreate { name, content } => {
+            exact(name, 256, "Self source file name")?;
+            exact(content, 1_048_576, "Self source text")?;
+            if name.starts_with('/')
+                || name.contains('\\')
+                || name.chars().any(char::is_control)
+                || name
+                    .split('/')
+                    .any(|member| member.is_empty() || member == "." || member == "..")
+            {
+                return Err("Self source file names must be relative members under the Control/self aperture".into());
+            }
+            // The person's own pasted prose, saved once through Central's
+            // declared human door. Central enforces atomic no-overwrite
+            // admission, the Control/self aperture, and refuses any caller
+            // its authority law does not admit; the desktop adds no bypass.
+            owner(
+                client,
+                "central.self.source.create",
+                json!({
+                    "project": Value::Null,
+                    "path": name,
+                    "content": content,
+                    "provenance": "human-authored",
+                    "standing": "authored-human-position",
+                    "actor_kind": "human",
+                    "acceptance": "human-accepted",
+                }),
+            )?;
+            // The created reference follows Central's own source grammar;
+            // the read-back through Central's owner is the verification —
+            // it returns the exact resolved bytes and the digest to pin,
+            // and refuses loudly if the reference does not resolve.
+            let relative = format!("Control/self/{name}");
+            let escaped = relative
+                .replace('%', "%25")
+                .replace(':', "%3A")
+                .replace(' ', "%20");
+            let reference = format!("central:source:control:root:{escaped}");
+            let mut reading = self_source_reading(client, None, &reference)?;
+            reading["path"] = json!(relative);
+            Ok(reading)
         }
         Request::Accept {
             profile_ref,
