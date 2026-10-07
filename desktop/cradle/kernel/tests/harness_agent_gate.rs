@@ -116,6 +116,7 @@ fn lifecycle_controls_reach_the_gateway_as_the_canonical_verbs() {
     assert!(argv.contains(" new"), "the canonical verb travels: {argv}");
 }
 
+#[ignore = "requires the OI_AIKIT_BIN frozen native candidate; the fake-executable tests above carry the contract in every other tier"]
 #[test]
 fn an_offline_gateway_refuses_as_named_data_never_a_kernel_error() {
     let home = unique_dir("offline");
