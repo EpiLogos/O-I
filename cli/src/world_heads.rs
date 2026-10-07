@@ -68,8 +68,57 @@ fn command_ui(args: &[OsString]) -> Result<i32, String> {
             eprintln!("oi ui: opening without the composed World supply: {error}");
         }
     }
+    // The active NOW field rides the same environment boundary: the exact
+    // `central.now.field` data document, read from the Central owner at this
+    // one launch moment. The terminal renders it on the Worlds pane; a
+    // degraded supply degrades to the plain delegation with the reason named.
+    match now_field_document() {
+        Ok(field) => {
+            let encoded = serde_json::to_string(&field)
+                .map_err(|error| format!("cannot encode the NOW field supply: {error}"))?;
+            if encoded.len() <= 1024 * 1024 {
+                env::set_var("OI_NOW_FIELD", &encoded);
+            } else {
+                eprintln!(
+                    "oi ui: the NOW field reading exceeds the supply bound; opening the terminal without it"
+                );
+            }
+        }
+        Err(error) => {
+            eprintln!("oi ui: opening without the NOW field supply: {error}");
+        }
+    }
     let forwarded = std::iter::once(OsString::from("ui")).chain(args.iter().cloned());
     exec_native(&executable, forwarded)
+}
+
+/// The exact `central.now.field` data document, read from the Central owner
+/// through its registered executable. A Central absence is a named supply
+/// gap, never an empty field: the terminal shows what actually happened.
+fn now_field_document() -> Result<serde_json::Value, String> {
+    let executable = resolve_owner_executable("central")?;
+    let output = Command::new(&executable)
+        .args(["--json", "action", "run", "central.now.field", "{}"])
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("cannot read the Central NOW field: {error}"))?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let parsed: serde_json::Value = serde_json::from_str(stdout.trim())
+        .map_err(|_| "Central answered without a readable NOW field".to_owned())?;
+    // The owner answers either the full Action envelope (`--json`) or the
+    // bare data document; accept exactly these two shapes and nothing else.
+    if parsed["ok"] == serde_json::Value::Bool(true) {
+        Ok(parsed["data"].clone())
+    } else if parsed["schema"] == serde_json::Value::String(
+        "central.now-field/v1".to_owned(),
+    ) {
+        Ok(parsed)
+    } else {
+        Err(format!(
+            "Central refused the NOW field reading: {}",
+            parsed["error"]["message"].as_str().unwrap_or("unspecified")
+        ))
+    }
 }
 
 const WORLD_USAGE: &str = "oi world [--json]                          whole-World orientation (current world, composition, requested mode)\n       oi world status|current|ground|mode|profile ...\n                                                the preserved routes (`oi status`, `oi current-world`, `oi ground`, `oi mode`, `oi profile`)";
