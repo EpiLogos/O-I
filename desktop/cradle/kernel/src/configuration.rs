@@ -500,10 +500,9 @@ impl Client {
                             // documents explicitly write null; comparing the
                             // raw JSON made every machine/world resolution
                             // look mismatched after a successful owner read.
-                            let matching_scope = serde_json::from_value::<ConfigScope>(
-                                row["scope"].clone(),
-                            )
-                            .is_ok_and(|scope| scope == pair.scope);
+                            let matching_scope =
+                                serde_json::from_value::<ConfigScope>(row["scope"].clone())
+                                    .is_ok_and(|scope| scope == pair.scope);
                             if row["setting_ref"] == pair.setting_ref && matching_scope {
                                 return row.clone();
                             }
