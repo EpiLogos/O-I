@@ -107,7 +107,9 @@ fn pinned_ref(value: &str) -> Result<(), String> {
         return Err("Self-definition source reference must be a single-line ref".into());
     }
     if !value.starts_with("central:source:") {
-        return Err("Self-definition source reference must name a Central source (central:source:…)".into());
+        return Err(
+            "Self-definition source reference must name a Central source (central:source:…)".into(),
+        );
     }
     Ok(())
 }
@@ -125,7 +127,9 @@ fn pinned_source_digest(cwd: &Path, scope: &str, reference: &str) -> Result<Stri
             unreadable("does not name a source inside the confirmed scope of this proposal")
         })?;
     if relpath.is_empty() || relpath.starts_with('/') || relpath.split('/').any(|s| s == "..") {
-        return Err(unreadable("does not name a relative path inside the confirmed scope"));
+        return Err(unreadable(
+            "does not name a relative path inside the confirmed scope",
+        ));
     }
     let path = cwd.join(relpath);
     let meta = std::fs::metadata(&path)
@@ -133,7 +137,8 @@ fn pinned_source_digest(cwd: &Path, scope: &str, reference: &str) -> Result<Stri
     if !meta.is_file() {
         return Err(unreadable("is not a regular file in the confirmed scope"));
     }
-    let bytes = std::fs::read(&path).map_err(|_| unreadable("is not readable in the confirmed scope"))?;
+    let bytes =
+        std::fs::read(&path).map_err(|_| unreadable("is not readable in the confirmed scope"))?;
     if bytes.len() as u64 > MAX_SOURCE {
         return Err(unreadable("exceeds the 4 MiB pinned-source bound"));
     }

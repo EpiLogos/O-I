@@ -241,8 +241,16 @@ fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_pro
     let self_text = b"I am the reading colleague; my ground is held, not claimed.\n";
     let logos_text = b"You act from within a relation.\n";
     fs::create_dir_all(rig.root.join("Control/self/agents/colleague")).unwrap();
-    fs::write(rig.root.join("Control/self/agents/colleague/self.md"), self_text).unwrap();
-    fs::write(rig.root.join("Control/self/agents/colleague/logos.md"), logos_text).unwrap();
+    fs::write(
+        rig.root.join("Control/self/agents/colleague/self.md"),
+        self_text,
+    )
+    .unwrap();
+    fs::write(
+        rig.root.join("Control/self/agents/colleague/logos.md"),
+        logos_text,
+    )
+    .unwrap();
     let self_ref = "central:source:control:root:Control/self/agents/colleague/self.md";
     let logos_ref = "central:source:control:root:Control/self/agents/colleague/logos.md";
     let expected = json!({
@@ -297,7 +305,11 @@ fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_pro
         "the read-back shows the profile carries the submitted pins"
     );
     // A changed byte is a different pin: the digest follows the exact file.
-    fs::write(rig.root.join("Control/self/agents/colleague/self.md"), b"changed\n").unwrap();
+    fs::write(
+        rig.root.join("Control/self/agents/colleague/self.md"),
+        b"changed\n",
+    )
+    .unwrap();
     let changed = rig
         .call(Request::Propose {
             name: "Colleague".into(),
@@ -314,7 +326,11 @@ fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_pro
         changed.contains("self_definition_echo_mismatch"),
         "the read-back no longer matches the freshly digested pin: {changed}"
     );
-    fs::write(rig.root.join("Control/self/agents/colleague/self.md"), self_text).unwrap();
+    fs::write(
+        rig.root.join("Control/self/agents/colleague/self.md"),
+        self_text,
+    )
+    .unwrap();
 
     // A missing source refuses by name, before `agent-profile.express` runs.
     let missing = Rig::new();
@@ -340,7 +356,11 @@ fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_pro
     // A ref from another world is not resolvable inside this confirmed scope.
     let foreign = Rig::new();
     fs::create_dir_all(foreign.root.join("Control/self/agents/colleague")).unwrap();
-    fs::write(foreign.root.join("Control/self/agents/colleague/self.md"), self_text).unwrap();
+    fs::write(
+        foreign.root.join("Control/self/agents/colleague/self.md"),
+        self_text,
+    )
+    .unwrap();
     let error = foreign
         .call(Request::Propose {
             name: "Colleague".into(),
@@ -398,7 +418,10 @@ fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_pro
                 logos_ref: Some(bad.1.into()),
             })
             .unwrap_err();
-        assert!(!error.contains("self_definition_requires_both_refs"), "{error}");
+        assert!(
+            !error.contains("self_definition_requires_both_refs"),
+            "{error}"
+        );
     }
     assert!(malformed.calls().is_empty());
 
