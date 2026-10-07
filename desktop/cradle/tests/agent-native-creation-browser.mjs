@@ -61,11 +61,6 @@ try{
  await page.evaluate(()=>window.creation.failSelfSources());
  await page.getByRole('button',{name:'Back to held draft',exact:true}).click();
  await page.getByRole('button',{name:'Read native roster',exact:true}).click();
- await page.waitForTimeout(1500);
- console.log('DEBUG',JSON.stringify(await page.evaluate(()=>window.creation.state())));
- console.log('PAGEERRORS',JSON.stringify(errors));
- console.log('ROWBUTTONS',await page.locator('[aria-label="Native Agent roster"] button').count(),'| review section:',await page.locator('[aria-label="Review native Agent source"]').count());
- console.log('NAMES',JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('button')].slice(0,6).map(b=>b.textContent))));
  await page.getByRole('button',{name:'Reading colleague Accepted definition'}).click();
  await page.getByText('the pinned self source is not readable in the confirmed scope',{exact:true}).waitFor();
  assert.equal(await page.locator('[data-operative-text]').count(),0,'unresolved pins never render invented text');
