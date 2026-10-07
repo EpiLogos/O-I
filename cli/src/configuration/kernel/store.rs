@@ -155,6 +155,7 @@ impl ConfigurationStore {
     /// Persist the full ChangeSet document (published atomically).
     pub fn save_changeset(&self, changeset: &ChangeSet) -> Result<PathBuf, String> {
         let path = self.changeset_path(&changeset.changeset_id);
+        refuse_corrupt_overwrite::<ChangeSet>(&path, "changeset")?;
         let bytes = serde_json::to_vec_pretty(changeset)
             .map_err(|error| format!("cannot encode changeset: {error}"))?;
         publish(&path, &bytes)?;
@@ -191,6 +192,7 @@ impl ConfigurationStore {
     /// the record of record; this is the pointer the World shares.
     pub fn save_receipt(&self, receipt: &Receipt) -> Result<PathBuf, String> {
         let path = self.receipt_path(&receipt.owner_ref, &receipt.receipt_id);
+        refuse_corrupt_overwrite::<Receipt>(&path, "receipt")?;
         let bytes = serde_json::to_vec_pretty(receipt)
             .map_err(|error| format!("cannot encode receipt: {error}"))?;
         publish(&path, &bytes)?;
@@ -232,6 +234,7 @@ impl ConfigurationStore {
     /// Record the latest reconciliation observation for a setting.
     pub fn save_reconciliation(&self, record: &ReconciliationRecord) -> Result<PathBuf, String> {
         let path = self.reconciliation_path(&record.setting_ref);
+        refuse_corrupt_overwrite::<ReconciliationRecord>(&path, "reconciliation record")?;
         let bytes = serde_json::to_vec_pretty(record)
             .map_err(|error| format!("cannot encode reconciliation record: {error}"))?;
         publish(&path, &bytes)?;
@@ -255,6 +258,7 @@ impl ConfigurationStore {
     /// Hold (or replace) one explicitly held desired intent.
     pub fn save_desired(&self, record: &DesiredRecord) -> Result<PathBuf, String> {
         let path = self.desired_path(&record.setting_ref, &record.scope);
+        refuse_corrupt_overwrite::<DesiredRecord>(&path, "desired record")?;
         let bytes = serde_json::to_vec_pretty(record)
             .map_err(|error| format!("cannot encode desired record: {error}"))?;
         publish(&path, &bytes)?;
@@ -368,6 +372,31 @@ fn list_regular(directory: &Path) -> Result<Vec<PathBuf>, String> {
 
 /// Atomic publish: temp file (0600, created new) in the target directory,
 /// fsync, rename, directory durability.
+/// Refuse to overwrite an existing record whose current content does not
+/// parse as its own kind. A hand-broken file under this store is the
+/// human's broken state: every read already names it loudly, so writes
+/// must preserve it for the human to fix — never silently replace it
+/// (the Hermes corrupt-config law: refuse-to-write, file preserved).
+/// A record that parses is ordinary state and overwrites freely.
+fn refuse_corrupt_overwrite<T: serde::de::DeserializeOwned>(
+    path: &Path,
+    kind: &str,
+) -> Result<(), String> {
+    let Some(bytes) = read_regular(path)? else {
+        return Ok(());
+    };
+    if serde_json::from_slice::<T>(&bytes).is_err() {
+        return Err(format!(
+            "refusing to overwrite the {} at {}: it exists and does not parse as a {}. \
+             Fix it, move it aside, or remove it first; the file is preserved.",
+            kind,
+            path.display(),
+            kind
+        ));
+    }
+    Ok(())
+}
+
 fn publish(path: &Path, bytes: &[u8]) -> Result<(), String> {
     if bytes.len() as u64 > MAX_FILE_BYTES {
         return Err(format!(
@@ -586,6 +615,71 @@ mod tests {
             path.starts_with(home.path().join("configuration")),
             "an encoded name never escapes the store: {}",
             path.display()
+        );
+    }
+
+    fn desired_record() -> DesiredRecord {
+        DesiredRecord {
+            setting_ref: "ai-kit:resolution:model.default".to_owned(),
+            scope: scope(),
+            value: Some(json!("sonnet-next")),
+            secret_reference: None,
+        }
+    }
+
+    /// The Hermes corrupt-config law at the store boundary: reads name the
+    /// broken file, writes refuse to destroy it, and the human's bytes are
+    /// preserved verbatim until they fix or remove it.
+    #[test]
+    fn a_hand_broken_record_is_loud_on_read_and_preserved_on_write() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let store = ConfigurationStore::open(home.path());
+        let record = desired_record();
+        let path = store.save_desired(&record).expect("held");
+        let hand_broken = b"{ not json";
+        std::fs::write(&path, hand_broken).expect("hand-broken");
+
+        let read_error = store
+            .load_desired(&record.setting_ref, &record.scope)
+            .expect_err("a broken record is named, never degraded");
+        assert!(read_error.contains("invalid desired record"), "{read_error}");
+        assert!(store.list_desired().is_err(), "the listing refuses too");
+
+        let write_error = store
+            .save_desired(&record)
+            .expect_err("writes refuse to overwrite the human's broken file");
+        assert!(write_error.contains("refusing to overwrite"), "{write_error}");
+        assert_eq!(
+            std::fs::read(&path).expect("file preserved"),
+            hand_broken,
+            "the human's bytes survive the refused write verbatim"
+        );
+
+        // A record that parses is ordinary state: hold-replace overwrites freely.
+        store.save_desired(&record).expect_err("still broken");
+        std::fs::write(&path, serde_json::to_vec_pretty(&record).unwrap()).expect("repaired");
+        store
+            .save_desired(&record)
+            .expect("a valid record overwrites freely");
+    }
+
+    #[test]
+    fn changeset_writes_refuse_a_corrupt_predecessor_and_listings_stay_loud() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let store = ConfigurationStore::open(home.path());
+        let changeset = changeset();
+        let path = store.save_changeset(&changeset).expect("saved");
+        std::fs::write(&path, b"[]").expect("hand-broken into the wrong shape");
+
+        assert!(store.list_changesets().is_err(), "the listing names it");
+        let error = store
+            .save_changeset(&changeset)
+            .expect_err("the rewrite is refused");
+        assert!(error.contains("refusing to overwrite"), "{error}");
+        assert_eq!(
+            std::fs::read(&path).expect("preserved"),
+            b"[]",
+            "the human's bytes survive"
         );
     }
 }
