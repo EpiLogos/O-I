@@ -138,9 +138,7 @@ mod unix {
                 // (argv, stdout and exit are asserted above). Only named
                 // supply notes may appear on stderr.
                 assert!(
-                    stderr
-                        .lines()
-                        .all(|line| line.starts_with("oi ui:")),
+                    stderr.lines().all(|line| line.starts_with("oi ui:")),
                     "{args:?}: unexpected stderr {stderr:?}"
                 );
             } else {
