@@ -107,7 +107,7 @@ async function openLiveThenSummon() {
 
 try {
   await startBridge();
-  server = await createServer({root, configFile: false, plugins: [react()], resolve: {alias: {three: resolve(root, 'node_modules/three')}}, define: {__CRADLE_WALK__: 'false'}, server: {host: '127.0.0.1', port: 0, fs: {allow: [root, resolve(root, '../../packages/oi-design-system')]}}});
+  server = await createServer({root, configFile: false, plugins: [react()], resolve: {alias: {three: resolve(root, 'node_modules/three')}}, define: {__CRADLE_WALK__: 'false'}, optimizeDeps: {noDiscovery: true, include: ['react', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'react-dom', 'react-dom/client', 'd3-force']}, server: {host: '127.0.0.1', port: 0, fs: {allow: [root, resolve(root, '../../packages/oi-design-system')]}}});
   await server.listen();
   browser = await chromium.launch({headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl']});
   receipt.browser = browser.version();

@@ -9,7 +9,21 @@ for g in gates/gate*.mjs; do node "$g"; done
 
 Each gate exits non-zero on any failed check. Raw outputs: `logs/*.log`.
 
-## Round-trip rule
+## Round-trip rule — realized for A3 (2026-10-07)
+
+The Rust clean-room parity suite (`desktop/cradle/kernel/tests/links_parity.rs`,
+committed with the cradle) binds to the same fixture vault and the same
+captured 1.7.7 oracle as gate 3 and enforces the same assertions on every
+kernel CI run: resolved/unresolved maps, all 37 probes, backlinks, and the
+exact 16-node / 19-edge adjacency, plus orphan/attachment toggle semantics.
+
+Anything O-I rebuilds from this campaign (Rust clean-room) must pass **this
+same suite** — the same fixture vaults, the same oracles, the same checks —
+with no gate edits. Gates that compare trees/maps bind to the oracles under
+`ProjectCentral/now/tmp/obsidian-re-20261007/lanes/`; if that scratch is
+ever pruned, regenerate oracles from live Obsidian first (drivers and pinning
+procedure: `lanes/a1/`, `lanes/a2/notes/cdp-drive.mjs`, `lanes/a3/run/`,
+per `BRIEF.md` in the same tmp root) before running the gates.
 
 Anything O-I rebuilds from this campaign (Rust clean-room) must pass **this
 same suite** — the same fixture vaults, the same oracles, the same checks —

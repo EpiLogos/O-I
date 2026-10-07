@@ -80,6 +80,7 @@ pub mod history;
 pub mod inhabitation;
 pub mod knowledge;
 pub mod knowledge_prepared;
+pub mod links;
 pub mod m3_reception;
 pub mod material;
 pub mod nara_coordinate;

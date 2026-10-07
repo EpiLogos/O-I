@@ -1,0 +1,311 @@
+{
+ "resolvedLinks": {
+  "Alpha.md": {
+   "Bravo.md": 2,
+   "Alpha.md": 5,
+   "attach/data.csv": 1
+  },
+  "BlockRef.md": {
+   "Alpha.md": 3
+  },
+  "Bravo.md": {
+   "Alpha.md": 5,
+   "attach/doc.pdf": 2,
+   "Target.md": 1,
+   "img.png": 1
+  },
+  "CaseTest.md": {
+   "sub/Target.md": 1,
+   "Target.md": 1
+  },
+  "FM-Link.md": {
+   "Alpha.md": 1,
+   "Bravo.md": 1
+  },
+  "Orphan.md": {},
+  "SelfLoop.md": {
+   "SelfLoop.md": 2
+  },
+  "Target.md": {},
+  "Tags.md": {},
+  "other/FromOther.md": {
+   "Target.md": 1
+  },
+  "sub/Sibling.md": {
+   "Target.md": 2,
+   "sub/Target.md": 2,
+   "Alpha.md": 2
+  },
+  "sub/Target.md": {}
+ },
+ "unresolvedLinks": {
+  "Alpha.md": {
+   "Missing": 3
+  },
+  "BlockRef.md": {},
+  "Bravo.md": {
+   "Ghost": 1
+  },
+  "CaseTest.md": {},
+  "FM-Link.md": {},
+  "Orphan.md": {},
+  "SelfLoop.md": {},
+  "Target.md": {},
+  "Tags.md": {},
+  "other/FromOther.md": {
+   "Nothing": 1,
+   "ghost.png": 1,
+   "Ghost": 1
+  },
+  "sub/Sibling.md": {},
+  "sub/Target.md": {}
+ },
+ "probes": [
+  {
+   "source": "Alpha.md",
+   "linktext": "Alpha",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "alpha",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "ALPHA",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Alpha.md",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Bravo",
+   "dest": "Bravo.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "bravo",
+   "dest": "Bravo.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Missing",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Missing.md",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "missing",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "#Head",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "sub/Sibling.md",
+   "linktext": "Target",
+   "dest": "Target.md",
+   "err": null
+  },
+  {
+   "source": "sub/Sibling.md",
+   "linktext": "./Target",
+   "dest": "sub/Target.md",
+   "err": null
+  },
+  {
+   "source": "sub/Sibling.md",
+   "linktext": "sub/Target",
+   "dest": "sub/Target.md",
+   "err": null
+  },
+  {
+   "source": "sub/Sibling.md",
+   "linktext": "../Alpha",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "sub/Sibling.md",
+   "linktext": "Sub/Target",
+   "dest": "sub/Target.md",
+   "err": null
+  },
+  {
+   "source": "sub/Sibling.md",
+   "linktext": "Target.md",
+   "dest": "Target.md",
+   "err": null
+  },
+  {
+   "source": "other/FromOther.md",
+   "linktext": "Target",
+   "dest": "Target.md",
+   "err": null
+  },
+  {
+   "source": "other/FromOther.md",
+   "linktext": "./Target",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "other/FromOther.md",
+   "linktext": "sub/Target",
+   "dest": "sub/Target.md",
+   "err": null
+  },
+  {
+   "source": "other/FromOther.md",
+   "linktext": "Nothing",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "other/FromOther.md",
+   "linktext": "ghost.png",
+   "dest": null,
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "img.png",
+   "dest": "img.png",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "data.csv",
+   "dest": "attach/data.csv",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "doc.pdf",
+   "dest": "attach/doc.pdf",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "attach/img.png",
+   "dest": "attach/img.png",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "SelfLoop",
+   "dest": "SelfLoop.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Selfloop",
+   "dest": "SelfLoop.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Orphan",
+   "dest": "Orphan.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "Tags",
+   "dest": "Tags.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "FM-Link",
+   "dest": "FM-Link.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "FM-Link.md",
+   "dest": "FM-Link.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "/Alpha",
+   "dest": "Alpha.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "/sub/Target",
+   "dest": "sub/Target.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "BlockRef",
+   "dest": "BlockRef.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "CaseTest",
+   "dest": "CaseTest.md",
+   "err": null
+  },
+  {
+   "source": "Alpha.md",
+   "linktext": "A-One",
+   "dest": null,
+   "err": null
+  }
+ ],
+ "live_graph": {
+  "nodes": 16,
+  "edges": [
+   "Alpha.md --> Alpha.md",
+   "Alpha.md --> Bravo.md",
+   "Alpha.md --> Missing",
+   "BlockRef.md --> Alpha.md",
+   "Bravo.md --> Alpha.md",
+   "Bravo.md --> Ghost",
+   "Bravo.md --> Target.md",
+   "CaseTest.md --> Target.md",
+   "CaseTest.md --> sub/Target.md",
+   "FM-Link.md --> Alpha.md",
+   "FM-Link.md --> Bravo.md",
+   "SelfLoop.md --> SelfLoop.md",
+   "other/FromOther.md --> Ghost",
+   "other/FromOther.md --> Nothing",
+   "other/FromOther.md --> Target.md",
+   "other/FromOther.md --> ghost.png",
+   "sub/Sibling.md --> Alpha.md",
+   "sub/Sibling.md --> Target.md",
+   "sub/Sibling.md --> sub/Target.md"
+  ]
+ }
+}

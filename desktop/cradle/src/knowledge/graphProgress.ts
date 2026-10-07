@@ -2,10 +2,13 @@ import {readGraph,type GraphInputName,type GraphReading,type GraphInput,type Gra
 import type {KernelTransportStatus} from '../kernel/types';
 
 const names:GraphInputName[]=['central_wiki','aikit_resolution','shared_field'];
-const operations:Record<GraphInputName,string>={central_wiki:'central.wiki.read',aikit_resolution:'aikit.knowledge.graph',shared_field:'shared-field.projection'};
+const operations:Record<GraphInputName,string>={central_wiki:'central.wiki.read',aikit_resolution:'aikit.knowledge.graph',shared_field:'shared-field.projection',wiki_links:'oi.cradle.wiki-links/v1'};
 export function emptyGraph():GraphReading {
   const input=(name:GraphInputName):GraphInput=>({state:'deferred',owner_operation:operations[name],detail:'Not requested'});
-  return {schema:'oi.cradle.graph-reading/v1',nodes:[],edges:[],formations:[],inputs:{central_wiki:input('central_wiki'),aikit_resolution:input('aikit_resolution'),shared_field:input('shared_field')},counts:{spaces:0,wiki_nodes:0,knowledge_rows:0,hosted_rows:0,nodes:0,edges:0}};
+  const inputs={central_wiki:input('central_wiki'),aikit_resolution:input('aikit_resolution'),shared_field:input('shared_field')};
+  // The derived wikilink input rides the Central wiki read (kernel input 4);
+  // it is never fetched separately.
+  return {schema:'oi.cradle.graph-reading/v1',nodes:[],edges:[],formations:[],inputs:{...inputs,wiki_links:input('wiki_links')},counts:{spaces:0,wiki_nodes:0,knowledge_rows:0,hosted_rows:0,link_rows:0,nodes:0,edges:0}};
 }
 /** Compose disclosed records, not a second graph index. Keep duplicate owner
  * node disclosures intact and collapse only exactly identical edge records. */
@@ -18,8 +21,13 @@ export function joinGraphInputs(parts:Partial<Record<GraphInputName,GraphReading
     result.nodes.push(...part.nodes);
     for(const edge of part.edges){const key=JSON.stringify(edge);if(!seen.has(key)){seen.add(key);result.edges.push(edge);}}
     result.formations!.push(...(part.formations??[]));result.truncated ||= part.truncated===true;
+    if(part.unresolved_links)result.unresolved_links=[...(result.unresolved_links??[]),...part.unresolved_links];
   }
-  result.counts={spaces:result.nodes.filter(n=>n.kind==='wiki-space').length,wiki_nodes:result.nodes.filter(n=>n.kind==='wiki-node').length,knowledge_rows:result.nodes.filter(n=>n.native_owner==='ai-kit').length,hosted_rows:result.nodes.filter(n=>n.native_owner==='shared-field').length,nodes:result.nodes.length,edges:result.edges.length};
+  // The derived wikilink input arrives inside the Central wiki reading;
+  // older fixtures and kernels name only the three owner inputs.
+  const wikiLinks=parts['central_wiki']?.inputs['wiki_links'];
+  if(wikiLinks)result.inputs['wiki_links']=wikiLinks;
+  result.counts={spaces:result.nodes.filter(n=>n.kind==='wiki-space').length,wiki_nodes:result.nodes.filter(n=>n.kind==='wiki-node').length,knowledge_rows:result.nodes.filter(n=>n.native_owner==='ai-kit').length,hosted_rows:result.nodes.filter(n=>n.native_owner==='shared-field').length,link_rows:result.edges.filter(e=>e.relation==='wiki-link').length,nodes:result.nodes.length,edges:result.edges.length};
   return result;
 }
 export interface GraphProgress {reading:GraphReading;pending:GraphInputName[]}

@@ -13,6 +13,18 @@
 //! (`world:central:project:O-I/…`), so they never collide with `central`
 //! nodes; the desktop mints no second semantic object for them.
 //!
+//! Input 4 is DERIVED, and says so: `oi.cradle.wiki-links/v1` parses the
+//! markdown documents the wiki reading itself points at (`node-source`
+//! targets), resolves their wikilinks by the campaign contract
+//! (`links.rs`; parity with the pinned reference is a repo test), and emits
+//! `wiki-link` edges whose endpoints are the owner's own source refs —
+//! nothing is invented that the owner did not disclose; the derivation is
+//! deterministic over owner reads and its provenance names them. Dangling
+//! targets are not minted as nodes: they are carried as typed
+//! `unresolved_links` beside the graph (a divergence from the reference
+//! UI's phantom nodes, which this wire keeps out of the node set because a
+//! node here must be an owner ref).
+//!
 //! Honest degradation: a failed owner input is reported as an explicit
 //! unavailable input with the owner's message, never as an empty graph
 //! and never as fabricated rows. An unbound Shared Field target is
@@ -23,16 +35,26 @@
 //! so local navigation never waits for an optional hosted-field request.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::path::Path;
 
+use crate::files;
 use crate::flow::{CentralClient, OwnerCallError};
 use crate::knowledge;
+use crate::links;
 use crate::shared_field;
 
 pub const GRAPH_READING_SCHEMA: &str = "oi.cradle.graph-reading/v1";
 /// The hosted Shared Field projection owner input (the O:I-owned client's
 /// `snapshot`), named on every hosted node, edge and input state.
 pub const SHARED_FIELD_INPUT: &str = shared_field::OWNER_OPERATION;
+/// The derived wikilink contribution (input 4): deterministic resolution of
+/// the wiki reading's own markdown sources; provenance names it derived.
+pub const WIKI_LINKS_DERIVATION: &str = "oi.cradle.wiki-links/v1";
+/// Derivation bounds: at most this many markdown documents are read per
+/// graph assembly, and larger documents are skipped.
+const WIKI_LINKS_MAX_DOCS: usize = 48;
+const WIKI_LINKS_MAX_BYTES: usize = 512 * 1024;
 
 /// Independently loadable inputs. `All` preserves the earlier request shape;
 /// the Wiki UI asks for the specific native inputs it actually displays.
@@ -44,6 +66,7 @@ pub enum InputSelection {
     CentralWiki,
     AikitResolution,
     SharedField,
+    WikiLinks,
 }
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct ReadOptions {
@@ -120,13 +143,23 @@ impl GraphInput {
     }
 }
 
-/// The named inputs of the graph reading. All three are always named on
-/// the wire; a failed one is explicit — never an empty fabrication.
+/// The named inputs of the graph reading. All are always named on the wire;
+/// a failed one is explicit — never an empty fabrication. `wiki_links` is
+/// the derived input (serde default keeps older cached readings decodable).
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct GraphInputs {
     pub central_wiki: GraphInput,
     pub aikit_resolution: GraphInput,
     pub shared_field: GraphInput,
+    #[serde(default = "deferred_wiki_links")]
+    pub wiki_links: GraphInput,
+}
+
+fn deferred_wiki_links() -> GraphInput {
+    GraphInput::Deferred {
+        owner_operation: WIKI_LINKS_DERIVATION.into(),
+        detail: "not requested yet".into(),
+    }
 }
 
 /// Owner attribution carried beside every node and edge (02 §5).
@@ -195,8 +228,23 @@ pub struct GraphCounts {
     /// the wire from older readers: serde default).
     #[serde(default)]
     pub hosted_rows: usize,
+    /// Derived `wiki-link` edges from input 4 (serde default: absent on
+    /// older readers).
+    #[serde(default)]
+    pub link_rows: usize,
     pub nodes: usize,
     pub edges: usize,
+}
+
+/// A dangling wikilink target from input 4: the normalized key, the source
+/// documents that mention it with their occurrence counts, and derivation
+/// provenance. Not a graph node — a node here must be an owner ref.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct UnresolvedLink {
+    pub key: String,
+    /// Source ref → occurrence count.
+    pub sources: BTreeMap<String, usize>,
+    pub provenance: GraphProvenance,
 }
 
 /// The typed graph input for U3.1/U3.4 presentation.
@@ -211,10 +259,14 @@ pub struct GraphReading {
     pub counts: GraphCounts,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub formations: Vec<Value>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub shape_catalog: Option<Value>,
     #[serde(default)]
     pub truncated: bool,
+    /// Dangling wikilink targets from input 4 (serde default: absent on
+    /// older readers).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unresolved_links: Vec<UnresolvedLink>,
 }
 
 impl GraphReading {
@@ -234,17 +286,20 @@ impl GraphReading {
                     owner_operation: SHARED_FIELD_INPUT.into(),
                     detail: "not requested yet".into(),
                 },
+                wiki_links: deferred_wiki_links(),
             },
             nodes: Vec::new(),
             edges: Vec::new(),
             formations: Vec::new(),
             shape_catalog: None,
             truncated: false,
+            unresolved_links: Vec::new(),
             counts: GraphCounts {
                 spaces: 0,
                 wiki_nodes: 0,
                 knowledge_rows: 0,
                 hosted_rows: 0,
+                link_rows: 0,
                 nodes: 0,
                 edges: 0,
             },
@@ -291,11 +346,14 @@ pub fn assemble_selected(
     options: &ReadOptions,
 ) -> GraphReading {
     let mut reading = GraphReading::empty();
+    let wiki_data: Option<Value> = None;
 
-    // Input 1: Central wiki read model (cell C1).
+    // Input 1: Central wiki read model (cell C1). Also fetched when the
+    // derived wikilink input is selected — the derivation reads the same
+    // owner disclosure.
     if matches!(
         options.input,
-        InputSelection::All | InputSelection::CentralWiki
+        InputSelection::All | InputSelection::CentralWiki | InputSelection::WikiLinks
     ) {
         match client.run(wiki_action, wiki_input.clone()) {
             Ok(data) => {
@@ -449,9 +507,165 @@ pub fn assemble_selected(
         }
     }
 
+    // Input 4: derived wikilinks over the wiki reading's own markdown
+    // sources (`node-source` targets), resolved by the campaign contract.
+    // Explicitly selectable (`wiki_links`), NOT default-on: derivation reads
+    // each document through the owner's file contract (two owner spawns per
+    // document, cold build), which would put a multi-second tail on every
+    // default graph read. Default-on waits for a bulk or cached owner read
+    // shape (recreation backlog, T5 note). Bounded and honest: the input
+    // reports what it derived from, and every derived element names its
+    // derivation.
+    if options.input == InputSelection::WikiLinks {
+        match wiki_data.as_ref() {
+            Some(data) => {
+                let (docs, over_budget, unreadable) = collect_wiki_link_documents(client, data);
+                assemble_wiki_links(&mut reading, &docs, wiki_action, over_budget, unreadable);
+            }
+            None => {
+                reading.inputs.wiki_links = GraphInput::Unavailable {
+                    owner_operation: WIKI_LINKS_DERIVATION.into(),
+                    detail: "derivation requires the Central wiki reading".into(),
+                };
+            }
+        }
+    }
+
     reading.counts.nodes = reading.nodes.len();
     reading.counts.edges = reading.edges.len();
     reading
+}
+
+/// The markdown documents input 4 derives from: the wiki reading's own
+/// `node-source` targets (`.md` only), resolved and read through the owner's
+/// file contract, bounded by `WIKI_LINKS_MAX_DOCS` / `WIKI_LINKS_MAX_BYTES`.
+/// Returns `(docs, over_budget, unreadable)`. Register-scoped wiki readings
+/// whose source refs the root file resolver cannot serve degrade as
+/// `unreadable` — honest absence, never fabrication.
+fn collect_wiki_link_documents(
+    client: &CentralClient,
+    data: &Value,
+) -> (BTreeMap<String, String>, usize, usize) {
+    let targets = extract_node_source_targets(data);
+    let over_budget = targets.len().saturating_sub(WIKI_LINKS_MAX_DOCS);
+    let mut docs = BTreeMap::new();
+    let mut unreadable = 0usize;
+    for reference in targets.into_iter().take(WIKI_LINKS_MAX_DOCS) {
+        let reading = files::resolve(client, &reference).and_then(|location| {
+            let reading = files::read(client, &location)?;
+            if reading.content.len() <= WIKI_LINKS_MAX_BYTES {
+                Ok(reading)
+            } else {
+                Err("document exceeds the derivation size bound".into())
+            }
+        });
+        match reading {
+            Ok(reading) => {
+                docs.insert(reference, reading.content);
+            }
+            Err(_) => unreadable += 1,
+        }
+    }
+    (docs, over_budget, unreadable)
+}
+
+/// The `node-source` relation targets of one wiki reading that look like
+/// markdown documents.
+fn extract_node_source_targets(data: &Value) -> std::collections::BTreeSet<String> {
+    data["relations"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|relation| relation["kind"].as_str() == Some("node-source"))
+        .filter_map(|relation| relation["to_ref"].as_str().map(str::to_owned))
+        .filter(|target| links::is_markdown(target))
+        .collect()
+}
+
+/// Fold the derived wikilink contribution (input 4) into a reading:
+/// `wiki-link` edges between the owner's own source refs, the referenced
+/// source documents as `file` nodes, and every dangling target as a typed
+/// `UnresolvedLink` — never as a node. Uniqueness per contract §4 (parallel
+/// occurrences collapse into the edge, their count carried in metadata).
+pub fn assemble_wiki_links(
+    reading: &mut GraphReading,
+    docs: &BTreeMap<String, String>,
+    wiki_action: &str,
+    over_budget: usize,
+    unreadable: usize,
+) {
+    let _derivation = GraphProvenance {
+        source: WIKI_LINKS_DERIVATION.into(),
+        revision: None,
+        detail: vec![format!("derived from {wiki_action}")],
+    };
+    let cache = links::build_cache(docs);
+    let derivation = GraphProvenance {
+        source: WIKI_LINKS_DERIVATION.into(),
+        revision: None,
+        detail: vec![format!("derived from {wiki_action}")],
+    };
+    for path in docs.keys() {
+        let label = path.rsplit('/').next().unwrap_or(path).to_owned();
+        reading.nodes.push(GraphNode {
+            ref_id: path.clone(),
+            kind: "file".into(),
+            label,
+            native_owner: "central".into(),
+            provenance: derivation.clone(),
+            actions: Vec::new(),
+            metadata: Default::default(),
+        });
+    }
+    let mut link_rows = 0usize;
+    for (source, targets) in &cache.resolved {
+        for (target, count) in targets {
+            // Only pairs whose both endpoints were read join the wire;
+            // attachment targets are indexed but are not documents.
+            if !docs.contains_key(target) {
+                continue;
+            }
+            let mut metadata = BTreeMap::new();
+            metadata.insert("occurrences".into(), serde_json::json!(count));
+            reading.edges.push(GraphEdge {
+                relation: "wiki-link".into(),
+                from_ref: source.clone(),
+                to_ref: target.clone(),
+                provenance: derivation.clone(),
+                metadata,
+            });
+            link_rows += 1;
+        }
+    }
+    let mut keys: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+    for (source, unresolved) in &cache.unresolved {
+        for (key, count) in unresolved {
+            keys.entry(key.clone())
+                .or_default()
+                .insert(source.clone(), *count);
+        }
+    }
+    reading.unresolved_links = keys
+        .into_iter()
+        .map(|(key, sources)| UnresolvedLink {
+            key,
+            sources,
+            provenance: derivation.clone(),
+        })
+        .collect();
+    reading.counts.link_rows = link_rows;
+    let mut detail = format!("derived from {wiki_action} over {} documents", docs.len());
+    if over_budget > 0 {
+        detail.push_str(&format!(", {over_budget} over the document budget"));
+    }
+    if unreadable > 0 {
+        detail.push_str(&format!(", {unreadable} unreadable"));
+    }
+    reading.inputs.wiki_links = GraphInput::Available {
+        owner_operation: WIKI_LINKS_DERIVATION.into(),
+        detail: Some(detail),
+    };
 }
 
 /// Fold one `oi.shared-field.snapshot/v1` reading into the graph: hosted
@@ -664,6 +878,74 @@ pub fn adapt_native_graph(reading: &mut GraphReading, data: &Value) {
 #[cfg(test)]
 mod native_graph_tests {
     use super::*;
+
+    #[test]
+    fn derived_wiki_links_fold_owner_refs_with_counts_and_dangling_keys() {
+        let mut reading = GraphReading::empty();
+        let docs = BTreeMap::from([
+            (
+                "central:source:control:root:x/Alpha.md".to_string(),
+                "# Alpha\nsee [[Beta]] and [[Beta|again]] and [[Missing]]\n".to_string(),
+            ),
+            (
+                "central:source:control:root:x/Beta.md".to_string(),
+                "# Beta\nback [[./Alpha]]\n".to_string(),
+            ),
+        ]);
+        assemble_wiki_links(&mut reading, &docs, "central.wiki.read", 0, 0);
+        // Alpha→Beta (2 occurrences) collapses to one unique-pair edge;
+        // Beta→Alpha via the relative form joins Alpha's folder.
+        assert_eq!(reading.counts.link_rows, 2);
+        let alpha_edge = reading
+            .edges
+            .iter()
+            .find(|e| e.from_ref.ends_with("Alpha.md"))
+            .expect("alpha edge");
+        assert_eq!(alpha_edge.relation, "wiki-link");
+        assert!(alpha_edge.to_ref.ends_with("Beta.md"));
+        assert_eq!(alpha_edge.metadata["occurrences"], 2);
+        assert_eq!(alpha_edge.provenance.source, WIKI_LINKS_DERIVATION);
+        // Source docs join as `file` nodes; dangling keys never do.
+        assert!(reading
+            .nodes
+            .iter()
+            .any(|n| n.kind == "file" && n.ref_id.ends_with("Alpha.md")));
+        assert!(!reading.nodes.iter().any(|n| n.kind == "unresolved-link"));
+        assert_eq!(reading.unresolved_links.len(), 1);
+        assert_eq!(reading.unresolved_links[0].key, "Missing");
+        assert_eq!(reading.unresolved_links[0].sources.len(), 1);
+        assert!(reading.inputs.wiki_links.is_available());
+    }
+
+    #[test]
+    fn node_source_targets_extract_md_only_and_skip_empties() {
+        let data = serde_json::json!({"relations": [
+            {"kind": "node-source", "to_ref": "central:source:control:root:a.md"},
+            {"kind": "node-source", "to_ref": "central:source:control:root:img.png"},
+            {"kind": "space-node", "to_ref": "central:source:control:root:b.md"},
+            {"kind": "node-source", "to_ref": ""}
+        ]});
+        assert_eq!(extract_node_source_targets(&data).len(), 1);
+    }
+
+    #[test]
+    fn old_readings_without_the_derived_input_still_decode() {
+        // Wire compatibility: a cached reading from before input 4 existed
+        // deserializes with the derived input deferred and zero link rows.
+        let legacy = serde_json::json!({
+            "schema": GRAPH_READING_SCHEMA,
+            "inputs": {
+                "central_wiki": {"state": "deferred", "owner_operation": "central.wiki.read", "detail": "x"},
+                "aikit_resolution": {"state": "deferred", "owner_operation": "aikit.knowledge.resolve", "detail": "x"},
+                "shared_field": {"state": "deferred", "owner_operation": SHARED_FIELD_INPUT, "detail": "x"}
+            },
+            "counts": {"spaces": 0, "wiki_nodes": 0, "knowledge_rows": 0, "nodes": 0, "edges": 0}
+        });
+        let decoded: GraphReading = serde_json::from_value(legacy).expect("legacy reading decodes");
+        assert!(!decoded.inputs.wiki_links.is_available());
+        assert_eq!(decoded.counts.link_rows, 0);
+    }
+
     #[test]
     fn native_addresses_occurrences_and_partial_wholes_survive_adaptation() {
         let mut reading = GraphReading::empty();
