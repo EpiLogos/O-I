@@ -109,6 +109,27 @@ test('the manuscript reads by its title, and the sections keep their own folder'
   assert.equal(sections.children[0].coord, '§0/1');
 });
 
+test('the arguments folder carries A and A′ as one field under the A/C root', () => {
+  const pages = corpus();
+  pages.push(page('section-rooms/arguments/conjugate/AC', 'AC — the dual-form root of the suite'));
+  pages.push(page('section-rooms/arguments/conjugate/A01-prime-Faithful-Definition-of-the-Agent', 'A01′ — Faithful Definition of the Agent'));
+  pages.push(page('section-rooms/arguments/conjugate/README', 'The conjugate field'));
+  pages.push(page('section-rooms/arguments/concepts/README', 'The concepts field'));
+  pages.push(page('section-rooms/arguments/concepts/C01-Apoha', 'C01 — Apoha'));
+  const model = fieldModel(pages);
+  const a01p = model.nodes.find((n) => n.s.endsWith('A01-prime-Faithful-Definition-of-the-Agent'));
+  assert.equal(a01p.coord, 'A01′', 'a conjugate face reads as its argument with the prime');
+  assert.equal(a01p.lab, 'Faithful Definition of the Agent');
+  const args = treeNode(model.tree, 'Arguments');
+  const labels = args.children.filter((f) => f.kind === 'leaf').map((f) => f.label);
+  assert.ok(labels.includes('Faithful Definition of the Agent'), 'the conjugate face stands among the arguments');
+  assert.ok(!labels.includes('Prime faithful definition of the agent'));
+  assert.equal(args.ni, model.nodes.find((n) => n.s.endsWith('/AC')).i, 'the A/C root is the suite page');
+  assert.ok(!args.children.some((f) => f.label === 'Conjugate'), 'no side folder: A′ are arguments');
+  const concepts = args.children.find((f) => f.label === 'Concepts');
+  assert.ok(concepts, 'the concepts ring keeps its folder');
+});
+
 test('a manuscript page carries its own movement anchors', async () => {
   const file = join(dir, 'manuscript-fixtures.md');
   await writeFile(file, '# t\n\n<a id="M01"></a>\n\n<a id="M07"></a>\n', 'utf8');

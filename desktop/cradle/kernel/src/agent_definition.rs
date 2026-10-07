@@ -3,6 +3,7 @@
 use crate::{agency, flow::CentralClient};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -36,6 +37,14 @@ pub enum Request {
         /// `expressive_character_ref`. The material itself never travels here.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         expressive_character_ref: Option<String>,
+        /// Central source refs pinning the Agent's authored self-definition
+        /// and its Relational Logos — both or neither. The exact bytes at the
+        /// confirmed scope root are digested here and the pins are forwarded
+        /// as the profile's `self_definition`; the text itself never travels.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        self_source_ref: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        logos_ref: Option<String>,
         #[serde(default)]
         skill_set_refs: Vec<String>,
     },
@@ -89,6 +98,49 @@ fn character_ref(value: &str) -> Result<(), String> {
         return Err("Expressive character reference must be a single-line ref".into());
     }
     Ok(())
+}
+/// A pinned self-definition pin: a single-line Central source ref, exactly as
+/// the creator gave it (the composer never rewrites an identity).
+fn pinned_ref(value: &str) -> Result<(), String> {
+    exact(value, 1024, "Self-definition source reference")?;
+    if value.contains('\n') || value.contains('\t') {
+        return Err("Self-definition source reference must be a single-line ref".into());
+    }
+    if !value.starts_with("central:source:") {
+        return Err(
+            "Self-definition source reference must name a Central source (central:source:…)"
+                .into(),
+        );
+    }
+    Ok(())
+}
+/// Resolve `central:source:{world_ref}:{relpath}` to the digest of its exact
+/// bytes under the proposal's confirmed scope root: `cwd` is already exactly
+/// that location — the Central root for the root scope, the project directory
+/// for a project scope (the kernel's `agent_location`). A pinned source must
+/// live inside the confirmed scope; anything else is unreadable here.
+fn pinned_source_digest(cwd: &Path, scope: &str, reference: &str) -> Result<String, String> {
+    const MAX_SOURCE: u64 = 4 * 1024 * 1024;
+    let unreadable = |why: &str| format!("self_source_unreadable: {reference} {why}");
+    let relpath = reference
+        .strip_prefix(&format!("central:source:{scope}:"))
+        .ok_or_else(|| {
+            unreadable("does not name a source inside the confirmed scope of this proposal")
+        })?;
+    if relpath.is_empty() || relpath.starts_with('/') || relpath.split('/').any(|s| s == "..") {
+        return Err(unreadable("does not name a relative path inside the confirmed scope"));
+    }
+    let path = cwd.join(relpath);
+    let meta = std::fs::metadata(&path)
+        .map_err(|_| unreadable("is not present in the confirmed scope"))?;
+    if !meta.is_file() {
+        return Err(unreadable("is not a regular file in the confirmed scope"));
+    }
+    let bytes = std::fs::read(&path).map_err(|_| unreadable("is not readable in the confirmed scope"))?;
+    if bytes.len() as u64 > MAX_SOURCE {
+        return Err(unreadable("exceeds the 4 MiB pinned-source bound"));
+    }
+    Ok(format!("sha256:{:x}", Sha256::digest(&bytes)))
 }
 /// The next authored revision: the trailing number advances (`r3` → `r4`),
 /// otherwise a counter is appended (`p` → `p-1`).
@@ -220,12 +272,29 @@ pub fn execute(
             expected_scope_ref,
             skill_refs,
             expressive_character_ref,
+            self_source_ref,
+            logos_ref,
             skill_set_refs,
         } => {
             exact(name, 256, "Agent name")?;
             if let Some(character) = expressive_character_ref {
                 character_ref(character)?;
             }
+            // Both or neither: a half-pinned self-definition is refused before
+            // any owner call, with its own name.
+            let pins = match (self_source_ref, logos_ref) {
+                (None, None) => None,
+                (Some(source), Some(logos)) => {
+                    pinned_ref(source)?;
+                    pinned_ref(logos)?;
+                    Some((source, logos))
+                }
+                _ => {
+                    return Err(
+                        "self_definition_requires_both_refs: an authored self-definition is pinned with both the self source and the Relational Logos ref; exactly one was given".into(),
+                    )
+                }
+            };
             exact(purpose, 16_384, "Human purpose")?;
             exact(
                 expected_scope_ref,
@@ -277,12 +346,41 @@ pub fn execute(
             if let Some(character) = expressive_character_ref {
                 input["expressive_character_ref"] = json!(character);
             }
+            // Pin the authored self-definition before anything is expressed:
+            // each ref is resolved to the exact bytes at the confirmed scope
+            // root and only the digest travels. An unreadable source refuses
+            // here, before `agent-profile.express` is ever called.
+            let self_definition = match pins {
+                Some((source, logos)) => {
+                    let source_digest = pinned_source_digest(cwd, expected_scope_ref, source)?;
+                    let logos_digest = pinned_source_digest(cwd, expected_scope_ref, logos)?;
+                    Some(json!({
+                        "source": {"reference": source, "content_digest": source_digest},
+                        "relational_logos": {"reference": logos, "content_digest": logos_digest},
+                    }))
+                }
+                None => None,
+            };
+            if let Some(pins) = &self_definition {
+                input["self_definition"] = pins.clone();
+            }
             input["skill_set_refs"] = json!(skill_set_refs);
             let proposal = owner(client, "agent-profile.express", input)?;
             let reference = proposal["profile"]["ref"].as_str().ok_or("Native proposal returned no profile reference; read the roster before proposing again")?;
             let mut read = scoped(project);
             read["profile_ref"] = json!(reference);
-            owner(client, "agent-profile.review", read)
+            let review = owner(client, "agent-profile.review", read)?;
+            // The read-back must show the profile carries exactly the pins
+            // that were submitted; a source that silently dropped or altered
+            // them is not the proposed Agent. The held draft stays held.
+            if let Some(pins) = &self_definition {
+                if review["profile"]["self_definition"] != *pins {
+                    return Err(
+                        "self_definition_echo_mismatch: Central's read-back does not carry the submitted self-definition pins; re-read the roster before proposing again".into(),
+                    );
+                }
+            }
+            Ok(review)
         }
         Request::Review { profile_ref } => {
             exact(profile_ref, 1024, "Profile reference")?;

@@ -9,6 +9,9 @@ try{
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/agent-native-creation-browser.html?fixtures=1`);
  await page.getByRole('textbox',{name:'Agent name',exact:true}).fill('Reading colleague');
  await page.getByRole('textbox',{name:'Human purpose',exact:true}).fill('Read the permitted source.');
+ await page.getByRole('textbox',{name:'Self source ref',exact:true}).fill('central:source:control:root:Control/self/agents/colleague/self.md');
+ await page.getByRole('textbox',{name:'Relational Logos ref',exact:true}).fill('central:source:control:root:Control/self/agents/colleague/logos.md');
+ checks.push('The Self-definition fieldset renders beside the visual character section and takes both Central source refs.');
  const checkbox=page.getByRole('checkbox',{name:/I choose the disclosed native scope/});await checkbox.check();
  await page.getByRole('checkbox',{name:'Skill Native reader',exact:true}).check();
  assert.equal(await page.getByRole('checkbox',{name:'Skill Disabled native skill',exact:true}).isDisabled(),true);
@@ -27,6 +30,12 @@ try{
  assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action==='prepare').length),1);
  assert.equal(await page.evaluate(()=>window.creation.calls.some(c=>c.action==='accept')),true);
  checks.push('Save and start completes the reviewed journey by itself — save, acceptance, readiness and preparation in order, then the conversation opens with the native identities; no separate manual relay.');
+ const proposeCall=await page.evaluate(()=>window.creation.calls.find(c=>c.action==='propose'));
+ assert.equal(proposeCall.self_source_ref,'central:source:control:root:Control/self/agents/colleague/self.md');
+ assert.equal(proposeCall.logos_ref,'central:source:control:root:Control/self/agents/colleague/logos.md');
+ assert.equal(await page.locator('pre[data-operative-text="source"]').textContent(),'I am the reading colleague; my ground is held, not claimed.');
+ assert.equal(await page.locator('pre[data-operative-text="relational_logos"]').textContent(),'You act from within a relation.');
+ checks.push('The reviewed source shows the resolved self-definition and Relational Logos text verbatim as the exact accepted source, with both pins carried on the native proposal.');
  await page.getByRole('button',{name:'Back to held draft',exact:true}).click();
  assert.equal(await page.getByRole('textbox',{name:'Human purpose',exact:true}).inputValue(),'Read the permitted source.');
  checks.push('Returning to the held draft preserves the exact purpose; the prepared session is cleared with it.');
@@ -48,6 +57,20 @@ try{
  await page.getByRole('button',{name:'Open conversation and choose harness',exact:true}).click();
  const row=await page.evaluate(()=>window.creation.opened());assert.equal(row.ref,'agent-session/browser-created');assert.equal(row.space,'session-space/browser-created');assert.equal(row.project,'');
  checks.push('Native Agent/session identities enter the existing conversation selector, including Central root.');
+ // An unresolved pin shows the named reason and never fake operative text.
+ await page.evaluate(()=>window.creation.failSelfSources());
+ await page.getByRole('button',{name:'Back to held draft',exact:true}).click();
+ await page.getByRole('button',{name:'Read native roster',exact:true}).click();
+ await page.waitForTimeout(1500);
+ console.log('DEBUG',JSON.stringify(await page.evaluate(()=>window.creation.state())));
+ console.log('PAGEERRORS',JSON.stringify(errors));
+ console.log('ROWBUTTONS',await page.locator('[aria-label="Native Agent roster"] button').count(),'| review section:',await page.locator('[aria-label="Review native Agent source"]').count());
+ console.log('NAMES',JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('button')].slice(0,6).map(b=>b.textContent))));
+ await page.getByRole('button',{name:'Reading colleague Accepted definition'}).click();
+ await page.getByText('the pinned self source is not readable in the confirmed scope',{exact:true}).waitFor();
+ assert.equal(await page.locator('[data-operative-text]').count(),0,'unresolved pins never render invented text');
+ assert.equal(await page.getByText('The pinned self-definition sources did not all resolve; this Agent is not running on its intended exact ground.').isVisible(),true);
+ checks.push('A self-definition pin that does not resolve shows its named reason and the unresolved standing; no operative text is fabricated.');
  assert.deepEqual(errors,[]);await page.screenshot({path:new URL('creation.png',out).pathname,fullPage:true});
  await writeFile(new URL('creation-receipt.json',out),JSON.stringify({standing:'controlled-browser-not-live-model',checks},null,2));console.log(JSON.stringify({passed:checks.length,checks}));
 }finally{await browser?.close();await server.close();}

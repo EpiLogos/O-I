@@ -9,6 +9,7 @@ use oi_cradle_kernel::{
     flow::CentralClient,
 };
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::{
     fs,
@@ -116,6 +117,8 @@ fn root_does_not_fallback_to_a_configured_child_and_no_acceptance_is_implied() {
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
             expressive_character_ref: None,
+            self_source_ref: None,
+            logos_ref: None,
             skill_set_refs: vec![],
         })
         .unwrap();
@@ -158,6 +161,8 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         skill_refs: vec![],
         skill_set_refs: vec![],
         expressive_character_ref: Some(character.into()),
+        self_source_ref: None,
+        logos_ref: None,
     })
     .unwrap();
     let calls = rig.calls();
@@ -181,6 +186,8 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         skill_refs: vec![],
         skill_set_refs: vec![],
         expressive_character_ref: None,
+        self_source_ref: None,
+        logos_ref: None,
     })
     .unwrap();
     let calls = bare.calls();
@@ -206,6 +213,8 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
                 skill_refs: vec![],
                 skill_set_refs: vec![],
                 expressive_character_ref: Some(bad.into()),
+                self_source_ref: None,
+                logos_ref: None,
             })
             .is_err());
     }
@@ -218,6 +227,239 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         wire,
         Request::Propose {
             expressive_character_ref: Some(_),
+            ..
+        }
+    ));
+}
+
+/// The authored self-definition pins ride the proposal as exact-byte digests
+/// resolved under the confirmed scope root, and the read-back must carry
+/// exactly what was submitted.
+#[test]
+fn the_self_definition_pins_are_resolved_to_exact_bytes_and_forwarded_to_the_proposal() {
+    let rig = Rig::new();
+    let self_text = b"I am the reading colleague; my ground is held, not claimed.\n";
+    let logos_text = b"You act from within a relation.\n";
+    fs::create_dir_all(rig.root.join("Control/self/agents/colleague")).unwrap();
+    fs::write(rig.root.join("Control/self/agents/colleague/self.md"), self_text).unwrap();
+    fs::write(rig.root.join("Control/self/agents/colleague/logos.md"), logos_text).unwrap();
+    let self_ref = "central:source:control:root:Control/self/agents/colleague/self.md";
+    let logos_ref = "central:source:control:root:Control/self/agents/colleague/logos.md";
+    let expected = json!({
+        "source": {
+            "reference": self_ref,
+            "content_digest": format!("sha256:{:x}", Sha256::digest(self_text))
+        },
+        "relational_logos": {
+            "reference": logos_ref,
+            "content_digest": format!("sha256:{:x}", Sha256::digest(logos_text))
+        }
+    });
+    // The read-back (the stub serves `profile.json` for `agent-profile.review`)
+    // carries exactly the composed pins, so the echo check passes.
+    fs::write(
+        rig.root.join("profile.json"),
+        json!({"schema":"central.agent-profile/v1","ref":"agent-profile:allocated","revision":"r1",
+            "agent_ref":"agent:native","scope":"personal","world_ref":"control:root","name":"Colleague",
+            "self_definition": expected})
+            .to_string(),
+    )
+    .unwrap();
+    let review = rig
+        .call(Request::Propose {
+            name: "Colleague".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec![],
+            skill_set_refs: vec![],
+            expressive_character_ref: None,
+            self_source_ref: Some(self_ref.into()),
+            logos_ref: Some(logos_ref.into()),
+        })
+        .unwrap();
+    let calls = rig.calls();
+    let express: Value = serde_json::from_str(
+        calls[1]
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        express["self_definition"], expected,
+        "the exact bytes under the confirmed scope root are digested and pinned"
+    );
+    assert_eq!(
+        review["profile"]["self_definition"], expected,
+        "the read-back shows the profile carries the submitted pins"
+    );
+    // A changed byte is a different pin: the digest follows the exact file.
+    fs::write(rig.root.join("Control/self/agents/colleague/self.md"), b"changed\n").unwrap();
+    let changed = rig
+        .call(Request::Propose {
+            name: "Colleague".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec![],
+            skill_set_refs: vec![],
+            expressive_character_ref: None,
+            self_source_ref: Some(self_ref.into()),
+            logos_ref: Some(logos_ref.into()),
+        })
+        .unwrap_err();
+    assert!(
+        changed.contains("self_definition_echo_mismatch"),
+        "the read-back no longer matches the freshly digested pin: {changed}"
+    );
+    fs::write(rig.root.join("Control/self/agents/colleague/self.md"), self_text).unwrap();
+
+    // A missing source refuses by name, before `agent-profile.express` runs.
+    let missing = Rig::new();
+    let error = missing
+        .call(Request::Propose {
+            name: "Colleague".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec![],
+            skill_set_refs: vec![],
+            expressive_character_ref: None,
+            self_source_ref: Some(self_ref.into()),
+            logos_ref: Some(logos_ref.into()),
+        })
+        .unwrap_err();
+    assert!(error.contains("self_source_unreadable"), "{error}");
+    assert!(error.contains(self_ref), "{error}");
+    assert!(!missing.calls().iter().any(|c| c
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "agent-profile.express")));
+    // A ref from another world is not resolvable inside this confirmed scope.
+    let foreign = Rig::new();
+    fs::create_dir_all(foreign.root.join("Control/self/agents/colleague")).unwrap();
+    fs::write(foreign.root.join("Control/self/agents/colleague/self.md"), self_text).unwrap();
+    let error = foreign
+        .call(Request::Propose {
+            name: "Colleague".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec![],
+            skill_set_refs: vec![],
+            expressive_character_ref: None,
+            self_source_ref: Some("central:source:project:project:elsewhere:self.md".into()),
+            logos_ref: Some(logos_ref.into()),
+        })
+        .unwrap_err();
+    assert!(error.contains("self_source_unreadable"), "{error}");
+    assert!(!foreign.calls().iter().any(|c| c
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "agent-profile.express")));
+
+    // Exactly one pin is refused before any owner call.
+    let half = Rig::new();
+    let error = half
+        .call(Request::Propose {
+            name: "Colleague".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec![],
+            skill_set_refs: vec![],
+            expressive_character_ref: None,
+            self_source_ref: Some(self_ref.into()),
+            logos_ref: None,
+        })
+        .unwrap_err();
+    assert!(
+        error.contains("self_definition_requires_both_refs"),
+        "{error}"
+    );
+    assert!(half.calls().is_empty());
+
+    // A padded or non-Central ref never reaches the owner.
+    let malformed = Rig::new();
+    for bad in [
+        (" central:source:control:root:self.md", logos_ref),
+        (self_ref, "Work/notes.md"),
+    ] {
+        let error = malformed
+            .call(Request::Propose {
+                name: "Colleague".into(),
+                purpose: "Keep my exact words.".into(),
+                expected_scope_ref: "control:root".into(),
+                skill_refs: vec![],
+                skill_set_refs: vec![],
+                expressive_character_ref: None,
+                self_source_ref: Some(bad.0.into()),
+                logos_ref: Some(bad.1.into()),
+            })
+            .unwrap_err();
+        assert!(!error.contains("self_definition_requires_both_refs"), "{error}");
+    }
+    assert!(malformed.calls().is_empty());
+
+    // A path that leaves the confirmed scope is not a source inside it.
+    let escaping = Rig::new();
+    let error = escaping
+        .call(Request::Propose {
+            name: "Colleague".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec![],
+            skill_set_refs: vec![],
+            expressive_character_ref: None,
+            self_source_ref: Some(
+                "central:source:control:root:Control/self/../agents/colleague/self.md".into(),
+            ),
+            logos_ref: Some(logos_ref.into()),
+        })
+        .unwrap_err();
+    assert!(error.contains("self_source_unreadable"), "{error}");
+    assert!(!escaping.calls().iter().any(|c| c
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "agent-profile.express")));
+
+    // No-self proposals stay byte-compatible: nothing is invented.
+    let bare = Rig::new();
+    bare.call(Request::Propose {
+        name: "Reader".into(),
+        purpose: "Keep my exact words.".into(),
+        expected_scope_ref: "control:root".into(),
+        skill_refs: vec![],
+        skill_set_refs: vec![],
+        expressive_character_ref: None,
+        self_source_ref: None,
+        logos_ref: None,
+    })
+    .unwrap();
+    let calls = bare.calls();
+    let express: Value = serde_json::from_str(
+        calls[1]
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(express.get("self_definition").is_none());
+
+    // The wire spelling the renderer sends deserializes, both pins on.
+    let wire: Request = serde_json::from_value(json!({"action":"propose","name":"R","purpose":"P",
+        "expected_scope_ref":"control:root","self_source_ref":self_ref,"logos_ref":logos_ref}))
+    .unwrap();
+    assert!(matches!(
+        wire,
+        Request::Propose {
+            self_source_ref: Some(_),
+            logos_ref: Some(_),
             ..
         }
     ));
@@ -311,6 +553,8 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             expected_scope_ref: "project:other".into(),
             skill_refs: vec![],
             expressive_character_ref: None,
+            self_source_ref: None,
+            logos_ref: None,
             skill_set_refs: vec![],
         })
         .is_err());
@@ -322,6 +566,8 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
             expressive_character_ref: None,
+            self_source_ref: None,
+            logos_ref: None,
             skill_set_refs: vec![],
         })
         .is_err());
@@ -466,6 +712,8 @@ fn skillset_readings_use_the_owner_set_surface_and_propose_carries_set_refs() {
             skill_refs: vec!["skill/one".into()],
             skill_set_refs: vec!["skill-set:research".into()],
             expressive_character_ref: None,
+            self_source_ref: None,
+            logos_ref: None,
         })
         .unwrap();
     assert_eq!(value["operation"], "agent-profile.review");

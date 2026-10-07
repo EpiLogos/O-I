@@ -3,10 +3,26 @@
 import {readAgentScope,readAgentSkills,type NativeAgentScope,type NativeAgentSkill} from "./nativeAgentReadiness.ts";
 export interface AgentDraftInput { name: string; purpose: string; skillRefs: string[]; skillSetRefs: string[]; scopeConfirmed: boolean;
  /** Central file ref of the reusable expressive character (`reuse.kind:"character"`); saved as the profile's `expressive_character_ref`. */
- characterRef?: string }
+ characterRef?: string;
+ /** Authored self-definition pins: Central source refs whose exact bytes are
+  * digested natively and carried on the profile as `self_definition`. Both
+  * refs or neither; the source temperament stands apart from the visual
+  * character above. */
+ selfDefinition?: { selfSourceRef: string; logosRef: string } }
+/** One pinned source as the stored profile carries it (reference + digest). */
+export interface SelfSourcePin { reference: string; content_digest?: string }
+/** The stored `self_definition` pins echoed back on the profile. */
+export interface SelfDefinitionPins { source?: SelfSourcePin; relational_logos?: SelfSourcePin }
+/** One pinned source as the owner's review resolves it — the exact operative
+ * text when it resolved, or the named reason when it did not. */
+export interface SelfSourceReading { reference: string; content_digest?: string; resolved?: boolean; text?: string; reason?: string }
+/** `agent-profile.review`'s self-definition payload: the resolved exact text
+ * per pin and whether the whole set resolved. */
+export interface SelfDefinitionReading { source?: SelfSourceReading; relational_logos?: SelfSourceReading; self_sources_resolved?: boolean }
 export interface NativeReview {
  schema: "central.agent-profile-review/v1";
- profile: { ref: string; revision: string; agent_ref: string; name?: string; purpose?: string; intent_provenance?: {intent_expression: string}; skill_refs?: string[]; skill_set_refs?: string[]; expressive_character_ref?: string };
+ profile: { ref: string; revision: string; agent_ref: string; name?: string; purpose?: string; intent_provenance?: {intent_expression: string}; skill_refs?: string[]; skill_set_refs?: string[]; expressive_character_ref?: string; self_definition?: SelfDefinitionPins };
+ self_definition?: SelfDefinitionReading;
  scope_ref: string; content_digest: string; accepted: boolean; execution_authority_granted: false;
  acceptance: null | {schema: "central.agent-profile-acceptance/v1"; acceptance_ref: string; profile_ref: string; agent_ref: string; profile_revision: string; content_digest: string; scope_ref: string};
 }
@@ -29,7 +45,7 @@ export type AgentRequest =
  | {action: "roster" | "scope" | "skills" | "skillsets"}
  | {action: "skillset"; name: string}
  | {action: "session"; agent_session: string}
- | {action: "propose"; name: string; purpose: string; skill_refs: string[]; skill_set_refs: string[]; expected_scope_ref: string; expressive_character_ref?: string}
+ | {action: "propose"; name: string; purpose: string; skill_refs: string[]; skill_set_refs: string[]; expected_scope_ref: string; expressive_character_ref?: string; self_source_ref?: string; logos_ref?: string}
  | {action: "review"; profile_ref: string}
  | {action: "set-character"; profile_ref: string; expected_revision: string; expressive_character_ref: string | null}
  | {action: "accept"; profile_ref: string; expected_revision: string; expected_content_digest: string}
@@ -256,14 +272,34 @@ export class NativeAgentController {
    throw new StagePrecondition("A selected SkillSet is not in the native set field. Re-read the repertoire and explicitly repair or remove that selection.");
   }
   const character = draft.characterRef?.trim() || undefined;
+  // The authored self-definition is pinned exactly as given: a ref is an
+  // identity, so untrimmed input is refused, never silently rewritten, and a
+  // half-pinned pair is refused before any native call.
+  const rawSelf = draft.selfDefinition?.selfSourceRef ?? "";
+  const rawLogos = draft.selfDefinition?.logosRef ?? "";
+  if (rawSelf !== rawSelf.trim() || rawLogos !== rawLogos.trim()) {
+   throw new StagePrecondition("Self-definition source refs are pinned exactly as given; remove the surrounding spaces.");
+  }
+  if (!!rawSelf !== !!rawLogos) {
+   throw new StagePrecondition("Pin both the self-definition source and the Relational Logos source, or leave both empty.");
+  }
+  const selfSourceRef = rawSelf || undefined, logosRef = rawLogos || undefined;
+  for (const ref of [selfSourceRef, logosRef]) {
+   if (ref !== undefined && !ref.startsWith("central:source:")) {
+    throw new StagePrecondition("Self-definition refs are Central source refs (central:source:…); the exact bytes they name are pinned and human-accepted.");
+   }
+  }
   const review = validateReview(await this.owner({action:"propose",name:draft.name,purpose:draft.purpose,
    skill_refs:[...draft.skillRefs],skill_set_refs:[...draft.skillSetRefs],expected_scope_ref:scopeRef,
-   ...(character?{expressive_character_ref:character}:{})}),scopeRef);
+   ...(character?{expressive_character_ref:character}:{}),
+   ...(selfSourceRef?{self_source_ref:selfSourceRef,logos_ref:logosRef}:{})}),scopeRef);
   if (review.accepted || review.profile.name !== draft.name || review.profile.intent_provenance?.intent_expression !== draft.purpose
       || JSON.stringify(review.profile.skill_refs??[])!==JSON.stringify(draft.skillRefs)
       || JSON.stringify(review.profile.skill_set_refs??[])!==JSON.stringify(draft.skillSetRefs)
-      || (review.profile.expressive_character_ref ?? undefined) !== character) {
-   throw new Error("The native proposal differs from the submitted purpose/name/character or was accepted without this review");
+      || (review.profile.expressive_character_ref ?? undefined) !== character
+      || (review.profile.self_definition?.source?.reference ?? undefined) !== selfSourceRef
+      || (review.profile.self_definition?.relational_logos?.reference ?? undefined) !== logosRef) {
+   throw new Error("The native proposal differs from the submitted purpose/name/character/self-definition or was accepted without this review");
   }
   this.set({review,prepared:undefined,requestId:undefined,compound:undefined});
  }
