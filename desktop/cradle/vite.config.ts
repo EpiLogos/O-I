@@ -29,9 +29,24 @@ export default defineConfig(({ command }) => ({
       three: fileURLToPath(new URL("./node_modules/three", import.meta.url)),
     },
   },
+  optimizeDeps: {
+    // Scan beyond index.html: the knowledge graph's d3-force enters through
+    // a web worker and a lazy surface, and is otherwise discovered on first
+    // visit — re-optimizing and reloading the page mid-session, which
+    // browser tests then race. Discovery belongs to startup.
+    entries: ["index.html", "src/knowledge/KnowledgeSurface.tsx", "src/knowledge/layout.worker.ts"],
+  },
   server: {
     port: 1421,
     strictPort: true,
+    // Pre-transform the lazily loaded surfaces at server start: without it,
+    // the first navigation that discovers a new bare dependency (d3-force
+    // behind the knowledge graph view, three behind the stage bodies) makes
+    // the optimizer re-run and reload the page mid-session — which browser
+    // tests then race. Discovery belongs to startup, not to first visit.
+    warmup: {
+      client: ["src/knowledge/KnowledgeSurface.tsx"],
+    },
     // The design-system package lives outside the app root; its assets
     // (the loading mark) must serve in dev.
     fs: {

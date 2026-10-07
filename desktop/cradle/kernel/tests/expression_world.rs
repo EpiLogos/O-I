@@ -96,6 +96,10 @@ fn graph_reading() -> GraphReading {
                 owner_operation: "shared-field.projection".into(),
                 detail: "not requested".into(),
             },
+            wiki_links: oi_cradle_kernel::graph::GraphInput::Deferred {
+                owner_operation: oi_cradle_kernel::graph::WIKI_LINKS_DERIVATION.into(),
+                detail: "not requested".into(),
+            },
         },
         nodes: vec![graph_node()],
         edges: vec![GraphEdge {
@@ -114,9 +118,11 @@ fn graph_reading() -> GraphReading {
             wiki_nodes: 1,
             knowledge_rows: 0,
             hosted_rows: 0,
+            link_rows: 0,
             nodes: 1,
             edges: 1,
         },
+        unresolved_links: Vec::new(),
     }
 }
 

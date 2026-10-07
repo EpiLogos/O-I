@@ -63,7 +63,7 @@ deletion re-check, open-editor auto-reload signal.
 **Verify:** scripted external-edit fixture → receipts observed on the event
 log within documented latencies; no writes issued by the watcher.
 
-## T4 — `oi-links` resolver crate (A3 §1–§3, §6)
+## T4 — `oi-links` resolver crate (A3 §1–§3, §6) — ✅ realized 2026-10-07 in `kernel/src/links.rs` (module of `oi-cradle-kernel`, not a separate crate; no IO, owner-agnostic), parity-tested in-repo
 
 Seam: new Rust crate (workspace-local) + `@lezer/markdown` stays the
 front-end parser for the editor; the resolver runs Rust-side on file reads
@@ -75,7 +75,7 @@ basename multimap, re-resolution triggers on create/rename/delete.
 run against the crate's output via an adapter that emits the gate's expected
 JSON.
 
-## T5 — Graph construction + filters (A3 §4–§5)
+## T5 — Graph construction + filters (A3 §4–§5) — ◐ realized 2026-10-07 as kernel graph input 4 (`oi.cradle.wiki-links/v1`, selection `wiki_links`): derivation + wire are live and parity-proven, but **opt-in only** — the default-on read was measured >10s cold in CI (two owner spawns per document × bounded docs) and is deferred until the owner read path offers a bulk or cached shape
 
 Seam: extends the single graph seam `KernelOp::Graph`
 (`kernel/src/graph.rs`) + `src/knowledge/` (`graph.ts`, `filters.ts`,
@@ -103,7 +103,7 @@ contract (the gate-4 assertion set reimplemented for the O-I mechanism —
 same assertions, new oracle captured from the O-I implementation, since
 Obsidian's dumps bind to Obsidian's runtime).
 
-## T7 — Suite adapter runner (infrastructure for T2/T4/T5)
+## T7 — Suite adapter runner (infrastructure for T2/T4/T5) — ✅ realized 2026-10-07 as `kernel/tests/links_parity.rs`: the repo-native parity gate binds to the same fixture vault and the same captured 1.7.7 oracle as the campaign's `gate3-graph-parity.mjs` (maps, 37 probes, 16/19 graph, orphan/attachment toggles), so the round-trip is enforced by CI on every kernel change
 
 Content: a thin CLI (`oi-vault --gate-adapter …`) that lets the unmodified
 gate scripts point at the Rust implementation instead of the captured

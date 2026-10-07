@@ -21,8 +21,8 @@ export function EncounterGraph({nodes, edges, focus, visualLocus, camera, picked
     schema:"oi.cradle.graph-reading/v1",
     nodes:nodes.map(node => ({ref:node.ref, kind:node.kind, label:node.label, native_owner:"shared-field", provenance:{source:"explore.local-whole"}, actions:[]})),
     edges:edges.map(edge => ({relation:edge.relation, from_ref:edge.from, to_ref:edge.to, provenance:{source:"explore.local-whole"}})),
-    inputs:{central_wiki:{state:"available",owner_operation:"explore.local-whole"}, aikit_resolution:{state:"available",owner_operation:"explore.local-whole"}, shared_field:{state:"available",owner_operation:"explore.local-whole"}},
-    counts:{spaces:0, wiki_nodes:nodes.length, knowledge_rows:0, nodes:nodes.length, edges:edges.length},
+    inputs:{central_wiki:{state:"available",owner_operation:"explore.local-whole"}, aikit_resolution:{state:"available",owner_operation:"explore.local-whole"}, shared_field:{state:"available",owner_operation:"explore.local-whole"}, wiki_links:{state:"available",owner_operation:"explore.local-whole"}},
+    counts:{spaces:0, wiki_nodes:nodes.length, knowledge_rows:0, link_rows:0, nodes:nodes.length, edges:edges.length},
   }), [nodes, edges]);
   const layout = useLayout(reading);
   const svg = useRef<SVGSVGElement>(null);
