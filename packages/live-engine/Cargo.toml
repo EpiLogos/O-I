@@ -1,0 +1,9 @@
+[package]
+name = "live-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Audio graph core for the Live shell (M1 of shell/SHELL-BLUEPRINT.md): tracks, device chains, mixer, transport clock, offline render"
+
+[dependencies]
+live-dynamics = { path = "../live-dynamics" }
+live-set = { path = "../live-set" }
