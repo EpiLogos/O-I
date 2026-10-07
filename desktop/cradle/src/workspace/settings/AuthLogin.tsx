@@ -59,7 +59,13 @@ export function HarnessAuth({harness}: {harness: string}) {
   const face = data.authFaces[harness];
   useEffect(() => { ensureAuthFaces([harness]); }, [harness]);
   if (!face || face.state === "reading") return <p className="settings-muted" data-auth-reading={harness} role="status">Reading {harnessName(harness)}’s sign-in options…</p>;
-  if (face.state === "failed") return <p className="settings-inline-error" role="alert" data-auth-failed={harness}>Couldn’t read the sign-in options: {face.error}</p>;
+  if (face.state === "failed") {
+    // AIKit carries no profile for this harness, so it has no brokered
+    // sign-in to offer — the refusal is that fact, not a page error. The
+    // card keeps its own install and detection facts.
+    if (/harness_auth\.unknown_harness|not a harness AIKit carries a profile/.test(face.error)) return null;
+    return <p className="settings-inline-error" role="alert" data-auth-failed={harness}>Couldn’t read the sign-in options: {face.error}</p>;
+  }
   if (face.value.own_login.length === 0) return null;
   return <div className="settings-auth" data-harness-auth={harness}>
     {face.value.own_login.map((entry) => entry.runnable && entry.argv?.length

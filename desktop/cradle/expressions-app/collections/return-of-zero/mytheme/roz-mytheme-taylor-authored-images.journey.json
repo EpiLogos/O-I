@@ -11,10 +11,10 @@
       "name": "A word that can return to its speaker",
       "character": "Checkmate asks to be played again; mystery deepens as the relation becomes articulate; the One knows the One through no-one; 0 is the One, 1 the All.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.04,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,12 @@
           "#c9b458"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.5,
+          "circulation": 0.25,
+          "dispersion": 0.06
+        }
       },
       "entities": [
         {
@@ -65,16 +74,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st429",
+                "id": "e386-sq1",
                 "text": "♟",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.147,
+                    "y": 0.147
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e386-sq2",
+                "text": "♟",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.147,
+                    "y": 0.147
+                  },
+                  "rotation": 180,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e386-sq3",
+                "text": "♟",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.147,
+                    "y": 0.147
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -149,16 +221,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st431",
+                "id": "e388-sq1",
                 "text": "0·1",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e388-sq2",
+                "text": "All→none",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e388-sq3",
+                "text": "0·1",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -221,29 +356,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The corpus gives twenty-three individual works within one authored whole: ten undated earlier works, the six-work P0→P5 composition, seven dated journal works from March–June 2026. FT-P01 plays to checkmate and asks to play again — the final repetition of play reopening what the ending closed. FT-P02 gives the Unknown relative knowability and removes final possession from the Known, whose exclusive focus spits back the empty husk; Knowing itself is the Mystery, the conjugal joy of Known and Knower. FT-P03 passes \"it",
+          "body": "The corpus gives twenty-three individual works: ten earlier works, P0→P5, seven journal works. FT-P01 plays to checkmate and asks to play again. FT-P02 gives the Unknown relative knowability and removes final possession from the Known — the husk is what an exclusive focus spits back. FT-P03 passes 'it takes one to know one' through three changes of case. FT-P07 dreams institutions that respect their constitution.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "takes one to know one\" through three changes of case to no-one, One knowing One. FT-P04 breathes the Two Ones in one line. FT-P07 dreams institutions which respect their constitution and do not devour the humanity that made and makes them — the present tense keeping originating act from becoming exhausted credit. FT-P08 wakes by getting tired; FT-P09's freedom moves from a rule to itself to the Rule of The Self, the message passing the pigeonhole; FT-P10 lets slighting approach slightly without gaining final authority.\n\nOccurrences: checkmate and the replayed game (FT-P01, #5→0); the husk (FT-P02); the three cases of one (FT-P03); the 0/1 line (FT-P04, developed at #1); the devouring institution (FT-P07, returned at #4's black sun).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: checkmate and the replayed game (FT-P01, #5→0); the husk (FT-P02); the three cases of one (FT-P03); the 0/1 line (FT-P04, developed at #1); the devouring institution (FT-P07, returned at #4's black sun).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -266,18 +401,34 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-play",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.12,
+          "max": 0.12,
+          "rate": 0.2,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-tay-1-roads",
       "name": "Two roads, six works, and the return through the loop",
       "character": "2 → (−1)+1 = 0 beside 2 → 0/1 → 00,01,10,11 + 0,1 = 4+2; P3's productive play answered by P4's severance; P5's word that points where no word can stand.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.12,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -285,7 +436,15 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.35,
+        "volumeEnabled": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0d0a14",
+        "depthPerspective": true
       },
       "field": {
         "background": "#f6f1e6",
@@ -296,7 +455,13 @@
           "#c9b458"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.45,
+          "circulation": 0.15,
+          "zConfinement": 0.65,
+          "dispersion": 0.07
+        }
       },
       "entities": [
         {
@@ -306,7 +471,7 @@
           "position": {
             "x": -0.45,
             "y": -0.21,
-            "z": 0
+            "z": -0.4
           },
           "size": {
             "x": 0.313,
@@ -327,16 +492,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st433",
+                "id": "e390-sq1",
                 "text": "2→0",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.313,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e390-sq2",
+                "text": "2→(−1)+1=0",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e390-sq3",
+                "text": "2→0",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.313,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -348,7 +576,7 @@
           "position": {
             "x": 0.45,
             "y": 0.35,
-            "z": 0
+            "z": 0.35
           },
           "size": {
             "x": 0.5,
@@ -369,16 +597,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st434",
+                "id": "e391-sq1",
                 "text": "4+2",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e391-sq2",
+                "text": "00 01 10 11",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e391-sq3",
+                "text": "4+2",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -390,7 +681,7 @@
           "position": {
             "x": 0,
             "y": -0.43,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.433,
@@ -411,16 +702,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st435",
+                "id": "e392-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.433,
+                    "y": 0.433
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e392-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.2,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.433,
+                    "y": 0.433
+                  },
+                  "rotation": 90,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e392-sq3",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 180,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -432,7 +786,7 @@
           "position": {
             "x": 0.55,
             "y": -0.42,
-            "z": 0
+            "z": -0.15
           },
           "size": {
             "x": 0.22,
@@ -474,7 +828,7 @@
           "position": {
             "x": -0.5,
             "y": -0.42,
-            "z": 0
+            "z": 0.15
           },
           "size": {
             "x": 0.24,
@@ -525,29 +879,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The P0→P5 order belongs to the composition. FT-P11 is the fork in two printed rows: 2 → (−1)+1 = 0, and 2 → 0/1 → 00, 01, 10, 11 + 0, 1 = 4+2 — the difference is the fate of relation under the two operations. FT-P12: what binary cannot compute, where two see the common root, there our powers grow. FT-P13: where language stays understanding frays; let language cave and lay bare the way, over the edge, under the lips. FT-P14 carries two through the Two Ones — never rent asunder, two playing itself apart to 4+2, looking back with love, six",
+          "body": "FT-P11 is the fork: 2 → (−1)+1 = 0, and 2 → 0/1 → 4+2 — relation's fate under two operations. FT-P12: where two see the common root, our powers grow. FT-P14 carries two through the Two Ones — playing itself apart to 4+2, falling down through the loop. FT-P15: we forgot that one really is two; humility before precision. FT-P16 finds the limit — so, to speak.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "perfection seeking recollection, ring around the Rosie until you fall down through the loop. FT-P15 names the age's underlying issue: we forgot that one really is two; the cutting mind is derived, measures by limiting a sky, seals with patterned definition; humility lands as prerequisite of precision. FT-P16 moves God from disputed object to a word pointing where no word can stand, the account including its own release — whereof one must be silent, there one shouldn't speak; and yet the essence of the project is to find the limit, so, to speak.\n\nOccurrences: the fork rows (FT-P11); the common root (FT-P12); the loop's fall (FT-P14, #5→0); the sealed sky and open sky (FT-P15, #4's frame images); the three pauses (FT-P16).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the fork rows (FT-P11); the common root (FT-P12); the loop's fall (FT-P14, #5→0); the sealed sky and open sky (FT-P15, #4's frame images); the three pauses (FT-P16).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -577,10 +931,10 @@
       "name": "Images that retain the relation they expose",
       "character": "The fish describing water; the cage and the window; the kaleidoscope; the Necker cube; centres without a final circumference; the broken token; the erased taijitu.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -589,7 +943,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.35,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -600,7 +958,12 @@
           "#c9b458"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.35,
+          "speed": 0.4,
+          "circulation": 0.1,
+          "dispersion": 0.08
+        }
       },
       "entities": [
         {
@@ -673,16 +1036,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st439",
+                "id": "e396-sq1",
+                "text": "▣",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e396-sq2",
+                "text": "☐",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e396-sq3",
                 "text": "▣☐",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -799,16 +1225,64 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st442",
+                "id": "e399-sq1",
                 "text": "⧒⧓",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.45,
+                  "y": -0.4,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e399-sq2",
+                "text": "⧒⧓",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.28,
+                  "y": -0.32,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -841,16 +1315,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st443",
+                "id": "e400-sq1",
+                "text": "∵∴",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e400-sq2",
                 "text": "∴",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.173,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e400-sq3",
+                "text": "",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.12,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.3,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -871,35 +1408,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The prose images give the field material operations. The fish attempts to describe the water in which it lives: every distinction is sustained by what it tries to place before itself — Draft 3's faithful definition succeeds by acknowledging the limit at which its subject cannot become one more bounded thing. The definition becomes cage or window: both need the frame; the window keeps a definite frame while admitting what exceeds it (C21's living symbol). The kaleidoscope rearranges relations without licensing every description: a word becomes a local orbital centre, centralising and",
+          "body": "The prose images give material operations: the fish describing the water it lives in, the faithful definition succeeding by acknowledging its limit; cage and window both needing the frame; the kaleidoscope's word a local orbital centre (returns-to Vāk); the Necker cube's context holding its readings; the kept fracture authenticating relation across absence; the erased dots — form kept, reciprocity gone (A13).",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "decentring both belonging to the authored image; it returns-to Vāk. The Necker cube admits a change of orientation; the context holds the readings in relation rather than adding a fourth competing face. Centres without a final circumference remove the demand for a last enclosing spectator (A26). The broken token: keeping the fracture lets relation be authenticated across absence — one half cannot announce itself the whole (A23). The erased taijitu dots: one-dot erases the retained other, the outer form of distinction kept while the reciprocal relation that made it generative disappears (A13).\n\nOccurrences: the fish and the definition (Draft 3, A01); the cage/window (C21); the orbital word (A06); the cube's context (A04, A22); the kept counterpart (A23); the erased dots (A13).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the fish and the definition (Draft 3, A01); the cage/window (C21); the orbital word (A06); the cube's context (A04, A22); the kept counterpart (A23); the erased dots (A13).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -922,11 +1459,11 @@
       "id": "m-tay-4-blacksun",
       "name": "The black sun and the radiating star",
       "character": "Capture receives energy without answering circulation; the Work/Play inversion; four rings of depth; the attention sequence from cynicism to blankness — and the star that gives outward.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.0,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -935,7 +1472,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#161a20",
@@ -946,7 +1487,12 @@
           "#8c3b2e"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.6,
+          "speed": 0.55,
+          "circulation": -0.35,
+          "dispersion": 0.05
+        }
       },
       "entities": [
         {
@@ -1019,16 +1565,102 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st445",
+                "id": "e402-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.9,
+                    "y": 0.9
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e402-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.2,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.68,
+                    "y": 0.68
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4d78",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e402-sq3",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.2,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.48,
+                    "y": 0.48
+                  },
+                  "rotation": 0,
+                  "tint": "#7a2e1d",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e402-sq4",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.32,
+                    "y": 0.32
+                  },
+                  "rotation": 0,
+                  "tint": "#a0301d",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1061,16 +1693,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st446",
+                "id": "e403-sq1",
                 "text": "✷",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.0,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#7a6a52",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e403-sq2",
+                "text": "✷",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.36
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1175,29 +1847,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Attention and labour move toward a centre; at the public edge actions present as work done for others, while deeper the power to decide their use is less visible. The black sun gathers capture: energy received without answering circulation. The radiating star changes the destination: what reaches the centre becomes available outward as generative power. The adopted unit gives the contrast a complete Work/Play inversion — public work as performance, decision in concealed play — over four concentric rings: outer philanthropy at Neptune's distance, capital's stabilising gravity at Jupiter's, inner fixers at Mercury's proximity,",
+          "body": "Attention and labour move toward a centre; the public edge presents work done for others, and the power to decide its use sits deeper. The black sun gathers capture: energy received without answering circulation. The radiating star changes the destination: what reaches the centre becomes available outward. The Work/Play inversion runs over four concentric rings — Neptune, Jupiter, Mercury, corona. Cynicism, exhaustion, blankness: a field ready for re-inscription.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "the innermost corona where mutual vulnerability binds. The false accounting excludes interior experience as unledgerable, then treats exclusion as absence. The attention sequence runs cynicism, exhaustion, blankness — a field ready for re-inscription; exposing the performance alone has not returned power. The city/bomb/surveillance/counterfeit unit differentiates destruction, capture and forged source-image as distinct failures; the God-image enters as the cultural question of what a collective places at the source of organised power. Particular allegations in the raw unit require their own evidence and are not reproduced.\n\nOccurrences: the black sun's intake and the star's radiance (#4); the four rings (#4); the attention sequence (#4); the city/bomb/surveillance/counterfeit distinctions (#4, returned at #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the black sun's intake and the star's radiance (#4); the four rings (#4); the attention sequence (#4); the city/bomb/surveillance/counterfeit distinctions (#4, returned at #5→0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -1220,17 +1892,33 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-capture",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.1,
+          "phase": 0.4,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-tay-5-return",
       "name": "Keeping the opening in the form",
       "character": "Each ending qualifies its work: the replayed game, the loop's fall, the returned shoe. The four operators of alterity; the recursive Bimba office; the way back to the particular words.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.2,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1239,7 +1927,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -1250,7 +1942,12 @@
           "#c9b458"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.4,
+          "circulation": 0.3,
+          "dispersion": 0.08
+        }
       },
       "entities": [
         {
@@ -1365,16 +2062,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st451",
+                "id": "e408-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.425,
+                    "y": 0.425
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e408-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7a52",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1407,16 +2144,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st452",
+                "id": "e409-sq1",
                 "text": "C38",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e409-sq2",
+                "text": "pratibimba",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e409-sq3",
+                "text": "C38",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1437,35 +2237,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The complete poems make return exact: play begins again after checkmate; the six routes fall through their loop; the distressed speaker must reconcile what he could not simply eradicate — two hearts in one breast, the choice between soothing sleep and entrainment, reconciliation of the brothers making him capable of becoming a right light to others (FT-P18's complete aftermath, not the excerpt ending at the kiln); the fitting shoe must still be returned. The final four operators belong to one encounter with alterity: God as Other; shadow as other-self; friend as my-self's-other; alien or",
+          "body": "Return is exact here: play begins again after checkmate; the six routes fall through their loop; the shoe must still be returned. God, shadow, friend, alien — four offices of alterity meeting in one encounter (A27, without becoming four character classes). Bimba keeps contextual office and wider dependence together. Corrections stand beside their texts; the way back to the particular words stays open.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "enemy as externalised uncertainty — together returning-to A27 without becoming four universal character classes. The Two Ones receive FT-P04 and the P0–P5 movement; faithful definition receives fish, frame and speaking limit; Vāk the language that can yield while remaining precise. The recursive Bimba operation preserves contextual office and wider order of dependence together. The compilation supplies all twenty-three complete poems; the raw site file remains unlocated; the Venus naming vector and protected experiential material keep their gates — the way back to the particular words stays open.\n\nOccurrences: the returned shoe (FT-P23, #5→0); the loop's fall (FT-P14, #2, #5→0); the four operators (#4, #5→0); the authorial sequence corrections (FT-P19, FT-P21, FT-P22 as stated instructions).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the returned shoe (FT-P23, #5→0); the loop's fall (FT-P14, #2, #5→0); the four operators (#4, #5→0); the authorial sequence corrections (FT-P19, FT-P21, FT-P22 as stated instructions).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1485,5 +2285,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T00:00:00.000Z"
 }

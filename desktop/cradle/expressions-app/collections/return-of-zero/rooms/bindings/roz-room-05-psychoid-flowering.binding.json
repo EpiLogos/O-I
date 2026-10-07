@@ -1,0 +1,142 @@
+{
+ "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json",
+ "family": "rooms",
+ "room_slug": "05-psychoid-flowering",
+ "worker": "E1",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-essay",
+  "family-section-room"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+  "records": [
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+    "sha256": "615f25e7946cf5fa74b9f7f304b11351f71c860c6846ad0003930320a958a614"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+    "sha256": "0cbbc0ce02feefd0cfcb3cb40117de67e1b788bfe46207be4a3054dddadec14d"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md",
+    "sha256": "4d1b5712e7b5752078eb586d85d9f4f8b87d720d004e4427fec7cae801c8ffd8"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/32-s4-p1-jung-individuation.md",
+    "sha256": "ac1398fcdd10b04c8918671f498e516a97862874b50ec476c7198ee67a2ba5cc"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/33-s4-p2-complexio-quaternity-senarius.md",
+    "sha256": "968bcb2600a5b920fc101465fe9e197b94225bcf2d5717fc8c7325bd0fda8e3d"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md",
+    "sha256": "b7a84801cc8621da7f99e554fc56c4bc01983b06087a928f23258fe15a529680"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/35-s4-p4-gebser-apollo-dionysus.md",
+    "sha256": "8dca25c303fcec914ff66995c89ceb3d685db68044c1ed46bca87c6a0c8a2384"
+   },
+   {
+    "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/36-s4-p5-mef-prompt-thrownness.md",
+    "sha256": "5a63f86318ab84825332c7d979fc4814b6cdf5f143e4c41afc99d47446165a88"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "scenes": [
+  {
+   "scene_id": "movement-31",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md",
+   "relations": "movement identity: §4 · #0 — The Psychoid Problem · canonical route: P1-M31 → A18 · A19 · A20 / C30 · C31 · C32 — Homologia/Analogia + Jung–Pauli Episteme · reading path: ← previous · M30 The Arche-Topos   ·   next → M32 Individuation through QL `X/x`"
+  },
+  {
+   "scene_id": "movement-32",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/32-s4-p1-jung-individuation.md",
+   "relations": "movement identity: §4 · #1 — Individuation through QL `X/x` · canonical route: P1-M32 → A21 / C19 · C31 · C34 · C35 · C36 — Arbitration Resolution-in-Reconciliation → Recognition · reading path: ← previous · M31 The Psychoid Problem   ·   next → M33 Complexio, Quaternity, and Senarius"
+  },
+  {
+   "scene_id": "movement-33",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/33-s4-p2-complexio-quaternity-senarius.md",
+   "relations": "movement identity: §4 · #2 — Complexio, Quaternity, and Senarius · canonical route: P1-M33 → A18 · A21 / C30 · C36 · C64 — exact quaternity/senarius relations only where earned · reading path: ← previous · M32 Individuation through QL `X/x`   ·   next → M34 Lacan, Matheme, and Mytheme"
+  },
+  {
+   "scene_id": "movement-34",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md",
+   "relations": "movement identity: §4 · #3 — Lacan, Matheme, and Mytheme · canonical route: P1-M34 → A18 · A20 / C21 · C30 · C61 · C64 — Matheme/Mytheme/Episteme disclosure with warrant boundaries · reading path: ← previous · M33 Complexio, Quaternity, and Senarius   ·   next → M35 Apollo Through Dionysus"
+  },
+  {
+   "scene_id": "movement-35",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/35-s4-p4-gebser-apollo-dionysus.md",
+   "relations": "movement identity: §4 · #4 — Apollo Through Dionysus · canonical route: P1-M35 → A04 · A20 · A21 · A35 / C09 · C32 · C34 · C36 · C56 — Regard + whole Apollo/Dionysus/Daphne Mytheme where ratified · reading path: ← previous · M34 Lacan, Matheme, and Mytheme   ·   next → M36 MEF and Prompt Thrownness"
+  },
+  {
+   "scene_id": "movement-36",
+   "source_ref": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/36-s4-p5-mef-prompt-thrownness.md",
+   "relations": "movement identity: §4 · #5→0 — MEF and Prompt Thrownness · canonical route: P1-M36 → A14 · A26 · A28 · A33 / C39 · C40 · C43 · C44 · C45 · C46 — Account; MEF framework / Prompt Thrownness / model-internal technical handoff · reading path: ← previous · M35 Apollo Through Dionysus   ·   next → M37 Central — Meaningful Continuity"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "diagram",
+   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "rooms/roz-room-05-psychoid-flowering.cover.png",
+ "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+ "status": "captured",
+ "notes": [
+  "E0 acceptance repair: text/field collision fixed on movement-31 (twin discs shifted right-of-centre and trimmed 1.35→1.2, spot-checked) and movement-32 (X/x pair re-centred); grammar shift + route layer top-left applied to all six scenes; cover re-captured at authored count.",
+  "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+  "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+  "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+  "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+  "Room register: dusk (bg #171a21, parchment ink, red/blue accents) — the unconscious field's own key, distinct from every paper room and from the gold night of §5→0.",
+  "m31 3D (z = the seam): psyche at −z, physis at +z, the vertical medium plane between them — a pattern appearing on both sides of an unmastered threshold, staged as the engine's own plane; turbulence LFO stirs the field.",
+  "m32 individuation: X grows as x brightens — capacity and instance become mutually legible; neither step completes without the other.",
+  "m33 complexio/quaternity/senarius (layout ring): the centre walks complexio → quaternity → 4+2 while four quiet corner pins hold the quaternity's square; vortex pointer = the quaternion's slow turn.",
+  "m34 the full recognition sequence (the presaging ledger's payoff): 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 → 0/1, warming to red through field-availability and heaviest at recognition's return; shove pointer = the stroke's occlusion; longest duration 18. The only other crossed zero in the corpus is room-02 m16 — this is the full sequence's home.",
+  "m35 Apollo through Dionysus: form fades to transparent as participation reddens, then participation returns as communicable form — the two formations' steps interleave; circulation LFO = the swing.",
+  "m36 MEF and prompt thrownness: one light → declared refractions, with the two companion discs tinted blue and red as the standing lenses; implode click = the spectrum gathered.",
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-essay-l2",
+  "lane": "ESSAY+ROOMS wave 2",
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "0": "M34: the recognition sequence's origin — representation's zero-space (the full sequence lives HERE, psychoid material)",
+  "1": "M34: the determinate mark the mediation makes available",
+  "psyche": "M31: the psychic description retained across the threshold — image and meaning without reduction to mechanism (red, at −z)",
+  "physis": "M31: the physical description retained across the same seam — event and matter without reduction to psychology (blue, at +z)",
+  "X": "M34: the field of crossings disclosed after the occlusion",
+  "x": "M32: the indefinite particular — no determination exhausts the whole; individuation as a local x transparent to the larger relation",
+  "4+2": "M33: the senarius — the implicate poles retained so the quaternity can move and return",
+  "complexio": "M33: the complexio oppositorum preserves the energy of opposites (red: the tension kept)",
+  "quaternity": "M33: Jung's differentiated wholeness — four terms around a centre, held by the four quiet corner pins",
+  "Ø": "M34: the first occlusion — the mediating stroke fused into the zero it crosses (the sequence's own step, transition 1.4: the stroke's appearance is the slowest)",
+  "Ø/X": "M34: occlusion and field held together — the mediating stroke legible as mediation",
+  "(0/Ø)/(1/X)": "M34: the two orientations of the crossed relation — field-availability",
+  "0/1": "M34: recognition's return (1 ↷ 0/1) — the achieved mark returns to its ground; the sequence's heaviest step",
+  "form": "M35: Apollonian form — determinate difference (bright parchment)",
+  "transparent": "M35: form becomes transparent to Dionysian participation (faded blue: the aperture letting through)",
+  "participation": "M35: Dionysian participation — the red weight of the field where form dissolves",
+  "communicable": "M35: participation returns as communicable form — the swing's second half",
+  "one light": "M36: one QL light — the paradigm from which the inquiry proceeds",
+  "declared refractions": "M36: MEF's lenses — source, lens, transformation, agreement, divergence, limit, return, each declared"
+ }
+}

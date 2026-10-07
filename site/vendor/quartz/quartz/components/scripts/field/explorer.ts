@@ -119,7 +119,7 @@ export function mountExplorer() {
     reading.forEach((r) => r.classList.remove("is-reading")); reading = []
     const c = S.cur; if (c.i == null) return
     const n = D.nodes[c.i]
-    const m = n.s === "THE-RETURN-OF-ZERO" ? c.m : n.k === "movement" ? n.m : null
+    const m = n.k === "manuscript" ? c.m : n.k === "movement" ? n.m : null
     if (!m || !D.moves[m]) return
     for (const ni of [D.moves[m].i, D.rooms[D.moves[m].room].i]) { const r = rows.get(ni); if (r && ni !== c.i) { r.classList.add("is-reading"); reading.push(r) } }
   }

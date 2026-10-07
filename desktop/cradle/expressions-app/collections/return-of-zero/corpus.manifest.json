@@ -1,6 +1,6 @@
 {
   "schema": "oi.legacy-collections/v1",
-  "exported_at": "2026-09-20T18:31:14.556Z",
+  "exported_at": "2026-10-06T19:30:00.000Z",
   "source": "Return of Zero — the E0 expression corpus (arguments, conjugates A′, episteme, matheme, symbolon, mytheme wholes)",
   "provenance": {
     "schema": "oi.collection-provenance/v1",
@@ -9,11 +9,11 @@
     "paths": [
       "Work/O-I/desktop/cradle/expressions-app/collections/return-of-zero"
     ],
-    "ground": "EpiLogos/Point-Cloud-Demo production/return-of-zero (E0 corpus: arguments-a, conjugates-a-prime, episteme, matheme, mytheme, symbolon) + EpiLogos/Antykathera-Essay-Work sources at dbf3b17 (sha-verified at export)",
+    "ground": "EpiLogos/Point-Cloud-Demo production/return-of-zero (E0 corpus: arguments-a, conjugates-a-prime, episteme, matheme, mytheme, symbolon) + EpiLogos/Antykathera-Essay-Work sources at dbf3b17 (sha-verified at export) | enriched in place 2026-10-06 by the Expression enrichment programme (branch enrich/expressions-20261006); the E0 byte-exact-copy lineage above is the collection origin, not its current content.",
     "exported_at": "2026-09-20T18:31:14.556Z",
     "generator": {
-      "name": "session fix/corpus-native-members-20260920 (byte-exact copy from production/return-of-zero, sha256-verified per artifact and per scene via bindings)",
-      "revision": "corpus-2026-09-20"
+      "name": "session enrich/expressions-20261006 (the 2026-10 enrichment pass: every member re-authored to the richness floor in place — sequences, multi-family scene change, 3d, pointer profiles, in-stage text, glyph rationales; bindings re-based, source records preserved at dbf3b17 with reading revision fc59a719)",
+      "revision": "enrichment-2026-10-06"
     },
     "source_revision": {
       "repo": "EpiLogos/Antykathera-Essay-Work",

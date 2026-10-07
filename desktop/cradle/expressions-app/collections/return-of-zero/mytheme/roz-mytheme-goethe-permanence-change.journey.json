@@ -11,10 +11,10 @@
       "name": "The wish for one hour — and the west wind",
       "character": "The mild west wind shakes down a shower of blossom: the force carrying beauty away is gentle, and the loss begins within the weather of its flourishing.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.0,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,12 @@
           "#e9e2cf"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.35,
+          "circulation": -0.2,
+          "dispersion": 0.12
+        }
       },
       "entities": [
         {
@@ -71,58 +80,16 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "st414",
+                "id": "e373-sq1",
                 "text": "❀",
                 "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.184,
-                    "y": 0.184
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st415",
-                "text": "❀ ❀",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.307,
-                    "y": 0.123
-                  },
-                  "rotation": 0,
-                  "tint": "#7c8b3f",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st416",
-                "text": "❀",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": {
+                  "x": 0.0,
+                  "y": -0.17,
+                  "z": 0
+                },
                 "objectState": {
                   "size": {
                     "x": 0.16,
@@ -131,6 +98,33 @@
                   "rotation": 0,
                   "tint": "#c9a227",
                   "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e373-sq2",
+                "text": "❀",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.8,
+                "position": {
+                  "x": 0.12,
+                  "y": -0.34,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7a52",
+                  "tintWeight": 0.5,
                   "force": {
                     "kind": "none",
                     "strength": 0,
@@ -163,9 +157,9 @@
           "tintWeight": 0.5,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.12,
+            "radius": 0.4,
             "spin": 0
           },
           "station": null,
@@ -242,29 +236,29 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The speaker asks for one hour in which the early blessing could be held. Already the mild west wind shakes down a shower of blossom; the force carrying beauty away is gentle, and the loss begins within the weather that belongs to its flourishing. Green foliage offers another pleasure — its shade just enjoyed — but the speaker sees autumn within that present gift: the leaves will turn pale",
+          "body": "The speaker asks for one hour in which the early blessing could be held. Already the mild west wind shakes down a shower of blossom — the loss begins within the very weather of flourishing. The shade just enjoyed holds autumn already: the leaves will turn pale and a storm will scatter them. The Klett witness carries all forty lines; Nims's page 169 stays uncollated.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "and a storm will scatter them. The first eight lines move through a wish, an accomplished loss, a question about enjoyment and an anticipated loss. The whole follows all forty German lines in the Klett 2010 witness, citing the Frankfurt edition of 1988; the project's alias \"Permanence and Change\" names the same poem, and Nims's page 169 remains uncollated — the account uses the German whole.\n\nOccurrences: the blossom-shower (#0); the west wind (#0); the shade and anticipated storm (#0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the blossom-shower (#0); the west wind (#0); the shade and anticipated storm (#0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
@@ -287,18 +281,34 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-wind",
+          "target": "field.params.dispersion",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.06,
+          "max": 0.06,
+          "rate": 0.18,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-goe-1-river",
       "name": "Fruit, valley, river",
       "character": "Whoever wants the fruit must reach promptly; every downpour changes the beloved valley; one does not swim in the same river twice.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1.2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.12,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -306,7 +316,15 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.35,
+        "volumeEnabled": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0a1410",
+        "vortex3d": true
       },
       "field": {
         "background": "#f6f1e6",
@@ -317,7 +335,13 @@
           "#e9e2cf"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.45,
+          "speed": 0.6,
+          "circulation": 0.5,
+          "dispersion": 0.08,
+          "zConfinement": 0.6
+        }
       },
       "entities": [
         {
@@ -327,7 +351,7 @@
           "position": {
             "x": -0.5,
             "y": -0.07,
-            "z": 0
+            "z": 0.4
           },
           "size": {
             "x": 0.172,
@@ -348,16 +372,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st419",
+                "id": "e376-sq1",
                 "text": "❧",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e376-sq2",
+                "text": "❧",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.15,
+                    "y": 0.15
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a2b",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -369,7 +433,7 @@
           "position": {
             "x": 0.45,
             "y": 0.35,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.6,
@@ -411,7 +475,7 @@
           "position": {
             "x": 0,
             "y": -0.35,
-            "z": 0
+            "z": -0.45
           },
           "size": {
             "x": 1.2,
@@ -432,16 +496,56 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st421",
+                "id": "e378-sq1",
                 "text": "",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.52,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e378-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -467,7 +571,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The second stanza answers the wish to hold with an instruction to take one's share: whoever wants the fruit must reach for it promptly, ripening and germination overlapping — what passes includes both the loss of a present gift and the advent of another. Rain enlarges the movement from plant to landscape: every downpour changes the beloved valley, yet affection gives no exemption from alteration. Then the river: one does not swim in the same river a second time. The swimmer participates bodily in what had been observed from shade and bank; water carries the scene forward through a medium that cannot be kept for a repeat encounter.",
+          "body": "The second stanza answers the wish to hold with an instruction: take your share. Whoever wants the fruit must reach promptly — ripening and germination overlap; what passes includes both loss and advent. Rain carries it outward: every downpour changes the beloved valley, and affection gives no exemption. Then the river: one does not swim in the same water twice; the swimmer enters what was watched from the bank.",
           "x": 0.04,
           "y": 0.55,
           "width": 620,
@@ -507,17 +611,33 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-current",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.15,
+          "max": 0.15,
+          "rate": 0.22,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-goe-2-body",
       "name": "The changing eyes; the lip, the foot, the hand",
       "character": "Walls and palaces are seen with different eyes; the lip that found healing, the foot bold on the cliff, the hand that did good — all changed.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.05,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -526,7 +646,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.32
       },
       "field": {
         "background": "#f6f1e6",
@@ -537,7 +661,13 @@
           "#e9e2cf"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.5,
+          "speed": 0.45,
+          "circulation": -0.1,
+          "dispersion": 0.1,
+          "turbulence": 0.15
+        }
       },
       "entities": [
         {
@@ -652,16 +782,192 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st424",
+                "id": "e381-sq1",
+                "text": "Lippe",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e381-sq2",
+                "text": "Fuß",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.24,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e381-sq3",
+                "text": "Hand",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e381-sq4",
                 "text": "∘△✋",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e386",
+          "name": "der Name — arrived like a wave, hurrying toward the element",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.38,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≈",
+          "share": 1,
+          "tint": "#7d8a8f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e386-sq1",
+                "text": "≈",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": {
+                  "x": 0.5,
+                  "y": 0.38,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e386-sq2",
+                "text": "≈",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": {
+                  "x": 0.74,
+                  "y": 0.52,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.09
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.4,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -682,35 +988,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The poem turns on the addressee: walls and palaces appear rock-solid, but they are continually seen with different eyes — recognition has a history on the observer's side. The stanza then leaves the spectator's eyes for bodily powers remembered through their acts: the lip that once found healing in a kiss has passed away; the foot that tested itself against the cliff with a chamois's",
+          "body": "Walls and palaces, rock-solid, are seen with different eyes — seeing has a history on the observer's side. Then the body remembered through its acts: the lip that found healing in a kiss, the foot that tested the cliff, the hand once gentle in doing good — all changed. The name remains, its bearer altered: what calls itself by it arrived like a wave, hurrying toward the element.",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "boldness; the hand once willing and gentle in doing good. Kindness belongs to the history of this body alongside pleasure and daring. Then the name remains where its bearer has altered: what now calls itself by that name arrived like a wave and hurries toward the element — water entering the description of the named person, a recognisable designation continuing across a succession it cannot arrest.\n\nOccurrences: the changing eyes on the walls (#2); the cliff and the chamois-foot (#2); the doing-good hand (#3); the wave and the element (#3, #4).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the changing eyes on the walls (#2); the cliff and the chamois-foot (#2); the doing-good hand (#3); the wave and the element (#3, #4).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -733,11 +1039,11 @@
       "id": "m-goe-4-muses",
       "name": "Beginning and end joined; content and form",
       "character": "The Muses' favour: what the breast carries and what the mind forms have distinct places — Den Gehalt in deinem Busen / Und die Form in deinem Geist.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 2.0,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.08,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -746,7 +1052,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 0.55,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#f6f1e6",
@@ -757,7 +1067,12 @@
           "#e9e2cf"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "pointerStrength": 0.55,
+          "speed": 0.4,
+          "circulation": 0.35,
+          "dispersion": 0.05
+        }
       },
       "entities": [
         {
@@ -788,16 +1103,79 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st425",
+                "id": "e382-sq1",
                 "text": "⊙⊙",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.8,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e382-sq2",
+                "text": "❀",
+                "shape": "text",
+                "hold": 3.0,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#d8d2c4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e382-sq3",
+                "text": "⊙⊙",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.7,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -823,9 +1201,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.25,
+            "radius": 0.35,
             "spin": 0
           },
           "station": null,
@@ -944,35 +1322,35 @@
           "align": "left"
         },
         {
-          "id": "body1",
+          "id": "body",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "The final stanza gives another imperative: beginning and end are to draw together into one, faster than the objects themselves flee past the addressee. The opening asked that an early blessing stay for an hour; the ending asks for an act of gathering across passage. The Muses enter: their favour promises something imperishable, and thanks are asked. The closing lines distinguish what is carried in the breast from its form in the mind — Den Gehalt in deinem Busen / Und die Form in deinem Geist. The content borne inwardly and the form through which it is",
+          "body": "The final imperative: beginning and end must draw together into one, faster than the objects flee. The opening wished an hour of held blessing; the ending asks a gathering across passage. The Muses' favour promises the imperishable, with thanks. Den Gehalt in deinem Busen — the content borne inwardly; die Form in deinem Geist — the formed expression carrying it onward. The relation is One in change (human-amplified: yes).",
           "x": 0.04,
-          "y": 0.47,
+          "y": 0.55,
           "width": 620,
           "size": 14,
           "align": "left",
-          "w": 520
+          "w": 620
         },
         {
-          "id": "body2",
+          "id": "occ",
           "visible": true,
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "apprehended have distinct places in the achieved whole. The promise remains the Muses': no sequel restores the earlier body or stops the valley's change; continuation is given through what the closing distinction makes available. The appointed relation is One in change, returning to the native Two Ones (human-amplified: yes): change reaches the perceiver, the body and the named identity; the concluding unity must receive those differences if it is to receive the poem at all. Equating poetic water with QL's 0 would add a symbol-key the appointment does not supply.\n\nOccurrences: the joined beginning and end (#0, #4); the Muses and thanks (#4); the breast/mind distinction (#4); the wave's element (#3, #4).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
+          "body": "Occurrences: the joined beginning and end (#0, #4); the Muses and thanks (#4); the breast/mind distinction (#4); the wave's element (#3, #4).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
           "size": 14,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -989,8 +1367,24 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-gather",
+          "target": "field.params.pointerStrength",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.2,
+          "max": 0.2,
+          "rate": 0.15,
+          "phase": 0.0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T00:00:00.000Z"
 }

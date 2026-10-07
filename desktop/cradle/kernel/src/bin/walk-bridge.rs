@@ -9,7 +9,8 @@
 //! Endpoints (CORS-open, loopback by default):
 //!   POST /op        body = one KernelOp JSON   -> {"ok":true,"outcome":…}
 //!                                                or {"ok":false,"error":…}
-//!   GET  /events?since=N  receipts at/after seq N (the ordered log)
+//!   GET  /event-replay?generation=G&cursor=N&limit=L  bounded replay page
+//!   GET  /events                         legacy endpoint; explicitly retired
 //!   GET  /state            the kernel snapshot
 //!   GET  /material/<url-encoded location JSON>/<relative path>
 //!                          dev-only mirror of the Tauri `oi-material://`
@@ -25,12 +26,180 @@
 //!
 //! Usage: cargo run --bin walk-bridge [--bind 127.0.0.1:4179]
 
+use sha2::{Digest, Sha256};
+use std::cell::Cell;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use oi_cradle_kernel::files::MaterialRouteError;
 use oi_cradle_kernel::{events::KERNEL_EVENT_TOPIC, Kernel, KernelOp, KernelOpResult};
+
+// Explicit controlled hosted proof only. Native business replies are sent
+// unchanged; exact wire copies and bounded scalar timings go to a pre-created
+// private directory, never to a public UI or a default installed host.
+const DIAGNOSTIC_WIRE_LIMIT: usize = 64 * 1024 * 1024;
+const DIAGNOSTIC_TOTAL_LIMIT: u64 = 256 * 1024 * 1024;
+const DIAGNOSTIC_TRACE_LIMIT: u64 = 64;
+struct RecoveryDiagnosticOutput {
+    directory: std::fs::File,
+    next_id: AtomicU64,
+    traces: AtomicU64,
+    bytes: AtomicU64,
+}
+impl RecoveryDiagnosticOutput {
+    #[cfg(unix)]
+    fn open(path: &std::path::Path) -> std::io::Result<Self> {
+        use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+        if !path.is_absolute() {
+            return Err(std::io::Error::other(
+                "diagnostic directory must be absolute",
+            ));
+        }
+        let directory = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+            .open(path)?;
+        let meta = directory.metadata()?;
+        if meta.uid() != unsafe { libc::geteuid() } || meta.mode() & 0o077 != 0 {
+            return Err(std::io::Error::other(
+                "diagnostic directory must be private and owned",
+            ));
+        }
+        Ok(Self {
+            directory,
+            next_id: AtomicU64::new(1),
+            traces: AtomicU64::new(0),
+            bytes: AtomicU64::new(0),
+        })
+    }
+    #[cfg(not(unix))]
+    fn open(_: &std::path::Path) -> std::io::Result<Self> {
+        Err(std::io::Error::other(
+            "controlled diagnostic directory unavailable on this platform",
+        ))
+    }
+    fn configured() -> Option<Arc<Self>> {
+        let path = std::env::var_os("OI_RECOVERY_DIAGNOSTIC_DIR")?;
+        match Self::open(std::path::Path::new(&path)) {
+            Ok(output) => Some(Arc::new(output)),
+            Err(_) => {
+                eprintln!("[recovery-phase] diagnostic_directory_refused");
+                None
+            }
+        }
+    }
+    fn reserve(&self, bytes: usize) -> std::io::Result<()> {
+        if bytes > DIAGNOSTIC_WIRE_LIMIT {
+            return Err(std::io::Error::other("diagnostic wire limit"));
+        }
+        self.bytes
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |old| {
+                old.checked_add(bytes as u64)
+                    .filter(|v| *v <= DIAGNOSTIC_TOTAL_LIMIT)
+            })
+            .map(|_| ())
+            .map_err(|_| std::io::Error::other("diagnostic total limit"))
+    }
+    #[cfg(unix)]
+    fn capture(&self, id: u64, side: &str, bytes: &[u8]) -> std::io::Result<String> {
+        use std::os::unix::io::{AsRawFd, FromRawFd};
+        self.reserve(bytes.len())?;
+        if !matches!(side, "request" | "response") {
+            return Err(std::io::Error::other("diagnostic side"));
+        }
+        let name = format!("trace-{id:06}-{side}.json");
+        let c_name = std::ffi::CString::new(name.as_str()).map_err(std::io::Error::other)?;
+        let fd = unsafe {
+            libc::openat(
+                self.directory.as_raw_fd(),
+                c_name.as_ptr(),
+                libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+                0o600,
+            )
+        };
+        if fd < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let mut file = unsafe { std::fs::File::from_raw_fd(fd) };
+        file.write_all(bytes)?;
+        Ok(name)
+    }
+    #[cfg(not(unix))]
+    fn capture(&self, _: u64, _: &str, _: &[u8]) -> std::io::Result<String> {
+        Err(std::io::Error::other("diagnostic capture unavailable"))
+    }
+}
+struct RecoveryDiagnostic {
+    output: Arc<RecoveryDiagnosticOutput>,
+    id: u64,
+    started: Instant,
+    active: Cell<bool>,
+}
+impl RecoveryDiagnostic {
+    fn new(output: Arc<RecoveryDiagnosticOutput>) -> Self {
+        let id = output.next_id.fetch_add(1, Ordering::Relaxed);
+        Self {
+            output,
+            id,
+            started: Instant::now(),
+            active: Cell::new(false),
+        }
+    }
+    fn activate(&self, raw: &[u8]) {
+        if self
+            .output
+            .traces
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |old| {
+                old.checked_add(1).filter(|v| *v <= DIAGNOSTIC_TRACE_LIMIT)
+            })
+            .is_err()
+        {
+            eprintln!("[recovery-phase] diagnostic_trace_limit");
+            return;
+        }
+        self.active.set(true);
+        self.phase("bridge_json_decode", self.started);
+        self.capture("request", raw);
+    }
+    fn phase(&self, phase: &'static str, started: Instant) {
+        if !self.active.get() {
+            return;
+        }
+        let at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|v| v.as_micros())
+            .unwrap_or(0);
+        eprintln!(
+            "[recovery-phase] {}",
+            serde_json::json!({
+                "schema":"oi.hosted-recovery-phase/v1", "trace_id":self.id, "phase":phase,
+                "elapsed_us":started.elapsed().as_micros(), "ended_at_unix_us":at,
+                "standing":"duration_only_not_acknowledgement"
+            })
+        );
+    }
+    fn capture(&self, side: &'static str, raw: &[u8]) {
+        if !self.active.get() {
+            return;
+        }
+        let started = Instant::now();
+        let result = self.output.capture(self.id, side, raw);
+        eprintln!(
+            "[recovery-wire] {}",
+            serde_json::json!({
+                "schema":"oi.hosted-recovery-wire/v1", "trace_id":self.id, "side":side,
+                "bytes":raw.len(), "sha256":(raw.len() <= DIAGNOSTIC_WIRE_LIMIT).then(||format!("{:x}",Sha256::digest(raw))),
+                "artifact":result.as_ref().ok(), "captured":result.is_ok(),
+                "ended_at_unix_us":std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|v|v.as_micros()).unwrap_or(0),
+                "capture_elapsed_us":started.elapsed().as_micros(),
+                "standing":"raw_controlled_wire_not_receiver_admission"
+            })
+        );
+    }
+}
 
 fn main() {
     let bind = std::env::args()
@@ -63,9 +232,11 @@ fn main() {
             .expect("serve the explicitly offered native owner")
         });
     println!("oi-cradle walk bridge listening on http://{bound} (topic {KERNEL_EVENT_TOPIC})");
+    let recovery_diagnostics = RecoveryDiagnosticOutput::configured();
     for stream in listener.incoming() {
         let Ok(stream) = stream else { continue };
         let kernel = Arc::clone(&kernel);
+        let recovery_diagnostics = recovery_diagnostics.clone();
         std::thread::spawn(move || {
             let mut stream = stream;
             // Bytes read past this request's body (the next request arriving
@@ -83,9 +254,15 @@ fn main() {
                     request.path,
                     request.body.len()
                 );
-                let outcome = handle(&kernel, &request);
+                let diagnostic = recovery_diagnostics
+                    .clone()
+                    .filter(|_| {
+                        request.method == "POST" && request.path.split('?').next() == Some("/op")
+                    })
+                    .map(RecoveryDiagnostic::new);
+                let outcome = handle_with_diagnostic(&kernel, &request, diagnostic.as_ref());
                 eprintln!("[bridge] -> answered {} {}", request.method, request.path);
-                respond(&mut stream, outcome);
+                respond_with_diagnostic(&mut stream, outcome, diagnostic.as_ref());
                 if !request.keep_alive {
                     return;
                 }
@@ -206,7 +383,15 @@ fn json_error(status: u16, message: impl Into<String>) -> BridgeResponse {
     }
 }
 
+#[cfg(test)]
 fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
+    handle_with_diagnostic(kernel, request, None)
+}
+fn handle_with_diagnostic(
+    kernel: &Mutex<Kernel>,
+    request: &Request,
+    diagnostic: Option<&RecoveryDiagnostic>,
+) -> BridgeResponse {
     let path = request.path.split('?').next().unwrap_or("");
     match (request.method.as_str(), path) {
         ("OPTIONS", _) => BridgeResponse::Empty { status: 204 },
@@ -217,27 +402,46 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 Err(error) => json_error(500, error.to_string()),
             }
         }
-        ("GET", "/events") => {
+        ("GET", "/events") => json_error(
+            410,
+            "unbounded event replay is retired; use /event-replay with generation and cursor",
+        ),
+        ("GET", "/event-replay") => {
+            let (generation, cursor, limit) = match event_replay_parameters(&request.path) {
+                Ok(parameters) => parameters,
+                Err(error) => return json_error(400, error),
+            };
             let kernel = kernel.lock().expect("kernel mutex");
-            let since = request
-                .path
-                .split_once("since=")
-                .map(|(_, value)| value.split('&').next().unwrap_or("0"))
-                .and_then(|value| value.parse::<u64>().ok())
-                .unwrap_or(0);
-            match serde_json::to_value(kernel.event_log().since(since.max(1))) {
-                Ok(receipts) => json_ok(serde_json::json!({"receipts": receipts})),
+            let replay = kernel
+                .event_log()
+                .replay(generation.as_deref(), cursor, limit);
+            match serde_json::to_value(replay) {
+                Ok(replay) => json_ok(serde_json::json!({"replay": replay})),
                 Err(error) => json_error(500, error.to_string()),
             }
         }
         ("POST", "/op") => {
-            let body = String::from_utf8_lossy(&request.body);
-            let op: KernelOp = match serde_json::from_str(body.trim()) {
-                Ok(op) => op,
-                Err(error) => return json_error(400, format!("unreadable op: {error}")),
-            };
+            let op: KernelOp =
+                match oi_cradle_kernel::expression_file::read_native_json(&request.body) {
+                    Ok(op) => op,
+                    Err(error) => return json_error(400, format!("unreadable op: {error}")),
+                };
+            if matches!(&op, KernelOp::ExpressionRecovery { .. }) {
+                if let Some(trace) = diagnostic {
+                    trace.activate(&request.body);
+                }
+            }
             let execute = || -> Result<oi_cradle_kernel::KernelOpOutcome, String> {
                 if let KernelOp::ExpressionRecovery { request } = op {
+                    if let Some(trace) = diagnostic.filter(|trace| trace.active.get()) {
+                        let started = Instant::now();
+                        let result = oi_cradle_kernel::expression_recovery::with_diagnostic_trace(
+                            trace.id,
+                            || oi_cradle_kernel::expression_recovery::execute(request),
+                        );
+                        trace.phase("bridge_owner_execution", started);
+                        return result;
+                    }
                     return oi_cradle_kernel::expression_recovery::execute(request);
                 }
                 if let KernelOp::NaraCoordinate { request } = op {
@@ -398,13 +602,20 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 kernel.lock().expect("kernel mutex").apply(op)
             };
             let result = execute();
-            match result {
+            let serialization_started = diagnostic
+                .filter(|trace| trace.active.get())
+                .map(|_| Instant::now());
+            let response = match result {
                 Ok(outcome) => match serde_json::to_value(&outcome) {
                     Ok(outcome) => json_ok(serde_json::json!({"outcome": outcome})),
                     Err(error) => json_error(500, error.to_string()),
                 },
                 Err(error) => json_error(200, error),
+            };
+            if let (Some(trace), Some(started)) = (diagnostic, serialization_started) {
+                trace.phase("bridge_outcome_serialization", started);
             }
+            response
         }
         _ if request.method == "GET" && path.starts_with("/world/") => {
             let served = oi_cradle_kernel::world_resolve::serve(&path["/world/".len()..]);
@@ -425,6 +636,52 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
 /// grammar (`<url-encoded location JSON>/<relative path>`) and identical
 /// resolution (`oi_cradle_kernel::files::resolve_material`), so a walk
 /// exercises the same traversal law the shipped protocol enforces.
+fn event_replay_parameters(path: &str) -> Result<(Option<String>, u64, usize), String> {
+    let mut parameters = std::collections::HashMap::new();
+    if let Some((_, query)) = path.split_once('?') {
+        for part in query.split('&') {
+            let (key, value) = part
+                .split_once('=')
+                .ok_or("invalid event replay query field")?;
+            if !matches!(key, "generation" | "cursor" | "limit") || value.is_empty() {
+                return Err("unknown or empty event replay query field".to_owned());
+            }
+            if parameters.insert(key, value).is_some() {
+                return Err("duplicate event replay query field".to_owned());
+            }
+        }
+    }
+    let generation = parameters
+        .get("generation")
+        .map(|value| (*value).to_owned());
+    if generation.as_ref().is_some_and(|value| {
+        value.len() > 128
+            || !value
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+    }) {
+        return Err("invalid event replay generation".to_owned());
+    }
+    let cursor = match parameters.get("cursor") {
+        Some(value) if value.bytes().all(|byte| byte.is_ascii_digit()) => value
+            .parse::<u64>()
+            .map_err(|_| "invalid event replay cursor")?,
+        Some(_) => return Err("invalid event replay cursor".to_owned()),
+        None => 1,
+    };
+    let limit = match parameters.get("limit") {
+        Some(value) if value.bytes().all(|byte| byte.is_ascii_digit()) => value
+            .parse::<usize>()
+            .map_err(|_| "invalid event replay limit")?,
+        Some(_) => return Err("invalid event replay limit".to_owned()),
+        None => 128,
+    };
+    if cursor == 0 || limit == 0 {
+        return Err("event replay cursor and limit must be positive".to_owned());
+    }
+    Ok((generation, cursor, limit))
+}
+
 fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
     let mut segments = rest.split('/').filter(|segment| !segment.is_empty());
     let Some(encoded_location) = segments.next() else {
@@ -532,7 +789,14 @@ fn content_type_for(mime_hint: Option<&str>, path: &str) -> String {
     oi_cradle_kernel::files::material_content_type(mime_hint, path)
 }
 
-fn respond(stream: &mut TcpStream, response: BridgeResponse) {
+fn respond_with_diagnostic(
+    stream: &mut TcpStream,
+    response: BridgeResponse,
+    diagnostic: Option<&RecoveryDiagnostic>,
+) {
+    let serialization_started = diagnostic
+        .filter(|trace| trace.active.get())
+        .map(|_| Instant::now());
     let (status, content_type, body): (u16, String, Vec<u8>) = match response {
         BridgeResponse::Json { status, body } => (
             status,
@@ -546,12 +810,17 @@ fn respond(stream: &mut TcpStream, response: BridgeResponse) {
         } => (status, content_type, body),
         BridgeResponse::Empty { status } => (status, "text/plain".into(), Vec::new()),
     };
+    if let (Some(trace), Some(started)) = (diagnostic, serialization_started) {
+        trace.phase("bridge_http_serialization", started);
+        trace.capture("response", &body);
+    }
     let reason = match status {
         200 => "OK",
         204 => "No Content",
         400 => "Bad Request",
         403 => "Forbidden",
         404 => "Not Found",
+        410 => "Gone",
         _ => "Internal Server Error",
     };
     let headers = format!(
@@ -561,7 +830,176 @@ fn respond(stream: &mut TcpStream, response: BridgeResponse) {
          Content-Type: {content_type}\r\nCache-Control: no-store\r\nContent-Length: {}\r\nConnection: keep-alive\r\n\r\n",
         body.len()
     );
+    let socket_started = diagnostic
+        .filter(|trace| trace.active.get())
+        .map(|_| Instant::now());
     let _ = stream.write_all(headers.as_bytes());
     let _ = stream.write_all(&body);
     let _ = stream.flush();
+    if let (Some(trace), Some(started)) = (diagnostic, socket_started) {
+        trace.phase("bridge_socket_write", started);
+    }
+}
+
+#[cfg(test)]
+mod replay_query_tests {
+    use super::event_replay_parameters;
+
+    #[test]
+    fn bootstrap_and_exact_generation_cursor_are_distinct() {
+        assert_eq!(
+            event_replay_parameters("/event-replay").unwrap(),
+            (None, 1, 128)
+        );
+        assert_eq!(
+            event_replay_parameters("/event-replay?generation=abc123&cursor=19&limit=12").unwrap(),
+            (Some("abc123".to_owned()), 19, 12)
+        );
+    }
+
+    #[test]
+    fn malformed_duplicate_unknown_empty_and_overflow_fields_refuse() {
+        for query in [
+            "cursor",
+            "cursor=0",
+            "cursor=-1",
+            "cursor=+1",
+            "cursor=one",
+            "cursor=18446744073709551616",
+            "limit=0",
+            "limit=one",
+            "limit=184467440737095516160",
+            "cursor=1&cursor=2",
+            "generation=abc&generation=def",
+            "generation=",
+            "generation=abc%20def",
+            "unknown=1",
+            "cursor=1&",
+            "",
+        ] {
+            assert!(
+                event_replay_parameters(&format!("/event-replay?{query}")).is_err(),
+                "{query}"
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod native_op_json_tests {
+    use super::*;
+    use serde_json::Value;
+    fn post(kernel: &Mutex<Kernel>, raw: &[u8]) -> (u16, Value) {
+        match handle(
+            kernel,
+            &Request {
+                method: "POST".into(),
+                path: "/op".into(),
+                body: raw.into(),
+                keep_alive: false,
+            },
+        ) {
+            BridgeResponse::Json { status, body } => (status, body),
+            _ => panic!("native operation must produce JSON"),
+        }
+    }
+    #[test]
+    fn genuine_http_operation_handler_refuses_bad_raw_before_native_mutation() {
+        let kernel = Mutex::new(Kernel::discover());
+        let (_, created) = post(&kernel, br#"{"op":"expression","request":{"operation":"create","expression_ref":"expression:http-number","title":"Raw numerical custody","actor":"human:controlled"}}"#);
+        assert_eq!(created["ok"], true, "{created}");
+        let read = br#"{"op":"expression","request":{"operation":"inspect","expression_ref":"expression:http-number"}}"#;
+        let before = post(&kernel, read).1;
+        assert!(
+            before["outcome"]["data"]["document"].is_object(),
+            "{before}"
+        );
+        for value in [
+            "1e400",
+            r#"{"$serde_json::private::Number":"10"}"#,
+            r#"{"$serde_json::private::RawValue":"10"}"#,
+            r#"{"\u0024serde_json::private::Number":"10"}"#,
+        ] {
+            let raw = format!(
+                r#"{{"op":"expression","request":{{"operation":"edit","expression_ref":"expression:http-number","expected_revision":1,"actor":"human:controlled","changes":[{{"change":"composition_set","presentation":{{"invalid_transport_probe":{value}}}}}]}}}}"#
+            );
+            let (status, refused) = post(&kernel, raw.as_bytes());
+            assert_eq!(status, 400, "{refused}");
+            assert_eq!(refused["ok"], false);
+            assert_eq!(post(&kernel, read).1, before);
+        }
+        let duplicate = br#"{"op":"expression","op":"presentation_read","request":{"operation":"inspect","expression_ref":"expression:http-number"}}"#;
+        assert_eq!(post(&kernel, duplicate).0, 400);
+        assert_eq!(post(&kernel, &[b'{', 0xff, b'}']).0, 400);
+        assert_eq!(post(&kernel, read).1, before);
+    }
+}
+
+#[cfg(all(test, unix))]
+mod recovery_diagnostic_tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+    struct Directory(std::path::PathBuf);
+    impl Directory {
+        fn new() -> Self {
+            static NEXT: AtomicU64 = AtomicU64::new(1);
+            let path = std::env::temp_dir().join(format!(
+                "oi-recovery-diagnostic-{}-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            std::fs::create_dir(&path).unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o700)).unwrap();
+            Self(path)
+        }
+    }
+    impl Drop for Directory {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    // Byte custody primitives only: this does not fabricate or admit a native
+    // checkpoint. The original hosted replay supplies the real Store request.
+    #[test]
+    fn exact_wire_bytes_and_existing_file_refusal() {
+        let directory = Directory::new();
+        let output = RecoveryDiagnosticOutput::open(&directory.0).unwrap();
+        let raw = "{\"n\":-0.0,\"text\":\"Ājñā\"}\n".as_bytes();
+        let name = output.capture(7, "request", raw).unwrap();
+        assert_eq!(std::fs::read(directory.0.join(&name)).unwrap(), raw);
+        assert!(output.capture(7, "request", b"different").is_err());
+        assert_eq!(std::fs::read(directory.0.join(name)).unwrap(), raw);
+    }
+    #[test]
+    fn directory_binding_refuses_symlinks_and_public_modes() {
+        let directory = Directory::new();
+        let alias = directory.0.join("alias");
+        std::os::unix::fs::symlink(&directory.0, &alias).unwrap();
+        assert!(RecoveryDiagnosticOutput::open(&alias).is_err());
+        std::fs::set_permissions(&directory.0, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(RecoveryDiagnosticOutput::open(&directory.0).is_err());
+    }
+    #[test]
+    fn diagnostic_limits_refuse_without_large_allocation() {
+        let directory = Directory::new();
+        let output = RecoveryDiagnosticOutput::open(&directory.0).unwrap();
+        assert!(output.reserve(DIAGNOSTIC_WIRE_LIMIT + 1).is_err());
+        assert_eq!(output.bytes.load(Ordering::Relaxed), 0);
+        output
+            .bytes
+            .store(DIAGNOSTIC_TOTAL_LIMIT, Ordering::Relaxed);
+        assert!(output.reserve(1).is_err());
+        assert_eq!(output.bytes.load(Ordering::Relaxed), DIAGNOSTIC_TOTAL_LIMIT);
+        output
+            .traces
+            .store(DIAGNOSTIC_TRACE_LIMIT, Ordering::Relaxed);
+        let trace = RecoveryDiagnostic::new(Arc::new(output));
+        trace.activate(b"not an admitted native request");
+        assert!(!trace.active.get());
+        assert_eq!(std::fs::read_dir(&directory.0).unwrap().count(), 0);
+    }
 }

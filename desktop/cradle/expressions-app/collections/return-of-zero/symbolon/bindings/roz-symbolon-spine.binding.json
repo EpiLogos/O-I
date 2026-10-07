@@ -1,0 +1,225 @@
+{
+ "artifact": "symbolon/roz-symbolon-spine.journey.json",
+ "family": "symbolon",
+ "worker": "E5",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-symbolon"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "symbolon-the-slash",
+    "path": "submission-package/essay/symbolon/the-slash.md",
+    "sha256": "887a3dbd1bf3541db33c5063f187c286bfa9a84c4261cab85a8608103dfb2b74"
+   },
+   {
+    "record_id": "symbolon-0-1",
+    "path": "submission-package/essay/symbolon/0-1.md",
+    "sha256": "ab0bdc96d6e9b6b0613b65bc195a3a025c29c36e9716b879f38202485553603a"
+   },
+   {
+    "record_id": "symbolon-question-assertion",
+    "path": "submission-package/essay/symbolon/question-assertion.md",
+    "sha256": "62d1d19be77f31bcba5557ea741d6c07f40b5ea13934331a286566a011414bf4"
+   },
+   {
+    "record_id": "symbolon-minus-plus",
+    "path": "submission-package/essay/symbolon/minus-plus.md",
+    "sha256": "3101f205d53857953ed74a776ab8c706295fb15fb12082cb665c08d80311c735"
+   },
+   {
+    "record_id": "symbolon-x-x",
+    "path": "submission-package/essay/symbolon/X-x.md",
+    "sha256": "3c9936c9babc69986f11301e790cba078325bbf617b78ef19717700d659adcca"
+   },
+   {
+    "record_id": "symbolon-am-is",
+    "path": "submission-package/essay/symbolon/AM-IS.md",
+    "sha256": "351c3425798022a1e037a41f11cb732681b81d35fd3cc579a4bad4ae62c90371"
+   },
+   {
+    "record_id": "symbolon-infinity-dx",
+    "path": "submission-package/essay/symbolon/infinity-dx.md",
+    "sha256": "c26332e6e0c76724a33d87138ae509e40800aad9274bb81039e1013aabfd1d75"
+   },
+   {
+    "record_id": "symbolon-1-0",
+    "path": "submission-package/essay/symbolon/1-0.md",
+    "sha256": "bf140fe76631f9b2e2870def31801892bdb5a442fe5f1baac5713bf083d3bd64"
+   },
+   {
+    "record_id": "symbolon-mono-poly",
+    "path": "submission-package/essay/symbolon/mono-poly.md",
+    "sha256": "5c895d54038fe6dea3002de3f3558a934f57ca41b054e3b3851b6434fc1f4b5b"
+   },
+   {
+    "record_id": "symbolon-complexio-oppositorum",
+    "path": "submission-package/essay/symbolon/complexio-oppositorum.md",
+    "sha256": "f1aca0c28e19caef749a81e3d5c6ad6577dcd5c5fbe0b2e6fa38f8f62d850daf"
+   },
+   {
+    "record_id": "symbolon-self-identity",
+    "path": "submission-package/essay/symbolon/self-identity.md",
+    "sha256": "bac6531eb707bc4df0a6be295a0f72e57d3d2a7b665f3a78537c2e02cb118985"
+   },
+   {
+    "record_id": "symbolon-subject-logics",
+    "path": "submission-package/essay/symbolon/subject-logics.md",
+    "sha256": "534c9016b83e9a1f8ce0c240fdda55feb53d96973f748142a607626654ca9ea1"
+   },
+   {
+    "record_id": "symbolon-eight-determinations",
+    "path": "submission-package/essay/symbolon/eight-determinations.md",
+    "sha256": "cbac593618012f9268bfd449953350f8b3a1aaf69f97e49a5f92bc323901e2b2"
+   }
+  ],
+  "basis_commit": "dbf3b17",
+  "note": "records re-read at fc59a719 (canonical for the 2026-10-06 enrichment pass); the sha256 hashes below remain the dbf3b17 basis hashes and are kept per protocol — the dbf3b17→fc59a719 delta touched every record (figures-and-images merge, editorial edits; largest eight-determinations +316 lines); every claim carried in the journey text layers was re-checked against the fc59a719 text"
+ },
+ "pointcloud_revision": "a39cf5f",
+ "traversal": {
+  "order": "the-slash → 0-1 → question-assertion → minus-plus → X-x → AM-IS → infinity-dx → 1-0 → head-mono-poly → head-complexio-oppositorum → head-self-identity → head-subject-logics → spine-index",
+  "law": "spine order is the record's own traversal (Amendment 2026-09-07); the four heads are traversal scenes that reread the spine; the spine-index closes as the gathering mandala and adds no thirteenth determination"
+ },
+ "scenes": [
+  {
+   "scene_id": "the-slash",
+   "source_ref": "symbolon-the-slash",
+   "claim_status": "Derived",
+   "relations": "`/ = −/−` parent determination; `(-1)/(+1)` held polarity vs `(-1)+(+1)=0` cancellation vs `(-1)-(+1)=-2` appropriation; `(0/1)/(1/0)`; `2 + 2² = 4 + 2 = 6`; returns-to Movement 19 and Symbolon README"
+  },
+  {
+   "scene_id": "0-1",
+   "source_ref": "symbolon-0-1",
+   "claim_status": "Derived",
+   "relations": "One/All first orientation; order of dependence; `2 + 2² = 2 + 4 = 6`; arithmetic seam (0/1 = 0, 1/0 undefined); returns-to The Loan Returns §1 · #5→0"
+  },
+  {
+   "scene_id": "question-assertion",
+   "source_ref": "symbolon-question-assertion",
+   "claim_status": "Derived",
+   "relations": "`?/!` at determination #1; Catuṣkoṭi corners IS / IS-NOT / BOTH / NEITHER with SILENCE; second processual placement at #3; returns-to A18 and §3 · #0"
+  },
+  {
+   "scene_id": "minus-plus",
+   "source_ref": "symbolon-minus-plus",
+   "claim_status": "Derived",
+   "relations": "reserve/issue, 'the void voids itself'; `(-1)/(+1)` axis; #2 Dynamis; Becoming harmonic and Text–Texture fold with X/x; breathing automation (field.dispersion LFO) stages the pulse"
+  },
+  {
+   "scene_id": "X-x",
+   "source_ref": "symbolon-x-x",
+   "claim_status": "Derived",
+   "relations": "capacity/particular in one letter; multiplication office; #3 Pattern; X = x psyche refraction (Argued crosswalk, no inference to phenomenality); three instance marks stage recurrence"
+  },
+  {
+   "scene_id": "AM-IS",
+   "source_ref": "symbolon-am-is",
+   "claim_status": "Derived",
+   "relations": "AM/IS personed copula, slash as second person; pramātṛ/pramāṇa/prameya; 1–2–3 and 4–5–0 passes (3:3, 3:1); #4 Context; Knowing/unKnowing harmonic with ∞/dx"
+  },
+  {
+   "scene_id": "infinity-dx",
+   "source_ref": "symbolon-infinity-dx",
+   "claim_status": "Derived",
+   "relations": "horizon/differential; `F(x)=x²+7 → F'(x)=2x`, `∫2x dx = x²+C` additive constant; #5 Realisation; Essence fold 0+5; declared 9/8 relation to the music register (distinct objects, one law of return retaining difference)"
+  },
+  {
+   "scene_id": "1-0",
+   "source_ref": "symbolon-1-0",
+   "claim_status": "Derived",
+   "relations": "consequent essence, `5→0` implicated in 1; `0/1 = 1/0` relational identity with the arithmetic seam retained; three persons return; geometry mirrored from 0-1 (return orientation staged); returns-to A36"
+  },
+  {
+   "scene_id": "head-mono-poly",
+   "source_ref": "symbolon-mono-poly",
+   "claim_status": "Argued",
+   "relations": "head: `0 = One = Self-Identity`, `1 = All = Self-Difference`; monoisation as promotion of local 1 into the 0-office; one centre mark with eight instances held by the whole ring"
+  },
+  {
+   "scene_id": "head-complexio-oppositorum",
+   "source_ref": "symbolon-complexio-oppositorum",
+   "claim_status": "Derived",
+   "relations": "head: `#` as whole determining relation vs particular `#0`/`#5` stations; held polarity vs cancellation vs fusion; `/ = ( = =/≠ ≠ )`; `4+2 → (3+1)+2`; Name and Power units"
+  },
+  {
+   "scene_id": "head-self-identity",
+   "source_ref": "symbolon-self-identity",
+   "claim_status": "Derived",
+   "relations": "head: `A = A` through difference; to/for/as/with; `=` crossed by `/` writes `≠`; `(0,0) (0,1) (1,0) (1,1)`; `2 + 2² = 6 = 4+2`; inversion of inversion"
+  },
+  {
+   "scene_id": "head-subject-logics",
+   "source_ref": "symbolon-subject-logics",
+   "claim_status": "Derived",
+   "relations": "head: `0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1` returning as `0/1`; antaḥkaraṇa occlusion; pramātṛ/pramāṇa/prameya as numerator/slash/denominator; von Neumann `0 = ∅`, `1 = {∅}` formal neighbour; composite staged as its exact parts (0/Ø) / (1/X) for legibility"
+  },
+  {
+   "scene_id": "spine-index",
+   "source_ref": "symbolon-eight-determinations",
+   "claim_status": "Derived",
+   "relations": "spine-index mandala: centre `0/1` threshold; cardinals `?/!` N, `−/+` E, `X/x` S, `AM/IS` W; ring = the whole (parā) carrying the #0/#5 envelope with `∞/dx` at the rim, `−/−` entering above, `1/0` returning below; folds (Being, Becoming, Knowing/unKnowing, Essence, Constitution, Text–Texture) in scene text; the four heads declared in text and this binding (they walk as the four prior scenes); returns-to §3 · #0 (Movement 25) and A18"
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "locked notation marks: `−/−`, `0/1`, `?/!`, `−/+`, `X/x`, `AM/IS`, `∞/dx`, `1/0`, `/`, `#`, `A=A`, `Ø`, `(0/Ø)/(1/X)` (U+2212 minus, U+221E infinity, U+00D8 slashed zero, as the records write them)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "mandala geometry per ql-expression-grammar.md §III (centre threshold, four cardinal stations, envelope ring, rim thresholds); whole-remnant ring retained in every depth scene as point of departure",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "symbolon/roz-symbolon-spine.cover.png",
+ "status": "captured",
+ "notes": "Craft: every scene carries the record's claim_status band in its text layer (mono-poly Argued; all others Derived, per record frontmatter); locked notation is reproduced verbatim incl. U+2212/∞/Ø. Sequence geometry performs containment: each depth scene keeps a small faint ring (upper right) as the whole retained, and the closing spine-index stages the traversal inside one envelope. All 13 scenes inspected at draft count (8000) and at authored count (62000). Revisions made during inspection: (1) spine-index originally staged 13 formations and the NATIVE ENGINE REFUSED TO BOOT — the native field supports 10 formations per scene, a limit the authoring validator (32) does not enforce [shared defect → Point-Cloud-Demo #6]; restaged to 9 formations, heads declared in text/binding; (2) first restage used two rings whose inner band at authored count fills into a bright disc burying the cardinals — final geometry uses the proven single-envelope layout; (3) `−` marks in a near-square box render as solid slabs at 62000 — dash boxes flattened to 0.32x0.09 so the stroke reads; (4) subject-logics composite `(0/Ø)/(1/X)` blurred into mush at authored count — split into its exact parts (0/Ø) / (1/X) with scene particle size 1.9; (5) 1-0 entity positions corrected (the mirror had not actually been applied); (6) markdown **/* markers stripped from all text bodies — text layers render literally; (7) whole-remnant ring moved from upper left (collided with the editorial column) to upper right. Covers captured with authored params through the real engine; spine-index and whole-held full-count evidence retained at /tmp/roz-e5-fullcount (session scratch, not shipped). Honest remainers: scene text layers are compressed refractions with source-of-record lines, never replacements for the canonical records; mono-poly's eight 'many' marks are lowercase x entities that render X-like at 900 weight — acceptable as instances-of-capacity, noted for honesty; the minus-plus breathing automation is present in the artifact but invisible in stills.\nENRICHMENT MOVES 2026-10-06 (per scene: what changes, and why that gesture carries the record's move) —\nthe-slash: field thins to 38k/3.1, circulation 0, dispersion 0.02 — nothing turns yet, relation before named terms; pointer repel at 0.06 with 0.3 pulse (stillness — the marks are not yet objects to push); the two dashes attract weakly toward the slash: their interval becomes a relation.\n0-1: the turn begins (circulation 0.8, zoom 1.06); pointer attract 0.5 — the One draws the All; SEQUENCE on the slash: `/ → 0/1 → /` — the activity gathers its terms into the signed pair and releases them; zero and one attract through the slash.\nquestion-assertion: the bare ?/!/ formations replaced by the sign as written, `?/!`, one formation; the sign's sequence leans it question-side, then inverts it 180° (assertion carrying the question), then holds it whole — the pair moved through its head positions by the sign's own inversion; the Catuṣkoṭi corners repel each other (held apart, grid layout), SILENCE attracts and its sequence withdraws the mark entirely (SILENCE → unmarked → SILENCE — the recognition is not one more mark); pointer repel 1.1 guard + shove click (NEITHER breaks the frame); duration 13.\nminus-plus: breathing kept (field.dispersion LFO) and voiced: − repels (withdrawal), + attracts (extension), opposed forces bound by the slash; pointer attract 0.8 + implode click — the breath gathers and releases; vignette background = the reserve as surround; SEQUENCE `/ → −/+ → /`.\nX-x: relational orbital mode on — the instances orbit capacity (X legible through its x's); spiral layout, vortex pointer (turning multiplication); instance-1's sequence recurs x across the instance positions with falling tint (the instance compounds); SEQUENCE `/ → X/x → /`.\nAM-IS: warmest near-black (presence, not correspondence); AM and IS attract toward each other through the slash — the second person as mutual lean; automation lane on field.pointerStrength (sine 0.25–0.95, rate 0.1): the address breathes — someone addresses, someone answers; duration 15, transition 2.0 (a slower personed beat); SEQUENCE `/ → AM/IS → /`.\ninfinity-dx: depth 0.45 + zConfinement 1.3 + zoom 0.9 — the field gains a horizon it does not reach; turbulence 0.3 (unbounded); pointer repel 0.4 (the horizon yields); dx's sequence shifts the differential locally with falling size (local exactness); ∞ repels, dx attracts; SEQUENCE `/ → ∞/dx → /`; duration 14, transition 1.8.\n1-0: the orientation reverses — circulation −0.8 (the turn runs backward), gravityX −0.5 (drift toward the zero side), implode click (the return gathers); zero attracts stronger than one (the condition gathers the mark home); SEQUENCE `/ → 1/0 → /` mirrors 0-1's.\nhead-mono-poly: focus travelling (head reads the spine); pointer repel 1.0 guard + shove click (monoisation defends, displaces); SEQUENCE on the centre mark: `1 → 0 → 1` with the `0` step tinted mytheme-warm and enlarged — the local 1 promoted into the 0-office, then returned to its office by the ring that holds the many (eight x's attract to centre); duration 13.\nhead-complexio-oppositorum: the bare `#` formation replaced by the record's own exact form `/ = ( = =/≠ ≠ )` as the holding above two station formations `#0`/`#5` (the native sign remains the scene's name and the binding's asset); the stations' reading sequence walks `#0 → #5 → #0` — the whole relation followed through its stations, held by the copula's attract; vortex pointer + vortex click (turning between opposites without cancelling); focus travelling.\nhead-self-identity: line layout (identity across two placements); A's attract toward the `=` between; SEQUENCE on the copula mark: `= → ≠ → =` with the `≠` step rotated 45° and warmed — the slash crossing the strokes writes difference, then returns; pointer attract 0.6 (the identifying act draws together); focus travelling.\nhead-subject-logics: the standing stations dim to tint 0.3 — the track as record — and ONE formation walks the full crossed-zero sequence `0 → Ø → X → Ø/X → (0/Ø) → (1/X) → 1` through the station positions with 0.9s crossings (recognition takes time); line layout, focus travelling; pointer vortex + shove click (occlusion breaks); duration 15 — the longest walk. This scene is the §4 · #3 crossing: `Ø` appears here and nowhere else in the journey (withholding honoured).\nspine-index: the mandala opens into 3D — view 3d, yaw 0.55, pitch 0.22; z is the determination's nesting: the sixfold cardinals at z 0 between threshold (0/1 at z 0.5, nearest) and return (1/0 at z −0.6, deepest), the envelope ring around all depths — depth stages (4+2)+2, the six held between threshold and return, parā surrounding them; volumeEnabled round + perspective + occlusion + depthTint give the glyphs standing depth; SEQUENCE on the centre mark walks the whole spine in declared order `−/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0`, each step moving to its station's position in 3D — the four-head traversal run as a real formation circuit; ring layout, travelling focus; duration 16, transition 2.4 (the widest beat).\nJourney-wide: 12 of 13 scenes carry multi-glyph formation sequences; every adjacent pair changes ≥3 settings across ≥2 families (pointer/physics/material/colour/camera/resonance); 6 pointer profiles chosen per meaning (stillness, guard+shove, gather+implode, vortex, address-pulse, return-implode); 4 automation/beats (dispersion breath, address pulse, durations 12–16, transitions 1.2–2.4); layouts: grid (Catuṣkoṭi), spiral (multiplication), line (traversals), ring (mandala), travelling focus on the four heads; text bodies compressed to ≤70 words with claim, status band (kicker), returns-to and source-of-record lines intact.",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-symbolon-l1",
+  "lane": "symbolon",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "0": "the non-objectifiable condition present in every act of distinguishing — subject-pole, the singular One, the uncounted; never nothing, never one more object (orienting principles §II)",
+  "1": "whatever has become determinate enough to name, count, model or govern — the mark, the polyvalent All, the object-pole",
+  "/": "the differentiating activity itself — division and ratio, AND/OR; the act that makes both positions legible, not punctuation between finished things",
+  "−": "withdrawal — the side that withholds itself from determinate presentation; reserve before value",
+  "+": "extension — the reserve's own issue; affirmation that carries its origin through the difference by which it appears",
+  "−/−": "the bare relation `/ = −/−`: one mark twice placed, no value assigned — relation before named terms, the parent determination",
+  "0/1": "the first orientation: the singular One becoming articulate through the polyvalent All — earned as notation at §1 · #5→0; QL's relational identity `0/1 = 1/0` names both orientations of one relation",
+  "1/0": "the obverse orientation: the achieved determination returning toward the condition it cannot possess — the consequent essence `5→0`, with the arithmetic seam retained",
+  "?/!": "inquiry and naming in one sign — the question has asserted a provisional this, and the assertion carries the question whether it has said truly (#1; second processual placement at #3)",
+  "IS": "first Catuṣkoṭi corner — the appearing belongs to awareness",
+  "IS-NOT": "second corner — awareness is not exhausted by the phenomenon now appearing",
+  "BOTH": "third corner — the appearance belongs to awareness and does not exhaust it; both operations held together",
+  "NEITHER": "fourth corner — the account turned on its own remaining claim; neither identity nor difference encloses the condition of predication",
+  "SILENCE": "the recognition through which the four corners become one lived movement — the asker no longer confused with a final answer",
+  "X": "determining capacity — the field of crossings; the Self's determining fullness presiding through its instances (#3 Pattern)",
+  "x": "the indefinite particular, and multiplication — an instance that can recur and compound; the ego's particular measurement (psyche spine reads X = x)",
+  "X/x": "one letter in two cases — capacity legible through its instances; the slash the activity of determination between them",
+  "AM": "first-person presence — I am; the personed face of the copula",
+  "AM/IS": "the personed copula — the slash as second person: an address that can be answered and alter the account's terms (#4 Context)",
+  "∞": "the unbounded horizon no finite mark contains — the openness encountered before and after determination (Essence fold 0+5)",
+  "dx": "the local differential through which change becomes exact — `F'(x)=2x`, whose integration retains an undetermined constant",
+  "∞/dx": "local precision held in relation to inexhaustible depth — return retaining a difference, one law with the retained `9/8`",
+  "/ = ( = =/≠ ≠ )": "the complexio's exact form — the whole determining relation held as identity, identity-related-to-difference and difference in one readable movement (the copula expansion, complexio-oppositorum record)",
+  "#0": "a numbered station — one determination located; the contrast through which the whole relation `#` is followed",
+  "#5": "the sixfold's last station — the same contrast read from the returning end",
+  "A": "the same letter twice placed — self-identity requires two appearances and the relation identifying them",
+  "=": "the identifying bond written as two parallel strokes — identity as active relation (to, for, as, with)",
+  "≠": "equality crossed by the slash — difference as equality under cut; identity retaining the difference through which it is asserted",
+  "Ø": "the crossed zero, introduced §1 · #3 with one job — representation crossing a zero-space it cannot fill; here in its §4 crossing scene only: the slash fused into the zero, computation confused for the computer (occlusion)",
+  "Ø/X": "mediation exposed — the stroke legible as medium between the apparent subject and its object-field",
+  "(0/Ø)": "recognition's first side — unobjectifiable presence distinguished from the apparent subject (composite staged as its exact parts)",
+  "(1/X)": "recognition's second side — the differentiated field gathered in relation to its affirmed unity",
+  "−/+": "polarity as force — withdrawal and extension, reserve and issue in one sign; the dynamis (#2), `(-1)/(+1)` with zero as axis"
+ }
+}

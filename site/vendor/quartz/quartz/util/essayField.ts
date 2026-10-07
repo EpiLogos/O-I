@@ -8,8 +8,10 @@
  * Classification follows the corpus's own layout: section-rooms 00–07 hold the
  * 48 movements (M01–M48, joined to the manuscript's `<a id="M##">` anchors by the
  * number in the file name), and the publication's #1–#4 offices live under
- * symbolon/. Nothing here reads page bodies beyond a word count.
+ * symbolon/. Page bodies are read only for word counts and, on the manuscript
+ * pages, for the `<a id="M##">` anchors each one carries.
  */
+import { readFileSync } from "node:fs"
 import type { QuartzPluginData } from "../plugins/vfile"
 import { simplifySlug, type FullSlug } from "./path"
 
@@ -46,6 +48,7 @@ export interface FNode {
   r: Register
   w: number // words
   m?: number // manuscript movement 1–48
+  mvs?: number[] // the movement anchors a manuscript page carries, ascending
   room?: number
   sec?: string
   pos?: string
@@ -141,6 +144,12 @@ function build(files: QuartzPluginData[]): FieldModel {
       if (m) { n.m = +m[3]; n.room = +m[1] }
       n.sec = fmStr(f, "station"); n.pos = fmStr(f, "position")
     }
+    if (k === "manuscript" && f.filePath) {
+      try {
+        const ids = [...readFileSync(f.filePath, "utf8").matchAll(/id="M(\d+)"/g)].map((x) => +x[1])
+        if (ids.length) n.mvs = [...new Set(ids)].sort((a, b) => a - b)
+      } catch { /* the anchors ride along when the source file is readable */ }
+    }
     if (k === "room") { n.room = +s.match(ROOM_RE)![1]; n.sec = fmStr(f, "station") }
     if (k === "reading" || k === "alignment") n.room = +s.match(ROOM_RE)![1]
     if (fmStr(f, "asset")) n.asset = 1
@@ -181,8 +190,8 @@ function build(files: QuartzPluginData[]): FieldModel {
     else if (n.k === "room") { t = rooms[n.room!].title; coord = n.sec ?? "" }
     else if (n.k === "reading") { t = "Reading route"; coord = rooms[n.room!]?.sec ?? "" }
     else if (n.k === "alignment") { t = "Canonical alignment"; coord = rooms[n.room!]?.sec ?? "" }
-    else if (n.s === "THE-RETURN-OF-ZERO") { t = "The Return of Zero"; coord = "M01–M48" }
-    else if (n.s === "CONFRONTING-THE-LIMIT-S01") { t = "Confronting the Limit"; coord = "§0/1" }
+    else if (n.s === "THE-RETURN-OF-ZERO") { t = "Confronting the Limit"; coord = "M01–M48" }
+    else if (n.s === "CONFRONTING-THE-LIMIT-S01") { t = "§0/1 — The Integral Threshold"; coord = "§0/1" }
     else if (n.s === "index") t = "Reading home"
     else if (n.k === "argument" && (m = t.match(/^([AC]\d+′?) — (.+)$/))) { coord = m[1]; t = m[2] }
     else if (n.k === "argument" && (m = n.s.split("/").pop()!.match(/^([AC]\d+)-(.+)$/))) { coord = m[1]; t = prettify(m[2]) }
@@ -206,8 +215,11 @@ function buildTree(nodes: FNode[], rooms: Record<number, FRoom>): TreeNode {
   const essay = add(root, mk("section", "Essay", { reg: "essay", key: "essay" }))
   const ms = add(essay, mk("folder", "The manuscript", { reg: "essay", key: "ms" }))
   const manuscript = bySlug.get("THE-RETURN-OF-ZERO"), s01 = bySlug.get("CONFRONTING-THE-LIMIT-S01"), home = bySlug.get("index")
-  if (manuscript) add(ms, leaf(manuscript, { label: "The Return of Zero" }))
-  if (s01) add(ms, leaf(s01, { label: "Confronting the Limit" }))
+  if (manuscript) add(ms, leaf(manuscript, { label: "Confronting the Limit" }))
+  if (s01) {
+    const sections = add(ms, mk("folder", "Sections", { reg: "essay", key: "ms-sections", ni: s01.i, gloss: "the essay's sections as they are submitted" }))
+    add(sections, leaf(s01))
+  }
   if (home) add(ms, leaf(home, { label: "Reading home", coord: "" }))
   const roomsF = add(essay, mk("folder", "Section-rooms", { reg: "essay", key: "rooms", gloss: "eight rooms, forty-eight movements" }))
   const roomsRoot = bySlug.get("section-rooms/README")

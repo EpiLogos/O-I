@@ -52,6 +52,7 @@ function execute(op){calls.push(op);
 }
 const cacheDir=mkdtempSync(out+'vite-cache-');
 const server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
+server.middlewares.use('/event-replay',(request,response)=>{response.setHeader('content-type','application/json');response.end(JSON.stringify({ok:true,replay:{schema:'oi.kernel-event-replay/v1',generation:'controlled-harness',oldest_seq:null,latest_seq:0,receipts:[],has_more:false,next_seq:1,resync_required:false}}));});
 server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
 server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true,"receipts":[]}');});
 // Full Chromium requests a favicon; serve the actual design-system mark so the

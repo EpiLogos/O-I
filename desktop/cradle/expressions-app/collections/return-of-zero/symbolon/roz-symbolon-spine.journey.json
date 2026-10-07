@@ -21,19 +21,22 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#101216",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
-          "opacity": 0.9,
+          "count": 38000,
+          "size": 3.1,
+          "opacity": 0.88,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.02,
+          "speed": 0.35,
+          "circulation": 0,
+          "turbulence": 0.12,
+          "pointerStrength": 0.06
         }
       },
       "entities": [
@@ -101,8 +104,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.35,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -185,8 +188,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.35,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -213,7 +216,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-the-slash · DERIVED",
           "title": "The Slash",
           "italic": "/ = −/−",
-          "body": "A dash appears twice, with a stroke between its placements: `−/−`. Neither mark has yet been assigned a value; the slash already makes two placements readable together — the activity through which the same can differ from itself, relation before named terms.\nArithmetic reads the stroke as division and ratio; QL reads it as AND/OR. Opposite signs give direction: `(-1)/(+1)`. Addition cancels, `(-1)+(+1)=0`; subtraction appropriates the span, `(-1)-(+1)=-2`, `(+1)-(-1)=+2`. The polar slash has done neither. Read upon itself, `(0/1)/(1/0)`, it yields `2 + 2² = 4 + 2 = 6`.\nReturns-to: Movement 19, and Symbolon — the whole relation whose first stroke is followed here.\nSource of record: submission-package/essay/symbolon/the-slash.md",
+          "body": "A dash appears twice, with a stroke between its placements: `−/−`. Neither mark has a value or name; the stroke already makes two placements readable together — relation before named terms. Arithmetic reads division and ratio; QL reads AND/OR. `(-1)/(+1)` holds direction; addition cancels; subtraction appropriates. Read upon itself, `(0/1)/(1/0)` yields `2 + 2² = 4 + 2 = 6`.\nReturns-to: Movement 19, and Symbolon.\nSource of record: submission-package/essay/symbolon/the-slash.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -244,7 +247,11 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       }
     },
     {
@@ -257,7 +264,7 @@
         "mode": "2d",
         "yaw": 0,
         "pitch": 0,
-        "zoom": 1,
+        "zoom": 1.06,
         "panX": 0,
         "panY": 0
       },
@@ -269,12 +276,14 @@
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 44000,
+          "size": 3,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.55,
+          "circulation": 0.8,
+          "pointerStrength": 0.5
         }
       },
       "entities": [
@@ -342,8 +351,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.4,
+            "radius": 0.55,
             "spin": 0
           },
           "station": null,
@@ -390,15 +399,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
+                "id": "st-ms-gather-1",
                 "text": "/",
                 "shape": "text",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null
+              },
+              {
+                "id": "st-ms-gather-2",
+                "text": "0/1",
+                "shape": "text",
                 "hold": 3,
-                "transition": 1,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-ms-gather-3",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.2,
                 "position": null
               }
             ]
@@ -426,8 +466,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.4,
+            "radius": 0.55,
             "spin": 0
           },
           "station": null,
@@ -454,7 +494,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-0-1 · DERIVED",
           "title": "0/1",
           "italic": "the first orientation — the singular One through the polyvalent All",
-          "body": "`0/1` holds the conscious circumstance in its first orientation: the singular One becomes articulate through the polyvalent All. `0` names unobjectifiable awareness; `1` names appearing, the field of determinate differences; the slash carries the differentiating activity. `1` depends on `0` for being present at all; `0` depends on `1` for manifestation and knowability — an order that cannot be exchanged.\nThe pair opens its own binary: `00`, `01`, `10`, `11` — `2 + 2² = 2 + 4 = 6`, the first explicit `4+2`. The pairings do not replace the singles.\nThe seam stays exact: ordinary arithmetic evaluates `0/1` as zero and leaves `1/0` undefined; QL's equality `0/1 = 1/0` concerns the identity of the relation under reversed orientation.\nReturns-to: The Loan Returns (§1 · #5→0).\nSource of record: submission-package/essay/symbolon/0-1.md",
+          "body": "`0/1` holds the conscious circumstance in its first orientation: the singular One becomes articulate through the polyvalent All. `0` names unobjectifiable awareness; `1` the field of determinate differences. Each depends on the other in an order that cannot be exchanged. `00`, `01`, `10`, `11` — `2 + 2² = 6`. The seam stays exact: `0/1` evaluates, `1/0` undefined.\nReturns-to: The Loan Returns (§1 · #5→0).\nSource of record: submission-package/essay/symbolon/0-1.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -485,15 +525,19 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.6,
+        "pointerClickRadius": 0.4
       }
     },
     {
       "id": "question-assertion",
       "name": "?/! — Question and Assertion",
       "character": "Inquiry and naming in one sign; the four corners and their SILENCE.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.2,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -503,19 +547,22 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#131519",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 50000,
+          "size": 2.9,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.06,
+          "speed": 0.6,
+          "circulation": 0,
+          "turbulence": 0.15,
+          "pointerStrength": 1.1
         }
       },
       "entities": [
@@ -562,50 +609,8 @@
           }
         },
         {
-          "id": "mark-question",
-          "name": "?",
-          "kind": "formation",
-          "position": {
-            "x": -0.36,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.36,
-            "y": 0.48
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "?",
-          "share": 1,
-          "tint": "#e9e5d9",
-          "tintWeight": 0.9,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-mark-question",
-                "text": "?",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "mark-slash",
-          "name": "/",
+          "id": "mark-sign",
+          "name": "?/!",
           "kind": "formation",
           "position": {
             "x": 0,
@@ -613,15 +618,15 @@
             "z": 0
           },
           "size": {
-            "x": 0.2,
+            "x": 0.62,
             "y": 0.62
           },
           "rotation": 0,
           "shape": "text",
-          "text": "/",
+          "text": "?/!",
           "share": 4,
           "tint": "#e9e5d9",
-          "tintWeight": 0.9,
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -631,58 +636,59 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
-                "text": "/",
+                "id": "st-sign-q",
+                "text": "?/!",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "mark-assertion",
-          "name": "!",
-          "kind": "formation",
-          "position": {
-            "x": 0.36,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.48
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "!",
-          "share": 1,
-          "tint": "#e9e5d9",
-          "tintWeight": 0.9,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
+                "hold": 2.4,
+                "transition": 1.2,
+                "position": {
+                  "x": -0.12,
+                  "y": 0,
+                  "z": 0
+                }
+              },
               {
-                "id": "st-mark-assertion",
-                "text": "!",
+                "id": "st-sign-bang",
+                "text": "?/!",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.12,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.62
+                  },
+                  "rotation": 180,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sign-whole",
+                "text": "?/!",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.2,
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                }
               }
             ]
           }
@@ -708,9 +714,9 @@
           "tintWeight": 0.5,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.45,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -750,9 +756,9 @@
           "tintWeight": 0.5,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.45,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -792,9 +798,9 @@
           "tintWeight": 0.5,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.45,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -834,9 +840,9 @@
           "tintWeight": 0.5,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.45,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
@@ -877,21 +883,37 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-corner-silence",
+                "id": "st-silence-1",
                 "text": "SILENCE",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.6,
+                "transition": 1.2,
+                "position": null
+              },
+              {
+                "id": "st-silence-2",
+                "text": "",
+                "shape": "text",
+                "hold": 1.6,
+                "transition": 1.6,
+                "position": null
+              },
+              {
+                "id": "st-silence-3",
+                "text": "SILENCE",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.2,
                 "position": null
               }
             ]
@@ -905,7 +927,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-question-assertion · DERIVED",
           "title": "?/!",
           "italic": "inquiry and naming in one sign",
-          "body": "`?` names openness to determination; `!` names the act of asserting enough for a determination to stand. The slash holds them in one operation: the question has asserted a provisional this, and the assertion carries the question whether it has said truly. “What allows for an essence is essentially inessential.”\nThe Catuṣkoṭi crossing tests the proposition 0 is and/or is not equal to 1: IS — the appearing belongs to awareness; IS-NOT — awareness is not exhausted by the phenomenon; BOTH holds the two operations; NEITHER turns the account on its own remaining claim. SILENCE names the recognition through which the four corners become one lived movement.\nThe determination sits at #1; the same sign reappears at processual #3, where `1/0` meets incomputability. The placements are not exchanged.\nReturns-to: A18 and §3 · #0.\nSource of record: submission-package/essay/symbolon/question-assertion.md",
+          "body": "`?` names openness to determination; `!` the act of asserting enough for a determination to stand; the slash holds them in one operation. The Catuṣkoṭi crossing tests the proposition 0 is and/or is not equal to 1: IS, IS-NOT, BOTH, NEITHER. SILENCE names the recognition through which the corners become one lived movement; the sign reappears at processual #3.\nReturns-to: A18 and §3 · #0.\nSource of record: submission-package/essay/symbolon/question-assertion.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -914,7 +936,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -936,7 +958,11 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.6,
+        "pointerClickRadius": 0.5
       }
     },
     {
@@ -961,12 +987,14 @@
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 56000,
+          "size": 2.9,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.09,
+          "speed": 0.5,
+          "circulation": 0.4,
+          "pointerStrength": 0.8
         }
       },
       "entities": [
@@ -1033,9 +1061,9 @@
           "tintWeight": 0.85,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.5,
+            "radius": 0.55,
             "spin": 0
           },
           "station": null,
@@ -1082,15 +1110,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
+                "id": "st-mp-1",
                 "text": "/",
                 "shape": "text",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null
+              },
+              {
+                "id": "st-mp-2",
+                "text": "−/+",
+                "shape": "text",
                 "hold": 3,
-                "transition": 1,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-mp-3",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.2,
                 "position": null
               }
             ]
@@ -1118,8 +1177,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.5,
+            "radius": 0.55,
             "spin": 0
           },
           "station": null,
@@ -1146,7 +1205,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-minus-plus · DERIVED",
           "title": "−/+",
           "italic": "withdrawal and extension, reserve and issue",
-          "body": "Negation's self-relation makes affirmation available: the appearing face belongs to the reserve that issues it. “The void voids itself” — determination arises through the unmarked's own self-limitation. Breathing gives the relation its bodily performance: gathering and release differ, and their difference sustains one living movement. The journey is the issuing pole; residence is the reserve through which issuing can continue.\nSigned, the polarity keeps its axis: `(-1)/(+1)`. Addition cancels the contributions, `(-1)+(+1)=0`; subtraction measures the span from one chosen pole, `(-1)-(+1)=-2`, `(+1)-(-1)=+2`. Neither operation can simply be substituted for the living polarity.\nWithin the sixfold this is #2, Dynamis, paired with `X/x` as the Becoming harmonic and the Text–Texture fold.\nSource of record: submission-package/essay/symbolon/minus-plus.md",
+          "body": "Negation's self-relation makes affirmation available: the appearing face belongs to the reserve that issues it. “The void voids itself” — determination arises through the unmarked's self-limitation. Breathing gives the relation its bodily performance: gathering and release differ, and their difference sustains one living movement. Signed, the polarity keeps its axis, `(-1)/(+1)`; addition cancels; subtraction appropriates. Within the sixfold this is #2, Dynamis.\nSource of record: submission-package/essay/symbolon/minus-plus.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -1192,9 +1251,13 @@
       ],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
+        "backgroundMode": "vignette",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 1.4,
+        "pointerClickRadius": 0.5
       }
     },
     {
@@ -1212,19 +1275,22 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#121417",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
+          "count": 58000,
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.8,
+          "circulation": 1.2,
+          "turbulence": 0.18,
+          "pointerStrength": 0.9
         }
       },
       "entities": [
@@ -1291,10 +1357,10 @@
           "tintWeight": 0.95,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
+            "kind": "vortex",
+            "strength": 0.4,
+            "radius": 0.7,
+            "spin": 0.5
           },
           "station": null,
           "sequence": {
@@ -1340,15 +1406,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
+                "id": "st-xx-1",
                 "text": "/",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null
+              },
+              {
+                "id": "st-xx-2",
+                "text": "X/x",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-xx-3",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.2,
                 "position": null
               }
             ]
@@ -1418,22 +1515,76 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.35,
+            "radius": 0.6,
             "spin": 0
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-instance-1",
+                "id": "st-x-1",
                 "text": "x",
                 "shape": "text",
-                "hold": 3,
+                "hold": 2,
                 "transition": 1,
                 "position": null
+              },
+              {
+                "id": "st-x-2",
+                "text": "x",
+                "shape": "text",
+                "hold": 2,
+                "transition": 1.2,
+                "position": {
+                  "x": 0.76,
+                  "y": -0.06,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-x-3",
+                "text": "x",
+                "shape": "text",
+                "hold": 2,
+                "transition": 1.2,
+                "position": {
+                  "x": 0.64,
+                  "y": 0.2,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.42,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -1460,8 +1611,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.35,
+            "radius": 0.6,
             "spin": 0
           },
           "station": null,
@@ -1502,8 +1653,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.35,
+            "radius": 0.6,
             "spin": 0
           },
           "station": null,
@@ -1530,7 +1681,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-x-x · DERIVED",
           "title": "X/x",
           "italic": "one letter in two cases",
-          "body": "X names determining capacity; x names its indefinite particular. The same letter carries both; the slash is the activity of determination between them. The small x also carries multiplication in the authored sign: an instance can recur, compound, and generate further instances — entity and operation meet in one mark.\nThe spine fixes `X/x` at #3, Pattern: “Sojourning through time yet unmovingly presidential.” The small x is the temporal sojourn; X presides as the capacity made legible through that journey. In the psyche register the spine reads X = x: the Self's determining fullness and the ego's particular measurement, related through identity-as-difference. The agentic corollary is an Argued functional crosswalk, with no inference from functional recursion to phenomenal subjectivity.\nSource of record: submission-package/essay/symbolon/X-x.md",
+          "body": "X names determining capacity; x its indefinite particular. The same letter carries both; the slash is the activity of determination between them. The small x also carries multiplication: an instance can recur, compound, generate further instances. The spine fixes X/x at #3, Pattern. In the psyche register the spine reads X = x — an Argued functional crosswalk, no inference to phenomenality.\nSource of record: submission-package/essay/symbolon/X-x.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -1539,7 +1690,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "spiral",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1561,15 +1712,21 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "vortex",
+        "pointerClickStrength": 1.2,
+        "pointerClickRadius": 0.45,
+        "relationalEnabled": true,
+        "relationalMode": "orbital"
       }
     },
     {
       "id": "AM-IS",
       "name": "AM/IS — The Personed Copula",
       "character": "First-person presence and third-person sayability; the slash is the second person.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1579,19 +1736,21 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#15130f",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
+          "count": 60000,
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.06,
+          "speed": 0.55,
+          "circulation": 0.3,
+          "pointerStrength": 0.5
         }
       },
       "entities": [
@@ -1659,8 +1818,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.5,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -1707,15 +1866,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
+                "id": "st-amis-1",
                 "text": "/",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null
+              },
+              {
+                "id": "st-amis-2",
+                "text": "AM/IS",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-amis-3",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
                 "position": null
               }
             ]
@@ -1743,8 +1933,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.5,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -1771,7 +1961,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-am-is · DERIVED",
           "title": "AM/IS",
           "italic": "the personed copula — the slash as second person",
-          "body": "AM speaks first-person presence: I am. IS makes something available for third-person predication: it is. The slash carries the second-person relation: an address can be answered; what appears as an object of my account can speak back and alter the account's terms. “I am here” and “she is here” can concern the same person without performing the same act.\nThe native knower–means–known coordination makes the three offices precise: pramātṛ the knower, pramāṇa the means, prameya the known. The 1–2–3 pass is followed by the 4–5–0 recognition pass — read as 3:3 and 3:1. The determination occupies #4, Context: “Context total yet totally incidental.”\nWith `∞/dx` this is the Knowing/unKnowing harmonic: someone knows, and the truth of that knowing includes its continuing relation to what exceeds its account.\nSource of record: submission-package/essay/symbolon/AM-IS.md",
+          "body": "AM speaks first-person presence; IS makes something available for third-person predication. The slash carries the second person: an address can be answered and alter the account's terms. The knower–means–known coordination makes the offices precise: pramātṛ, pramāṇa, prameya. The 1–2–3 pass is followed by the 4–5–0 recognition pass — read as 3:3 and 3:1. The determination occupies #4, Context.\nSource of record: submission-package/essay/symbolon/AM-IS.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -1797,30 +1987,51 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [],
+      "automation": [
+        {
+          "id": "address-answer-pulse",
+          "enabled": true,
+          "target": "field.pointerStrength",
+          "type": "lfo",
+          "wave": "sine",
+          "min": 0.25,
+          "max": 0.95,
+          "rate": 0.1,
+          "phase": 0,
+          "blend": "replace",
+          "duration": 15,
+          "delay": 0,
+          "loop": "loop",
+          "firedAt": null
+        }
+      ],
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 1,
+        "pointerClickRadius": 0.45
       }
     },
     {
       "id": "infinity-dx",
       "name": "∞/dx — Horizon and Differential",
       "character": "The horizon no finite mark contains; the differential through which relation becomes exact.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.8,
       "view": {
         "mode": "2d",
         "yaw": 0,
         "pitch": 0,
-        "zoom": 1,
+        "zoom": 0.9,
         "panX": 0,
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#0d0f13",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
@@ -1828,11 +2039,16 @@
         "material": "ink",
         "params": {
           "count": 62000,
-          "size": 2.8,
-          "opacity": 0.9,
+          "size": 2.7,
+          "opacity": 0.85,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.08,
+          "speed": 0.5,
+          "circulation": 0.5,
+          "turbulence": 0.3,
+          "depth": 0.45,
+          "zConfinement": 1.3,
+          "pointerStrength": 0.4
         }
       },
       "entities": [
@@ -1899,9 +2115,9 @@
           "tintWeight": 0.95,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.3,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -1948,15 +2164,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
+                "id": "st-indx-1",
                 "text": "/",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null
+              },
+              {
+                "id": "st-indx-2",
+                "text": "∞/dx",
+                "shape": "text",
+                "hold": 3.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-indx-3",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
                 "position": null
               }
             ]
@@ -1984,21 +2231,56 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.4,
+            "radius": 0.5,
             "spin": 0
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-differential",
+                "id": "st-dx-1",
                 "text": "dx",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.2,
+                "transition": 1.4,
+                "position": null
+              },
+              {
+                "id": "st-dx-2",
+                "text": "dx",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.44,
+                  "y": 0.06,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-dx-3",
+                "text": "dx",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.4,
                 "position": null
               }
             ]
@@ -2012,7 +2294,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-infinity-dx · DERIVED",
           "title": "∞/dx",
           "italic": "the horizon no finite mark contains",
-          "body": "∞ names the unbounded depth no finite mark contains; dx names the local differential through which change becomes exact. The slash holds local precision in relation to inexhaustible depth; no ordinary quotient of an infinite scalar by an infinitesimal is being calculated.\nThe calculus development makes the limit exact: `F(x)=x²+7` differentiates to `F'(x)=2x`; integrating restores a family, `∫2x dx = x²+C` — the local change does not select the original `7`. Knowing a determination truly does not entail knowing every condition of its derivation.\nAt #5, Realisation, the mark faces what it cannot possess: “Silent but in structure reverential.” Across the sequence `∞/dx` joins `0/1` as the Essence fold, 0+5 — one openness encountered before and after determination. The music register declares the same law in another exact form — octave return through the retained `9/8`; different objects, one relation: return retaining a difference.\nSource of record: submission-package/essay/symbolon/infinity-dx.md",
+          "body": "∞ names the unbounded depth no finite mark contains; dx the local differential through which change becomes exact. The calculus makes the limit exact: `F(x)=x²+7` differentiates to `F'(x)=2x`; integrating restores a family, `∫2x dx = x²+C` — the local change does not select the original `7`. At #5, Realisation, the mark faces what it cannot possess; the same law returns as the retained `9/8`.\nSource of record: submission-package/essay/symbolon/infinity-dx.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -2041,9 +2323,13 @@
       "automation": [],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
+        "backgroundMode": "vignette",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.4
       }
     },
     {
@@ -2056,7 +2342,7 @@
         "mode": "2d",
         "yaw": 0,
         "pitch": 0,
-        "zoom": 1,
+        "zoom": 1.04,
         "panX": 0,
         "panY": 0
       },
@@ -2068,12 +2354,15 @@
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 44000,
+          "size": 3,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.5,
+          "circulation": -0.8,
+          "gravityX": -0.5,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
@@ -2141,8 +2430,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.55,
             "spin": 0
           },
           "station": null,
@@ -2189,15 +2478,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-slash",
+                "id": "st-ret-1",
                 "text": "/",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null
+              },
+              {
+                "id": "st-ret-2",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-ret-3",
+                "text": "/",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
                 "position": null
               }
             ]
@@ -2225,8 +2545,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.5,
+            "radius": 0.6,
             "spin": 0
           },
           "station": null,
@@ -2253,7 +2573,7 @@
           "kicker": "SYMBOLON ROOT · symbolon-1-0 · DERIVED",
           "title": "1/0",
           "italic": "the obverse orientation — determination returns through its ground",
-          "body": "The parent `/ = −/−` precedes the six determinations `0/1`, `?/!`, `−/+`, `X/x`, `AM/IS`, `∞/dx`; `1/0` turns their achieved articulation back toward its condition, bracketing the sixfold at its returning end. A seventh interior position would turn the return into one more item to be counted.\nQL writes the relational identity `0/1 = 1/0` — one relation read from its two ends. The arithmetic seam belongs to the notation's work: `0/1` evaluates to zero, `1/0` is undefined; the returning mark cannot supply a value that would place its condition among its objects.\nThis is the consequent essence, `5→0`, with 5 implicated in 1 through exactly this connection. Recognition changes the act: the three persons unfold, their isolation is voided, their unity recognised, and that one returns as `0/1`.\nReturns-to: A36, Advent of Integral Zero.\nSource of record: submission-package/essay/symbolon/1-0.md",
+          "body": "The parent `/ = −/−` precedes the six determinations; `1/0` turns achieved articulation back toward its condition, bracketing the sixfold without a seventh interior position. QL writes `0/1 = 1/0` — one relation read from its two ends; the arithmetic seam belongs to the notation. This is the consequent essence, `5→0`, with 5 implicated in 1 through exactly this connection.\nReturns-to: A36, Advent of Integral Zero.\nSource of record: submission-package/essay/symbolon/1-0.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -2284,15 +2604,19 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "implode",
+        "pointerClickStrength": 1.6,
+        "pointerClickRadius": 0.55
       }
     },
     {
       "id": "head-mono-poly",
       "name": "Mono/Poly — One through the Many",
       "character": "The One at centre; the many held around it — mutually implicate accountings, not rival totals.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -2302,19 +2626,21 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#101216",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
+          "count": 52000,
           "size": 2.8,
-          "opacity": 0.9,
+          "opacity": 0.88,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.55,
+          "circulation": 0.4,
+          "pointerStrength": 1
         }
       },
       "entities": [
@@ -2388,15 +2714,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-one",
+                "id": "st-mpoly-1",
                 "text": "1",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.6,
+                "transition": 1.2,
+                "position": null
+              },
+              {
+                "id": "st-mpoly-2",
+                "text": "0",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.54
+                  },
+                  "rotation": 0,
+                  "tint": "#c9ad7a",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-mpoly-3",
+                "text": "1",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.2,
                 "position": null
               }
             ]
@@ -2408,7 +2765,7 @@
           "kind": "formation",
           "position": {
             "x": 0.6,
-            "y": 0.0,
+            "y": 0,
             "z": 0
           },
           "size": {
@@ -2424,8 +2781,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2466,8 +2823,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2508,8 +2865,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2550,8 +2907,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2592,8 +2949,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2634,8 +2991,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2676,8 +3033,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2718,8 +3075,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.3,
+            "radius": 0.8,
             "spin": 0
           },
           "station": null,
@@ -2746,7 +3103,7 @@
           "kicker": "SYMBOLON HEAD · symbolon-mono-poly · ARGUED",
           "title": "Mono/Poly",
           "italic": "one through the many — Self-Identity becoming Self-Difference",
-          "body": "Mono names the singular One; Poly names the All through which that One appears: `0 = One = Self-Identity`, `1 = All = Self-Difference`. The whole is structurally prior to its parts because no part creates the conditions through which it becomes that part — a priority of the relation, not a time before distribution. Inclusion and generation are different predications; both can hold without installing a final owner of the picture.\nMonoisation names the reversal of office: a local determination presents itself as the source of the field through which it arose — the promotion of the local `1` into the `0`-office. Two monocultures can occupy the place of plurality while the operation maintaining them stays similar. Recovery returns each claim to the relations it has excluded; a false claim can remain false.\nClaim status: Argued — from the authorial QL derivation and the named developmental corpus.\nSource of record: submission-package/essay/symbolon/mono-poly.md",
+          "body": "Mono names the singular One; Poly the All through which that One appears: `0 = One = Self-Identity`, `1 = All = Self-Difference`. The whole is structurally prior to its parts. Monoisation names the reversal of office: a local `1` promoted into the `0`-office, presenting itself as the source of its field. Recovery returns each claim to the relations it excluded.\nClaim status: Argued.\nSource of record: submission-package/essay/symbolon/mono-poly.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -2757,7 +3114,7 @@
       "composition": {
         "layout": "free",
         "plane": "XY",
-        "focus": "parallel",
+        "focus": "travelling",
         "focusDuration": 4,
         "carryTint": true,
         "carryStation": false,
@@ -2777,7 +3134,11 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.4,
+        "pointerClickRadius": 0.5
       }
     },
     {
@@ -2795,19 +3156,22 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#121316",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
+          "count": 56000,
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.6,
+          "circulation": 0.9,
+          "swirlRadius": 0.5,
+          "pointerStrength": 0.8
         }
       },
       "entities": [
@@ -2855,28 +3219,28 @@
         },
         {
           "id": "mark-hash",
-          "name": "#",
+          "name": "copula-holding",
           "kind": "formation",
           "position": {
             "x": 0,
-            "y": 0,
+            "y": 0.18,
             "z": 0
           },
           "size": {
-            "x": 0.58,
-            "y": 0.64
+            "x": 1.25,
+            "y": 0.13
           },
           "rotation": 0,
           "shape": "text",
-          "text": "#",
+          "text": "/ = ( = =/≠ ≠ )",
           "share": 5,
           "tint": "#e9e5d9",
           "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.45,
+            "radius": 0.9,
             "spin": 0
           },
           "station": null,
@@ -2894,6 +3258,129 @@
               }
             ]
           }
+        },
+        {
+          "id": "station-0",
+          "name": "#0",
+          "kind": "formation",
+          "position": {
+            "x": -0.34,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "#0",
+          "share": 1,
+          "tint": "#e9e5d9",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0.45,
+            "radius": 0.6,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st-cx-1",
+                "text": "#0",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": null
+              },
+              {
+                "id": "st-cx-2",
+                "text": "#5",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.34,
+                  "y": -0.28,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-cx-3",
+                "text": "#0",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.34,
+                  "y": -0.28,
+                  "z": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "station-5",
+          "name": "#5",
+          "kind": "formation",
+          "position": {
+            "x": 0.34,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "#5",
+          "share": 1,
+          "tint": "#e9e5d9",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0.45,
+            "radius": 0.6,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st-cx-5",
+                "text": "#5",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.2,
+                "position": null
+              }
+            ]
+          }
         }
       ],
       "text": [
@@ -2903,7 +3390,7 @@
           "kicker": "SYMBOLON HEAD · symbolon-complexio-oppositorum · DERIVED",
           "title": "Complexio oppositorum",
           "italic": "the holding of opposites, carried by the # mark",
-          "body": "The native sign `#` names the whole determining relation that can be followed through every station; it does different work from any particular `#0` or `#5`, which locate a determination. The formless takes form; the form recognises the formless through which it appears — inverse directions held in one act.\nHeld polarity `(-1)/(+1)` keeps zero as common axis; cancellation `(-1)+(+1)=0` ends the opposition; fusion erases the difference through which either term could answer the other. The copula gives the holding its exact form: `/ = ( = =/≠ ≠ )` — and the recount `4+2 → (3+1)+2` survives the change of apprehension.\nTwo complete units unfold under `#`: the Name (Truth, Mind, Word, Logos, Son, Image) and Power (Play, Need, Sacrifice, Decision, Love, Work). Wholeness keeps its power to differ: the settlement can receive what it excluded without being erased.\nSource of record: submission-package/essay/symbolon/complexio-oppositorum.md",
+          "body": "The native sign `#` names the whole determining relation followed through every station — different work from any particular `#0` or `#5`. The formless takes form; the form recognises the formless through which it appears. Held polarity `(-1)/(+1)` keeps zero as common axis; cancellation ends the opposition; fusion erases difference. The copula gives the holding its exact form: `/ = ( = =/≠ ≠ )`.\nSource of record: submission-package/essay/symbolon/complexio-oppositorum.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -2914,7 +3401,7 @@
       "composition": {
         "layout": "free",
         "plane": "XY",
-        "focus": "parallel",
+        "focus": "travelling",
         "focusDuration": 4,
         "carryTint": true,
         "carryStation": false,
@@ -2934,7 +3421,11 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "vortex",
+        "pointerClickStrength": 1.2,
+        "pointerClickRadius": 0.45
       }
     },
     {
@@ -2942,7 +3433,7 @@
       "name": "Self-Identity",
       "character": "The same appears twice, and the relation identifies them.",
       "duration": 12,
-      "transition": 1.5,
+      "transition": 1.3,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -2959,12 +3450,14 @@
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
-          "size": 2.8,
+          "count": 46000,
+          "size": 2.9,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.04,
+          "speed": 0.45,
+          "circulation": 0.2,
+          "pointerStrength": 0.6
         }
       },
       "entities": [
@@ -3032,8 +3525,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.45,
+            "radius": 0.6,
             "spin": 0
           },
           "station": null,
@@ -3080,15 +3573,46 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-mark-equals",
+                "id": "st-si-1",
                 "text": "=",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
+                "hold": 2.6,
+                "transition": 1.2,
+                "position": null
+              },
+              {
+                "id": "st-si-2",
+                "text": "≠",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.24
+                  },
+                  "rotation": 45,
+                  "tint": "#c9ad7a",
+                  "tintWeight": 0.95,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-si-3",
+                "text": "=",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.2,
                 "position": null
               }
             ]
@@ -3116,8 +3640,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.45,
+            "radius": 0.6,
             "spin": 0
           },
           "station": null,
@@ -3144,7 +3668,7 @@
           "kicker": "SYMBOLON HEAD · symbolon-self-identity · DERIVED",
           "title": "Self-Identity",
           "italic": "identity as an active relation — to, for, as, with",
-          "body": "To write `A = A` requires two appearances of A and the relation identifying them: sameness is available through difference. Four modalities build: identical to itself (reflexivity), for itself (self-gift), as itself (the one appears as many), with itself (accompaniment through the distinctions). Their priority is constitutive, not temporal.\nTwo parallel strokes write `=`; crossing them with `/` writes `≠` — difference as equality under cut. The expanded expression `/ = ( = =/≠ ≠ )` holds identity, identity-related-to-difference, and difference in one readable movement. Retaining the two and opening the four pairings `(0,0) (0,1) (1,0) (1,1)` gives `2 + 2² = 6 = 4+2`.\nManifestation differentiates; recognition — the inversion of inversion — knows that differentiation as the source's own activity. The achieved expression does not have to disappear.\nSource of record: submission-package/essay/symbolon/self-identity.md",
+          "body": "To write `A = A` requires two appearances of A and the relation identifying them: sameness is available through difference. Four modalities build: to, for, as, with itself. Two parallel strokes write `=`; crossing them with `/` writes `≠`. The expanded expression holds identity and difference in one readable movement; retaining both opens `(0,0) (0,1) (1,0) (1,1)` — `2 + 2² = 6`.\nSource of record: submission-package/essay/symbolon/self-identity.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -3153,9 +3677,9 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
-        "focus": "parallel",
+        "focus": "travelling",
         "focusDuration": 4,
         "carryTint": true,
         "carryStation": false,
@@ -3175,14 +3699,18 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.7,
+        "pointerClickRadius": 0.45
       }
     },
     {
       "id": "head-subject-logics",
       "name": "Subject-Logics — The Ø Traversal",
       "character": "0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1, returning as 0/1.",
-      "duration": 12,
+      "duration": 15,
       "transition": 1.5,
       "view": {
         "mode": "2d",
@@ -3193,19 +3721,21 @@
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#0f1116",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
         ],
         "material": "ink",
         "params": {
-          "count": 62000,
+          "count": 58000,
           "size": 1.9,
-          "opacity": 0.9,
+          "opacity": 0.88,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.06,
+          "speed": 0.55,
+          "circulation": 0.4,
+          "pointerStrength": 0.7
         }
       },
       "entities": [
@@ -3269,7 +3799,7 @@
           "text": "0",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.9,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3311,7 +3841,7 @@
           "text": "Ø",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.75,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3353,7 +3883,7 @@
           "text": "X",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.75,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3395,7 +3925,7 @@
           "text": "Ø/X",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.75,
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3405,16 +3935,197 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-station-mediation",
+                "id": "st-sl-0",
+                "text": "0",
+                "shape": "text",
+                "hold": 1.6,
+                "transition": 0.9,
+                "position": {
+                  "x": -1.02,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.17,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sl-o",
+                "text": "Ø",
+                "shape": "text",
+                "hold": 1.6,
+                "transition": 0.9,
+                "position": {
+                  "x": -0.66,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.31
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sl-x",
+                "text": "X",
+                "shape": "text",
+                "hold": 1.6,
+                "transition": 0.9,
+                "position": {
+                  "x": -0.31,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.25,
+                    "y": 0.32
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sl-m",
                 "text": "Ø/X",
                 "shape": "text",
-                "hold": 3,
+                "hold": 1.8,
                 "transition": 1,
-                "position": null
+                "position": {
+                  "x": 0.04,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.17
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sl-ra",
+                "text": "(0/Ø)",
+                "shape": "text",
+                "hold": 1.8,
+                "transition": 1,
+                "position": {
+                  "x": 0.48,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.15
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sl-rb",
+                "text": "(1/X)",
+                "shape": "text",
+                "hold": 1.8,
+                "transition": 1,
+                "position": {
+                  "x": 1.04,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.15
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sl-1",
+                "text": "1",
+                "shape": "text",
+                "hold": 1.8,
+                "transition": 1,
+                "position": {
+                  "x": 1.4,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.17,
+                    "y": 0.22
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -3437,7 +4148,7 @@
           "text": "(0/Ø)",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.75,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3479,7 +4190,7 @@
           "text": "/",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.75,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3521,7 +4232,7 @@
           "text": "(1/X)",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.75,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3563,7 +4274,7 @@
           "text": "1",
           "share": 1,
           "tint": "#e9e5d9",
-          "tintWeight": 0.9,
+          "tintWeight": 0.3,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -3595,7 +4306,7 @@
           "kicker": "SYMBOLON HEAD · symbolon-subject-logics · DERIVED",
           "title": "Subject-Logics",
           "italic": "the Ø traversal — 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1, returning as 0/1",
-          "body": "`0` names the unobjectifiable subject-pole: C01 defines the subject as defined-indefinable. The inner instrument — antaḥkaraṇa — organises experience; occlusion `Ø` occurs when that describable apparatus is taken as the final knower: the slash fused into the zero, computation confused for the computer. `X` marks the field of crossings; `Ø/X` exposes mediation; `(0/Ø)/(1/X)` holds both sides under recognition; `1` affirms the subject's relation to its world as one being, returning as `0/1`.\nPramātṛ, pramāṇa, prameya give the page three exact offices: numerator, slash, denominator. Descartes and Hume sit at the occlusion as authorial diagnostic placements. In von Neumann's construction `0 = ∅`, `1 = {∅}` — a formal neighbour for a mark that links without becoming identical to what it links.\nSource of record: submission-package/essay/symbolon/subject-logics.md",
+          "body": "`0` names the unobjectifiable subject-pole. Occlusion `Ø` occurs when the inner instrument — antaḥkaraṇa — is taken as the final knower: computation confused for the computer. `X` marks the field of crossings; `Ø/X` exposes mediation; `(0/Ø)/(1/X)` holds both sides under recognition; `1` affirms the subject's relation to its world, returning as `0/1`. Pramātṛ, pramāṇa, prameya are numerator, slash, denominator.\nSource of record: submission-package/essay/symbolon/subject-logics.md",
           "x": 0.035,
           "y": 0.055,
           "width": 250,
@@ -3604,9 +4315,9 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
-        "focus": "parallel",
+        "focus": "travelling",
         "focusDuration": 4,
         "carryTint": true,
         "carryStation": false,
@@ -3626,25 +4337,29 @@
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.5,
+        "pointerClickRadius": 0.5
       }
     },
     {
       "id": "spine-index",
       "name": "Eight Determinations — The Complete Traversal",
       "character": "The spine held within the whole: centre threshold, four cardinal stations, thresholds bracketing on the rim.",
-      "duration": 14,
-      "transition": 1.5,
+      "duration": 16,
+      "transition": 2.4,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.55,
+        "pitch": 0.22,
+        "zoom": 0.95,
         "panX": 0,
         "panY": 0
       },
       "field": {
-        "background": "#14161a",
+        "background": "#0b0d11",
         "palette": [
           "#e9e5d9",
           "#e9e5d9"
@@ -3655,8 +4370,12 @@
           "size": 2.8,
           "opacity": 0.9,
           "contrast": 0.94,
-          "dispersion": 0.07,
-          "speed": 0.6
+          "dispersion": 0.05,
+          "speed": 0.5,
+          "circulation": 0.6,
+          "depth": 0.6,
+          "zConfinement": 1.5,
+          "pointerStrength": 0.6
         }
       },
       "entities": [
@@ -3667,7 +4386,7 @@
           "position": {
             "x": 0,
             "y": 0,
-            "z": 0
+            "z": -0.1
           },
           "size": {
             "x": 1.9,
@@ -3709,7 +4428,7 @@
           "position": {
             "x": 0,
             "y": 0,
-            "z": 0
+            "z": 0.5
           },
           "size": {
             "x": 0.5,
@@ -3730,16 +4449,224 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st-centre-threshold",
+                "id": "st-sp-1",
+                "text": "−/−",
+                "shape": "text",
+                "hold": 1.4,
+                "transition": 1,
+                "position": {
+                  "x": 0,
+                  "y": 0.96,
+                  "z": -0.35
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-2",
                 "text": "0/1",
                 "shape": "text",
-                "hold": 3,
+                "hold": 1.6,
+                "transition": 1.1,
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0.5
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.58
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-3",
+                "text": "?/!",
+                "shape": "text",
+                "hold": 1.4,
                 "transition": 1,
-                "position": null
+                "position": {
+                  "x": 0,
+                  "y": 0.44,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-4",
+                "text": "−/+",
+                "shape": "text",
+                "hold": 1.4,
+                "transition": 1,
+                "position": {
+                  "x": 0.46,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-5",
+                "text": "X/x",
+                "shape": "text",
+                "hold": 1.4,
+                "transition": 1,
+                "position": {
+                  "x": 0,
+                  "y": -0.44,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.32,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-6",
+                "text": "AM/IS",
+                "shape": "text",
+                "hold": 1.4,
+                "transition": 1,
+                "position": {
+                  "x": -0.46,
+                  "y": 0,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-7",
+                "text": "∞/dx",
+                "shape": "text",
+                "hold": 1.4,
+                "transition": 1,
+                "position": {
+                  "x": -0.68,
+                  "y": -0.68,
+                  "z": -0.5
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-sp-8",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 1.8,
+                "transition": 1.1,
+                "position": {
+                  "x": 0.68,
+                  "y": -0.68,
+                  "z": -0.6
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e5d9",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0.4,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
@@ -3766,8 +4693,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.25,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -3808,8 +4735,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.25,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -3850,8 +4777,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.25,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -3892,8 +4819,8 @@
           "locked": false,
           "force": {
             "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
+            "strength": 0.25,
+            "radius": 0.7,
             "spin": 0
           },
           "station": null,
@@ -3919,7 +4846,7 @@
           "position": {
             "x": 0,
             "y": 0.96,
-            "z": 0
+            "z": -0.35
           },
           "size": {
             "x": 0.34,
@@ -3961,7 +4888,7 @@
           "position": {
             "x": -0.68,
             "y": -0.68,
-            "z": 0
+            "z": -0.5
           },
           "size": {
             "x": 0.4,
@@ -4003,7 +4930,7 @@
           "position": {
             "x": 0.68,
             "y": -0.68,
-            "z": 0
+            "z": -0.6
           },
           "size": {
             "x": 0.34,
@@ -4046,7 +4973,7 @@
           "kicker": "SPINE-INDEX · symbolon-eight-determinations · DERIVED · THE TWELVEFOLD",
           "title": "Eight Determinations",
           "italic": "(4+2)+2 — one relation, threshold to return",
-          "body": "The eight determinations traverse the inner nature of `0/1`: the parent relation, the sixfold's qualitative body, and the return. The two thresholds bracket the six positions; they add no interior positions. Centre: the `0/1` threshold. Cardinal stations: `?/!` N, `−/+` E, `X/x` S, `AM/IS` W. The ring is the whole, parā, carrying the #0/#5 envelope: `∞/dx` at the rim, `−/−` entering above, `1/0` returning below.\nThe four heads read this spine — Mono/Poly, `#`, `A=A`, `Ø` — the four scenes just walked. Eight plus four: the twelvefold. This index adds no thirteenth determination.\nFolds: Being `0/1·?/!`; Becoming `−/+·X/x`; Knowing/unKnowing `AM/IS·∞/dx`; Essence #0+#5; Constitution #1+#4; Text–Texture #2+#3.\nReturns-to: §3 · #0 (Movement 25) and A18.\nSource of record: submission-package/essay/symbolon/eight-determinations.md",
+          "body": "The eight determinations traverse the inner nature of `0/1`: parent relation, sixfold body, return — `(4+2)+2`. Centre: the `0/1` threshold. Cardinals: `?/!` N, `−/+` E, `X/x` S, `AM/IS` W. The ring is the whole, parā: `∞/dx` at the rim, `−/−` entering above, `1/0` returning below. The four heads read this spine; eight plus four: the twelvefold, no thirteenth.\nReturns-to: §3 · #0 (Movement 25) and A18.\nSource of record: submission-package/essay/symbolon/eight-determinations.md",
           "x": 0.035,
           "y": 0.045,
           "width": 240,
@@ -4055,9 +4982,9 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
-        "focus": "parallel",
+        "focus": "travelling",
         "focusDuration": 4,
         "carryTint": true,
         "carryStation": false,
@@ -4075,11 +5002,20 @@
       "automation": [],
       "engine": {
         "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
+        "backgroundMode": "vignette",
         "fontFamily": "system-ui, -apple-system, sans-serif",
-        "fontWeight": 900
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.8,
+        "pointerClickRadius": 0.45,
+        "volumeEnabled": true,
+        "volumeProfile": "round",
+        "depthPerspective": true,
+        "depthOcclusion": true,
+        "depthTintColor": "#0a0d12"
       }
     }
   ],
-  "updatedAt": "2026-09-17T01:40:05Z"
+  "updatedAt": "2026-10-06T00:00:00Z"
 }

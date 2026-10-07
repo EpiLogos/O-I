@@ -10,11 +10,11 @@
       "id": "m-ares-0-song",
       "name": "The song, the bed, and the gods at the door",
       "character": "Demodocus takes the lyre among the Phaeacians; the tale turns to Ares and Aphrodite in Hephaestus's house.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 14,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
-        "yaw": 0,
+        "yaw": 0.06,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -23,7 +23,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.7,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#f6f1e6",
@@ -34,7 +38,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.6,
+          "circulation": 0.35,
+          "pointerStrength": 0.7,
+          "dispersion": 0.08
+        }
       },
       "entities": [
         {
@@ -142,9 +151,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "repel",
+            "strength": 0.2,
+            "radius": 0.4,
             "spin": 0
           },
           "station": null,
@@ -184,9 +193,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.35,
+            "radius": 0.32,
             "spin": 0
           },
           "station": null,
@@ -226,9 +235,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.45,
+            "radius": 0.34,
             "spin": 0
           },
           "station": null,
@@ -314,8 +323,8 @@
       "id": "m-ares-0b-bonds",
       "name": "Bonds beyond the gods' sight",
       "character": "Hephaestus forges bonds no one can break or loosen, arranges them around the bed, and pretends to leave for Lemnos.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 10,
+      "transition": 1.2,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -327,7 +336,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.25,
+        "pointerClickRadius": 0.28
       },
       "field": {
         "background": "#120d08",
@@ -338,7 +351,12 @@
           "#7d8a8f"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.3,
+          "circulation": -0.45,
+          "dispersion": 0.03,
+          "pointerStrength": 0.25
+        }
       },
       "entities": [
         {
@@ -417,16 +435,20 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "st8",
-                "text": "",
-                "shape": "ring",
-                "hold": 2.6,
-                "transition": 1.2,
-                "position": null,
+                "id": "st-e7-1",
+                "text": "·",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": {
+                  "x": -0.45,
+                  "y": -0.42,
+                  "z": 0
+                },
                 "objectState": {
                   "size": {
-                    "x": 1.084,
-                    "y": 0.722
+                    "x": 0.18,
+                    "y": 0.18
                   },
                   "rotation": 0,
                   "tint": "#c9a227",
@@ -440,19 +462,23 @@
                 }
               },
               {
-                "id": "st9",
-                "text": "",
-                "shape": "ring",
-                "hold": 2.6,
-                "transition": 1.2,
-                "position": null,
+                "id": "st-e7-2",
+                "text": "✕",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": {
+                  "x": 0.45,
+                  "y": -0.42,
+                  "z": 0
+                },
                 "objectState": {
                   "size": {
-                    "x": 0.83,
-                    "y": 0.564
+                    "x": 0.22,
+                    "y": 0.22
                   },
                   "rotation": 0,
-                  "tint": "#e07020",
+                  "tint": "#d9b84a",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -463,19 +489,23 @@
                 }
               },
               {
-                "id": "st10",
-                "text": "",
-                "shape": "ring",
-                "hold": 2.6,
-                "transition": 1.2,
-                "position": null,
+                "id": "st-e7-3",
+                "text": "✕✕✕",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": {
+                  "x": 0,
+                  "y": -0.12,
+                  "z": 0
+                },
                 "objectState": {
                   "size": {
-                    "x": 1.084,
-                    "y": 0.722
+                    "x": 0.3,
+                    "y": 0.14
                   },
                   "rotation": 0,
-                  "tint": "#c9a227",
+                  "tint": "#e0d090",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -506,7 +536,7 @@
           "text": "Ares",
           "share": 1,
           "tint": "#e07020",
-          "tintWeight": 1,
+          "tintWeight": 0.8,
           "locked": false,
           "force": {
             "kind": "none",
@@ -590,7 +620,7 @@
           "text": "Lemnos",
           "share": 1,
           "tint": "#7d8a8f",
-          "tintWeight": 1,
+          "tintWeight": 0.55,
           "locked": false,
           "force": {
             "kind": "none",
@@ -635,7 +665,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "In pain and anger Hephaestus sets his anvil and makes bonds that could neither be broken nor loosened by those they held — around the bedposts, suspended from the beams, fine as a spider's web, beyond the gods' sight. He pretends to leave for Lemnos. Ares, watching, sees the husband gone, takes Aphrodite's hand, and the unseen work closes. They can neither lift nor move their limbs; only then do they know escape is impossible. Helios brings word a second time, and grief becomes a summons to Zeus and the gods.",
+          "body": "In pain and anger Hephaestus sets his anvil and makes bonds that can neither be broken nor loosened — around the bedposts, suspended from the beams, fine as a spider's web, beyond the gods' sight. He pretends to leave for Lemnos. Ares sees the husband gone, takes Aphrodite's hand, and the unseen work closes; only then do they know escape is impossible.",
           "x": 0.04,
           "y": 0.55,
           "width": 620,
@@ -694,7 +724,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.3,
+        "pointerClickRadius": 0.5
       },
       "field": {
         "background": "#f6f1e6",
@@ -706,7 +740,13 @@
           "#a5623a"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.5,
+          "circulation": 0.15,
+          "dispersion": 0.06,
+          "pointerStrength": 0.4,
+          "turbulence": 0.15
+        }
       },
       "entities": [
         {
@@ -714,8 +754,8 @@
           "name": "Harmonia",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.08,
+            "x": -0.2,
+            "y": -0.14,
             "z": 0
           },
           "size": {
@@ -756,8 +796,8 @@
           "name": "Deimos",
           "kind": "formation",
           "position": {
-            "x": -0.62,
-            "y": -0.14,
+            "x": -0.66,
+            "y": -0.1,
             "z": 0
           },
           "size": {
@@ -798,8 +838,8 @@
           "name": "Phobos",
           "kind": "formation",
           "position": {
-            "x": -0.16,
-            "y": -0.3,
+            "x": -0.66,
+            "y": -0.32,
             "z": 0
           },
           "size": {
@@ -863,18 +903,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st17",
+                "id": "st-e14-1",
                 "text": "Eros",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.62,
+                  "y": 0.42,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#2b6b6b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e14-2",
+                "text": "Ἔρως",
+                "shape": "text",
+                "hold": 3.2,
+                "transition": 1.5,
+                "position": {
+                  "x": 0.5,
+                  "y": -0.18,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#3d7d74",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -924,8 +1012,8 @@
           "name": "Harmonia's line — Cadmus, Ino, Semele, Agave, Autonoë, Polydorus",
           "kind": "formation",
           "position": {
-            "x": -0.4,
-            "y": -0.5,
+            "x": 0.05,
+            "y": -0.48,
             "z": 0
           },
           "size": {
@@ -982,7 +1070,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Hesiod's Theogony bears Deimos and Phobos — terror and fear — and Harmonia, whom Cadmus marries; her line continues into a human household. Eros belongs among the primordial powers at 116–122, and accompanies Aphrodite's sea-birth at 176–206; a separately reported lyric parentage (Simonides, in scholia) makes him child of Ares and Aphrodite, its fragment attribution a citation debt. These tellings bring Harmonia and Eros into the field without adding them to Demodocus' scene: Harmonia supplies the named child and continuing genealogy; Eros supplies a primordial power of attraction and, in the variant, a living issue of difference and desire.",
+          "body": "Hesiod's Theogony bears Deimos and Phobos — terror and fear — and Harmonia, whom Cadmus marries into a human line. Eros belongs among the primordial powers at 116–122 and accompanies Aphrodite's sea-birth; a separately reported lyric parentage (Simonides, in scholia) makes him child of Ares and Aphrodite. These tellings enter the field without joining Demodocus' scene: Harmonia the named child; Eros attraction and, in the variant, living desire.",
           "x": 0.04,
           "y": 0.55,
           "width": 620,
@@ -1005,7 +1093,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "grid",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1028,12 +1116,12 @@
       "id": "m-ares-2-difference",
       "name": "The difference that can meet — the bow that is also a lyre",
       "character": "Ares bears distinct being and refusal; Aphrodite attraction and joining; Harmonia the form sustained through their countertension.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 13,
+      "transition": 1.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
-        "pitch": 0,
+        "pitch": 0.06,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -1041,7 +1129,11 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 1,
+        "pointerClickRadius": 0.35
       },
       "field": {
         "background": "#f6f1e6",
@@ -1052,7 +1144,12 @@
           "#a5623a"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.65,
+          "circulation": 0.5,
+          "dispersion": 0.08,
+          "pointerStrength": 0.55
+        }
       },
       "entities": [
         {
@@ -1076,9 +1173,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.3,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -1118,9 +1215,9 @@
           "tintWeight": 1,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.3,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -1167,18 +1264,81 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st22",
-                "text": "",
+                "id": "st-e19-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.975,
+                    "y": 0.975
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e19-2",
+                "text": "·",
+                "shape": "triangle",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.12,
+                    "y": 0.72
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a2b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e19-3",
+                "text": "·",
+                "shape": "yantra",
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1300,7 +1460,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Phobos remain beside the family: differentiation can become hostility, joining can become a demand that the other surrender its difference. The Heraclitus B51 image — what differs agrees through a backwards-turning fastening, as in bow and lyre — is a distinct compact carrier; the bow forgets it is a lyre when tension collapses into a target (Q27's hamartia re-entry, human-amplified: yes for that exact quilt operation).\n\nOccurrences: Ares' and Aphrodite's offices (#2); Harmonia's countertension (#2); terror and fear kept beside the relation (#1–#2); bow/lyre as a separate image, no new event in the song (#2).",
+          "body": "Phobos remain beside the family: differentiation can become hostility; joining can demand the other surrender its difference. Heraclitus B51: what differs agrees through a backwards-turning fastening, as bow and lyre. The bow forgets it is a lyre when tension collapses into a target — Q27's hamartia re-entry (human-amplified: yes for that exact quilt operation).",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -1326,26 +1486,49 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-lyre",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.15,
+          "max": 0.15,
+          "rate": 0.22,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ares-3-apparatus",
       "name": "What the apparatus gathers — and where it stalls",
       "character": "Surveillance, fabrication, immobilisation, a public exhibit; the gods laugh; Hermes receives the deterrent as inducement. The scene stalls where the apparatus stalls.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 16,
+      "transition": 2.2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.42,
+        "zoom": 0.92,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
+        "pointerClickStrength": 1.9,
+        "pointerClickRadius": 0.42,
+        "depthOcclusion": true,
+        "depthTintColor": "#140f0a",
+        "volumeEnabled": true
       },
       "field": {
         "background": "#120d08",
@@ -1358,7 +1541,11 @@
         "material": "round",
         "params": {
           "dispersion": 0.1,
-          "contrast": 0.9
+          "contrast": 0.9,
+          "speed": 0.25,
+          "circulation": 0.05,
+          "zConfinement": 0.75,
+          "pointerStrength": 0.5
         }
       },
       "entities": [
@@ -1390,18 +1577,81 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st25",
-                "text": "",
+                "id": "st-e22-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.05,
+                    "y": 0.78
+                  },
+                  "rotation": 0,
+                  "tint": "#e07020",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e22-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 4.2,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.46
+                  },
+                  "rotation": 0,
+                  "tint": "#e07020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e22-3",
+                "text": "·",
+                "shape": "ring",
+                "hold": 4.6,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.46
+                  },
+                  "rotation": 0,
+                  "tint": "#b34d14",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1409,9 +1659,9 @@
           "name": "Ares — displayed",
           "kind": "formation",
           "position": {
-            "x": 0.3,
+            "x": 0.12,
             "y": 0.08,
-            "z": 0
+            "z": -0.08
           },
           "size": {
             "x": 0.36,
@@ -1422,7 +1672,7 @@
           "text": "Ares",
           "share": 1,
           "tint": "#e07020",
-          "tintWeight": 1,
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1451,9 +1701,9 @@
           "name": "Aphrodite — displayed",
           "kind": "formation",
           "position": {
-            "x": 0.38,
-            "y": 0.34,
-            "z": 0
+            "x": -0.1,
+            "y": 0.16,
+            "z": -0.05
           },
           "size": {
             "x": 0.52,
@@ -1464,7 +1714,7 @@
           "text": "Aphrodite",
           "share": 1,
           "tint": "#c99a3c",
-          "tintWeight": 1,
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1494,8 +1744,8 @@
           "kind": "formation",
           "position": {
             "x": 0,
-            "y": -0.18,
-            "z": 0
+            "y": 0.1,
+            "z": 0.5
           },
           "size": {
             "x": 0.113,
@@ -1511,7 +1761,7 @@
           "force": {
             "kind": "repel",
             "strength": 0.6,
-            "radius": 0.5,
+            "radius": 0.4,
             "spin": 0
           },
           "station": null,
@@ -1535,9 +1785,9 @@
           "name": "the gateway — male gods laughing",
           "kind": "formation",
           "position": {
-            "x": -0.72,
-            "y": -0.36,
-            "z": 0
+            "x": -0.66,
+            "y": -0.3,
+            "z": -0.3
           },
           "size": {
             "x": 0.307,
@@ -1577,9 +1827,9 @@
           "name": "Hermes — \"three times as many bonds\"",
           "kind": "formation",
           "position": {
-            "x": 0.72,
-            "y": -0.14,
-            "z": 0
+            "x": 0.66,
+            "y": 0.32,
+            "z": 0.35
           },
           "size": {
             "x": 0.26,
@@ -1619,9 +1869,9 @@
           "name": "the goddesses — absent, shame unevenly distributed",
           "kind": "formation",
           "position": {
-            "x": -0.72,
-            "y": -0.5,
-            "z": 0
+            "x": 0.05,
+            "y": -0.12,
+            "z": -0.42
           },
           "size": {
             "x": 0.5,
@@ -1691,7 +1941,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "that the slow caught the swift. Apollo asks Hermes whether he would accept those bonds; Hermes would welcome three times as many, with all the gods looking on — the deterrent received as inducement. The laughter is no single moral verdict. Here the song itself stalls: exposure without payment, display without release, an account that cannot make Ares' future conduct present to inspection.\n\nOccurrences: Helios' watching and twice-told report (#0, #3); the anvil, bonds, chamber arrangement (#0, #3); the gateway audience and laughter (#0, #3); Apollo's question and Hermes' answer (#0, #3); the demanded return of marriage gifts from Zeus (#0, #3).",
+          "body": "that the slow caught the swift. Apollo asks Hermes whether he would accept those bonds; Hermes would welcome three times as many, with all the gods looking on — the deterrent received as inducement. The laughter is no single moral verdict. Here the song stalls: exposure without payment, display without release, an account that cannot make Ares' future conduct present to inspection.",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -1700,7 +1950,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1723,8 +1973,8 @@
       "id": "m-ares-4-surety",
       "name": "The word that takes on the debt",
       "character": "Poseidon's first promise is refused — a bad debtor makes a bad guarantee. He answers with his own payment; Hephaestus loosens the bonds with the same hands.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 11,
+      "transition": 1,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1736,7 +1986,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "attract",
+        "pointerClick": "implode",
+        "pointerClickStrength": 1.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
         "background": "#0f2230",
@@ -1747,7 +2001,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.55,
+          "circulation": 0.3,
+          "dispersion": 0.06,
+          "pointerStrength": 0.45
+        }
       },
       "entities": [
         {
@@ -1820,18 +2079,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st33",
-                "text": "",
+                "id": "st-e30-1",
+                "text": "·",
                 "shape": "triangle",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e30-2",
+                "text": "·",
+                "shape": "triangle",
+                "hold": 4,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.765,
+                    "y": 0.527
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1862,18 +2161,66 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st34",
+                "id": "st-e31-1",
                 "text": "Hephaestus",
                 "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 3.4,
+                "transition": 1.1,
+                "position": {
+                  "x": -0.6,
+                  "y": -0.34,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#e07020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e31-2",
+                "text": "⚒",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.1,
+                "position": {
+                  "x": -0.3,
+                  "y": -0.26,
+                  "z": 0
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -1894,7 +2241,7 @@
           "text": "Ares",
           "share": 1,
           "tint": "#d8cfb8",
-          "tintWeight": 1,
+          "tintWeight": 0.85,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1946,18 +2293,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st36",
-                "text": "",
+                "id": "st-e33-1",
+                "text": "·",
                 "shape": "ring",
                 "hold": 3,
-                "transition": 1,
-                "position": null
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.156,
+                    "y": 0.867
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.35,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e33-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 3.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.4,
+                    "y": 1.05
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.12,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         }
       ],
@@ -1981,7 +2368,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Poseidon repeatedly asks Hephaestus to free Ares and promises Ares will pay. Hephaestus hears the weakness: the man who can depart can evade the payment — how could he bind Poseidon before the immortals? The answer is a changed undertaking: if Ares flees without paying, Poseidon will pay. This gives Hephaestus an answer to his objection without making Ares' future conduct present to inspection. He judges the undertaking acceptable and uses his skill to undo his work; the same hands which assembled the constraint open it. The lovers spring up.",
+          "body": "Poseidon promises Ares will pay; Hephaestus hears the weakness — the man who can depart can evade the payment. The answer is a changed undertaking: if Ares flees without paying, Poseidon will pay. This answers the objection without making Ares' future conduct present to inspection. Hephaestus judges it acceptable and uses his skill to undo his work; the same hands which assembled the constraint open it.",
           "x": 0.04,
           "y": 0.55,
           "width": 620,
@@ -2021,14 +2408,30 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "auto-oath",
+          "target": "field.params.pointerStrength",
+          "type": "lfo",
+          "wave": "triangle",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.1,
+          "max": 0.1,
+          "rate": 0.13,
+          "phase": 0.3,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-ares-5-return",
       "name": "The relation after release",
       "character": "The spectators' scene no longer contains them; the claim persists, the work has changed, the guarantor has undertaken a cost, the lovers have paths beyond the image.",
-      "duration": 12,
-      "transition": 1.5,
+      "duration": 15,
+      "transition": 2.4,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -2040,7 +2443,11 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false
+        "autoFitSizes": false,
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.1,
+        "pointerClickRadius": 0.25
       },
       "field": {
         "background": "#0f2230",
@@ -2051,7 +2458,12 @@
           "#c9a227"
         ],
         "material": "round",
-        "params": {}
+        "params": {
+          "speed": 0.45,
+          "circulation": 0.55,
+          "dispersion": 0.12,
+          "pointerStrength": 0.1
+        }
       },
       "entities": [
         {
@@ -2059,8 +2471,8 @@
           "name": "Thrace — Ares' path out of the song",
           "kind": "formation",
           "position": {
-            "x": -0.55,
-            "y": -0.08,
+            "x": -0.72,
+            "y": -0.05,
             "z": 0
           },
           "size": {
@@ -2075,9 +2487,9 @@
           "tintWeight": 0.55,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.3,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -2101,8 +2513,8 @@
           "name": "Paphos — precinct, fragrant altar; the Graces bathe, anoint, clothe",
           "kind": "formation",
           "position": {
-            "x": 0.58,
-            "y": 0.38,
+            "x": 0.72,
+            "y": 0.4,
             "z": 0
           },
           "size": {
@@ -2117,9 +2529,9 @@
           "tintWeight": 0.6,
           "locked": false,
           "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
+            "kind": "attract",
+            "strength": 0.3,
+            "radius": 0.3,
             "spin": 0
           },
           "station": null,
@@ -2166,18 +2578,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "st39",
-                "text": "",
+                "id": "st-e36-1",
+                "text": "·",
                 "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "hold": 4,
+                "transition": 2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.105,
+                    "y": 0.807
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.3,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st-e36-2",
+                "text": "·",
+                "shape": "ring",
+                "hold": 4.5,
+                "transition": 2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.5,
+                    "y": 1.1
+                  },
+                  "rotation": 0,
+                  "tint": "#7d8a8f",
+                  "tintWeight": 0.12,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
-            ]
+            ],
+            "order": "loop",
+            "easing": "smoothstep"
           }
         },
         {
@@ -2243,7 +2695,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "Aphrodite reaches Paphos, where the Graces bathe, anoint and clothe her; Ares reaches Thrace; the song ends with its hearers pleased. Payment is not narrated; no child completes the release — Harmonia's genealogy and the Eros variants stand beside the ending, not inside it. The eightfold native field (`−/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0`) carries the return; the page's six positions followed the song itself. The whole returns-to Movement 22 with the productive difference",
+          "body": "Aphrodite reaches Paphos, where the Graces bathe, anoint and clothe her; Ares reaches Thrace; the hearers are pleased. Payment is not narrated; no child completes the release — Harmonia's genealogy and the Eros variants stand beside the ending, not inside it. The eightfold field (`−/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0`) carries the return.",
           "x": 0.04,
           "y": 0.47,
           "width": 620,
@@ -2257,7 +2709,7 @@
           "kicker": "",
           "title": "",
           "italic": "",
-          "body": "restored, Movement 40 through the distinction between an exposed basis of judgment and a responsible continuation (no score becomes metaphysical Zero by analogy with the bed), and Movement 46 with the commons obligation: name the entrusted office, the bearer of a loss, the evidence of consequence, the route by which consequence can revise the commission. The Graces' re-clothing as symbolic transformation of shame is a source event with no appointed amplification (human-amplified: no).\n\nDeclared cross-story: Indra's jewel net (huayan whole) — the double-net comparison distinguishes mutual implication from capture organised as public evidence; neither net supplies the other a missing episode. Shared archetypal ground with the Neumann and uroboros wholes (A18 return links). ↳ Occurrences: Thrace and Paphos paths (#5→0); the Graces' bathing, anointing, clothing (#5→0); the unnarrated payment (#4–#5→0).",
+          "body": "restored (Mv 22); Mv 40 — exposed basis of judgment vs responsible continuation, no score metaphysical Zero; Mv 46 — name the entrusted office, bearer of loss, evidence of consequence, route to revise the commission. Graces' re-clothing as symbolic transformation: source event, no appointed amplification (human-amplified: no). Cross-story: Indra's jewel net — mutual implication vs capture as public evidence. Occurrences: Thrace and Paphos, the Graces' bathing, the unnarrated payment (#4–#5→0).",
           "x": 0.6,
           "y": 0.47,
           "width": 505,
@@ -2266,7 +2718,7 @@
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "line",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -2286,5 +2738,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-17T00:00:00.000Z"
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

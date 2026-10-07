@@ -1,0 +1,866 @@
+{
+ "artifact": "episteme/roz-c-concepts-2.journey.json",
+ "family": "episteme-concepts",
+ "worker": "E3",
+ "date": "2026-09-17",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "family-concept"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "census_caveat": "receipt sha256 values predate the 5c22906 content landing; per-record current sha256 computed at dbf3b17 (see hash_note)",
+  "records": [
+   {
+    "record_id": "C33",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C33-Image-Valuation.md",
+    "sha256": "79045eee79ca03935733a6d8aa901eb68d526f5d397bd79dded1126196c56936",
+    "sha256_census_receipt": "3fc264fe5b769f39e60e1d5e03ca6254cb2233c7db45f870d94f2505f6d67401",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C34",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C34-Individuation.md",
+    "sha256": "e25fb07609b01c2fbf3013ea0c3cecf0f1648f59e4f0f93b81d7a27255ce6103",
+    "sha256_census_receipt": "d3004de47ed24308e4600848974aa2e70ed6de8f4f179d8f8bc01b6b5a85e856",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C35",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C35-Selfing-Self-Subjectivity-Self-Thing.md",
+    "sha256": "1aaca77dd229a37d896c60a7626d00f8a41942c5f7fccc7a5d0f91d39c55f9cd",
+    "sha256_census_receipt": "de2e0bac6f3f939187baab333dcee6baa69959c47b7b50fcab1345f35f86df69",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C36",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C36-Complexio-Oppositorum.md",
+    "sha256": "e6f77d7c475ee6eb66c197c68129d211009f0c61bebeb65a6c4293b0fd426e65",
+    "sha256_census_receipt": "31846b67222d662a765df988faaad4390090254ae711b79f11eeea0df899cf82",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C37",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C37-World-Picture-to-World-Atlas.md",
+    "sha256": "e1d621337b3ef00d104e1fa832cee56d5e09eb9b367e6e76215a60fb4a4c9844",
+    "sha256_census_receipt": "6839156b4da6b994ce57694d9f0aa298a7e5c74ca4b1e35f444365f44514a81c",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C38",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C38-Bimba-Pratibimba-Bimba-Map.md",
+    "sha256": "e193a9ef386cae04697f521c5c194249f46befc60b8cbb8c875e901b71bff6b8",
+    "sha256_census_receipt": "23fade4d1bf16368014e73cc6985fa11237ebc93e6db06cd70e00ff1c3d3c905",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C39",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C39-Meta-Epistemic-Framework.md",
+    "sha256": "34ed246c80a0bac4c1a3011c2d8778574aaee895643b7767a1b40f419ddbae2e",
+    "sha256_census_receipt": "6697333019ad8d253054cb5c2190c4de777c7e7dabd0f03e6862d2a5dc9c4540",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C40",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C40-Model-Internality-Judgment-Field.md",
+    "sha256": "f19e23e2ae500c8bf6d7bb4c428e4050e313f26adcdc036759a452127cd68af9",
+    "sha256_census_receipt": "b01dc2cd66b85913fd77641b8287efaa2833df96cabaa2d90aa93e19a8694581",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C41",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C41-Objective-Internality.md",
+    "sha256": "f412ee36087f330c7e8ce6461eaf6ca6426ac711b9a662a1a91eeb866fdd1796",
+    "sha256_census_receipt": "2d95f27df8ec539ce9545db8740b9649c27e6769edac875b4f16ca90c0520be4",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C42",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C42-Objective-Co-Internality.md",
+    "sha256": "a7ee7e7b08ada7978c585e2764ce2e319227d3279a3d732922e4460d34c5ccea",
+    "sha256_census_receipt": "2bf66f359de7a753107214a16bcaafa73d1d326991eff83d495cc55d6a29e679",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C43",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C43-Computational-Vimarsa.md",
+    "sha256": "d51cc85748ff9202f053b407b839ca7fc2eaa10268f4fae472e1d01bee8f5ded",
+    "sha256_census_receipt": "716dacb5d29f2a70218e543f63e7c28c64604ca0f9f2b3c3ac28f3a24b592bdf",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C44",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C44-Prompt-Thrownness.md",
+    "sha256": "1cf57fa6b50dd40acc950e9fdad10937d2067be39f9fb2f081b0bc2bc3f1161b",
+    "sha256_census_receipt": "18d902f7f65c7bdcae575fd3d3e542cfd9681f64ab6cce18d17c1e7beb3c1dc2",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C45",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C45-Operational-Parity.md",
+    "sha256": "88416ddde055a71bb30df24401a7276cbeb3948e16e6ae3acc12de19f2610af7",
+    "sha256_census_receipt": "0b55f4f45b8085ca66bf5ca1a386a53a8218ff781decf323a68c738d88047a6d",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C46",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C46-Epistemic-Cultivation.md",
+    "sha256": "4ab32d4e46105416f19e8cb2f697c386cbd90e7b3d493e6a41c0143d741d7e19",
+    "sha256_census_receipt": "18045feda000d4d613fd816f9009bf2bb970707f460044d71adb365ef1f83f64",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C47",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C47-Deferential-Intelligence.md",
+    "sha256": "2adb00fe3e8ecb0fbe4ae0a43cf234f2303ee3ff007da94f4b22541b04e55f09",
+    "sha256_census_receipt": "b6730156fbeee37f0852e780d7b59a457ac83d39f5c6777175cf5b4d65e39d20",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C48",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C48-Trust-Faith-under-Formal-Limit.md",
+    "sha256": "7ff506d88764a113faf8373cdf9a14dae93a0e7fd0954c9d49f9a2e9149ea244",
+    "sha256_census_receipt": "1a06d2bc720327e367f03efa62db1962bc72da17856a72be6a90e6ae319bdabd",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C49",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C49-The-Two-Ones-0-One-1-All.md",
+    "sha256": "56c421fd766b92a52b65db3e95255403ceac0729d2c411cd5f6544e6abe5cfe3",
+    "sha256_census_receipt": "2dfbabc31db288b984b0719b84fbeeb05cb32c7b5c8b13d23f42523bb3bfa6fb",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C50",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C50-Dia-Syn.md",
+    "sha256": "eda8cdd7480bec82b61af6736e6f37572510298447f52db6324714485c47aa4c",
+    "sha256_census_receipt": "fe5539234a8fc5b56d6062fa087c4dd07cc76c37f36b3497ffa421a19e993ba2",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C51",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C51-Logos-Epi-Logos.md",
+    "sha256": "f511f57fbd68cdf2867da6ec057f0d50f21422ba6ff539af1342d3cc52404ed3",
+    "sha256_census_receipt": "b87abb64a5a17faad0889b8f778f0ef151bfedf63ee1e5714a7e8b3b45a2af50",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C52",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md",
+    "sha256": "6139fe6cd42eb2272961eaa6810de12931948310dddede3ac1cf43737d3e204c",
+    "sha256_census_receipt": "06a23819c23d8bd0306d59f654d13285968e6c3711e69ca561c4cd6530cddc49",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C53",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C53-Power-Delegated-Labour.md",
+    "sha256": "d7d74fd4e9606b13e1f5b40e5e10932bee63e518b80c1a4db604144ec0ce2dd2",
+    "sha256_census_receipt": "e80b07553252d62c46cc37c7e7df9d7cea53e2cc830af35388767f05edd427d3",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C54",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C54-Commons-Non-Monopoly.md",
+    "sha256": "2e6eff41f71f3bd135834ac7e0504041775571e6e641b0f6a69db8dead5e5e12",
+    "sha256_census_receipt": "9b7c8a4376f061e96e267051bf1bab0d8173594cbf074a7fc44ca4d96f98ee26",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C55",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C55-Reflective-Field-Mirror-That-Moves-First.md",
+    "sha256": "fe518dad05da0357bbf4088311813f45e5919a4e70fc84de8ae0a1b27381bdb7",
+    "sha256_census_receipt": "962b4e484a04c5ef9f02d1a86ca911d42af0e44c02bd6f841b739f9f1d701a4a",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C56",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C56-Compassion-Sensitivity-to-Origins.md",
+    "sha256": "6ebf2329c955d310c463a47af457d7dc9c609d006e86a125ba0bf1759764b7ac",
+    "sha256_census_receipt": "43368a44737e2a6f4fbb81dba16d6c4e687beb36f8cdd5fa4a89f44afb4444a3",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C57",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C57-Agentworld.md",
+    "sha256": "e1ca274b8cdb027dd4ce30e91b46b2c0cfd788293abbc53efef899035ccd44bd",
+    "sha256_census_receipt": "fd5babf55c64c8bccdee617bbef8b19c23332aa549f644c3f05d20bcf42ca443",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C58",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C58-Anthropomorphization.md",
+    "sha256": "a7e9b00dc47d0945a70f1b87174c1faf1a0d49010662116449809e5204c4bd7c",
+    "sha256_census_receipt": "f6f999394d9c7409d693566f02fc1b8ee378c1cd2ef1824e4c1453a8a85d8478",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C59",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture.md",
+    "sha256": "3d5d4df234dd319577282d6d7c5d33c2171f539aa1da3e5765baa540270713d6",
+    "sha256_census_receipt": "aa44a1711960c1edfb768bd7c6359b884d5b85722197f9d8e5bebfe1579d6df2",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C60",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C60-Idealism-Order-of-Dependence.md",
+    "sha256": "6715c5f0e4854e399322be424bcc53d7d4f9ba6ad1caa8e5d22e6483cbcea52f",
+    "sha256_census_receipt": "5017929ff790ce771e3b120996f7547f8a05a2476ecccac34510957dea308839",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C61",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C61-Symbolon-Disclosure-Architecture.md",
+    "sha256": "9c9f4d1aeedd476c77350307ff4879a82144eaaccfbcfab391a0351ee2bec389",
+    "sha256_census_receipt": "462ecda8f013761ac21d31ae5e8d52473fae08dedf87915dbfd0ef8814f5b5ed",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C62",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C62-Planetary-Computation.md",
+    "sha256": "32ec0e0f26a8357863123615ae2d9707f2c9c98d53e8ea28a21a4e8b719859a3",
+    "sha256_census_receipt": "1ff2b8557d13ab6e9e42987edec949a80ee247f6e330efb8c0353698fda7ccea",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C63",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C63-Pros-Hen-In-Quantum-Focal-Return-Qualified-Predication.md",
+    "sha256": "8379dcf18e8139d8361a2477f77d6aedc8ca0bcceac7a151b50e32f966c1357e",
+    "sha256_census_receipt": "d989bdc87840a52d382cbf1da0eb6f399478fd793f84c976bdcfcce62b5647b1",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   },
+   {
+    "record_id": "C64",
+    "path": "submission-package/essay/symbolon/episteme/concepts/C64-Paradox-Transforming-the-Containing-Field.md",
+    "sha256": "b7af2e489d84921559a82e680b063fb742d5b05efdbee2b4ed0c06271f0db5e5",
+    "sha256_census_receipt": "587c01a9e72d9003c6fc2cea3a9483c7380e35d7a6392765b3aa7647274e1850",
+    "hash_note": "receipt hash stale, current-bytes hash used"
+   }
+  ]
+ },
+ "pointcloud_revision": "f257de5",
+ "journey": {
+  "id": "roz-c-concepts-2",
+  "name": "Return of Zero — Episteme Concepts C33–C64",
+  "scenes": 32,
+  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+ },
+ "scenes": [
+  {
+   "scene_id": "c33",
+   "source_ref": "C33",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C33-Image-Valuation.md",
+   "sha256": "79045eee79ca03935733a6d8aa901eb68d526f5d397bd79dded1126196c56936",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "A formed appearance; the valuation that makes it matter enough to alter action."
+  },
+  {
+   "scene_id": "c34",
+   "source_ref": "C34",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C34-Individuation.md",
+   "sha256": "e25fb07609b01c2fbf3013ea0c3cecf0f1648f59e4f0f93b81d7a27255ce6103",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Differentiated indivisibility: more able to bear its relations without dissolving."
+  },
+  {
+   "scene_id": "c35",
+   "source_ref": "C35",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C35-Selfing-Self-Subjectivity-Self-Thing.md",
+   "sha256": "1aaca77dd229a37d896c60a7626d00f8a41942c5f7fccc7a5d0f91d39c55f9cd",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Selfing, self-thing, Subjectivity, Self: four offices of self-reference, one point of change."
+  },
+  {
+   "scene_id": "c36",
+   "source_ref": "C36",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C36-Complexio-Oppositorum.md",
+   "sha256": "e6f77d7c475ee6eb66c197c68129d211009f0c61bebeb65a6c4293b0fd426e65",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "A containing field bearing opposed determinations, transformed through their tension."
+  },
+  {
+   "scene_id": "c37",
+   "source_ref": "C37",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C37-World-Picture-to-World-Atlas.md",
+   "sha256": "e1d621337b3ef00d104e1fa832cee56d5e09eb9b367e6e76215a60fb4a4c9844",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "One picture; then situated views related through domains, distortions, overlaps."
+  },
+  {
+   "scene_id": "c38",
+   "source_ref": "C38",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C38-Bimba-Pratibimba-Bimba-Map.md",
+   "sha256": "e193a9ef386cae04697f521c5c194249f46befc60b8cbb8c875e901b71bff6b8",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Original and reflection: display without severance, dependence without diminishment."
+  },
+  {
+   "scene_id": "c39",
+   "source_ref": "C39",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C39-Meta-Epistemic-Framework.md",
+   "sha256": "34ed246c80a0bac4c1a3011c2d8778574aaee895643b7767a1b40f419ddbae2e",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Lenses, sources, gauges, judgments, return: mediation made inspectable."
+  },
+  {
+   "scene_id": "c40",
+   "source_ref": "C40",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C40-Model-Internality-Judgment-Field.md",
+   "sha256": "f19e23e2ae500c8bf6d7bb4c428e4050e313f26adcdc036759a452127cd68af9",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C41",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "The making of a determination as inspectable object: sources, gauges, revisions conditioned."
+  },
+  {
+   "scene_id": "c41",
+   "source_ref": "C41",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C41-Objective-Internality.md",
+   "sha256": "f412ee36087f330c7e8ce6461eaf6ca6426ac711b9a662a1a91eeb866fdd1796",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C01",
+     "C10",
+     "C16",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "The mediating constitution: real, investigable, between knower and known."
+  },
+  {
+   "scene_id": "c42",
+   "source_ref": "C42",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C42-Objective-Co-Internality.md",
+   "sha256": "a7ee7e7b08ada7978c585e2764ce2e319227d3279a3d732922e4460d34c5ccea",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C40",
+     "C41",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "Non-identical interiors constituting one another through a shared world."
+  },
+  {
+   "scene_id": "c43",
+   "source_ref": "C43",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C43-Computational-Vimarsa.md",
+   "sha256": "d51cc85748ff9202f053b407b839ca7fc2eaa10268f4fae472e1d01bee8f5ded",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C41",
+     "C50",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "Output returned upon its own sources and conditions, so later processing can change."
+  },
+  {
+   "scene_id": "c44",
+   "source_ref": "C44",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C44-Prompt-Thrownness.md",
+   "sha256": "1cf57fa6b50dd40acc950e9fdad10937d2067be39f9fb2f081b0bc2bc3f1161b",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Arrival into an authored and inherited horizon the agent did not wholly make."
+  },
+  {
+   "scene_id": "c45",
+   "source_ref": "C45",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C45-Operational-Parity.md",
+   "sha256": "88416ddde055a71bb30df24401a7276cbeb3948e16e6ae3acc12de19f2610af7",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Claim and operation set side by side; parity is what inspection can discriminate."
+  },
+  {
+   "scene_id": "c46",
+   "source_ref": "C46",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C46-Epistemic-Cultivation.md",
+   "sha256": "4ab32d4e46105416f19e8cb2f697c386cbd90e7b3d493e6a41c0143d741d7e19",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C41",
+     "C51",
+     "C55"
+    ],
+    "source_ids": []
+   },
+   "form": "The knowing apparatus itself tended: distinctions, gauges, revision procedures."
+  },
+  {
+   "scene_id": "c47",
+   "source_ref": "C47",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C47-Deferential-Intelligence.md",
+   "sha256": "2adb00fe3e8ecb0fbe4ae0a43cf234f2303ee3ff007da94f4b22541b04e55f09",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C41",
+     "C42",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "Strong enough to act, permeable enough to be corrected by what it does not contain."
+  },
+  {
+   "scene_id": "c48",
+   "source_ref": "C48",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C48-Trust-Faith-under-Formal-Limit.md",
+   "sha256": "7ff506d88764a113faf8373cdf9a14dae93a0e7fd0954c9d49f9a2e9149ea244",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "The dependency already enacted before any belief about a neutral world."
+  },
+  {
+   "scene_id": "c49",
+   "source_ref": "C49",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C49-The-Two-Ones-0-One-1-All.md",
+   "sha256": "56c421fd766b92a52b65db3e95255403ceac0729d2c411cd5f6544e6abe5cfe3",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Derived",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "0 = One, self-identity; 1 = All, self-difference — two offices of one relation."
+  },
+  {
+   "scene_id": "c50",
+   "source_ref": "C50",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C50-Dia-Syn.md",
+   "sha256": "eda8cdd7480bec82b61af6736e6f37572510298447f52db6324714485c47aa4c",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Derived",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "The cut and the seam: differentiation and relational return as conjugate operations."
+  },
+  {
+   "scene_id": "c51",
+   "source_ref": "C51",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C51-Logos-Epi-Logos.md",
+   "sha256": "f511f57fbd68cdf2867da6ec057f0d50f21422ba6ff539af1342d3cc52404ed3",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "The achieved account turning back upon its own conditions; articulation renewed."
+  },
+  {
+   "scene_id": "c52",
+   "source_ref": "C52",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C52-Dimensional-Reframing-at-Zero-and-Infinity.md",
+   "sha256": "6139fe6cd42eb2272961eaa6810de12931948310dddede3ac1cf43737d3e204c",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "The local rule reaches its limit; the containing structure is specified differently."
+  },
+  {
+   "scene_id": "c53",
+   "source_ref": "C53",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C53-Power-Delegated-Labour.md",
+   "sha256": "d7d74fd4e9606b13e1f5b40e5e10932bee63e518b80c1a4db604144ec0ce2dd2",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [
+     "A25",
+     " A28",
+     " A29",
+     " A30",
+     " A33",
+     " A35"
+    ],
+    "concept_links": [
+     "C27",
+     "C29",
+     "C54",
+     "C62"
+    ],
+    "source_ids": [
+     "taylor-2026-revision-notes-trust",
+     "ostrom-2009-beyond-markets-states-nobel-lecture"
+    ]
+   },
+   "form": "Capacity exercised from an entrusted office; the product carries the relation that made it."
+  },
+  {
+   "scene_id": "c54",
+   "source_ref": "C54",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C54-Commons-Non-Monopoly.md",
+   "sha256": "2e6eff41f71f3bd135834ac7e0504041775571e6e641b0f6a69db8dead5e5e12",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [
+     "A12",
+     " A29",
+     " A35"
+    ],
+    "concept_links": [
+     "C26",
+     "C53",
+     "C59"
+    ],
+    "source_ids": [
+     "ostrom-2009-beyond-markets-states-nobel-lecture",
+     "42-techne-2026-sovereign-commons",
+     "bratton-2026-agentworld-brief"
+    ]
+   },
+   "form": "A shared field maintained so that no share may claim the field’s source."
+  },
+  {
+   "scene_id": "c55",
+   "source_ref": "C55",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C55-Reflective-Field-Mirror-That-Moves-First.md",
+   "sha256": "fe518dad05da0357bbf4088311813f45e5919a4e70fc84de8ae0a1b27381bdb7",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C41",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "Humanity exteriorises; the image measures back; the instrument moves first."
+  },
+  {
+   "scene_id": "c56",
+   "source_ref": "C56",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C56-Compassion-Sensitivity-to-Origins.md",
+   "sha256": "6ebf2329c955d310c463a47af457d7dc9c609d006e86a125ba0bf1759764b7ac",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C27",
+     "C29"
+    ],
+    "source_ids": []
+   },
+   "form": "Return to genesis, wound and exclusion — meeting them without consuming them."
+  },
+  {
+   "scene_id": "c57",
+   "source_ref": "C57",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C57-Agentworld.md",
+   "sha256": "e1ca274b8cdb027dd4ce30e91b46b2c0cfd788293abbc53efef899035ccd44bd",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Persistent shared worldhood: what one does becomes a condition of what another can do."
+  },
+  {
+   "scene_id": "c58",
+   "source_ref": "C58",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C58-Anthropomorphization.md",
+   "sha256": "a7e9b00dc47d0945a70f1b87174c1faf1a0d49010662116449809e5204c4bd7c",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "An interface operation; failure only when the face is read as the evidence of a subject."
+  },
+  {
+   "scene_id": "c59",
+   "source_ref": "C59",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C59-Cultural-Individuation-Epi-Logos-as-Culture.md",
+   "sha256": "3d5d4df234dd319577282d6d7c5d33c2171f539aa1da3e5765baa540270713d6",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C27"
+    ],
+    "source_ids": []
+   },
+   "form": "A culture’s images recognisable as images; its measures as measures."
+  },
+  {
+   "scene_id": "c60",
+   "source_ref": "C60",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C60-Idealism-Order-of-Dependence.md",
+   "sha256": "6715c5f0e4854e399322be424bcc53d7d4f9ba6ad1caa8e5d22e6483cbcea52f",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Subject, means, world in order of dependence; the whole held by Life / Mind."
+  },
+  {
+   "scene_id": "c61",
+   "source_ref": "C61",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C61-Symbolon-Disclosure-Architecture.md",
+   "sha256": "9c9f4d1aeedd476c77350307ff4879a82144eaaccfbcfab391a0351ee2bec389",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C21",
+     "C22",
+     "C45",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "One subject-matter routed through Matheme, Mytheme, Episteme; consumers preserved."
+  },
+  {
+   "scene_id": "c62",
+   "source_ref": "C62",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C62-Planetary-Computation.md",
+   "sha256": "32ec0e0f26a8357863123615ae2d9707f2c9c98d53e8ea28a21a4e8b719859a3",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [
+     "C27",
+     "C29",
+     "C45",
+     "C51"
+    ],
+    "source_ids": []
+   },
+   "form": "Computation inside the material, institutional, ecological world that hosts and changes it."
+  },
+  {
+   "scene_id": "c63",
+   "source_ref": "C63",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C63-Pros-Hen-In-Quantum-Focal-Return-Qualified-Predication.md",
+   "sha256": "8379dcf18e8139d8361a2477f77d6aedc8ca0bcceac7a151b50e32f966c1357e",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Many senses aimed at one focus; each predication true in its stated respect."
+  },
+  {
+   "scene_id": "c64",
+   "source_ref": "C64",
+   "source_path": "submission-package/essay/symbolon/episteme/concepts/C64-Paradox-Transforming-the-Containing-Field.md",
+   "sha256": "b7af2e489d84921559a82e680b063fb742d5b05efdbee2b4ed0c06271f0db5e5",
+   "hash_note": "receipt hash stale, current-bytes hash used",
+   "claim_status": "Argued",
+   "relations": {
+    "argument_consumers": [],
+    "concept_links": [],
+    "source_ids": []
+   },
+   "form": "Irreconcilable determinations of real standing; the containing field itself must change."
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "inline entity text sources (only where the record states its own notation: c03 and c49 '/', c48 '0/1'); field materials and shape entities",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "episteme/roz-c-concepts-2.cover.png",
+ "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 32 scenes drafted at count 8000 and read as images via the scratch setScene driver (/tmp/roz-e3-drafts, session evidence)",
+ "status": "reviewed",
+ "notes": [
+  "Grammar: family-concept — one governing formation per concept shaped by its declared operation (64 distinct operations mapped: appearing-ring, cut, window-in-cage, broken token, merged disc, focal satellites, occupied centre, and so on); one definitional card (kicker = record_id + claim_status; italic = declared argument consumers, concept links, source_ids, capped with +n more — the exact lists are in this binding); body = the record's governing proposition compressed from the record's opening only.",
+  "Material: episteme register treatment per roz-corpus-base — print material on cooler paper #e9ece7, cooler ink #20262b: the instituted lattice. Status accent (Argued/Derived/Offered) is presentation-only encoding recorded in the family profile.",
+  "Text-layer sizes respect the engine minimum of 14 (sizes below 14 fail validateJourney: \"Invalid page text\" is also triggered by undersized text).",
+  "C scene ids are the lower-cased census record ids (c01…c64) per the collection README.",
+  "Enrichment moves 2026-10-06 (episteme lane, records re-read at fc59a719 under submission-package/essay/section-rooms/arguments/concepts/):",
+  "Material character: concepts-2 splits the register from concepts-1 — warmer, slightly darker papers, round material on the living/psychic scenes (C33, C36, C42, C46, C48, C54, C55, C56), engine-forward scenes (relational orbital on C42 co-internality and C57 agentworld; autoSweep ascent on C43 computational vimarśa; morphEnabled on C36 complexio and C52 reframing). Rust again marks failure modes (C50's Dia step, C53's shove, C62's density), violet the psychic (C33, C36, C49, C52, C61, C64).",
+  "c33: known → unknown → known on the image-disc (the record's Van Eenwyk walk); middle swells violet, return darker-edged; implode click (the image draws interpretation in).",
+  "c34: x → X → x (Frank's native inscription per C34); return heavier than start (freedom to vary).",
+  "c35: three square-moments — selfing gathers (scale lfo), the self-image a product, the self-thing the arrest; repel keeps the product from settling as owner.",
+  "c36: complexio — morphEnabled holds the containing field under strain; round soft field; attract (opposites held in one relation).",
+  "c37: world-picture → world ≠ world-model → world-atlas (the record's own notation as the middle step); vortex pointer (coordinating views).",
+  "c38: bimba/pratibimba — attract with soft halo (display without severance, dependence without diminishment).",
+  "c39: MEF — edge-weighted plates, repel (inspection keeps distance); italic from the record's closing line.",
+  "c40: judgment field — five conditioning relations; attract with steady pulse; long transition (the field develops).",
+  "c41: objective internality — vortex/vortex (the crossed-zero distinction operative per the record's own citation).",
+  "c42: THE relational scene — the full cycle source → contribution → reception → changed condition → new act walking the ring; relational orbital + pairwise (reciprocal constitution); cycle drift automation.",
+  "c43: computational vimarśa — (m, θ, Eθ) → (m′, θ′, Eθ′) (the record's exact inscription); autoSweep ascent (the return upon its states).",
+  "c44: prompt thrownness — near-still inherited horizon; weak pointer (what arrived was not wholly made).",
+  "c45: operational parity — the criterion as a shove against unearned promotion; high contrast, brittle roundness.",
+  "c46: cultivation — tending breathe on the innermost disc; moss/sand warmth; round material (the means itself tended).",
+  "c47: five sites of revision walk the column with TINT ONLY — no size growth, because the record denies any depth is intrinsically better; implode click (deference lets the source change the model).",
+  "c48: reliance — a single 0/1 text-formation in a soft round field; barely-there pointer (reliance before belief).",
+  "c49: THE 3D SCENE — the Two Ones as two strata of one relation: source-unity disc at z −0.45 beneath, manifest-unity disc at z +0.3, the slash formation walking the strata (/ = −/− at z 0 → source-unity descended → manifest-unity risen → return); depth means: the ground/manifestation relation read vertically, the slash the between. depthPerspective+occlusion+tint authored.",
+  "c50: dia/syn — Dia (rust, cut) and Syn (moss, composed) alternate on the retaining ring; the two triangles = the differentiated terms kept able to meet; vortex click (the relation turns).",
+  "c51: logos/epi-logos — attract with warm sand accent (the return upon the achieved account); long transition.",
+  "c52: reframing — morphEnabled opens the containing relation; repel with camera easing in (zoom 1.04); the work already done stays accounted for (no param resets).",
+  "c53: power/delegated labour — attract with shove click (entrusted power that must stay answerable); earth/rust.",
+  "c54: commons — vortex over five offices in a round field (no participant owns the source).",
+  "c55: the mirror's three motions verbatim walking the image-square, rust at the measure-monopoly, moss at the initiated return; excitation lfo = return light; body trimmed ≤70 words, no claim changed.",
+  "c56: compassion — the journey's softest round field; implode click (meeting origins without consuming them).",
+  "c57: agentworld — relational orbital over a participant grid; condition drift on a member disc (acts becoming conditions).",
+  "c58: anthropomorphization — repel keeps mask and bearer distinct; ink/sand (an interface, not an identity).",
+  "c59: cultural individuation — institutions as instituted: grid of squares under rust-slate; long transition (sustained common practice).",
+  "c60: idealism — the ontological order walks the plane left to right (Subject / Consciousness → constituted means → determinate object), each term in place; order breathe on the middle term (the mediating office).",
+  "c61: disclosure architecture — Matheme → Mytheme → Episteme alternate inside the symbolon triangle (three-within-one); vortex/vortex (the passage among them).",
+  "c62: planetary computation — dense, wide, slow vortex at infrastructural scale; the journey's heaviest field.",
+  "c63: pros hen → in quantum — the two source-distinct grammars the record itself names, held as one conjunction (their two-step alternation, nothing more); long transition (two traditions, no identification).",
+  "c64: paradox — pressure: triangle-wave dispersion lfo (the containing relation strained), strongest repel/shove; violet/rust.",
+  "Beats: durations 12–16s, transitions 1.6–2.6; 8 automation lanes; 12 sequence scenes — all step texts verbatim from the records at fc59a719."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-episteme-l2",
+  "lane": "enrich/expressions-20261006",
+  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "records re-read at fc59a719 — the C concepts live under submission-package/essay/section-rooms/arguments/concepts/ at that revision (bound source_path values keep their dbf3b17 homes under submission-package/essay/symbolon/episteme/concepts/; hashes below are dbf3b17 receipts and are not re-bound) | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
+ },
+ "glyph_rationales": {
+  "known": "the familiar authority of the image before the encounter unsettles it (C33, Van Eenwyk known→unknown→known)",
+  "unknown": "the moment the categories through which the image was read cease to suffice (C33)",
+  "x": "the determining capacity as a particular — Frank's native inscription, start and changed return (C34)",
+  "X": "the expanded moment of determining capacity — C34's formal/mythemic reading",
+  "world-picture": "a view ordered from a position (C37)",
+  "world ≠ world-model": "the notation that stays operative through every additional view (C37)",
+  "world-atlas": "situated views related through domains, distortions, translations and obstructions (C37)",
+  "source": "first station of the co-internal cycle — what one participant's act passes from (C42)",
+  "contribution": "the act entering another's means of perceiving and judging (C42)",
+  "reception": "the contribution received into another participant's constitution (C42)",
+  "changed condition": "the means altered by what passed through it (C42)",
+  "new act": "the next act possible only through the changed condition (C42)",
+  "(m, θ, Eθ)": "current model, operative configuration, evaluator under that configuration (C43)",
+  "(m′, θ′, Eθ′)": "the states after review — change permitted at any site, not all three together (C43)",
+  "answer": "shallowest site of revision — a changed answer may leave the paradigm intact (C47)",
+  "task interpretation": "second site — what the task was taken to be (C47)",
+  "world-model": "third site — the model under which the source is encountered (C47)",
+  "evaluator/gauge": "fourth site — what counts as success (C47)",
+  "terms of commission": "deepest site — why the activity is occurring at all (C47)",
+  "/ = −/−": "the primordial relation before assignment of the terms (C49; C50's relating activity)",
+  "source-unity": "the One that remains uncounted (C49)",
+  "manifest-unity": "the All whose manifestation becomes determinate (C49)",
+  "Dia": "the conjugate operation that cuts, contrasts, excludes, orients and selects (C50)",
+  "Syn": "the conjugate operation that composes while retaining the relation (C50)",
+  "humanity exteriorises its measures": "first motion of the Mirror That Moves First (C55)",
+  "the exteriorised image becomes a measure": "second motion — the image governs the life it reflects (C55)",
+  "the instrument initiates a return": "third motion — conditions made answerable to the life addressed (C55)",
+  "Subject / Consciousness": "first term of the ontological order of dependence (C60)",
+  "constituted means": "the middle term — mind's mediating office (C60)",
+  "determinate object": "the object as real determination of the whole, not self-grounding item (C60)",
+  "Matheme": "formal register of the three-within-one disclosure (C61)",
+  "Mytheme": "imaginal register of the three-within-one disclosure (C61)",
+  "Episteme": "epistemic register of the three-within-one disclosure (C61)",
+  "pros hen": "the grammar directing different senses toward one focal term (C63)",
+  "in quantum": "the grammar stating the respect under which a predicate holds (C63)",
+  "0/1": "the mark of reliance itself — the All depends on the One for being and determining reality, the One becomes manifest and knowable through the All (C48: dependency before belief)",
+  "/": "the primordial slash as it stands in C49's 3D strata scene — the relating activity of `/ = −/−` before assignment of the terms, through which source-unity and manifest-unity become legible (C49)"
+ }
+}

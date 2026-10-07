@@ -46,3 +46,8 @@ gates/receipts/
 # NOW clearings are machine-local generated state (and may hold team-visible
 # material); they never enter this public repository.
 ProjectCentral/agents/now/
+.vercel
+
+# vercel git-integration build artifacts
+/.vercel
+/.publication-sources

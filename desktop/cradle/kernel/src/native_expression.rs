@@ -951,7 +951,8 @@ impl Manager {
     }
 }
 
-/// Host operations a webview may relay: the K² determinant operations and
+/// Host operations a webview may relay: the K² determinant operations, the
+/// played strike (a performance act on named scene voices, QL-MEF #281) and
 /// the Ta-Onta procedural stage's five scoped operations (stage-state {},
 /// stage-evaluate {procedure}, stage-retire {procedure_ref}, stage-bind
 /// {procedure, max_evaluations?}, stage-unbind {procedure_ref} on the QL
@@ -959,7 +960,7 @@ impl Manager {
 /// (non-K²) owner refuses them natively. The stage operations are
 /// scene-scoped on the QL side; admission here is by exact name only —
 /// each payload is validated again by the owner host.
-const EXCHANGE_OPERATIONS: [&str; 14] = [
+const EXCHANGE_OPERATIONS: [&str; 15] = [
     "read",
     "inspect",
     "advance",
@@ -968,6 +969,7 @@ const EXCHANGE_OPERATIONS: [&str; 14] = [
     "m1-advance",
     "replace-event",
     "set-damping",
+    "strike",
     "influence",
     "stage-state",
     "stage-evaluate",
@@ -2645,7 +2647,7 @@ for line in sys.stdin: time.sleep(60)
                 "{op}"
             );
         }
-        for op in ["m1-advance", "replace-event", "influence"] {
+        for op in ["m1-advance", "replace-event", "influence", "strike"] {
             assert!(exchange_admits(&json!({"command":{"operation":op}})));
         }
         for op in [
