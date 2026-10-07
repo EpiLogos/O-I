@@ -184,6 +184,7 @@ fn run(args: &[OsString]) -> Result<i32, String> {
             Ok(0)
         }
         "status" => command_status(&catalog, &args[1..]),
+        "readiness" => readiness::command_readiness(&args[1..]),
         "init" => command_init(&catalog, &args[1..]),
         "register" => command_register(&catalog, &args[1..]),
         "install" => command_install(&catalog, &args[1..]),
@@ -206,8 +207,12 @@ fn run(args: &[OsString]) -> Result<i32, String> {
 
 fn catalog() -> Result<Catalog, String> {
     let resolved = crate::catalog_source::resolve()?;
-    let catalog: Catalog = serde_json::from_str(&resolved.json)
-        .map_err(|error| format!("surface descriptors ({}) are invalid: {error}", resolved.origin))?;
+    let catalog: Catalog = serde_json::from_str(&resolved.json).map_err(|error| {
+        format!(
+            "surface descriptors ({}) are invalid: {error}",
+            resolved.origin
+        )
+    })?;
     if catalog.schema != 1 {
         return Err(format!(
             "unsupported surface descriptor schema {}",
@@ -257,7 +262,10 @@ fn print_help(catalog: &Catalog) {
 }
 
 fn command_catalogue(args: &[OsString]) -> Result<i32, String> {
-    let sub = args.first().and_then(|value| value.to_str()).unwrap_or("show");
+    let sub = args
+        .first()
+        .and_then(|value| value.to_str())
+        .unwrap_or("show");
     match sub {
         "show" => {
             let resolved = crate::catalog_source::resolve()?;
@@ -1220,10 +1228,8 @@ mod profile_selection_tests {
         // Store the frozen fixture profile, then select it explicitly.
         let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../suite/configuration/cases/profile-development.json");
-        let fixture: serde_json::Value = serde_json::from_str(
-            &fs::read_to_string(&fixture_path).unwrap(),
-        )
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&fixture_path).unwrap()).unwrap();
         let profile: Profile = serde_json::from_value(fixture["profile"].clone()).unwrap();
         use oi_cli::configuration::profile_store::ProfileStore;
         ProfileStore::open().unwrap().save(&profile).unwrap();

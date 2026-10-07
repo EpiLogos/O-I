@@ -1161,6 +1161,24 @@
       "owner_lane": "gateway-parity-convergence",
       "reason": "Implementation added; enforcement proven at the kernel crate level (advertised contract refused one version ahead). Native UX acceptance evidence still required before verification.",
       "scenarios": []
+    },
+    {
+      "op": "harness_agent_read",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "gateway-parity convergence r2; Hermes session.list parity routed through the owner's own gateway",
+      "status": "unverified",
+      "owner_lane": "gateway-parity-convergence",
+      "reason": "Implementation added; refusal-as-named-data and verbatim pass-through proven at the kernel crate level. Native UX acceptance evidence still required before verification.",
+      "scenarios": []
+    },
+    {
+      "op": "harness_agent_control",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "gateway-parity convergence r2; Hermes session lifecycle parity routed through the owner's own gateway",
+      "status": "unverified",
+      "owner_lane": "gateway-parity-convergence",
+      "reason": "Implementation added; canonical verb routing proven at the kernel crate level. Native UX acceptance evidence still required before verification.",
+      "scenarios": []
     }
  ]
 }

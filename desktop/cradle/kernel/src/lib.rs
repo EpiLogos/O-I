@@ -252,11 +252,49 @@ pub struct Kernel {
 // receipts its state changes produced.
 // ---------------------------------------------------------------------------
 
+/// The conversation lifecycle controls the AIKit gateway exposes per
+/// harness binding. The `model`/`harness`/`skills` selectors are separate
+/// surfaces and deliberately absent here.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum HarnessAgentControl {
+    New,
+    Stop,
+    Restart,
+    Pause,
+    Resume,
+}
+
+impl HarnessAgentControl {
+    pub fn as_cli_verb(&self) -> &'static str {
+        match self {
+            Self::New => "new",
+            Self::Stop => "stop",
+            Self::Restart => "restart",
+            Self::Pause => "pause",
+            Self::Resume => "resume",
+        }
+    }
+}
+
 /// One kernel operation. `project` stays optional everywhere: the
 /// configured project query is the co-reference fallback (02 §7).
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    /// The AIKit gateway's canonical session surface for one harness
+    /// binding: which conversations exist there right now.
+    HarnessAgentRead {
+        binding: String,
+    },
+    /// Drive one conversation lifecycle control against the binding's
+    /// gateway (`new`, `stop`, `restart`, `pause`, `resume`). The gateway's
+    /// answer — or its named refusal — comes back verbatim; the kernel owns
+    /// no session state.
+    HarnessAgentControl {
+        binding: String,
+        control: HarnessAgentControl,
+    },
     /// Which contracts this kernel speaks and enforces, derived from the
     /// enforcing modules (see `protocol.rs`): advertised is enforced.
     ProtocolRead,
@@ -953,6 +991,19 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    /// The gateway's session reading for one binding, verbatim — or its
+    /// named refusal (`{"refused":true, ...}`).
+    HarnessAgentReading {
+        binding: String,
+        document: serde_json::Value,
+    },
+    /// The gateway's answer to a lifecycle control, verbatim — or its named
+    /// refusal.
+    HarnessAgentOutcome {
+        binding: String,
+        control: HarnessAgentControl,
+        document: serde_json::Value,
+    },
     /// The protocol disclosure: derived from the enforcing constants beside
     /// the live event log's generation (`oi.kernel-protocol/v1`).
     Protocol {
@@ -3586,6 +3637,26 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: vec![],
                     result: KernelOpResult::WorkingSurfaceReading { document },
+                })
+            }
+            KernelOp::HarnessAgentRead { binding } => {
+                let document = self.agency.gateway_agent(None, &binding, "sessions")?;
+                Ok(KernelOpOutcome {
+                    receipts: vec![],
+                    result: KernelOpResult::HarnessAgentReading { binding, document },
+                })
+            }
+            KernelOp::HarnessAgentControl { binding, control } => {
+                let document = self
+                    .agency
+                    .gateway_agent(None, &binding, control.as_cli_verb())?;
+                Ok(KernelOpOutcome {
+                    receipts: vec![],
+                    result: KernelOpResult::HarnessAgentOutcome {
+                        binding,
+                        control,
+                        document,
+                    },
                 })
             }
             KernelOp::ProtocolRead => Ok(KernelOpOutcome {
