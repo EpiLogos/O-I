@@ -38,6 +38,8 @@ function defaults(env = process.env) {
   return {
     aikit: env.OI_AIKIT_BIN ?? join(central, "worktrees/env-1/ai-kit/target/debug/aikit"),
     actuation: env.EPI_ACTUATION_ROOT ?? join(central, "worktrees/env-1/actuation"),
+    // the Epi Prime distribution (EpiLogos/Epi-Prime): its own repository, not part of Actuation
+    epiPrime: env.EPI_PRIME_DIR ?? join(central, "Work/Epi-Prime"),
     instrument: env.EPI_OWNER_INSTRUMENT ?? join(central, "Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument"),
     qlRoot: env.EPI_QL_ROOT ?? join(central, "Work/Quaternal-Logic"),
     ql: env.EPI_QL_BIN ?? join(central, "Work/Quaternal-Logic/target/debug/ql"),
@@ -59,7 +61,7 @@ const KEV_START = "sh ~/.workcell/decision-models/kev-0.8b/serve-kev.sh ~/.workc
 export async function provisionCompanion({profileDir, ground, worldsRoot, oi, project = "O-I", start = true, log = console.log, env: baseEnv = process.env, overrides = {}}) {
   const d = {...defaults(baseEnv), ...overrides};
   const home = join(profileDir, "aikit-home");
-  const required = [["aikit (the candidate build)", d.aikit], ["actuation checkout", d.actuation], ["owner instrument", d.instrument], ["ql", d.ql], ["prime-agent", d.prime], ["QL skill", d.skill],
+  const required = [["aikit (the candidate build)", d.aikit], ["actuation checkout", d.actuation], ["Epi Prime distribution (EPI_PRIME_DIR)", join(d.epiPrime, "tools/epi-distribution.mjs")], ["owner instrument", d.instrument], ["ql", d.ql], ["prime-agent", d.prime], ["QL skill", d.skill],
     ["actuation-research", d.research], ["ctrl", d.ctrl], ["agency template", d.template], ["redis-server", d.redisServer], [`launcher (${join(d.actuation, "target/debug/actuation-epi-prime")})`, join(d.actuation, "target/debug/actuation-epi-prime")]];
   for (const [name, path] of required) if (!existsSync(path)) throw new Error(`the companion needs ${name}: ${path} is missing`);
   const projectDir = join(ground, "Work", project);
@@ -105,7 +107,7 @@ export async function provisionCompanion({profileDir, ground, worldsRoot, oi, pr
   const cleanups = [];
 
   // 1 — the Prime distribution, the coherent faculty configuration, the new launcher
-  const distribution = join(d.actuation, "distribution/prime-epi/tools/epi-distribution.mjs");
+  const distribution = join(d.epiPrime, "tools/epi-distribution.mjs");
   const facultyConfig = join(home, "faculty/faculty.json");
   const generated = JSON.parse(sh(process.execPath, [distribution, "faculty-config", "--instrument", d.instrument, "--source-root", d.qlRoot, "--evidence-root", join(home, "faculty-evidence"), "--out", facultyConfig]));
   const installed = JSON.parse(sh(process.execPath, [distribution, "install", "--research-bin", d.research, "--faculty-config", facultyConfig, "--root", join(home, "tools")]));

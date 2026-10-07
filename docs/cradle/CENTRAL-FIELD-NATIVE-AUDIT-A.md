@@ -158,7 +158,7 @@ New findings recorded while doing this:
 Source prepared in `env-1/actuation` (`feat/central-field-actuation`), uncommitted. No repository, release or download was created.
 
 - **`distribution/pi-ql-native/`** — the Pi package (`ql-native-agent` 0.3.3: `ql_project_event`, `ql_decision_frame`, `ql_harmonic_read`, `ql_decide`, `ql_validate_determination`, `ql_invoke`, event context, six Skills) copied from `~/.workcell/tools/ql-agent/pi-packages/aikit/f6d2aa93…` (the package `~/.pi/agent/settings.json` references), with `PROVENANCE.json`: copy path and date, generator (`aikit 0.1.0`, `pi-package/1`), QL-MEF #291 owner provenance and kernel digest, the search that found no other repository home, per-file SHA-256 (19 files) and a tree digest. Its `ql-agent.ts` is byte-identical (`3e33f6cf…`) to the owner-extension copy Prime's binding verifies. G1 is closed as to *location*; regenerating it from QL-MEF's SkillSets and scripts remains QL-MEF's.
-- **`distribution/prime-epi/`** — `manifest.json` (`actuation.prime-distribution/v1`) pinning upstream Prime Agent v0.9.4 (`f771dfce…`), recording that **no upstream source is patched** and that the delta is three changes: (a) the launcher loads the shared extension explicitly, (b) a missing or drifted QL binding fails closed, (c) the install root is `$EPI_LOGOS_TOOLS_ROOT`, else `$AIKIT_HOME/tools`, not a Workcell root. `tools/epi-distribution.mjs` has `verify`, `seal` and `install`. `extensions/ql-faculty-bindings.ts` moved here from `experiments/native-research/prime/extensions/` (with its proof test).
+- **The Prime distribution** (first built as Actuation `distribution/prime-epi/`; now its own repository, EpiLogos/Epi-Prime, with the same files at the repository root; the evidence below was taken at the earlier location) — `manifest.json` (`epi-prime.distribution/v1`, earlier `actuation.prime-distribution/v1`) pinning upstream Prime Agent v0.9.4 (`f771dfce…`), recording that **no upstream source is patched** and that the delta is three changes: (a) the launcher loads the shared extension explicitly, (b) a missing or drifted QL binding fails closed, (c) the install root is `$EPI_LOGOS_TOOLS_ROOT`, else `$AIKIT_HOME/tools`, not a Workcell root. `tools/epi-distribution.mjs` has `verify`, `seal` and `install`. `extensions/ql-faculty-bindings.ts` moved here from `experiments/native-research/prime/extensions/` (with its proof test).
 - **Rust launcher** (`crates/actuation-cli/src/epi_provider.rs`): requires `--extension` and `--installation`; verifies the binding before Prime starts (schema, absolute paths, the owner extension's source closure by SHA-256, entry point, containment) and exits 2 with the reason; passes `-e <extension>` after `--no-extensions`. AIKit's `epi-prime-configure` takes and passes both.
 - **Prime facts found while doing it:** Prime swallows extension load errors in RPC mode (an extension that throws leaves stderr empty and `get_commands` empty), so fail-closed cannot live in the extension alone; and Prime supplies `typebox` to extensions itself, so the earlier `node_modules/typebox` symlink into Pi's tree was never needed (an owner root with no `node_modules` loads; pinned by test).
 
@@ -168,11 +168,11 @@ Evidence:
 cargo test -p actuation-cli -j2 --lib epi_provider        6 passed (argv has -e after --no-extensions; missing --extension/--installation refused at parse;
                                                            binding verified by schema, closure and digest; a drifted binding makes run() fail and Prime is NOT started)
 cargo test -p actuation-cli -j2                           78 passed, 0 failed (12 suites); cargo clippy -p actuation-cli --all-targets: clean; cargo fmt --all --check: clean
-node distribution/prime-epi/tools/epi-distribution.mjs verify            ok (4 files + pi-ql-native tree digest)
-node distribution/prime-epi/tests/install-and-load.mjs    6 checks, 0 model calls: install under a temp root, binding has no ".workcell",
+node tools/epi-distribution.mjs verify (in Epi-Prime)            ok (4 files + pi-ql-native tree digest)
+node tests/install-and-load.mjs (in Epi-Prime)    6 checks, 0 model calls: install under a temp root, binding has no ".workcell",
                                                            real Prime loads it (ql-mode, ql-status), absent root loads nothing, no node_modules needed,
                                                            one changed owner byte loads nothing, a .workcell root is refused
-node distribution/prime-epi/tests/ql-native-bindings.mjs <installed current.json> <out>   18 checks, 0 model calls (the earlier proof, now on the relocated extension)
+node tests/ql-native-bindings.mjs (in Epi-Prime) <installed current.json> <out>   18 checks, 0 model calls (the earlier proof, now on the relocated extension)
 live: target/debug/actuation-epi-prime + real prime-agent 0.9.4 over an installed distribution:
    verified binding -> exit 0, get_commands lists ql-mode, ql-status
    drifted ql-agent.ts -> exit 2, "QL binding refused: extensions/ql-agent.ts differs from its installed source digest", Prime not started
@@ -221,7 +221,7 @@ failures seen in its first runs were run down:
   Python reports an empty stderr. Reproduced directly against the installed `actuation-research`; with the pin changed to 6a81fc44 the same call
   succeeds and files its receipt. The turn is damaged, not just the receipt: after the failure the body went on investigating for over fifteen minutes.
   The everyday `epi-prime-ql` row still carries the stale config.
-  Repair (Actuation, `distribution/prime-epi`): `install` now refuses a faculty configuration whose pin is not the revision the instrument reports
+  Repair (Epi-Prime, first made in Actuation `distribution/prime-epi`): `install` now refuses a faculty configuration whose pin is not the revision the instrument reports
   (`checkFacultyCoherence`, naming both), and `epi-distribution.mjs faculty-config --instrument … --source-root … --evidence-root … --out …`
   writes the configuration from the instrument's own reply, so it follows a rebuild. Native-CLI owners report no revision and are disclosed, not probed.
 - **`ql_decision_frame` refused `quaternary.position.structure` ("expected one of lens, context-frame, faculty, operation").** The model invented

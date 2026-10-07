@@ -26,7 +26,7 @@
 //   EPI_REDIS_CONFIG              aikit.redis-now-config/v1 of the running Redis NOW service     default ~/.aikit/services/redis-now/redis-now.json
 //   EPI_DECISION_PROVIDER         aikit.decision-provider/v1 of the running Kev                  default ~/.aikit/decision-provider.json
 //   EPI_TOOLS_ROOT                where the Prime distribution is installed                       default <aikit home>/tools
-//   EPI_ACTUATION_ROOT, EPI_ACTUATION_PRIME_BINARY, EPI_PRIME_AGENT_BINARY, EPI_QL_BIN, EPI_QL_ROOT, EPI_QL_REVISION,
+//   EPI_ACTUATION_ROOT, EPI_PRIME_DIR, EPI_ACTUATION_PRIME_BINARY, EPI_PRIME_AGENT_BINARY, EPI_QL_BIN, EPI_QL_ROOT, EPI_QL_REVISION,
 //   EPI_QL_SKILL_PATH, EPI_ACTUATION_RESEARCH_BINARY, EPI_FACULTY_CONFIG, AIKIT_AGENCY_MINT_TEMPLATE, OI_CENTRAL_CTRL_BIN
 //   OI_WALK_BRIDGE_PORT           default random
 import {execFileSync, spawn, spawnSync} from "node:child_process";
@@ -53,6 +53,7 @@ const BRIDGE_BIN = env0.FIELD_BRIDGE_BIN ?? join(cradle, "kernel/target/debug/wa
 const REDIS = env0.EPI_REDIS_CONFIG ?? join(HOME, ".aikit/services/redis-now/redis-now.json");
 const KEV = env0.EPI_DECISION_PROVIDER ?? join(HOME, ".aikit/decision-provider.json");
 const ACTUATION = env0.EPI_ACTUATION_ROOT ?? "/Users/admin/Central/worktrees/env-1/actuation";
+const EPI_PRIME_DIR = env0.EPI_PRIME_DIR ?? join(HOME, "Central/Work/Epi-Prime");   // EpiLogos/Epi-Prime, the Prime distribution
 const LAUNCHER = env0.EPI_ACTUATION_PRIME_BINARY ?? join(ACTUATION, "target/debug/actuation-epi-prime");
 const PRIME = env0.EPI_PRIME_AGENT_BINARY ?? join(HOME, ".npm-global/lib/node_modules/prime-agent/dist/bundle/cli.js");
 const QL_ROOT = env0.EPI_QL_ROOT ?? join(HOME, "Central/Work/Quaternal-Logic");
@@ -149,7 +150,7 @@ try {
   const toolsRoot = env0.EPI_TOOLS_ROOT ?? join(aikitHome, "tools");
   const evidence = join(run, "faculty-evidence"); mkdirSync(evidence, {recursive: true});
   const facultyConfig = join(run, "faculty.walk.json");
-  const distribution = join(ACTUATION, "distribution/prime-epi/tools/epi-distribution.mjs");
+  const distribution = join(EPI_PRIME_DIR, "tools/epi-distribution.mjs");
   if (FACULTY) writeFileSync(facultyConfig, JSON.stringify({...JSON.parse(readFileSync(FACULTY, "utf8")), evidence_root: evidence}, null, 2));
   else say("faculty-config", JSON.parse(sh(process.execPath, [distribution, "faculty-config", "--instrument", OWNER_INSTRUMENT, "--source-root", QL_ROOT, "--evidence-root", evidence, "--out", facultyConfig])));
   const QL_REVISION = env0.EPI_QL_REVISION ?? JSON.parse(readFileSync(facultyConfig, "utf8")).owner.revision;

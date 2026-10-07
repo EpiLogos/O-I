@@ -16,7 +16,8 @@
 //   OI_AIKIT_BIN                  the AIKit build that has encounter-epi-prime-configure and encounter-use
 //   FIELD_SITE_ROOT               a built site root
 //   EPI_ACTUATION_PRIME_BINARY    actuation-epi-prime launcher with --extension (the new one)
-//   EPI_ACTUATION_ROOT            the Actuation checkout that holds distribution/prime-epi (for install + revision)
+//   EPI_ACTUATION_ROOT            the Actuation checkout (launcher binary and body revision)
+//   EPI_PRIME_DIR                 the Epi-Prime checkout (default ~/Central/Work/Epi-Prime), for install
 //   defaults below are the owner's installed material on this machine
 import {execFileSync, spawnSync} from "node:child_process";
 import {chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
@@ -34,6 +35,7 @@ const aikit = need("OI_AIKIT_BIN");
 const real = realProviderAuthorised();
 const home = homedir();
 const ACTUATION = process.env.EPI_ACTUATION_ROOT ?? "/Users/admin/Central/worktrees/env-1/actuation";
+const EPI_PRIME_DIR = process.env.EPI_PRIME_DIR ?? join(home, "Central/Work/Epi-Prime");   // EpiLogos/Epi-Prime, the Prime distribution
 const LAUNCHER = process.env.EPI_ACTUATION_PRIME_BINARY ?? join(ACTUATION, "target/debug/actuation-epi-prime");
 const QL_DIR = process.env.EPI_QL_DIR ?? join(home, ".workcell/tools/ql-agent/1a50b99ccf1884a4adbb3e3d6386854678de76d1ee899d89d629c7153977103d");
 const PRIME = process.env.EPI_PRIME_AGENT_BINARY ?? join(home, ".npm-global/bin/prime-agent");
@@ -74,7 +76,7 @@ const provision = async ({root, home: oiHome, projectRoot}) => {
   // the body: the distribution's own installer writes the binding this launcher verifies before Prime starts
   const toolsRoot = join(aikitHome, "tools");
   mkdirSync(toolsRoot, {recursive: true});
-  const installed = JSON.parse(execFileSync("node", [join(ACTUATION, "distribution/prime-epi/tools/epi-distribution.mjs"), "install", "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--root", toolsRoot], {encoding: "utf8"}));
+  const installed = JSON.parse(execFileSync("node", [join(EPI_PRIME_DIR, "tools/epi-distribution.mjs"), "install", "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--root", toolsRoot], {encoding: "utf8"}));
   record.installation = installed;
   const configured = native("encounter-epi-prime-configure", "--provider-id", "epi-prime-ql", "--launcher", LAUNCHER, "--prime-bin", PRIME, "--ql-bin", join(QL_DIR, "ql"),
     "--ql-revision", QL_REVISION, "--body-revision", BODY_REVISION, "--skill-path", SKILL, "--extension", installed.extension, "--installation", installed.binding,
