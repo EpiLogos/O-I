@@ -21,136 +21,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
+        "pointerMode": "attract",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.2,
+        "pointerClickStrength": 0.45,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#2a2016",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#e8c896",
+          "#a87848",
+          "#f5ead0",
+          "#6a4a24"
         ],
         "material": "round",
         "params": {
-          "speed": 0.35,
-          "circulation": 0.12,
-          "dispersion": 0.06,
-          "pointerStrength": 0.2
+          "speed": 0.32,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e516",
-          "name": "the avatar — descent into a form that can act",
+          "id": "ava0-face",
+          "name": "the face — turning toward someone",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.08,
-            "z": 0
-          },
-          "size": {
-            "x": 0.433,
-            "y": 0.13
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "Avatar",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e516-1",
-                "text": "Avatar",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.433,
-                    "y": 0.13
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-2",
-                "text": "a voice",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": {
-                  "x": -0.38,
-                  "y": -0.08,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.1
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e517",
-          "name": "the commissioned representative — authority within a commission, answerable to what was entrusted",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.3,
+            "x": -0.3,
+            "y": -0.42,
             "z": 0
           },
           "size": {
             "x": 0.24,
-            "y": 0.24
+            "y": 0.22
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "⚖",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#e8c896",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -162,37 +75,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st560",
-                "text": "⚖",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-\"\"-.\n  /  o o  \\\n |    ..   |\n  \\  \\__/  /\n   '-....-'\n"
+            }
           }
         },
         {
-          "id": "e518",
-          "name": "the prompt already a determination — A28's recursive relation",
+          "id": "ava0-name",
+          "name": "the name — the person callable again",
           "kind": "formation",
           "position": {
-            "x": -0.5,
-            "y": -0.35,
+            "x": 0.16,
+            "y": -0.56,
             "z": 0
           },
           "size": {
-            "x": 0.4,
+            "x": 0.2,
             "y": 0.14
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#f5ead0",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -204,71 +114,100 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st561",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .-------.\n | NAME  |\n '-------'\n"
+            }
+          }
+        },
+        {
+          "id": "ava0-role",
+          "name": "the role — an undertaking with a bearer",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#a87848",
+          "tintWeight": 0.75,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "ava0-lamp",
+          "name": "presence — a finite light that can be addressed",
+          "kind": "formation",
+          "position": {
+            "x": 0.58,
+            "y": -0.68,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e8c896",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .~~.\n  (  )\n (____)\n    ||\n   _|__\n"
+            }
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#0–#1 · the four-office ecology; A28 authored ground and positional delegation",
-          "title": "Presence becomes addressable through a form",
-          "italic": "The avatar embodies effective finite presence: not made unreal by having an appearance, but given an occasion on which it can matter — authority exact without becoming absolute sourcehood.",
+          "kicker": "",
+          "title": "Presence addressable",
+          "italic": "A face turns; a name calls again; a role carries an undertaking.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Presence becomes addressable through a form. A face turns towards someone; a name lets that person be called again; a role gives an undertaking a recognisable place. Someone can now be met, remembered, trusted, opposed or answered. A person does not first become complete in isolation and then add a public mask — language, expression and shared practices participate in the life that appears.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Yet no achieved presentation finishes that life: the named can answer differently; the one approached through a role can question what the role permits. Descent names the movement into a form that can act — a voice rather than every possible voice, an entrusted representative rather than an undertaking with no bearer. A28: authority exact and effective without becoming absolute sourcehood; even the original instruction is already a formulation.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the naming and role (#0, taken up as mask at #3); the entrusted commission (#1, returned at #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -282,7 +221,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.07,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -290,23 +229,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-greet",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": 0.12,
-          "max": 0.28,
-          "rate": 0.2,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-ava-1-image",
@@ -323,302 +246,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.45,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f2ead8",
+        "background": "#2a2016",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#e8c896",
+          "#a87848",
+          "#f5ead0",
+          "#6a4a24"
         ],
         "material": "round",
         "params": {
-          "speed": 0.45,
-          "circulation": 0.18,
+          "speed": 0.32,
+          "circulation": 0.1,
           "dispersion": 0.05,
-          "pointerStrength": 0.4
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e519",
-          "name": "the image — gathering attention, desire, expectation",
+          "id": "ava1-eye",
+          "name": "the gathered image — attention returning to it",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.27,
-            "z": 0
-          },
-          "size": {
-            "x": 0.491,
-            "y": 0.491
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1.8,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e519-1",
-                "text": "",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.491,
-                    "y": 0.491
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e519-2",
-                "text": "",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.55,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e519-3",
-                "text": "",
-                "shape": "disc",
-                "hold": 3.2,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.6
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e520",
-          "name": "the organising complex — the field of response around a consequential formation",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": 0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st563",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e521",
-          "name": "Bimba locally · pratibimba widely — authority with a determinate scope",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
+            "x": -0.16,
             "y": -0.4,
             "z": 0
           },
           "size": {
-            "x": 0.34,
-            "y": 0.14
+            "x": 0.26,
+            "y": 0.16
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "C38",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e521-1",
-                "text": "C38",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e521-2",
-                "text": "pratibimba",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e521-3",
-                "text": "Bimba",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#2b3a55",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e522",
-          "name": "the test — can the encountered source still alter what the image means?",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.42,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "?",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#f5ead0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -630,76 +300,188 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-~-.\n  (  o  )\n   '-~-'\n"
+            }
+          }
+        },
+        {
+          "id": "ava1-complex",
+          "name": "the organising complex — the field of response around the formation",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.56,
+            "y": 0.56
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#a87848",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st565",
-                "text": "?",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "id": "ava1-complex-st1",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.56
+                  },
+                  "tintWeight": 0.6,
+                  "tint": "#a87848",
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  },
+                  "rotation": 0
+                }
+              },
+              {
+                "id": "ava1-complex-st2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.62,
+                    "y": 0.62
+                  },
+                  "tintWeight": 0.45,
+                  "tint": "#a87848",
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  },
+                  "rotation": 0
+                }
               }
-            ]
+            ],
+            "sourcesVersion": 1
+          }
+        },
+        {
+          "id": "ava1-round",
+          "name": "the round — the parental relation before the figures appear",
+          "kind": "formation",
+          "position": {
+            "x": -0.58,
+            "y": -0.62,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e8c896",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .---.\n  ( .-. )\n  ( '-' )\n   '---'\n"
+            }
+          }
+        },
+        {
+          "id": "ava1-test",
+          "name": "the test",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.66,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↔",
+          "share": 1.0,
+          "tint": "#f5ead0",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#2 · Symbolon Dynamics; the Neumann ground; A20's authority test",
+          "kicker": "",
           "title": "The image gathers force",
-          "italic": "The decisive change is in authority: whether the encountered source can still alter what the image is allowed to mean and do.",
+          "italic": "Attention returns; desire organises; a picture becomes the measure.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The image makes presence available under a particular arrangement — faithful without being exhaustive; selection gives recognition its precision. Within a declared Context Frame an achieved image can genuinely occupy Bimba, the local original, while remaining pratibimba relative to wider sources — authority real at the scale of the inquiry; idolisation begins when it prevents its own source relation from being questioned.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The image gathers force: attention returns, desire and fear organise, expectations make possibilities vivid. Symbolon Dynamics: archetypal capacity, particular image and organising complex keep different offices. Libido, prāṇa and Śakti name registers of efficacy — investment, circulation, manifestation-power — without a common physical measurement. The test: what the coherence can receive — if every encounter must confirm it, apparent fidelity protects the image from the relation that made it significant.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the gathered attention and valuation (#2, captured at #4); the libido/prāṇa/Śakti registers (#2); the Bimba office (#1, returned at #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "ring",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -708,7 +490,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.07,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -716,23 +498,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-gather",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.08,
-          "max": 0.08,
-          "rate": 0.26,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-ava-2-mask",
@@ -749,300 +515,192 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
-        "pointerClick": "shove",
-        "pointerClickStrength": 0.8,
-        "pointerClickRadius": 0.4,
-        "morphEnabled": true
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.28
       },
       "field": {
-        "background": "#efe6d4",
+        "background": "#1c1a26",
         "palette": [
-          "#2e2e2e",
-          "#6b6b6b",
-          "#b0413e",
-          "#e3ddd0"
+          "#9a94b8",
+          "#4e4870",
+          "#d8d4e0",
+          "#332e4a"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": 0.3,
-          "dispersion": 0.08,
-          "pointerStrength": 0.45
+          "speed": 0.25,
+          "circulation": 0.06,
+          "dispersion": 0.05,
+          "pointerStrength": 0.25
         }
       },
       "entities": [
         {
-          "id": "e523",
+          "id": "ava2-mask",
           "name": "the mask — the interface of participation",
           "kind": "formation",
           "position": {
-            "x": -0.45,
-            "y": -0.36,
+            "x": -0.28,
+            "y": -0.42,
             "z": 0
           },
           "size": {
-            "x": 0.261,
-            "y": 0.313
+            "x": 0.24,
+            "y": 0.22
           },
           "rotation": 0,
-          "shape": "square",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 0.5,
+          "share": 1.3,
+          "tint": "#d8d4e0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
             "strength": 0,
             "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e523-1",
-                "text": "",
-                "shape": "square",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.261,
-                    "y": 0.313
-                  },
-                  "rotation": 0,
-                  "tint": "#e3ddd0",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e523-2",
-                "text": "",
-                "shape": "square",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.29,
-                    "y": 0.34
-                  },
-                  "rotation": 8,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e524",
-          "name": "the anticipated count — editing what can be shown; the unapproved response as defect",
-          "kind": "formation",
-          "position": {
-            "x": 0.4,
-            "y": 0.25,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.28
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#b0413e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e524-1",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e524-2",
-                "text": "⊢",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": {
-                  "x": 0.32,
-                  "y": 0.18,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e525",
-          "name": "Number Six — the assigned number; Two's office changing; One questioned",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.26,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "6",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "repel",
-            "strength": 0.5,
-            "radius": 0.3,
             "spin": 0
           },
           "station": null,
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st568",
-                "text": "6",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .-\"\"\"-.\n /  o o  \\\n \\   __  /\n  '-...-'\n"
+            }
+          }
+        },
+        {
+          "id": "ava2-six",
+          "name": "Number Six — the question assigned a place",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#9a94b8",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .---.\n  /  o  \\\n |    \\  |\n  \\    \\ |\n   '--O--'\n      (O)\n"
+            }
+          }
+        },
+        {
+          "id": "ava2-count",
+          "name": "the anticipated count — editing what can be shown",
+          "kind": "formation",
+          "position": {
+            "x": 0.58,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1.0,
+          "tint": "#332e4a",
+          "tintWeight": 0.75,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "ava2-num",
+          "name": "the numbering",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": -0.72,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "6",
+          "share": 1.0,
+          "tint": "#d8d4e0",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#3 · the Prisoner appointment; the chameleon seam held for its own recovery",
-          "title": "The mask: participation becoming self-administration",
-          "italic": "The mask demonstrates access conditioned on presentation: what began as an interface becomes an internal criterion — the doors keep opening while the life that can pass through them narrows.",
+          "kicker": "",
+          "title": "The mask administers",
+          "italic": "It opens doors while narrowing the life that passes through.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The image becomes a mask when it offers a way to enter a social field: language, manner, credentials and the expectations of a role make someone legible. Learning to wear it is participation's achievement — no demand for complete exposure. The pressure appears when access depends upon the presentation so completely that its bearer must administer life by the recognising field's measure.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The mask opens doors while narrowing the life that can pass through: anticipating what will count, the bearer can receive an unapproved response as a defect in the self. The Prisoner stages it: the agent designated Number Six, Number Two occupants, Number One the question — numbering gives the office continuity and the captive an identity the institution administers; the question about source diverted into power's classification of the questioner.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Declared cross-story: the Prisoner and Daphne and Job appointments of the quilt's ecology, each whole retaining its own home. ↳ Occurrences: the opening doors and narrowing life (#3); Six's assigned number (#3, whole at the-prisoner).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "line",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1051,7 +709,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.2,
+        "thetaRate": 0.04,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1059,23 +717,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-admin",
-          "target": "field.params.speed",
-          "type": "lfo",
-          "wave": "triangle",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.1,
-          "max": 0.1,
-          "rate": 0.3,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-ava-3-idol",
@@ -1094,132 +736,47 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.45
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.28
       },
       "field": {
-        "background": "#171310",
+        "background": "#1c1a26",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#9a94b8",
+          "#4e4870",
+          "#d8d4e0",
+          "#332e4a"
         ],
         "material": "round",
         "params": {
-          "speed": 0.28,
+          "speed": 0.25,
           "circulation": 0.06,
-          "dispersion": 0.04,
-          "pointerStrength": 0.5
+          "dispersion": 0.05,
+          "pointerStrength": 0.25
         }
       },
       "entities": [
         {
-          "id": "e526",
-          "name": "the laurel — the emblem continuing after the living withdrawal",
+          "id": "ava3-idol",
+          "name": "the idol — the closed image, known before encounter",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": 0.35,
+            "x": -0.32,
+            "y": -0.48,
             "z": 0
           },
           "size": {
-            "x": 0.36,
-            "y": 0.5
-          },
-          "rotation": 0,
-          "shape": "triangle",
-          "text": "",
-          "share": 1,
-          "tint": "#3f5a36",
-          "tintWeight": 0.7,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st569",
-                "text": "",
-                "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e527",
-          "name": "the protected account — contradiction classified as the judged person's defect",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.21,
-            "z": 0
-          },
-          "size": {
-            "x": 0.156,
-            "y": 0.156
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⚖",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st570",
-                "text": "⚖",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e528",
-          "name": "the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.38,
-            "z": 0
-          },
-          "size": {
-            "x": 0.361,
-            "y": 0.361
+            "x": 0.22,
+            "y": 0.3
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.6,
+          "share": 1.4,
+          "tint": "#d8d4e0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1231,37 +788,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st571",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   |=o=|\n   |===|\n   |===|\n  /=====\\\n  '====='\n"
+            }
           }
         },
         {
-          "id": "e529",
-          "name": "the liar's dividend — counterfeiting making the genuine record refusable",
+          "id": "ava3-laurel",
+          "name": "the laurel claimed — the emblem continuing after refusal",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": -0.45,
+            "x": 0.14,
+            "y": -0.54,
             "z": 0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.18,
+            "y": 0.26
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "∴",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#4e4870",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1271,117 +825,102 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e529-1",
-                "text": "∴",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e529-2",
-                "text": "A32",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.05,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    ,*\n   /**,\n  **,,*\n   **,*\n    ||\n    ||\n"
+            }
+          }
+        },
+        {
+          "id": "ava3-fake",
+          "name": "the counterfeit — body joined to utterance, forged",
+          "kind": "formation",
+          "position": {
+            "x": 0.52,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#9a94b8",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ,---+---.\n / o  |###\\\n |     |###\n \\__, ' ##/\n  '---+---'\n"
+            }
+          }
+        },
+        {
+          "id": "ava3-dividend",
+          "name": "the liar's dividend",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊘",
+          "share": 1.0,
+          "tint": "#d8d4e0",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#4 · the Ovid, Job and deepfake appointments; A18's fabricated slash; A32's next encounter",
-          "title": "The idol closes the path through the image",
-          "italic": "The deepfake demonstrates the closure at the claimed seam itself: not merely a false proposition but a forged provenance — and the dividend that lets a real witness be refused as synthetic.",
+          "kicker": "",
+          "title": "The idol closes the path",
+          "italic": "Visible everywhere, unable to change the terms; the counterfeit forges provenance.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The idol closes the path through the image: the bearer remains visible while losing the ability to change the terms of representation; contrary speech is classified as further evidence. Ovid: Daphne's refusal and Peneus's grant precede the pursuit; the changed body feels, recoils from the kiss, is claimed for Apollo's emblems — seeming assent retained, neither detail authorising consent. The emblem continues after possession has failed.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Job tests another image: an account of justice defended by making Job the guilty person it needs; the whirlwind changes the field, the friends are rebuked, restoration passes through his intercession. The deepfake forges the apparent provenance by which a proposition asks to be trusted; once fabrication is available as explanation, a real witness can be dismissed as synthetic — no prevalence or documented case established here.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Declared cross-story: the Apollo–Eros–Daphne–Peneus whole figures emblematic possession after withdrawal; the Job whole figures the witness the protected account must hear. ↳ Occurrences: the laurel's continuation (#4); the protected account (#4); the forged provenance and the dividend (#4, returned at #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -1395,7 +934,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.04,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1412,62 +951,135 @@
       "duration": 15,
       "transition": 2.0,
       "view": {
-        "mode": "3d",
-        "yaw": 0.3,
-        "pitch": 0.35,
-        "zoom": 0.95,
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 0.6,
-        "pointerClickRadius": 0.3,
-        "depthOcclusion": true,
-        "depthTintColor": "#0d0a14",
-        "volumeEnabled": true
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#1a1524",
+        "background": "#ded2ba",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#3a3020",
+          "#6a5a38",
+          "#20282c",
+          "#8a6a3a"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": 0.25,
-          "dispersion": 0.08,
-          "zConfinement": 0.85,
-          "pointerStrength": 0.5
+          "speed": 0.35,
+          "circulation": 0.14,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e530",
-          "name": "regard — the disclosed criterion and the answer that can change it",
+          "id": "ava5-regard",
+          "name": "the regard — between two faces, neither owning the reply",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.41,
+            "x": -0.24,
+            "y": -0.42,
             "z": 0
           },
           "size": {
-            "x": 0.678,
-            "y": 0.575
+            "x": 0.32,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#3a3020",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .---.   .---.\n | o . | | . o |\n |  -  | |  -  |\n  '---'   '---'\n"
+            }
+          }
+        },
+        {
+          "id": "ava5-hand",
+          "name": "the hand withdrawn — withdrawal received as an answer",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#6a5a38",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   _ _ _\n  | | | |\n  | | | |\n  |_|_|_|\n    | |\n   _|_|_\n"
+            }
+          }
+        },
+        {
+          "id": "ava5-open",
+          "name": "the form kept open — continuity of address without ownership",
+          "kind": "formation",
+          "position": {
+            "x": 0.02,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.8
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.5,
+          "share": 1.0,
+          "tint": "#8a6a3a",
+          "tintWeight": 0.4,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1479,37 +1091,28 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st573",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         },
         {
-          "id": "e531",
-          "name": "the entrusted avatar remaining powerful — source office inspectable and revisable (A28)",
+          "id": "ava5-return",
+          "name": "regard returning through the form",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": 0.5,
-            "z": 0.3
+            "x": 0.6,
+            "y": -0.7,
+            "z": 0
           },
           "size": {
-            "x": 0.3,
+            "x": 0.14,
             "y": 0.14
           },
           "rotation": 0,
           "shape": "text",
-          "text": "A28",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "text": "↺",
+          "share": 1.0,
+          "tint": "#20282c",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1521,326 +1124,22 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st574",
-                "text": "A28",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e532",
-          "name": "withdrawal as an answer the representation must learn to receive",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.42,
-            "z": 0.2
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "←",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st575",
-                "text": "←",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e533",
-          "name": "the Symbol/Account/Trust circuit — all four operations through the ecology",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.42,
-            "z": -0.3
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "ΣΛΤ",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st576",
-                "text": "ΣΛΤ",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e534",
-          "name": "the four offices walk to regard (the ecology's return)",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.1,
-            "z": -0.2
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.08
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "Avatar",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 0.7,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e534-1",
-                "text": "Avatar",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.1,
-                "position": {
-                  "x": -0.5,
-                  "y": -0.1,
-                  "z": -0.2
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.08
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e534-2",
-                "text": "Image",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.1,
-                "position": {
-                  "x": -0.28,
-                  "y": -0.45,
-                  "z": -0.1
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.08
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e534-3",
-                "text": "Mask",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.1,
-                "position": {
-                  "x": 0.12,
-                  "y": -0.5,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.08
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e534-4",
-                "text": "Idol",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.1,
-                "position": {
-                  "x": 0.45,
-                  "y": -0.28,
-                  "z": 0.08
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.08
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e534-5",
-                "text": "Regard",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.1,
-                "position": {
-                  "x": 0.0,
-                  "y": 0.05,
-                  "z": 0.3
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.1
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#5→0 · the Arbitration field at register 3; A27, A30; the Neumann relation without ego-chronology",
-          "title": "Regard returns through the form",
-          "italic": "The whole returns-to its consumers as Mytheme: the tellings make the relations lived and legible — and the form's integrity lies in allowing the life it carried to answer back.",
+          "kicker": "",
+          "title": "Regard returns",
+          "italic": "The answer need not confirm the first question; withdrawal can be the answer.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Regard returns through the form to the participant who can answer it. The answer need not confirm the first question: it can disclose an omitted circumstance, refuse an imposed role, correct an attributed statement, or show that the criterion itself misnamed the encounter. Maintained personhood does not require an essence displayed without mediation; it requires that continuity of address not become ownership of the person addressed.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The Symbol/Account/Trust field carries four operations: identify the claimed source, make the claim inspectable, let reliance permit correction and refusal, return the effects to the conditions of next use. An avatar remains powerful with its source office revisable; a mask enables participation while its bearer exceeds its terms; withdrawal can be the answer. A27 grounds unity without possession; A30 the shared encounter; person, image and field return still distinct.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the four offices' return (#0–#4, #5→0); the entrusted commission (#1, #5→0); the counterfeit's consequence for the next encounter (#4, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -1854,7 +1153,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.08,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1862,24 +1161,8 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-regard",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": 0.35,
-          "max": 0.65,
-          "rate": 0.25,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     }
   ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+  "updatedAt": "2026-10-07T12:00:00.000Z"
 }

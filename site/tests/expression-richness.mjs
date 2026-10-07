@@ -1,24 +1,41 @@
 #!/usr/bin/env node
-// Expression richness linter — the objective floor for the 2026-10 enrichment pass.
+// Expression craft gate — the law for the 2026-10-07 rework pass.
 //
-// Reports, per journey and in total, how much of the Expression format each
-// published member actually uses, and FAILS below the enrichment floor
-// (brief §3, 2026-10-06):
-//   1. formation sequences on >= 1/3 of scenes; at least one sequence that
-//      changes glyph AND object state (position/size/tint), not text alone;
-//   2. every adjacent scene pair changes >= 3 settings across >= 2 families
-//      (a palette-only change does not count);
-//   3. at least one scene in 3d: view.mode "3d", entities distributed in z,
-//      and a volume/depth setting authored;
-//   4. at least three distinct pointer profiles per journey;
-//   5. every scene carries a placed text block (kicker + title + italic),
-//      body <= 70 words, blocks do not overlap at 1440x900 or 390x844
-//      (heuristic box math; the render pass is the visual truth);
-//   6. every distinct formation glyph has a rationale in the member's craft
-//      note (glyph_rationales in the binding record);
-//   7. at least one automation lane / property track, and beats that differ
-//      (>= 2 distinct durations or transitions);
-//   8. not `free` layout in every scene.
+// This replaces the 2026-10-06 "enrichment floor", whose quotas mandated the
+// failure they meant to prevent: a text block on every scene filled the stage
+// with citations and routing, per-pair change quotas outlawed stillness, and
+// a word swelling into another word counted as "glyph AND object state".
+// Four passes of that produced a corpus that is 93% word-glyphs with one
+// background per journey. That floor is gone; the law replacing it:
+//
+//   TEXT IS THE MINIMUM FORM. Any image or glyph can be used. Genuine
+//   creativity is required, not optional.
+//
+// What this gate checks objectively (the critic's eye is the primary
+// acceptance; this gate is the plumbing it stands on):
+//
+//   1. carriers       — every scene is drawn with at least one non-text
+//                       formation; ≥ half of a journey's formations are
+//                       non-text (ascii, image, geometry, …); formation text
+//                       may be notation (≤3 chars) or a single sign-name, never
+//                       a sentence; no yantra formations.
+//   2. colour         — the journey moves through colour: ≥3 distinct
+//                       backgrounds and a palette or tint set that travels.
+//   3. rest           — stillness is lawful and required: ≥1/3 of adjacent
+//                       scene pairs change no engine/field/view settings.
+//                       Motion needs a reason; rest does not.
+//   4. scale          — the engine's size normalisation stays on: no scene
+//                       disables autoFitSizes; the engine sizes each glyph.
+//   5. stage text     — hospitable only: ≤120 words of visible stage text per
+//                       journey; no metadata on stage (citations, file paths,
+//                       routing words, "Source of record"); text blocks clear
+//                       the formations' boxes at 1440×900 and 390×844.
+//   6. accountability — every distinct glyph (formation text, or a non-text
+//                       formation's name) carries a rationale in the binding's
+//                       glyph_rationales; no placeholder glyphs; the binding
+//                       record exists.
+//   7. renderable     — within the authoring/capture ceiling (≤10 formations,
+//                       ≤8 pins per scene); validateJourney clean.
 //
 // Usage:
 //   node site/tests/expression-richness.mjs [--json] [--stats] [--collection DIR]...
@@ -29,61 +46,22 @@
 import { readdirSync, statSync, existsSync, readFileSync } from "node:fs";
 import { join, dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateJourney, DEFAULT_ENGINE_SETTINGS } from "../../packages/oi-design-system/expressions-engine/shell/model.mjs";
+import { validateJourney } from "../../packages/oi-design-system/expressions-engine/shell/model.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "../..");
 
 const PLACEHOLDER_GLYPHS = new Set(["◉", "●", "○", "·", "•", "?", "∅", "#", "*"]);
-const NOTATION_GLYPHS = new Set(["0", "1", "/", "Ø", "x", "X", "−", "-", "+", "=", "∞"]);
-
-// format families for the adjacent-scene change check
-const FAMILY_OF = {
-  pointer: new Set(["engine.pointerMode", "engine.pointerClick", "engine.pointerClickStrength", "engine.pointerClickRadius", "field.params.pointerStrength", "field.params.pointerRadius", "field.params.pointerFalloff"]),
-  resonance: new Set(["engine.resonanceEnabled", "engine.resonatorMode", "engine.autoSweep", "engine.sweepDirection", "field.params.frequency", "field.params.dominance", "field.params.excitation"]),
-  relational: new Set(["engine.relationalEnabled", "engine.relationalMode", "engine.mediumEnabled", "engine.mediumDimension", "engine.mediumPlane", "engine.collisionEnabled", "engine.collisionMode", "engine.pairwiseEnabled"]),
-  morph: new Set(["engine.morphEnabled", "engine.trajectory", "engine.driveShape", "engine.autoOscillate", "morph.thetaRate", "morph.phiRate", "morph.thetaOffset", "morph.phiOffset", "morph.law", "morph.depth", "morph.dwell"]),
-  camera: new Set(["view.mode", "view.yaw", "view.pitch", "view.zoom", "view.panX", "view.panY", "composition.plane", "field.params.depth", "field.params.zConfinement", "engine.volumeEnabled", "engine.volumeProfile", "engine.depthPerspective", "engine.depthOcclusion", "engine.depthTintColor", "engine.vortex3d", "engine.dispersion3d"]),
-  colour: new Set(["field.background", "field.palette", "engine.colorMode", "engine.colorEnabled", "engine.inkMode", "engine.dotShape", "engine.fontFamily", "engine.fontWeight"]),
-};
-const MATERIAL_KEYS = new Set(["count", "size", "sizeBias", "opacity", "roundness", "softness", "irregularity", "elongation", "orientation", "contrast", "densityScale", "densityPhase", "edgeWeight", "halo", "grain", "field.material"]);
-function familyOf(key) {
-  for (const [family, keys] of Object.entries(FAMILY_OF)) if (keys.has(key)) return family;
-  if (key.startsWith("field.params.")) {
-    const p = key.slice("field.params.".length);
-    if (MATERIAL_KEYS.has(p)) return "material";
-    return "physics"; // motion/relational-scalar residue: speed, turbulence, gravity*, curl*, drag…
-  }
-  if (key.startsWith("entity.force") || key.startsWith("entity.sequence")) return "physics";
-  return "other";
-}
-
-function flatten(prefix, value, out = {}) {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    for (const [k, v] of Object.entries(value)) flatten(prefix ? `${prefix}.${k}` : k, v, out);
-  } else out[prefix] = value;
-  return out;
-}
-const round = (v) => (typeof v === "number" ? Math.round(v * 1e6) / 1e6 : v);
-function effectiveSettings(scene) {
-  const engine = { ...DEFAULT_ENGINE_SETTINGS, ...(scene.engine ?? {}) };
-  const flat = flatten("", { engine, "field.params": scene.field?.params ?? {}, view: scene.view ?? {}, composition: { plane: scene.composition?.plane, layout: scene.composition?.layout }, morph: scene.morph ?? {}, "field.background": scene.field?.background, "field.palette": scene.field?.palette, "field.material": scene.field?.material });
-  for (const k of Object.keys(flat)) flat[k] = round(flat[k]);
-  return flat;
-}
-function sceneDeltas(a, b) {
-  const changes = [];
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-  for (const k of keys) if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) changes.push(k);
-  return changes;
-}
+const BANNED_SHAPES = new Set(["yantra"]);
+const METADATA_RE = /(^|\s)(q\d{3}\b|Met\.\s*\d|Source of record|submission-package|previous\b|next\b|related\b|In the essay)|^#\d+\s*·|\.(md|json|mjs)\b|\/[a-z-]+\/[a-z-]+/i;
+// a sentence = two or more letter-words; spaced pure-symbol notation ("/ = −/−") is a mark
+const isSentence = (s) => s.trim().split(/\s+/).filter((t) => /\p{L}/u.test(t)).length >= 2;
 
 function wordCount(s) { return (s ?? "").trim().split(/\s+/).filter(Boolean).length; }
 
-// Heuristic stage boxes for the text-overlap check. x/y are stage fractions,
-// width is px at the authored stage; height is estimated from the string and
-// font size. The page keeps long bodies below the field on narrow stages, so
-// the narrow check considers kicker+title+italic only.
+// Heuristic stage boxes for the text-clears-formations check. x/y are stage
+// fractions, width is px at the authored stage; height is estimated from the
+// string and font size. The narrow stage keeps long bodies below the field.
 function textRect(item, stageW, stageH, narrow) {
   const size = item.size ?? 28;
   const widthPx = Math.min(item.width ?? 340, narrow ? stageW * 0.92 : stageW);
@@ -96,7 +74,14 @@ function textRect(item, stageW, stageH, narrow) {
   const x = item.x * stageW, y = item.y * stageH;
   return { x, y, w: widthPx, h };
 }
-function overlap(a, b) {
+function entityRect(e, stageW, stageH) {
+  const p = e.position ?? { x: 0.5, y: 0.5 };
+  const s = e.size ?? { x: 0.2, y: 0.1 };
+  const w = (typeof s.x === "number" ? s.x : 0.2) * stageW;
+  const h = (typeof s.y === "number" ? s.y : 0.1) * stageH;
+  return { x: p.x * stageW - w / 2, y: p.y * stageH - h / 2, w, h };
+}
+function overlapArea(a, b) {
   const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
   const iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
   return ix * iy;
@@ -110,159 +95,119 @@ function findBinding(journeyPath) {
   return null;
 }
 
-function glyphsOf(scene) {
-  const glyphs = new Set();
-  for (const e of scene.entities ?? []) {
-    if (e.text) glyphs.add(e.text);
-    if (e.sequence?.enabled) for (const st of e.sequence.steps ?? []) if (st.text) glyphs.add(st.text);
-  }
-  return [...glyphs];
-}
+const isTextFormation = (e) => e.shape === "text" || (!e.shape && e.text);
+const formationGlyph = (e) => (e.text ?? "").trim();
 
 function checkJourney(journey, journeyPath) {
-  const c = (name, pass, detail) => ({ check: name, pass, detail });
+  const fail = (name, detail) => { findings.push({ check: name, pass: false, detail }); };
   const findings = [];
-  const fail = (name, detail) => findings.push(c(name, false, detail));
   const scenes = journey.scenes ?? [];
 
   // validity
   try { validateJourney(JSON.parse(JSON.stringify(journey))); } catch (e) { fail("valid", e.message); }
 
   // renderability: the authoring/capture app refuses >10 formations / >8 pins per scene
-  // (field-studies-journeys app.ts ensureCapacity) even though the validator admits 32.
   for (const s of scenes) {
     const forms = (s.entities ?? []).filter((e) => e.kind === "formation").length;
     const pins = (s.entities ?? []).filter((e) => e.kind === "pin").length;
     if (forms > 10 || pins > 8) fail("renderable", `${s.id}: ${forms} formations / ${pins} pins — the authoring app refuses over 10/8`);
   }
 
-  // 1 — sequences
-  const seqScenes = scenes.filter((s) => (s.entities ?? []).some((e) => e.sequence?.enabled && (() => { const gs = new Set((e.sequence.steps ?? []).map((t) => `${t.text}\u0000${t.shape}`)); return gs.size >= 2; })()));
-  const morphSeq = scenes.some((s) => (s.entities ?? []).some((e) => e.sequence?.enabled && (e.sequence.steps ?? []).some((st) => st.objectState && (st.position || (st.objectState.size && (st.objectState.size.x !== undefined)) || st.objectState.tint !== undefined))));
-  const seqNeed = Math.max(1, Math.ceil(scenes.length / 3));
-  if (seqScenes.length < seqNeed) fail("sequences", `${seqScenes.length}/${scenes.length} scenes carry multi-glyph sequences (floor ${seqNeed})`);
-  if (!morphSeq) fail("sequences", "no sequence changes glyph AND object state (position/size/tint)");
-
-  // 2 — adjacent-scene multi-family change
-  const settings = scenes.map(effectiveSettings);
-  let weakPair = null;
-  for (let i = 1; i < scenes.length; i++) {
-    const changes = sceneDeltas(settings[i - 1], settings[i]).filter((k) => familyOf(k) !== "other" || k.startsWith("field.params."));
-    const families = new Set(changes.map(familyOf));
-    if (changes.length < 3 || families.size < 2) { weakPair = { at: i, changes: changes.length, families: [...families] }; break; }
-  }
-  if (weakPair) fail("scene-change", `scenes ${weakPair.at - 1}->${weakPair.at}: ${weakPair.changes} settings across ${weakPair.families.length} family/families (${weakPair.families.join(",") || "none"})`);
-
-  // 3 — 3d
-  const scenes3d = scenes.filter((s) => s.view?.mode === "3d" && (s.entities ?? []).some((e) => (e.position?.z ?? 0) !== 0) && ["volumeEnabled", "volumeProfile", "depthPerspective", "depthOcclusion", "depthTintColor"].some((k) => k in (s.engine ?? {})));
-  if (!scenes3d.length) fail("3d", "no scene is 3d with z-distributed entities and authored depth/volume");
-
-  // 4 — pointer profiles
-  const profiles = new Set(scenes.map((s) => { const e = { ...DEFAULT_ENGINE_SETTINGS, ...(s.engine ?? {}) }; return `${e.pointerMode}/${e.pointerClick}/${e.pointerClickStrength}/${e.pointerClickRadius}`; }));
-  // size-aware floor: a scene carries one profile, so a journey of N scenes can
-  // hold at most N distinct ones (S-products lane finding, 2026-10-06).
-  const pointerFloor = Math.min(3, scenes.length);
-  if (profiles.size < pointerFloor) fail("pointer", `${profiles.size} distinct pointer profiles (floor ${pointerFloor} for ${scenes.length} scenes)`);
-
-  // 5 — text blocks
-  let textScenes = 0, longBody = null, overlapHit = null, smallSizes = new Set();
+  // 1 — carriers: text is the minimum form
+  let entities = 0, nonText = 0, sentence = null, yantra = null;
+  const scenesWithoutMark = [];
   for (const s of scenes) {
-    const items = (s.text ?? []).filter((t) => t.visible !== false && (t.kicker || t.title || t.italic || t.body));
-    const full = items.filter((t) => t.kicker && t.title && t.italic);
-    if (full.length) textScenes++;
-    for (const t of items) {
-      smallSizes.add(t.size ?? 28);
-      if (wordCount(t.body) > 70 && !longBody) longBody = `${s.id}/${t.id}: ${wordCount(t.body)} words`;
-    }
-    const rectsN = items.map((t) => textRect(t, 390, 844, true));
-    const rectsW = items.map((t) => textRect(t, 1440, 900, false));
-    for (const [rects, label] of [[rectsN, "390x844"], [rectsW, "1440x900"]]) {
-      for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
-        if (overlap(rects[i], rects[j]) > 140 && !overlapHit) overlapHit = `${s.id}: blocks ${items[i].id}+${items[j].id} overlap at ${label}`;
+    const es = s.entities ?? [];
+    const forms = es.filter((e) => e.kind === "formation");
+    const marks = forms.filter((e) => !isTextFormation(e));
+    entities += forms.length; nonText += marks.length;
+    if (forms.length && !marks.length) scenesWithoutMark.push(s.id);
+    for (const e of forms) {
+      if (BANNED_SHAPES.has(e.shape) && !yantra) yantra = `${s.id}/${e.name ?? e.id}: ${e.shape}`;
+      const g = formationGlyph(e);
+      if (isTextFormation(e) && isSentence(g) && !sentence) sentence = `${s.id}: ${JSON.stringify(g)} — a sentence is not a glyph`;
+      // sequences can carry what the entity's top-level shape hides
+      for (const st of e.sequence?.steps ?? []) {
+        if (BANNED_SHAPES.has(st.shape) && !yantra) yantra = `${s.id}/${e.name ?? e.id} step ${st.id ?? ""}: ${st.shape}`;
+        const sg = (st.text ?? "").trim();
+        if (isSentence(sg) && !sentence) sentence = `${s.id}: ${JSON.stringify(sg)} — a sentence is not a glyph`;
       }
     }
   }
-  if (textScenes < scenes.length) fail("text", `${textScenes}/${scenes.length} scenes carry kicker+title+italic`);
-  if (longBody) fail("text", `body over 70 words at ${longBody}`);
-  if (overlapHit) fail("text", overlapHit);
-  if (smallSizes.size < 2) fail("text", "no size hierarchy (one text size across the journey)");
+  if (scenesWithoutMark.length) fail("carriers", `scenes drawn with text only (no non-text formation): ${scenesWithoutMark.slice(0, 6).join(", ")}${scenesWithoutMark.length > 6 ? ` +${scenesWithoutMark.length - 6}` : ""}`);
+  const nonTextShare = entities ? nonText / entities : 0;
+  if (entities && nonTextShare < 0.5) fail("carriers", `only ${Math.round(nonTextShare * 100)}% of formations are non-text (floor 50% — text is the minimum form; draw the rest: ascii, image, geometry, anything but sentences)`);
+  if (sentence) fail("carriers", sentence);
+  if (yantra) fail("carriers", yantra);
 
-  // 6 — glyph rationales
+  // 2 — colour journey
+  const backgrounds = new Set(scenes.map((s) => (s.field?.background ?? "").toLowerCase()).filter(Boolean));
+  const palettes = new Set(scenes.map((s) => JSON.stringify((s.field?.palette ?? []).map((x) => (x ?? "").toLowerCase()))).filter((p) => p !== "[]"));
+  const tints = new Set(scenes.flatMap((s) => (s.entities ?? []).map((e) => (e.tint ?? "").toLowerCase())).filter(Boolean));
+  if (backgrounds.size < Math.min(3, scenes.length)) fail("colour", `${backgrounds.size} distinct background(s) across ${scenes.length} scenes (the journey must move through colour)`);
+  if (palettes.size < 2 && tints.size < 3) fail("colour", `${palettes.size} palette(s), ${tints.size} tint(s) — particle colour must travel too`);
+
+  // 3 — rest: stillness is lawful and required
+  const sig = (s) => JSON.stringify({ e: s.engine ?? {}, f: { background: s.field?.background, palette: s.field?.palette, params: s.field?.params ?? {} }, v: s.view ?? {}, m: s.morph ?? {} });
+  let stillPairs = 0, pairs = 0;
+  for (let i = 1; i < scenes.length; i++) { pairs++; if (sig(scenes[i - 1]) === sig(scenes[i])) stillPairs++; }
+  const stillFloor = Math.ceil(pairs / 3);
+  if (pairs > 0 && stillPairs < stillFloor) fail("rest", `${stillPairs}/${pairs} adjacent pairs are still (floor ${stillFloor} — rest is part of the composition; motion needs a reason, stillness does not)`);
+
+  // 4 — scale: the engine sizes each glyph
+  for (const s of scenes) {
+    if (s.engine && "autoFitSizes" in s.engine && s.engine.autoFitSizes === false) { fail("scale", `${s.id}: autoFitSizes disabled — size normalisation is the engine's job; compose within it`); break; }
+  }
+
+  // 5 — stage text: hospitable only
+  let words = 0, metadata = null, overlapHit = null;
+  for (const s of scenes) {
+    const items = (s.text ?? []).filter((t) => t && t.visible !== false && (t.kicker || t.title || t.italic || t.body));
+    const ents = (s.entities ?? []).filter((e) => e.position && e.kind === "formation");
+    for (const t of items) {
+      words += wordCount([t.kicker, t.title, t.italic, t.body].filter(Boolean).join(" "));
+      if (!metadata) {
+        const blob = [t.kicker, t.title, t.italic, t.body].filter(Boolean).join(" · ");
+        if (METADATA_RE.test(blob)) metadata = `${s.id}/${t.id}: ${JSON.stringify(blob.slice(0, 80))} — metadata lives in the binding and the field's connections panel, not on the stage`;
+      }
+    }
+    for (const t of items) {
+      for (const [w, h, narrow] of [[1440, 900, false], [390, 844, true]]) {
+        const tr = textRect(t, w, h, narrow);
+        for (const e of ents) {
+          if (overlapArea(tr, entityRect(e, w, h)) > 140 * (narrow ? 40 : 90) && !overlapHit) overlapHit = `${s.id}: text ${t.id} sits on formation ${e.name ?? e.id} at ${w}x${h}`;
+          if (overlapHit) break;
+        }
+        if (overlapHit) break;
+      }
+      if (overlapHit) break;
+    }
+  }
+  if (words > 120) fail("stage-text", `${words} words of visible stage text (budget 120 — the field carries the words; the stage carries the sign)`);
+  if (metadata) fail("stage-text", metadata);
+  if (overlapHit) fail("stage-text", overlapHit);
+
+  // 6 — accountability: every glyph has a rationale
   const binding = findBinding(journeyPath);
   const rationales = new Map(Object.entries(binding?.glyph_rationales ?? {}));
-  // A rationale is an exact glyph_rationales key, or a notes line that begins
-  // with the glyph (an entry ABOUT that glyph). Incidental mentions inside
-  // prose do not count (critic wave-2 finding on the substring fallback).
   const noteLines = [binding?.notes].flat(Infinity).filter((x) => typeof x === "string").flatMap((x) => x.split("\n")).map((l) => l.trim());
   const hasRationale = (g) => rationales.has(g) || noteLines.some((l) => l.startsWith(g) && /^([\s:,—–-]|$)/.test(l.slice(g.length)));
-  const used = new Set(scenes.flatMap(glyphsOf));
+  const used = new Set();
+  for (const s of scenes) for (const e of s.entities ?? []) {
+    const g = formationGlyph(e);
+    if (g) used.add(g);
+    else if (e.kind === "formation" && e.name) used.add(e.name);
+    if (e.sequence?.enabled) for (const st of e.sequence.steps ?? []) { const sg = (st.text ?? "").trim(); if (sg) used.add(sg); }
+  }
   const unexplained = [...used].filter((g) => !hasRationale(g));
-  const placeholders = [...used].filter((g) => g.length <= 2 && (PLACEHOLDER_GLYPHS.has(g) || NOTATION_GLYPHS.has(g)) && !hasRationale(g));
-  if (!binding) fail("glyphs", "no craft note (binding record) beside the journey");
+  const placeholders = [...used].filter((g) => g.length <= 2 && PLACEHOLDER_GLYPHS.has(g) && !hasRationale(g));
+  if (!binding) fail("accountability", "no craft note (binding record) beside the journey");
   else {
-    if (unexplained.length) fail("glyphs", `glyphs without rationale: ${unexplained.map((g) => JSON.stringify(g)).join(", ").slice(0, 300)}`);
-    if (placeholders.length) fail("glyphs", `placeholder glyphs: ${placeholders.map((g) => JSON.stringify(g)).join(", ")}`);
+    if (unexplained.length) fail("accountability", `glyphs without rationale: ${unexplained.map((g) => JSON.stringify(g)).join(", ").slice(0, 300)}`);
+    if (placeholders.length) fail("accountability", `placeholder glyphs: ${placeholders.map((g) => JSON.stringify(g)).join(", ")}`);
   }
 
-  // 7 — automation / time
-  const autoScenes = scenes.filter((s) => (s.automation?.length ?? 0) > 0 || (s.propertyTracks?.length ?? 0) > 0);
-  const durations = new Set(scenes.map((s) => s.duration));
-  const transitions = new Set(scenes.map((s) => s.transition));
-  if (!autoScenes.length) fail("automation", "no automation lane or property track");
-  if (scenes.length >= 2 && durations.size < 2 && transitions.size < 2) fail("automation", "one duration and one transition across the journey (no narrative beats)");
-
-  // 8 — layout
-  const laidOut = scenes.filter((s) => s.composition?.layout && s.composition.layout !== "free");
-  if (!laidOut.length) fail("layout", "every scene is layout free");
-
-  return { findings, stats: { scenes: scenes.length, seqScenes: seqScenes.length, scenes3d: scenes3d.length, profiles: profiles.size, autoScenes: autoScenes.length, laidOut: laidOut.length } };
-}
-
-// ---------- corpus stats (the section-1 table, recomputed) ----------
-function corpusStats(entries) {
-  const paramValueCounts = {};
-  const engineValueCounts = {};
-  const glyphHist = {};
-  let scenes = 0, entities = 0, seqEntities = 0, multiGlyphEntities = 0, entitiesZ = 0, scenes3d = 0, autoScenes = 0, textEntities = 0, strongForces = 0;
-  const layouts = {};
-  let journeysChanging = 0;
-  for (const { journey } of entries) {
-    let changed = false;
-    let prevSettings = null;
-    for (const s of journey.scenes ?? []) {
-      scenes++;
-      const settings = effectiveSettings(s);
-      if (prevSettings && sceneDeltas(prevSettings, settings).some((k) => familyOf(k) !== "other")) changed = true;
-      prevSettings = settings;
-      for (const [k, v] of Object.entries(s.field?.params ?? {})) {
-        paramValueCounts[k] ??= new Map();
-        paramValueCounts[k].set(JSON.stringify(v), (paramValueCounts[k].get(JSON.stringify(v)) ?? 0) + 1);
-      }
-      for (const [k, v] of Object.entries({ ...DEFAULT_ENGINE_SETTINGS, ...(s.engine ?? {}) })) {
-        engineValueCounts[k] ??= new Map();
-        engineValueCounts[k].set(JSON.stringify(v), (engineValueCounts[k].get(JSON.stringify(v)) ?? 0) + 1);
-      }
-      if (s.view?.mode === "3d") scenes3d++;
-      if ((s.automation?.length ?? 0) > 0 || (s.propertyTracks?.length ?? 0) > 0) autoScenes++;
-      layouts[s.composition?.layout ?? "free"] = (layouts[s.composition?.layout ?? "free"] ?? 0) + 1;
-      for (const e of s.entities ?? []) {
-        entities++;
-        if ((e.text ?? "").length > 1 || (e.text ?? "").length === 1) { if (e.text && [...e.text].length > 1 || /\s/.test(e.text ?? "")) textEntities++; }
-        if (e.sequence?.enabled) {
-          seqEntities++;
-          const gs = new Set((e.sequence.steps ?? []).map((t) => t.text));
-          if (gs.size > 1) multiGlyphEntities++;
-        }
-        if ((e.position?.z ?? 0) !== 0) entitiesZ++;
-        if ((e.force?.strength ?? 0) > 0) strongForces++;
-        for (const g of glyphsOf(s)) if (g.length <= 2) glyphHist[g] = (glyphHist[g] ?? 0) + 1;
-      }
-    }
-    if (changed) journeysChanging++;
-  }
-  return { scenes, entities, seqEntities, multiGlyphEntities, entitiesZ, scenes3d, autoScenes, textEntities, strongForces, journeysChanging, layouts, glyphHist,
-    paramSpread: Object.fromEntries(Object.entries(paramValueCounts).map(([k, m]) => [k, m.size]).sort((a, b) => b[1] - a[1])),
-    engineSpread: Object.fromEntries(Object.entries(engineValueCounts).map(([k, m]) => [k, m.size])) };
+  return { findings, stats: { scenes: scenes.length, entities, nonText, backgrounds: backgrounds.size, palettes: palettes.size, tints: tints.size, stillPairs, pairs, stageWords: words } };
 }
 
 // ---------- discovery ----------
@@ -305,30 +250,24 @@ for (const dir of collections) {
 }
 
 const results = entries.map(({ file, collection, journey, loadError }) => {
-  if (loadError || !journey) return { file, collection, id: null, ok: false, findings: [c("load", false, loadError ?? "unreadable")], stats: { scenes: 0 } };
+  if (loadError || !journey) return { file, collection, id: null, ok: false, findings: [{ check: "load", pass: false, detail: loadError ?? "unreadable" }], stats: { scenes: 0 } };
   const { findings, stats } = checkJourney(journey, file);
   return { file: relative(REPO, file) ?? file, collection, id: journey.id, name: journey.name, ok: findings.every((f) => f.pass), findings, stats };
 });
 
 const passed = results.filter((r) => r.ok).length;
-const stats = corpusStats(entries.filter((e) => e.journey));
 
 if (asJson) {
-  console.log(JSON.stringify({ generated_at: new Date().toISOString(), collections: collections.map((c) => relative(REPO, c) ?? c), skipped, totals: { journeys: results.length, passed, failed: results.length - passed }, corpus: stats, results }, null, 2));
+  console.log(JSON.stringify({ generated_at: new Date().toISOString(), collections: collections.map((c) => relative(REPO, c) ?? c), skipped, totals: { journeys: results.length, passed, failed: results.length - passed }, results }, null, 2));
 } else {
   for (const r of results) {
     console.log(`${r.ok ? "PASS" : "FAIL"}  ${r.id ?? "?"}  ${r.file}`);
     for (const f of r.findings.filter((x) => !x.pass)) console.log(`      ✗ ${f.check}: ${f.detail}`);
   }
-  console.log(`\n${passed}/${results.length} journeys meet the enrichment floor.`);
+  console.log(`\n${passed}/${results.length} journeys meet the craft law.`);
   if (asStats) {
-    console.log(`\ncorpus: ${stats.scenes} scenes, ${stats.entities} entities`);
-    console.log(`sequences: ${stats.seqEntities} entities (${stats.multiGlyphEntities} multi-glyph) | 3d scenes: ${stats.scenes3d} | entities with z: ${stats.entitiesZ}`);
-    console.log(`automation scenes: ${stats.autoScenes} | forces with strength>0: ${stats.strongForces} | journeys changing between scenes: ${stats.journeysChanging}/${results.length}`);
-    console.log(`layouts:`, stats.layouts);
-    console.log(`short-glyph histogram:`, Object.fromEntries(Object.entries(stats.glyphHist).sort((a, b) => b[1] - a[1]).slice(0, 12)));
-    console.log(`param spread (distinct values):`, stats.paramSpread);
-    console.log(`engine spread (distinct values):`, stats.engineSpread);
+    const t = results.reduce((a, r) => ({ scenes: a.scenes + (r.stats.scenes || 0), nonText: a.nonText + (r.stats.nonText || 0), entities: a.entities + (r.stats.entities || 0), words: a.words + (r.stats.stageWords || 0) }), { scenes: 0, nonText: 0, entities: 0, words: 0 });
+    console.log(`\ncorpus: ${t.scenes} scenes, ${t.entities} formations (${Math.round((100 * t.nonText) / Math.max(1, t.entities))}% non-text), ${t.words} words of stage text`);
   }
 }
 if (skipped.length) console.error(`skipped (no journeys found): ${skipped.join(", ")}`);

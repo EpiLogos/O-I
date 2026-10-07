@@ -97,6 +97,46 @@ test('the chosen expressive character travels on the proposal and must come back
  // No character: nothing is sent, and none is required back.
  const bare=rig();await propose(bare);assert.equal('expressive_character_ref' in bare.calls.find(c=>c.action==='propose'),false);assert.equal(bare.controller.snapshot().unknown,undefined);
 });
+test('the authored self-definition travels on the proposal and must come back pinned on the reviewed source',async()=>{
+ const selfDefinition={selfSourceRef:'central:source:control:root:Control/self/agents/source-reader/self.md',logosRef:'central:source:control:root:Control/self/agents/source-reader/logos.md'};
+ const pins={source:{reference:selfDefinition.selfSourceRef,content_digest:'sha256:self'},relational_logos:{reference:selfDefinition.logosRef,content_digest:'sha256:logos'}};
+ const resolved={...pins,self_sources_resolved:true,source:{...pins.source,resolved:true,text:'I am the source reader; my ground is held, not claimed.'},relational_logos:{...pins.relational_logos,resolved:true,text:'You act from within a relation.'}};
+ // The owner resolves the pins at review time; the resolution payload rides
+ // the review verbatim into the held reading.
+ const echo=rig({intercept:q=>q.action==='propose'?{...review(),profile:{...review().profile,self_definition:pins},self_definition:resolved}:undefined});
+ await echo.controller.refresh();echo.controller.edit({name:profile.name,purpose:profile.purpose,scopeConfirmed:true,selfDefinition});await echo.controller.propose();
+ const sent=echo.calls.find(c=>c.action==='propose');
+ assert.equal(sent.self_source_ref,selfDefinition.selfSourceRef);
+ assert.equal(sent.logos_ref,selfDefinition.logosRef);
+ const s=echo.controller.snapshot();
+ assert.equal(s.unknown,undefined);
+ assert.equal(s.review.profile.self_definition.source.reference,selfDefinition.selfSourceRef,'the pins are echoed on the reviewed profile');
+ assert.equal(s.review.self_definition.source.text,'I am the source reader; my ground is held, not claimed.','the resolved operative text rides the review verbatim');
+ assert.equal(s.review.self_definition.self_sources_resolved,true);
+ // A source that silently dropped the pins is not the submitted Agent.
+ const dropped=rig();await dropped.controller.refresh();dropped.controller.edit({name:profile.name,purpose:profile.purpose,scopeConfirmed:true,selfDefinition});await dropped.controller.propose();
+ assert.equal(dropped.controller.snapshot().unknown,'propose');assert.match(dropped.controller.snapshot().error,/self-definition/);
+ // No self-definition: today's propose payload, byte for byte.
+ const bare=rig();await propose(bare);
+ const bareSent=bare.calls.find(c=>c.action==='propose');
+ assert.equal('self_source_ref' in bareSent,false);assert.equal('logos_ref' in bareSent,false);
+ assert.equal(bare.controller.snapshot().unknown,undefined);
+});
+test('an untrimmed or half-pinned self-definition is refused before any native proposal',async()=>{
+ const r=rig();await r.controller.refresh();
+ r.controller.edit({name:profile.name,purpose:profile.purpose,scopeConfirmed:true,selfDefinition:{selfSourceRef:' central:source:control:root:self.md',logosRef:'central:source:control:root:logos.md'}});
+ await r.controller.propose();
+ assert.equal(r.calls.filter(c=>c.action==='propose').length,0,'an untrimmed ref is refused, never silently rewritten');
+ assert.match(r.controller.snapshot().error,/exactly as given/);
+ r.controller.edit({selfDefinition:{selfSourceRef:'central:source:control:root:self.md'}});
+ await r.controller.propose();
+ assert.equal(r.calls.filter(c=>c.action==='propose').length,0,'one ref without the other is refused');
+ assert.match(r.controller.snapshot().error,/Pin both/);
+ r.controller.edit({selfDefinition:{selfSourceRef:'Work/self.md',logosRef:'central:source:control:root:logos.md'}});
+ await r.controller.propose();
+ assert.equal(r.calls.filter(c=>c.action==='propose').length,0,'a ref that names no Central source is refused');
+ assert.match(r.controller.snapshot().error,/central:source/);
+});
 test('an existing Agent changes its character through the CAS set-character request and re-reads the source',async()=>{
  const character='central:Control/agents/expressive-material/character/source-reader.expression.json';
  const r=rig({intercept:q=>q.action==='set-character'?{...review(false),profile:{...review().profile,revision:'r2',expressive_character_ref:q.expressive_character_ref??undefined},character_change:{state:'saved',previous_revision:'r1',revision:'r2',re_acceptance_required:false}}:undefined});

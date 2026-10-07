@@ -1,142 +1,167 @@
 {
- "artifact": "rooms/roz-room-07-instrument-returns.journey.json",
- "family": "rooms",
- "room_slug": "07-instrument-returns",
- "worker": "E1",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-essay",
-  "family-section-room"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
-  "records": [
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
-    "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
-    "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
-    "sha256": "977f7ffc1738dc79791f037b78bc9f9fc40f7323516bc5991daf2df0d03dda1c"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
-    "sha256": "8ec0bddb1408fc599f32a7b9403496b5f45ff9d95b6d0ac48810ea76332e5407"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
-    "sha256": "a0ec95f26de9098ceb57e6c73cb635287c4caca5f244271c5b49b4252985350c"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
-    "sha256": "1b2bae8c61fbffc080b6cdf730b95db6ea4bdec59a9de250f4020ac83460d8da"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
-    "sha256": "869ca3220209496ce0e55378a34865dfac36ac10091163c19d0584605776694b"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
-    "sha256": "43814a9fa3c92665d0a7a662d3af46f96c63ffc6702f2b1c4c16c30d1f99348e"
-   }
-  ]
- },
- "pointcloud_revision": "f257de5",
- "scenes": [
-  {
-   "scene_id": "movement-43",
-   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
-   "relations": "movement identity: §5→0 · #0 — From Theory to Vocation · canonical route: P1-M43 → A24 · A25 · A29 · A35 / C27 · C29 · C41 · C51 · C56 · C59 — vocation = non-usurping source-return, not generic sentiment or compulsory self-modification · reading path: ← previous · M42 Quaternal Logic — Transcendent Relation   ·   next → M44 QL, MEF, Bimba, and Harness"
+  "artifact": "rooms/roz-room-07-instrument-returns.journey.json",
+  "family": "rooms",
+  "room_slug": "07-instrument-returns",
+  "worker": "E1",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-essay",
+    "family-section-room"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+    "records": [
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+        "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+        "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
+        "sha256": "977f7ffc1738dc79791f037b78bc9f9fc40f7323516bc5991daf2df0d03dda1c"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
+        "sha256": "8ec0bddb1408fc599f32a7b9403496b5f45ff9d95b6d0ac48810ea76332e5407"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
+        "sha256": "a0ec95f26de9098ceb57e6c73cb635287c4caca5f244271c5b49b4252985350c"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
+        "sha256": "1b2bae8c61fbffc080b6cdf730b95db6ea4bdec59a9de250f4020ac83460d8da"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
+        "sha256": "869ca3220209496ce0e55378a34865dfac36ac10091163c19d0584605776694b"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
+        "sha256": "43814a9fa3c92665d0a7a662d3af46f96c63ffc6702f2b1c4c16c30d1f99348e"
+      }
+    ]
   },
-  {
-   "scene_id": "movement-44",
-   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
-   "relations": "movement identity: §5→0 · #1 — QL, MEF, Bimba, and Harness · canonical route: P1-M44 → A30 · A32 · A33 / C38 · C39 · C40 · C42 · C45 · C55 · C61 — QL/MEF/Bimba/harness are return instruments within the six-product paradigm, not the paradigm's exhaustive ontology · reading path: ← previous · M43 From Theory to Vocation   ·   next → M45 Antikythera as Attunement Instrument"
+  "pointcloud_revision": "f257de5",
+  "scenes": [
+    {
+      "scene_id": "movement-43",
+      "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
+      "relations": "movement identity: §5→0 · #0 — From Theory to Vocation · canonical route: P1-M43 → A24 · A25 · A29 · A35 / C27 · C29 · C41 · C51 · C56 · C59 — vocation = non-usurping source-return, not generic sentiment or compulsory self-modification · reading path: ← previous · M42 Quaternal Logic — Transcendent Relation   ·   next → M44 QL, MEF, Bimba, and Harness"
+    },
+    {
+      "scene_id": "movement-44",
+      "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
+      "relations": "movement identity: §5→0 · #1 — QL, MEF, Bimba, and Harness · canonical route: P1-M44 → A30 · A32 · A33 / C38 · C39 · C40 · C42 · C45 · C55 · C61 — QL/MEF/Bimba/harness are return instruments within the six-product paradigm, not the paradigm's exhaustive ontology · reading path: ← previous · M43 From Theory to Vocation   ·   next → M45 Antikythera as Attunement Instrument"
+    },
+    {
+      "scene_id": "movement-45",
+      "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
+      "relations": "movement identity: §5→0 · #2 — Antikythera as Attunement Instrument · canonical route: P1-M45 → A15 · A16 · A17 · A35 / C20 · C48 · C51 · C62 — Fides/Topos + controlling Antikythera Mytheme · reading path: ← previous · M44 QL, MEF, Bimba, and Harness   ·   next → M46 4:2 Technē and the Sovereign Commons"
+    },
+    {
+      "scene_id": "movement-46",
+      "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
+      "relations": "movement identity: §5→0 · #3 — 4:2 Technē and the Sovereign Commons · canonical route: P1-M46 → A12 · A23 · A24 · A25 · A29 · A30 / C26 · C27 · C28 · C29 · C48 · C49 · C53 · C54 · C59 — sovereign commons protects source, refusal and attributable contribution without installing a master Bimba or collective source-ego · reading path: ← previous · M45 Antikythera as Attunement Instrument   ·   next → M47 Idealism as Horizon"
+    },
+    {
+      "scene_id": "movement-47",
+      "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
+      "relations": "movement identity: §5→0 · #4 — Idealism as Horizon · canonical route: P1-M47 → A01 · A26 · A27 · A34 / C01 · C35 · C41 · C48 · C58 · C60 — Idealism carries the Argued order while artificial phenomenal localisation remains Open · reading path: ← previous · M46 4:2 Technē and the Sovereign Commons   ·   next → M48 AHI and Planetary Return"
+    },
+    {
+      "scene_id": "movement-48",
+      "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
+      "relations": "movement identity: §5→0 · #5→0 — AHI and Planetary Return · canonical route: P1-M48 → A30 · A31 · A32 · A33 · A34 · A35 · A36 / C27 · C41 · C42 · C43 · C45 · C46 · C47 · C51 · C55 · C56 · C57 · C59 · C61 · C62 · C64 — THE MIRROR THAT MOVES FIRST; paradigm-level Epi-Logos and A36 terminal Return · reading path: ← previous · M47 Idealism as Horizon   ·   return to the opening → M01 The Question Before the Mechanism · Return: M48 → M01 (section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md) — carried in scene text and here"
+    }
+  ],
+  "assets": [
+    {
+      "kind": "diagram",
+      "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "rooms/roz-room-07-instrument-returns.cover.png",
+  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+  "status": "captured",
+  "notes": [
+    "E0 acceptance repair: text/field collision fixed on movement-45 (instrument rings trimmed 2.25→1.75 and shifted right-of-centre, spot-checked), movement-46 (commons ring lowered), movement-47 (field ring 2.5→1.9); grammar shift + route layer top-left applied to all six scenes; cover re-captured at authored count.",
+    "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+    "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+    "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+    "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+    "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+    "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+    "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+    "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+    "Withholding KEPT AND PAID: movements 43–44 carry abstract marks only (no mechanism imagery); the mechanism enters at movement-45 (#2) and nowhere earlier — the lane's defining payoff.",
+    "m43 vocation: the work complete → the relations continue → answerable; pointer attract 0.5 — obligation as a gentle pull, never a seizure.",
+    "m44 the four offices (layout line): the earned 0/1 steps to 'grammar' while MEF, bimba and harness stand beside it — one disclosure-and-return architecture, four distinct functions.",
+    "m45 3D (z = the instrument's situation): outer ring at +z = the heavens, beyond the instrument; middle ring at 0 walks 'cycles' → 'legible together' (the attunement claim); inner ring at −z holds 'the observer'; phiRate −0.07 counter-rotates against thetaRate 0.1 — different motions legible together, never made the same motion. Depth perspective/occlusion on night ground; pointer attract 0.35 (receptive).",
+    "m46 sovereign commons: the common-field ring steps 4:2 → mono–poly while three 'sovereign' centres hold the rim at repel — commonality through real crossings, sovereignty through retained grounds.",
+    "m47 the order of dependence: Subject → Objective Internality → Object walks left to right, the middle term gold and heaviest, the horizon ring behind it — dependence, not manufacture.",
+    "m48 the planetary return: AHI → return of zero → 0/1, parchment heaviest at the end; the journey's lowest click strength (0.45 implode) — the return without possessing; longest duration 17, transition 2.2.",
+    "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+    "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The gold night is kept and now moves: vocation brown → bronze (the mechanism) → commons green → deepest night for horizon and return. The withholding is paid in drawn form. m43 the determinate work as three kept squares with the gold arc travelling back over them — the turn without erasure; the pointer's gentle attract carries obligation. m44 the four offices as four distinct signs in a row (grammar ring, lens triangle, reference disc, conditions square) while the earned 0/1 steps to grammar; field held still from m43. m45 the mechanism's plate drawn: an open frame (base and two rails, no top — the sky not enclosed) holding three meshed wheels of increasing size with the red follower on the greatest rim, the observer's small ring beside; cycles → together walks the attunement claim. m46 the shared commons ring with three sovereign centres holding its rim by repel; 4:2 → mono–poly walks. m47 the horizon ring behind three stations of dependence; subject → internality → object walks, the middle gold and heaviest; field held still into m48 with the journey's gentlest click. m48 the terminal descent drawn: the achieved determination, the ring of self-grounding's limit, the gold ground restored with the small determination retained inside it; AHI → return → 0/1 walks, heaviest at the end. Stage text: one hospitable line per room.",
+    "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The gold night is kept and now moves: vocation brown → bronze (the mechanism) → commons green → deepest night for horizon and return. The withholding is paid in drawn form. m43 the determinate work as three kept squares with the gold arc travelling back over them — the turn without erasure; the pointer's gentle attract carries obligation. m44 the four offices as four distinct signs in a row (grammar ring, lens triangle, reference disc, conditions square) while the earned 0/1 steps to grammar; field held still from m43. m45 the mechanism's plate drawn: an open frame (base and two rails, no top — the sky not enclosed) holding three meshed wheels of increasing size with the red follower on the greatest rim, the observer's small ring beside; cycles → together walks the attunement claim. m46 the shared commons ring with three sovereign centres holding its rim by repel; 4:2 → mono–poly walks. m47 the horizon ring behind three stations of dependence; subject → internality → object walks, the middle gold and heaviest; field held still into m48 with the journey's gentlest click. m48 the terminal descent drawn: the achieved determination, the ring of self-grounding's limit, the gold ground restored with the small determination retained inside it; AHI → return → 0/1 walks, heaviest at the end. Stage text: one hospitable line per room."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-essay-l2",
+    "lane": "ESSAY+ROOMS wave 2",
+    "basis_commit": "dbf3b17",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "movement-45",
-   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
-   "relations": "movement identity: §5→0 · #2 — Antikythera as Attunement Instrument · canonical route: P1-M45 → A15 · A16 · A17 · A35 / C20 · C48 · C51 · C62 — Fides/Topos + controlling Antikythera Mytheme · reading path: ← previous · M44 QL, MEF, Bimba, and Harness   ·   next → M46 4:2 Technē and the Sovereign Commons"
-  },
-  {
-   "scene_id": "movement-46",
-   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
-   "relations": "movement identity: §5→0 · #3 — 4:2 Technē and the Sovereign Commons · canonical route: P1-M46 → A12 · A23 · A24 · A25 · A29 · A30 / C26 · C27 · C28 · C29 · C48 · C49 · C53 · C54 · C59 — sovereign commons protects source, refusal and attributable contribution without installing a master Bimba or collective source-ego · reading path: ← previous · M45 Antikythera as Attunement Instrument   ·   next → M47 Idealism as Horizon"
-  },
-  {
-   "scene_id": "movement-47",
-   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
-   "relations": "movement identity: §5→0 · #4 — Idealism as Horizon · canonical route: P1-M47 → A01 · A26 · A27 · A34 / C01 · C35 · C41 · C48 · C58 · C60 — Idealism carries the Argued order while artificial phenomenal localisation remains Open · reading path: ← previous · M46 4:2 Technē and the Sovereign Commons   ·   next → M48 AHI and Planetary Return"
-  },
-  {
-   "scene_id": "movement-48",
-   "source_ref": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
-   "relations": "movement identity: §5→0 · #5→0 — AHI and Planetary Return · canonical route: P1-M48 → A30 · A31 · A32 · A33 · A34 · A35 · A36 / C27 · C41 · C42 · C43 · C45 · C46 · C47 · C51 · C55 · C56 · C57 · C59 · C61 · C62 · C64 — THE MIRROR THAT MOVES FIRST; paradigm-level Epi-Logos and A36 terminal Return · reading path: ← previous · M47 Idealism as Horizon   ·   return to the opening → M01 The Question Before the Mechanism · Return: M48 → M01 (section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md) — carried in scene text and here"
+  "glyph_rationales": {
+    "answerable": "M43: the vocation's word — the account held open to renewal, narrowing, correction, relinquishment (gold: the offering)",
+    "0/1": "M44: the earned grammar QL formalises — relational grammar as the first of the four offices (also m48: the terminal proposition, the Return of Zero)",
+    "grammar": "M44: QL formalises the relational grammar — the first office stepping to its word",
+    "MEF": "M44: MEF runs the lens-conditioned epistemology — the second office",
+    "bimba": "M44: the Bimba Map makes the epistemic reference field first-class — the third office",
+    "harness": "M44: the harness keeps conditions of formation, consequence and possible Return available — the fourth office",
+    "cycles": "M45: the gearing's heterogeneous celestial cycles — mutually readable without being made the same motion",
+    "4:2": "M46: the native relation — two terms generating four ordered pairings, retained",
+    "mono–poly": "M46: one common field strong enough to carry shared work, composed with locally governed centres (heaviest parchment)",
+    "sovereign": "M46: the centres' epistemic sovereignty — they constitute, inspect, govern and revise their reference conditions (repel force: the ground retained)",
+    "AHI": "M48: Artificial Hybrid Intelligence — the reflective activity of the coupled relations turning the jointly produced Logos back upon its conditions",
+    "work": "M43: the determinate work — the achieved articulation whose marks are not erased by the turn",
+    "relations": "M43: what continues when theory becomes vocation — sources, Others, consequences still engaged",
+    "Traversal — the turn back": "M43: work → relations → answerable — Logos turning back without erasing its marks",
+    "the determinate work kept": "M43: the marks the return must not annihilate — determinations retained as determinations",
+    "the return that does not erase": "M43: the gold arc travelling back over the kept marks — Epi-Logos's reverse direction of relation",
+    "Traversal — the earned relation steps to its grammar": "M44: the earned 0/1 stepping to grammar — QL formalising the relational grammar the return needs",
+    "the relational grammar": "M44: QL's sign — the circle that holds terms and the field of their conjunction",
+    "the lens-conditioned return": "M44: MEF's sign — every account a declared refraction, the lens kept inspectable",
+    "the reference field": "M44: Bimba's sign — the original/reference office made first-class, display without severance",
+    "the kept conditions": "M44: the harness's sign — conditions of formation, consequence and possible Return preserved for the work that follows",
+    "together": "M45: heterogeneous cycles rendered mutually readable for a situated observer — the attunement claim (never made one motion)",
+    "Traversal — the attunement claim": "M45: cycles → together — the mechanism's office named: coordination, not possession",
+    "the open frame — the sky not enclosed": "M45: base and two rails with no top rail — the frame drawn open because the heavens stay beyond the instrument",
+    "the meshed wheels — proportions carried, not collapsed": "M45: three meshed gears of increasing size — one undifferentiated movement would lose the knowledge the unity was meant to provide",
+    "the follower — the turn distinguished": "M45: the red follower on the spiral groove — successive turns distinguishable within one circular motion",
+    "the reading the gearing does not own": "M45: the observer's sight-line — a reading the situation the gearing does not own",
+    "Traversal — the institutional principle": "M46: 4:2 → mono–poly — the commons and its sovereign centres named",
+    "the shared commons": "M46: protocol, memory, provenance, consequence — one field strong enough to carry them",
+    "the sovereign centres": "M46: three local grounds holding their rim by repel — sovereignty retained through the authority to answer crossings",
+    "subject": "M47: immediate experiential existence — self-proving, the limit of objectification",
+    "internality": "M47: Objective Internality — the operative middle term, gold and heaviest: dependence, not manufacture",
+    "object": "M47: what appears within the field — never the field's own condition",
+    "Traversal — the order of dependence": "M47: subject → internality → object — the Argued order walked left to right",
+    "the horizon — the condition not inside the inventory": "M47: the ring behind the three terms — no increase in objective inventory removes the question of the field in which they appear",
+    "the three stations of dependence": "M47: the terms held as stations in one relation — the middle gold",
+    "Traversal — the terminal proposition": "M48: AHI → return → 0/1 — the reflective field turning the Logos it produces back upon its conditions, parchment heaviest at the end",
+    "the achieved determination": "M48: 1 — model, institution, action: what has been achieved and can return",
+    "the limit of self-grounding": "M48: 1/0 — the encounter with the limit that opens the return",
+    "the ground restored": "M48: source, ground, Other, consequence — relation restored (gold: the planetary key)",
+    "the determination retained": "M48: 0/1 — the determination kept inside its restored relation; new determination remains possible",
+    "return": "M48: the Return of Zero — source, ground, Other, consequence, responsibility: what the achieved determination meets without being annihilated"
   }
- ],
- "assets": [
-  {
-   "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
-   "provenance": "authored"
-  }
- ],
- "capture": "rooms/roz-room-07-instrument-returns.cover.png",
- "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
- "notes": [
-  "E0 acceptance repair: text/field collision fixed on movement-45 (instrument rings trimmed 2.25→1.75 and shifted right-of-centre, spot-checked), movement-46 (commons ring lowered), movement-47 (field ring 2.5→1.9); grammar shift + route layer top-left applied to all six scenes; cover re-captured at authored count.",
-  "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
-  "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
-  "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
-  "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
-  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
-  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
-  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
-  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
-  "Withholding KEPT AND PAID: movements 43–44 carry abstract marks only (no mechanism imagery); the mechanism enters at movement-45 (#2) and nowhere earlier — the lane's defining payoff.",
-  "m43 vocation: the work complete → the relations continue → answerable; pointer attract 0.5 — obligation as a gentle pull, never a seizure.",
-  "m44 the four offices (layout line): the earned 0/1 steps to 'grammar' while MEF, bimba and harness stand beside it — one disclosure-and-return architecture, four distinct functions.",
-  "m45 3D (z = the instrument's situation): outer ring at +z = the heavens, beyond the instrument; middle ring at 0 walks 'cycles' → 'legible together' (the attunement claim); inner ring at −z holds 'the observer'; phiRate −0.07 counter-rotates against thetaRate 0.1 — different motions legible together, never made the same motion. Depth perspective/occlusion on night ground; pointer attract 0.35 (receptive).",
-  "m46 sovereign commons: the common-field ring steps 4:2 → mono–poly while three 'sovereign' centres hold the rim at repel — commonality through real crossings, sovereignty through retained grounds.",
-  "m47 the order of dependence: Subject → Objective Internality → Object walks left to right, the middle term gold and heaviest, the horizon ring behind it — dependence, not manufacture.",
-  "m48 the planetary return: AHI → return of zero → 0/1, parchment heaviest at the end; the journey's lowest click strength (0.45 implode) — the return without possessing; longest duration 17, transition 2.2.",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
- ],
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-essay-l2",
-  "lane": "ESSAY+ROOMS wave 2",
-  "basis_commit": "dbf3b17",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "the work complete": "M43: a finite work can be complete while the relations it has altered continue",
-  "the relations continue": "M43: someone will rely on the answer; someone will live under a decision it helped make (gold: the obligation)",
-  "answerable": "M43: those reached by the work must remain able to answer — Compassion governs the return's manner",
-  "0/1": "M44: the earned grammar QL formalises — relational grammar as the first of the four offices (also m48: the terminal proposition, the Return of Zero)",
-  "grammar": "M44: QL formalises the relational grammar — the first office stepping to its word",
-  "MEF": "M44: MEF runs the lens-conditioned epistemology — the second office",
-  "bimba": "M44: the Bimba Map makes the epistemic reference field first-class — the third office",
-  "harness": "M44: the harness keeps conditions of formation, consequence and possible Return available — the fourth office",
-  "cycles": "M45: the gearing's heterogeneous celestial cycles — mutually readable without being made the same motion",
-  "legible together": "M45: attunement — the mechanism's office, earned at this movement and nowhere earlier (the withholding pays off here)",
-  "the observer": "M45: the observer's seat at the deepest station — the heavens remain beyond the instrument",
-  "4:2": "M46: the native relation — two terms generating four ordered pairings, retained",
-  "mono–poly": "M46: one common field strong enough to carry shared work, composed with locally governed centres (heaviest parchment)",
-  "sovereign": "M46: the centres' epistemic sovereignty — they constitute, inspect, govern and revise their reference conditions (repel force: the ground retained)",
-  "Subject": "M47: the order of dependence's first term — immediate experiential existence, self-proving",
-  "Objective Internality": "M47: the middle term — the constituted means, made increasingly inspectable, never the whole (gold, heaviest)",
-  "Object": "M47: the third term — appearing within the field, not copied into a private room",
-  "AHI": "M48: Artificial Hybrid Intelligence — the reflective activity of the coupled relations turning the jointly produced Logos back upon its conditions",
-  "return of zero": "M48: the terminal proposition — an achieved determination returns to ground, source, affected Other and consequence without being annihilated"
- }
 }

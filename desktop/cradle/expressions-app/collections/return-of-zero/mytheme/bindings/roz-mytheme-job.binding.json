@@ -1,184 +1,196 @@
 {
- "artifact": "mytheme/roz-mytheme-job.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-job",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/biblical/job/WHOLE.md",
-    "sha256": "412ba0131524794d2ef77f3023a2d36a3a659b5b8eb33dea12671722c43052c2",
-    "sha256_receipt_stale": "0db8bced14174a2a15048385a40643d275076eeebbdeaa3848cbfdb72868ccc9"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-job-0-councils",
-   "phase": "#0 the councils Job never hears",
-   "relations": "Job 1:1–2:13 (q001, q002); the seven-day silence"
+  "artifact": "mytheme/roz-mytheme-job.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-job",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/biblical/job/WHOLE.md",
+        "sha256": "412ba0131524794d2ef77f3023a2d36a3a659b5b8eb33dea12671722c43052c2",
+        "sha256_receipt_stale": "0db8bced14174a2a15048385a40643d275076eeebbdeaa3848cbfdb72868ccc9"
+      }
+    ]
   },
-  {
-   "scene_id": "m-job-1-rounds",
-   "phase": "#1 the three rounds",
-   "relations": "Job 3–27 (q002, q003); comfort becoming accusation"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-job-0-councils",
+      "phase": "#0 the councils Job never hears",
+      "relations": "Job 1:1–2:13 (q001, q002); the seven-day silence"
+    },
+    {
+      "scene_id": "m-job-1-rounds",
+      "phase": "#1 the three rounds",
+      "relations": "Job 3–27 (q002, q003); comfort becoming accusation"
+    },
+    {
+      "scene_id": "m-job-2-wisdom",
+      "phase": "#2 chapter 28",
+      "relations": "Job 28 (q004); wisdom's place not found by extraction"
+    },
+    {
+      "scene_id": "m-job-2b-oath",
+      "phase": "#2 the oath and Elihu",
+      "relations": "Job 29–37 (q003, q005)"
+    },
+    {
+      "scene_id": "m-job-3-whirlwind",
+      "phase": "#3 the first whirlwind speech",
+      "relations": "Job 38:1–40:5 (q006); the hand on the mouth"
+    },
+    {
+      "scene_id": "m-job-3b-behemoth",
+      "phase": "#3 Behemoth and Leviathan",
+      "relations": "Job 40:6–41:34 (q006); displayed not slain"
+    },
+    {
+      "scene_id": "m-job-4-return",
+      "phase": "#4 \"now mine eye seeth thee\"; intercession; the named daughters",
+      "relations": "Job 42:1–17 (q007, q008); Jung's Answer to Job as second attributed whole (CW11 §§609–628, 746–757)"
+    },
+    {
+      "scene_id": "m-job-5-return",
+      "phase": "#5→0 protected account, trust, consequence",
+      "relations": "anchor job-protected-account-return, job-measure-trust-return, job-consequence-return, job-native-return; A19–A25, A27, A29, A31–A36; C21, C25–C27, C31, C48, C53, C56"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "Satan / the two councils",
+      "occurrence": "#0 the wager over what Job has, then his flesh — never disclosed to Job"
+    },
+    {
+      "figure": "the four messengers",
+      "occurrence": "#0 each still speaking when the next arrives"
+    },
+    {
+      "figure": "the wife's words",
+      "occurrence": "#0 curse God and die; the answer through receiving evil and good"
+    },
+    {
+      "figure": "Eliphaz, Bildad, Zophar",
+      "occurrence": "#0 seven-day silence; #1 three rounds; #4 the rebuke and the intercession"
+    },
+    {
+      "figure": "the miner's shaft; Abaddon and Death",
+      "occurrence": "#2 chapter 28's honoured discovery and unreachable wisdom"
+    },
+    {
+      "figure": "the written charge on shoulder and crown",
+      "occurrence": "#2 the oath of chapter 31"
+    },
+    {
+      "figure": "Behemoth and Leviathan",
+      "occurrence": "#3 hook, covenant, plaything, trade — refused by displayed strength"
+    },
+    {
+      "figure": "Jemima, Kezia, Keren-happuch",
+      "occurrence": "#4 named, with inheritance among the brothers"
+    },
+    {
+      "motif": "the first losses retained",
+      "occurrence": "#0 and #4 the renewed household cannot undo; no resurrection of the first children in the text"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "protected account (A20/C27); arbitration (A24 + field); trust (A23/C48); mediation (A25); consequence (A29/C53); compassion (A35/C56); deference/reflective field (A31/A32); native appointments A01, A03, A21, A36",
+      "flag": "yes"
+    },
+    {
+      "relation": "a biblical derivation of QL; fixed person-to-function correspondences; identifying Leviathan with Satan; reassigning Job's repentance to the LORD per Jung's thesis; Sophia entering Job 28 as a character",
+      "flag": "no"
+    }
+  ],
+  "cross_story_relations": [
+    "Jung's Answer to Job enters as a separate attributed second whole; the distinction governs the evidence.",
+    "Shared Neumann ground via the A19–A21 relation.",
+    "Avatar-image-mask-idol figures Job's protected account within its idol scene; this whole retains the full telling."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-job.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: eight scenes because the record's own arc requires the council asymmetry, the three rounds, wisdom's chapter, the oath, two distinct whirlwind movements, and the double ending (humbling + rebuke/intercession) before the return. The whirlwind scenes use the storm palette; the ending scene keeps both the ⚖ rebuke and the named daughters so neither half of ch.42 can be dropped. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-job-0-councils, m-job-3-whirlwind, m-job-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+    "#0 councils — the asymmetry of knowledge staged in brightness: the council ring sits dim in the upper field (convening, then darker as the wager is set), Job's world runs bright below and then dims (the man unchanged in his knowing); ⊣ becomes ☠ — the wager's challenge becomes the losses the reader watches; pointer repel faint — what Job cannot reach.",
+    "#1 rounds — line layout: Eliphaz, Bildad, Zophar in their column; Eliphaz's sign becomes ⚖ and steps toward Job (the moral order invoked as accusation); Job carries a small repel field (answers, protests); pointer shove — explanation adding injury.",
+    "#2 wisdom — the shaft descends: the square narrows and sinks while ⛏ follows it down; the ore disc dims — gold cannot purchase; pointer attract faint — the search itself.",
+    "#2b oath — the demanded charge ≡+ becomes the written ✍ (the demand staged as the sign's own act); ☁ grows and darkens twice — the weather displacing the courtroom; pointer repel — the contest held open.",
+    "#3 whirlwind — THE 3D SCENE. z is the whirlwind's depth: the answer's ring opens from small to large at depth (the storm's mouth), the hawk 𓅃 crosses from high z +0.4 to deep z −0.2 (the creatures' reaches), the sea's disc breaks into a ring (the womb opened, doors and bars) — vortex3d drives a real storm circulation; saw-wave turbulence LFO (the wind's drive); pointer vortex with shove click; duration 16 — the speech held.",
+    "#3b behemoth — the coil that cannot be drawn: Leviathan's ring widens and deepens (no hook draws him out — the ring grows but holds); ⚔ becomes ♛ (the counted weapons become the majesty Job would need to administer); pointer repel with vortex click — displayed, unseizable.",
+    "#4 return — grid layout: the household restored; ◉ brightens twice its size (report become sight — the book's turn); ⚖ becomes ✋ (the friends' restoration passing through Job's interceding hand); pointer attract — the intercession.",
+    "#5→0 essay return — the appointment cards settle beside 1/0; circulation breathes on a slow sine (auto-terminal); pointer near-still. ENDING QUALIFIES BEGINNING: #0 opened with knowledge asymmetric — the reader saw councils Job could not; #5→0 makes the account's own councils addressable (C27, A24, A29 as carriers now exposed rather than hidden), and the ? of #0 is answered not by explanation but by the 1/0 return — encounter beyond the ear. The storms of #3–#3b stay dark in the palette's memory while the human scenes keep their parchment: the losses are retained in the material as in the text.",
+    "Human-amplified staging (binding flags kept): Jung's Answer to Job carried as a second, attributed whole in the #4 body — distinct registers, not additional speeches; the native eightfold named without biblical derivation in #5→0. Mythemic verbs only: the narrative demonstrates the protected account; the whirlwind demonstrates the extent of the question — no formal entailment, no QL derivation attributed to the text.",
+    "Automation: auto-storm (turbulence, saw — the whirlwind's drive) and auto-terminal (circulation, sine — the return's breath). Durations 11–16, transitions 1.1–2.2: the whirlwind held longest, the oath shortest.",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — the heavenly council, the running messengers, the ash-seat, the three pressuring friends, the rock engraving, the mine shaft, the oath-bearer, Elihu, the whirlwind vortex, foundations beneath stars, Behemoth and the coiled Leviathan, the open eye, the kneeling intercessor, the three daughters, the balance; colour journey council night (held through the rounds) → mine dark → storm slate (held through the whirlwind) → beast green → dawn ivory (held through the essay's return); stillness pairs #0–#1, #2b–#3 and #4–#5; stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l2",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-job-2-wisdom",
-   "phase": "#2 chapter 28",
-   "relations": "Job 28 (q004); wisdom's place not found by extraction"
-  },
-  {
-   "scene_id": "m-job-2b-oath",
-   "phase": "#2 the oath and Elihu",
-   "relations": "Job 29–37 (q003, q005)"
-  },
-  {
-   "scene_id": "m-job-3-whirlwind",
-   "phase": "#3 the first whirlwind speech",
-   "relations": "Job 38:1–40:5 (q006); the hand on the mouth"
-  },
-  {
-   "scene_id": "m-job-3b-behemoth",
-   "phase": "#3 Behemoth and Leviathan",
-   "relations": "Job 40:6–41:34 (q006); displayed not slain"
-  },
-  {
-   "scene_id": "m-job-4-return",
-   "phase": "#4 \"now mine eye seeth thee\"; intercession; the named daughters",
-   "relations": "Job 42:1–17 (q007, q008); Jung's Answer to Job as second attributed whole (CW11 §§609–628, 746–757)"
-  },
-  {
-   "scene_id": "m-job-5-return",
-   "phase": "#5→0 protected account, trust, consequence",
-   "relations": "anchor job-protected-account-return, job-measure-trust-return, job-consequence-return, job-native-return; A19–A25, A27, A29, A31–A36; C21, C25–C27, C31, C48, C53, C56"
+  "glyph_rationales": {
+    "?": "the accuser's question: reverence examined as profitable exchange — the wager Job never hears (#0).",
+    "!": "the protest: words driven by despair refusing the judgement the friends place on them — the hearing asked for (#1).",
+    "☁": "the ordering of wind, water, rain and thunder: the reach in which God knows wisdom's way, beyond the miner's (#2).",
+    "✦": "the morning stars: singing while the foundations were laid — the scale on which the answer begins (#3).",
+    "⚓": "the hook: capture imagined through every practice and refused — no hook draws Leviathan out (#3b).",
+    "2×": "the substance doubled: the household returned carrying its history — the first losses not erased (#4).",
+    "✎": "the written charge: innocence named under particulars where it could be examined — the oath's own form (#5→0).",
+    "the council — sons of God presenting, the accuser among them": "the drawn council: the scene shown to the reader alone — the knowledge difference running through the whole encounter (#0).",
+    "the messengers — each still speaking when the next comes": "the drawn runners: the losses arriving through exhausted human mouths (#0).",
+    "the ashes — the potsherd, the torn mantle": "the seated figure in ashes: the body afflicted, the worship retained (#0).",
+    "the accuser's question": "the question mark on the stage's edge: fidelity examined as exchange (#0).",
+    "the three friends — explanation pressing where mourning began": "three drawn figures with pressing speech: the silence broken by explanation — comfort becoming accusation (#1).",
+    "written in the rock — words kept beyond the encounter": "the engraved stone: the wish that the speech survive the friends' judgement (#1).",
+    "no daysman — no hand laid on both": "the empty ring: the court Job cannot locate — magnitude itself the difficulty of obtaining a hearing (#1).",
+    "the protest": "the exclamation on the stage's edge: the lament that makes his continued existence the question (#1).",
+    "the mine — shafts, channels through rock, hidden ore to light": "the drawn shaft: human skill reaching the earth's hidden interior (#2).",
+    "the deep — depth and sea cannot supply it": "the drawn depths: the interior gold cannot purchase — wisdom's place elsewhere (#2).",
+    "God knows the way — the place of wisdom": "the wide ring: the knowledge extraction cannot secure, held in an ordering beyond reach (#2).",
+    "the ordering beyond the miner's reach": "the cloud on the stage's edge: wind, water, rain and thunder in their ordering (#2).",
+    "the oath — the charge carried openly on the shoulder": "the figure bearing a tablet: the claim bound to contestable particulars, the adversary's charge welcomed (#2b).",
+    "Elihu — the young voice his elders' failure released": "the drawn youth with his breath lines: anger at both sides, a mediation of his own manner (#2b).",
+    "the gathering clouds — weather displacing the courtroom": "the drawn clouds: the imagined human courtroom giving way to weather (#2b).",
+    "the mediation offered": "the ring: Elihu's intervention between the oath and the encounter (#2b).",
+    "the whirlwind — the answer arriving out of it": "the drawn vortex: the LORD answering Job out of the whirlwind (#3).",
+    "the foundations — measures laid, stars singing": "the drawn cornerstone beneath stars: where were you when the measures were determined (#3).",
+    "rain where no man is — the wilderness satisfied": "the rain drawn over empty ground: a place consequential without serving any household (#3).",
+    "the morning stars": "the star on the stage's edge: the rejoicing at the founding (#3).",
+    "Behemoth — made with Job, untroubled by the rushing river": "the heavy drawn beast: displayed as a fellow creature, its rest beside the flood (#3b).",
+    "Leviathan — the coiled strength no hook draws out": "the coiled serpent above the water line: breath and flame the imagined uses cannot master (#3b).",
+    "kingship over the children of pride": "the dark ring: the closing name — capture's failure left standing (#3b).",
+    "hearing become encounter": "the open drawn eye: the hearing of the ear become the seeing of the eye (#4).",
+    "the intercession — Job praying for the men who accused him": "the kneeling drawn figure: the one they instructed to correct himself becomes their intercessor (#4).",
+    "the named daughters — each with her inheritance": "three drawn figures: Jemima, Kezia and Keren-happuch, given inheritance among the brothers (#4).",
+    "the substance doubled": "the count on the stage's edge: livestock doubled, daughters named — restoration with its history (#4).",
+    "the criterion — the account that must let the witness be heard": "the drawn balance: the protected account exposed where its witness can answer it (#5→0).",
+    "trust with the power to withhold — the accused become the restored": "two drawn figures turned toward each other: the friends' admission passing through Job's prayer (#5→0).",
+    "consequence able to arrive — the next act inherits": "the wide ring: where consequence can reach — the epilogue carried whole (#5→0).",
+    "the written charge": "the writing sign on the stage's edge: particulars contestable, the oath's form kept (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "Satan / the two councils",
-   "occurrence": "#0 the wager over what Job has, then his flesh — never disclosed to Job"
-  },
-  {
-   "figure": "the four messengers",
-   "occurrence": "#0 each still speaking when the next arrives"
-  },
-  {
-   "figure": "the wife's words",
-   "occurrence": "#0 curse God and die; the answer through receiving evil and good"
-  },
-  {
-   "figure": "Eliphaz, Bildad, Zophar",
-   "occurrence": "#0 seven-day silence; #1 three rounds; #4 the rebuke and the intercession"
-  },
-  {
-   "figure": "the miner's shaft; Abaddon and Death",
-   "occurrence": "#2 chapter 28's honoured discovery and unreachable wisdom"
-  },
-  {
-   "figure": "the written charge on shoulder and crown",
-   "occurrence": "#2 the oath of chapter 31"
-  },
-  {
-   "figure": "Behemoth and Leviathan",
-   "occurrence": "#3 hook, covenant, plaything, trade — refused by displayed strength"
-  },
-  {
-   "figure": "Jemima, Kezia, Keren-happuch",
-   "occurrence": "#4 named, with inheritance among the brothers"
-  },
-  {
-   "motif": "the first losses retained",
-   "occurrence": "#0 and #4 the renewed household cannot undo; no resurrection of the first children in the text"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "protected account (A20/C27); arbitration (A24 + field); trust (A23/C48); mediation (A25); consequence (A29/C53); compassion (A35/C56); deference/reflective field (A31/A32); native appointments A01, A03, A21, A36",
-   "flag": "yes"
-  },
-  {
-   "relation": "a biblical derivation of QL; fixed person-to-function correspondences; identifying Leviathan with Satan; reassigning Job's repentance to the LORD per Jung's thesis; Sophia entering Job 28 as a character",
-   "flag": "no"
-  }
- ],
- "cross_story_relations": [
-  "Jung's Answer to Job enters as a separate attributed second whole; the distinction governs the evidence.",
-  "Shared Neumann ground via the A19–A21 relation.",
-  "Avatar-image-mask-idol figures Job's protected account within its idol scene; this whole retains the full telling."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-job.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: eight scenes because the record's own arc requires the council asymmetry, the three rounds, wisdom's chapter, the oath, two distinct whirlwind movements, and the double ending (humbling + rebuke/intercession) before the return. The whirlwind scenes use the storm palette; the ending scene keeps both the ⚖ rebuke and the named daughters so neither half of ch.42 can be dropped. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-job-0-councils, m-job-3-whirlwind, m-job-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
-  "#0 councils — the asymmetry of knowledge staged in brightness: the council ring sits dim in the upper field (convening, then darker as the wager is set), Job's world runs bright below and then dims (the man unchanged in his knowing); ⊣ becomes ☠ — the wager's challenge becomes the losses the reader watches; pointer repel faint — what Job cannot reach.",
-  "#1 rounds — line layout: Eliphaz, Bildad, Zophar in their column; Eliphaz's sign becomes ⚖ and steps toward Job (the moral order invoked as accusation); Job carries a small repel field (answers, protests); pointer shove — explanation adding injury.",
-  "#2 wisdom — the shaft descends: the square narrows and sinks while ⛏ follows it down; the ore disc dims — gold cannot purchase; pointer attract faint — the search itself.",
-  "#2b oath — the demanded charge ≡+ becomes the written ✍ (the demand staged as the sign's own act); ☁ grows and darkens twice — the weather displacing the courtroom; pointer repel — the contest held open.",
-  "#3 whirlwind — THE 3D SCENE. z is the whirlwind's depth: the answer's ring opens from small to large at depth (the storm's mouth), the hawk 𓅃 crosses from high z +0.4 to deep z −0.2 (the creatures' reaches), the sea's disc breaks into a ring (the womb opened, doors and bars) — vortex3d drives a real storm circulation; saw-wave turbulence LFO (the wind's drive); pointer vortex with shove click; duration 16 — the speech held.",
-  "#3b behemoth — the coil that cannot be drawn: Leviathan's ring widens and deepens (no hook draws him out — the ring grows but holds); ⚔ becomes ♛ (the counted weapons become the majesty Job would need to administer); pointer repel with vortex click — displayed, unseizable.",
-  "#4 return — grid layout: the household restored; ◉ brightens twice its size (report become sight — the book's turn); ⚖ becomes ✋ (the friends' restoration passing through Job's interceding hand); pointer attract — the intercession.",
-  "#5→0 essay return — the appointment cards settle beside 1/0; circulation breathes on a slow sine (auto-terminal); pointer near-still. ENDING QUALIFIES BEGINNING: #0 opened with knowledge asymmetric — the reader saw councils Job could not; #5→0 makes the account's own councils addressable (C27, A24, A29 as carriers now exposed rather than hidden), and the ? of #0 is answered not by explanation but by the 1/0 return — encounter beyond the ear. The storms of #3–#3b stay dark in the palette's memory while the human scenes keep their parchment: the losses are retained in the material as in the text.",
-  "Human-amplified staging (binding flags kept): Jung's Answer to Job carried as a second, attributed whole in the #4 body — distinct registers, not additional speeches; the native eightfold named without biblical derivation in #5→0. Mythemic verbs only: the narrative demonstrates the protected account; the whirlwind demonstrates the extent of the question — no formal entailment, no QL derivation attributed to the text.",
-  "Automation: auto-storm (turbulence, saw — the whirlwind's drive) and auto-terminal (circulation, sine — the return's breath). Durations 11–16, transitions 1.1–2.2: the whirlwind held longest, the oath shortest."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l2",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "·": "the unnamed carrier — a formation whose sense is its shape alone (the council ring, the shaft, the sea, Leviathan's coil); no glyph is pretended.",
-  "?": "the integrity question — \"Doth Job fear God for nought?\" — the wager that precedes the suffering (#0).",
-  "Job": "the witness whose integrity the opening affirmed — the man the explanation-account must confront (chs. 1–2).",
-  "⊣": "the adversary's challenge: the wager set — remove the hedge and he will curse (Job 1).",
-  "☠": "the losses: servants, children, livestock — deaths the reader watches and Job does not understand (#0).",
-  "E1": "Eliphaz: the first round — from Job's former strength to the innocency question (chs. 4–5).",
-  "B": "Bildad: divine justice insisted — the children's death explicable through transgression (ch. 8).",
-  "Z": "Zophar: the intensified accusation — wisdom not the friends' possession (ch. 11).",
-  "⚖": "the disputed justice: the moral order the friends invoke and the criterion ch. 28 and ch. 38 overturn.",
-  "✎": "Job's protest: the oath-bound claim and the demand for a hearing (chs. 23, 31).",
-  "⛏": "the miner: human skill opening shafts, bringing hidden ore to light (ch. 28).",
-  "≡": "the hidden ordering of things — wind, water, rain, thunder — which God knows and the miner cannot reach (ch. 28).",
-  "✍": "the written charge: what Job asks of the adversary — carried openly on the shoulder, as a crown (ch. 31).",
-  "≡+": "the adversary's answer demanded in a contestable form — the oath naming the relations under which innocence could be examined (ch. 31).",
-  "Eh": "Elihu: suffering as instruction — heard in tension; absent from the named rebuke in 42 (chs. 32–37).",
-  "☁": "the gathering weather: the storm that begins to displace the imagined courtroom (chs. 36–37, into 38).",
-  "𓅃": "the hawk and the wild creatures: need and predation within an order that does not serve Job's household (ch. 39).",
-  "✋": "the hand on the mouth (40:3–5) and, at the return, the interceding hand — Job's prayer consequential for his friends.",
-  "♛": "the majesty Job would need to administer judgement: \"clothe himself in majesty\" — the challenge of the second speech (chs. 40–41).",
-  "⚔": "the counted weapons — stubble before Leviathan: capture failing in every human practice (ch. 41).",
-  "◉": "the eye that sees: \"now mine eye seeth thee\" — report become encounter (ch. 42).",
-  "⁂": "the named daughters — Jemima, Kezia, Keren-happuch — given inheritance among their brothers (ch. 42).",
-  "C27": "the Protected Account's criterion: can the witness alter the authority of the account under which the witness is received? (the essay's appointment).",
-  "A24": "arbitration and the usurpation of measure: a criterion becoming usurping when its relation to the field can no longer be questioned.",
-  "A23": "trust under formal limit: address persisting after its first account of safety fails (C48).",
-  "A29": "power, delegated labour and return: the council's permissions and the losses borne below — where consequence can arrive.",
-  "1/0": "the terminal movement of the native field: the achieved determination returned toward its ground — no biblical derivation claimed (essay return)."
- }
 }

@@ -1,146 +1,154 @@
 {
- "artifact": "mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme",
-  "family-frank-taylor"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-meal-epistemic-metabolism",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/meal-epistemic-metabolism/WHOLE.md",
-    "sha256": "8af5938eca8cce3917effabe3a02444d7261a91f7fd8d7050f19d5f0a1d266f0"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-meal-0-hunger",
-   "phase": "#0 information without nourishment",
-   "relations": "the authored outline; the quilt's logos-health appointment (yes)"
+  "artifact": "mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-frank-taylor"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-meal-epistemic-metabolism",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/meal-epistemic-metabolism/WHOLE.md",
+        "sha256": "8af5938eca8cce3917effabe3a02444d7261a91f7fd8d7050f19d5f0a1d266f0"
+      }
+    ]
   },
-  {
-   "scene_id": "m-meal-1-plate",
-   "phase": "#1 the plate and its five preparations",
-   "relations": "raw/cooked/processed/junk/fermented; A29"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-meal-0-hunger",
+      "phase": "#0 information without nourishment",
+      "relations": "the authored outline; the quilt's logos-health appointment (yes)"
+    },
+    {
+      "scene_id": "m-meal-1-plate",
+      "phase": "#1 the plate and its five preparations",
+      "relations": "raw/cooked/processed/junk/fermented; A29"
+    },
+    {
+      "scene_id": "m-meal-2-chew",
+      "phase": "#2 taste and chewing",
+      "relations": "the fourfold discrimination; the pathologies; the taste/knowing routes"
+    },
+    {
+      "scene_id": "m-meal-3-table",
+      "phase": "#3–#4 the container; the shared table",
+      "relations": "Symbolon Dynamics; A30; the microbiome image; companions are not food; the Apportionment and Encounter fields"
+    },
+    {
+      "scene_id": "m-meal-5-return",
+      "phase": "#5→0 satiety, rest, renewed hunger; the coda",
+      "relations": "anchor meal-satiety-and-new-hunger, meal-logos-health-return, meal-source-registers; A21, A29, A30, A35; the Symbol/Account/Trust and Arbitration fields"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "the feed",
+      "occurrence": "#0 attention occupied, question unfelt; #5→0 the emptied rite as its sacramental image"
+    },
+    {
+      "figure": "the display case and the disposal",
+      "occurrence": "#0 the two failure images"
+    },
+    {
+      "figure": "the five preparations",
+      "occurrence": "#1 roles in the authored ecology, not dietary ranking"
+    },
+    {
+      "figure": "the ant, the reed, the eagle, the tower — absent here by design",
+      "occurrence": "no: those belong to the Eros/Psyche whole; this meal's helpers are the outline's own"
+    },
+    {
+      "figure": "the epistemic microbiome",
+      "occurrence": "#4 constitutive assistance beyond solitary agency; biological claims kept to their own sources"
+    },
+    {
+      "figure": "bread in the hands of companions; loaves and fishes",
+      "occurrence": "#5→0 the outline's explicit wink — no derivation of 4+2"
+    },
+    {
+      "motif": "companions are not food",
+      "occurrence": "#4 the social boundary of the nourishing metaphor"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "the existing authored relation (assimilation letting received material change the receiver and return to the shared field); logos-health and its prescribed returns to A29/A30/A35",
+      "flag": "yes"
+    },
+    {
+      "relation": "demonstrating a therapeutic, biological or institutional outcome; clinical vocabulary as medical evidence; historical explanations of the coda's traditions",
+      "flag": "no"
+    }
+  ],
+  "cross_story_relations": [
+    "Neumann metabolism grounds the nourishing/devouring distinction (the uroboros whole owns the developed bodily drama); Jung Aion's Leviathan-as-food kept distinct."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-meal-epistemic-metabolism.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: five scenes with a warming palette toward the table; the failure images (display case, disposal) sit in scene 1's corners so the meal's stakes read before the plate arrives. No public-document allegation reproduced. E0 acceptance repair: title/field collision fixed on m-meal-3-table (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
+    "#0 hunger — dim morning room; the feed ≣ trails into … (the discrepancy unarticulated) while ? brightens from half-lit to full (hunger becoming perceptible); pointer repel faint — the feed's interruptions keep everything at bay; no automation (the feed is a stream, not a rhythm).",
+    "#1 plate — ring layout: the plate and its five preparations gathered; ⌘ → A29 (provenance opening into the labour-question); the cooked disc breathing (someone else's labour, the affirmative office); attract/pulse — appetite drawn to the determinate plate; auto-plate LFO (the served plate steadying).",
+    "#2 chew — 4 → ✓/✗ states the fourfold's discriminations; the cymatic chewer rotates and swells (teeth dividing so contact prolongs); vortex/pulse with morphEnabled thetaRate 0.18 — the working-through; auto-chew triangle LFO on speed (mastication).",
+    "#3 container + table — THE 3D SCENE. z is the table's depth: ⊗ (companions are not food) nearest at z +0.3 — the boundary kept closest to the viewer; the microbiome dots at z +0.15; the shared table breathing at z 0; ≡ → ≡? (the criteria themselves questioned) at z −0.15; the container deepest at z −0.35 (the bounded interior sustaining the work); attract/implode — the table gathering; pointerStrength 0.5.",
+    "#5→0 satiety and renewed hunger — line layout: the meal's after; ?′ walks back to ? at the satiety disc's station, bright — the next question arising from changed ground; the emptied rite's ring dims twice (form outliving capacity); pointer repel with shove — rest, no compulsory intake, the rite's emptiness gently refused; auto-rest LFO low on pointerStrength (breathing at rest).",
+    "ENDING QUALIFIES BEGINNING: #0's ? — dim inside the feed's stream, with ≣ trailing into … — returns at #5→0 as ?′ walking back to ? bright: the question that could not be felt under the feed is now asked from changed ground; the plate's ⌘→A29 provenance question returns in the occ circuit (labour's costs reaching the office able to answer); the coda's ☩ names the shared routes while the emptied rite — the feed's own morning ritual — dims: the ending distinguishes the meal from the feed it began against. human-amplified: yes for the ratified logos-health operation and its prescribed returns; no therapeutic or institutional outcome demonstrated.",
+    "Human-amplified guards carried: outline's biological and clinical language keeps its own evidential burden (no diagnosis of readers; microbes prove no group mind; no physiological absorption sites claimed); traditions keep their own histories (no single doctrine); 4+2 not derived from loaves and fishes; taste/knowing word-fields research routes, not licences. Mythemic verbs only: the meal demonstrates assimilation; the table demonstrates non-devouring shared ground.",
+    "Automation: auto-plate (the served steadiness), auto-chew (mastication), auto-rest (breathing at rest) — tied to the record's moves; #0 without automation (the feed is continuous, not rhythmic). Durations 12–15, transitions 1.3–1.7; the table held longest.",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — the stored report, display case, the plated five preparations, the first bite, teeth, the fourfold boxes, the shared table, the not-food boundary, the microbiome field, the resting figure, the spark of new hunger, the emptied chalice, the shared loaf; colour journey display-case blue-grey → terracotta (held through plate, chewing and table) → cream of sufficiency; stillness pairs #1–#2 and #2–#3 (one meal-light through the eating); stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l4",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-meal-2-chew",
-   "phase": "#2 taste and chewing",
-   "relations": "the fourfold discrimination; the pathologies; the taste/knowing routes"
-  },
-  {
-   "scene_id": "m-meal-3-table",
-   "phase": "#3–#4 the container; the shared table",
-   "relations": "Symbolon Dynamics; A30; the microbiome image; companions are not food; the Apportionment and Encounter fields"
-  },
-  {
-   "scene_id": "m-meal-5-return",
-   "phase": "#5→0 satiety, rest, renewed hunger; the coda",
-   "relations": "anchor meal-satiety-and-new-hunger, meal-logos-health-return, meal-source-registers; A21, A29, A30, A35; the Symbol/Account/Trust and Arbitration fields"
+  "glyph_rationales": {
+    "○": "the hollow: appetite without form — hunger made perceptible before anything can nourish (#0).",
+    "⚡": "the jolt: outrage, reassurance or fear discharging contact before it can do its work (#2).",
+    "the finished report — recallable, unchanged in its receiver": "the drawn document: stored but unassimilated — accumulation without the formative operation (#0).",
+    "the display case — cataloguing behind glass": "the drawn case: knowledge present, inspected, untouched (#0).",
+    "the continuous feed — attention occupied, the discrepancy unarticulated": "the wide ring: the morning ritual — intake continuing without the question of nourishment (#0).",
+    "the hollow — appetite without form": "the hollow circle on the stage's edge: what is missing cannot yet be named (#0).",
+    "the plate — the question given something determinate to meet": "the drawn plate with its portions: a document, a testimony, an argument — available for inspection (#1).",
+    "raw — the demanding texture of primary material": "the unworked cluster: primary material that resists quick consumption (#1).",
+    "cooked — labour making the difficult accessible": "the steaming dish: someone else's labour opening a route into the source — preparation answerable to what was prepared (#1).",
+    "processed and junk — the transformations unrecoverable; stimulation after nourishment": "the sealed wrapper: earlier transformations hard to recover; the pursuit of stimulation once the relation to nourishment has fallen away (#1).",
+    "fermented — inherited practice already working on what is received": "the drawn jar: earlier participants having worked on what a newcomer receives (#1).",
+    "the first bite — attraction and aversion at the threshold": "the open mouth: the first valuation — welcome or refusal before any work has begun (#2).",
+    "chewing — the division that keeps contact and makes it usable": "the drawn teeth: statement divided from evidence, event from interpretation, connection from explanation (#2).",
+    "the fourfold — affirm, reject, hold together, change the question": "four marked boxes: the responses kept available — the fourth able to change the question itself (#2).",
+    "the jolt — contact discharged before its work": "the bolt on the stage's edge: the pathology at the threshold (#2).",
+    "the shared table — distinct companions, consequential differences": "the drawn table with companions: shared ground formed through differences that can change what is asked next (#3–#4).",
+    "companions are not food — the boundary keeping the meal social": "two figures with a line between: the contributor retaining the capacity to contest the use of their work (#3–#4).",
+    "the epistemic microbiome — assistance exceeding solitary agency": "the drawn micro-marks: inherited frameworks and practices present in knowing before any claim to have produced it alone (#3–#4).",
+    "the circuit — share, consequence, return, revision": "the wide ring: apportionment — the share acting, consequence returning, the field revisable (#3–#4).",
+    "satiety — enough worked through to act from changed ground": "the reclining drawn figure: rest that is not compulsory intake — nourishment recognisable in changed capacity (#5→0).",
+    "renewed hunger — beginning from what was assimilated": "the small spark: a new question arising from the nourished life, carrying the previous meal's consequence (#5→0).",
+    "the emptied rite — the form continuing without the change": "the drawn chalice: the ritual persisting after its capacity to change anyone has ceased (#5→0).",
+    "the bread passed hand to hand": "the drawn loaf: sharing making sufficiency available — the closing invitation's direction beyond solitary accumulation (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "the feed",
-   "occurrence": "#0 attention occupied, question unfelt; #5→0 the emptied rite as its sacramental image"
-  },
-  {
-   "figure": "the display case and the disposal",
-   "occurrence": "#0 the two failure images"
-  },
-  {
-   "figure": "the five preparations",
-   "occurrence": "#1 roles in the authored ecology, not dietary ranking"
-  },
-  {
-   "figure": "the ant, the reed, the eagle, the tower — absent here by design",
-   "occurrence": "no: those belong to the Eros/Psyche whole; this meal's helpers are the outline's own"
-  },
-  {
-   "figure": "the epistemic microbiome",
-   "occurrence": "#4 constitutive assistance beyond solitary agency; biological claims kept to their own sources"
-  },
-  {
-   "figure": "bread in the hands of companions; loaves and fishes",
-   "occurrence": "#5→0 the outline's explicit wink — no derivation of 4+2"
-  },
-  {
-   "motif": "companions are not food",
-   "occurrence": "#4 the social boundary of the nourishing metaphor"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "the existing authored relation (assimilation letting received material change the receiver and return to the shared field); logos-health and its prescribed returns to A29/A30/A35",
-   "flag": "yes"
-  },
-  {
-   "relation": "demonstrating a therapeutic, biological or institutional outcome; clinical vocabulary as medical evidence; historical explanations of the coda's traditions",
-   "flag": "no"
-  }
- ],
- "cross_story_relations": [
-  "Neumann metabolism grounds the nourishing/devouring distinction (the uroboros whole owns the developed bodily drama); Jung Aion's Leviathan-as-food kept distinct."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-meal-epistemic-metabolism.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: five scenes with a warming palette toward the table; the failure images (display case, disposal) sit in scene 1's corners so the meal's stakes read before the plate arrives. No public-document allegation reproduced. E0 acceptance repair: title/field collision fixed on m-meal-3-table (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
-  "#0 hunger — dim morning room; the feed ≣ trails into … (the discrepancy unarticulated) while ? brightens from half-lit to full (hunger becoming perceptible); pointer repel faint — the feed's interruptions keep everything at bay; no automation (the feed is a stream, not a rhythm).",
-  "#1 plate — ring layout: the plate and its five preparations gathered; ⌘ → A29 (provenance opening into the labour-question); the cooked disc breathing (someone else's labour, the affirmative office); attract/pulse — appetite drawn to the determinate plate; auto-plate LFO (the served plate steadying).",
-  "#2 chew — 4 → ✓/✗ states the fourfold's discriminations; the cymatic chewer rotates and swells (teeth dividing so contact prolongs); vortex/pulse with morphEnabled thetaRate 0.18 — the working-through; auto-chew triangle LFO on speed (mastication).",
-  "#3 container + table — THE 3D SCENE. z is the table's depth: ⊗ (companions are not food) nearest at z +0.3 — the boundary kept closest to the viewer; the microbiome dots at z +0.15; the shared table breathing at z 0; ≡ → ≡? (the criteria themselves questioned) at z −0.15; the container deepest at z −0.35 (the bounded interior sustaining the work); attract/implode — the table gathering; pointerStrength 0.5.",
-  "#5→0 satiety and renewed hunger — line layout: the meal's after; ?′ walks back to ? at the satiety disc's station, bright — the next question arising from changed ground; the emptied rite's ring dims twice (form outliving capacity); pointer repel with shove — rest, no compulsory intake, the rite's emptiness gently refused; auto-rest LFO low on pointerStrength (breathing at rest).",
-  "ENDING QUALIFIES BEGINNING: #0's ? — dim inside the feed's stream, with ≣ trailing into … — returns at #5→0 as ?′ walking back to ? bright: the question that could not be felt under the feed is now asked from changed ground; the plate's ⌘→A29 provenance question returns in the occ circuit (labour's costs reaching the office able to answer); the coda's ☩ names the shared routes while the emptied rite — the feed's own morning ritual — dims: the ending distinguishes the meal from the feed it began against. human-amplified: yes for the ratified logos-health operation and its prescribed returns; no therapeutic or institutional outcome demonstrated.",
-  "Human-amplified guards carried: outline's biological and clinical language keeps its own evidential burden (no diagnosis of readers; microbes prove no group mind; no physiological absorption sites claimed); traditions keep their own histories (no single doctrine); 4+2 not derived from loaves and fishes; taste/knowing word-fields research routes, not licences. Mythemic verbs only: the meal demonstrates assimilation; the table demonstrates non-devouring shared ground.",
-  "Automation: auto-plate (the served steadiness), auto-chew (mastication), auto-rest (breathing at rest) — tied to the record's moves; #0 without automation (the feed is continuous, not rhythmic). Durations 12–15, transitions 1.3–1.7; the table held longest."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l4",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "≣": "the continuous feed — supplied answers arriving without interval, attention occupied, seeking displaced (#0).",
-  "⌫": "the disposal — material taken in and its distinctions destroyed before they can become consequential: throughput without assimilation (#0).",
-  "…": "the discrepancy unarticulated — where the question should be, the stream trails off (#0).",
-  "?": "appetite — the question with standing as an opening for inquiry; dim inside the feed (#0), returned bright from changed ground at the last scene (#5→0).",
-  "⌘": "provenance — who produced the material, what it says, what work prepared it (#1).",
-  "A29": "power, delegated labour and return — the finished product accepted while the conditions and costs of its production disappear (#1; the circuit's return at #5→0).",
-  "4": "the fourfold discrimination — affirm · reject · hold together · recognise a failed alternative (#2).",
-  "✓/✗": "the discriminations stated — affirmation and rejection as distinct responses, neither a default taste (#2).",
-  "≡": "the inherited criteria — the distinctions through which conclusions have been reached (#3).",
-  "≡?": "the criteria themselves questioned — a decisive distinction become incidental, an excluded condition become necessary (#3).",
-  "⚠": "the pathology — contact repeatedly discharged before its work: gulping, refusal, the consumption-sensation mistaken for nourishment (#2).",
-  "⊗": "companions are not food — the contributor retains the capacity to contest the use of their work; against the devouring table (#3).",
-  "⋅⋅⋅": "the epistemic microbiome — inherited frameworks and shared traditions assisting beyond solitary agency; biological claims kept to their own sources (#3).",
-  "—": "rest — the meal can be enough; no machinery of compulsory intake (#5→0).",
-  "?′": "renewed hunger — the next question arising from changed ground, carrying the previous meal's consequence (#5→0).",
-  "☩": "the coda — bread in the hands of companions; potlatch, seder, langar, iftar, thanksgiving as routes of further encounter; the loaves-and-fishes wink, no 4+2 derivation (#5→0)."
- }
 }

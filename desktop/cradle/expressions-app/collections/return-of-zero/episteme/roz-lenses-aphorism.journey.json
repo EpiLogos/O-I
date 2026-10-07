@@ -7,6 +7,351 @@
   "loop": true,
   "scenes": [
     {
+      "id": "lens-aperture",
+      "name": "The Aperture — Source Discipline and Native Operation",
+      "character": "A refracting lens: source discipline and native operation overlapping in one aperture (the two lens records' shared figure).",
+      "duration": 11,
+      "transition": 2,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#1e2124",
+        "palette": [
+          "#e3e7e6",
+          "#5898a4"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0.05,
+          "halo": 0.14,
+          "speed": 0.4,
+          "circulation": 0.32,
+          "turbulence": 0.1,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-lens-lens-aperture-1",
+          "name": "source discipline",
+          "kind": "formation",
+          "position": {
+            "x": -0.22,
+            "y": 0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#e3e7e6",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-lens-aperture-1-s1",
+                "hold": 2.6,
+                "transition": 1.8,
+                "position": {
+                  "x": -0.48400000000000004,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#e3e7e6",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-lens-aperture-1-s2",
+                "hold": 4,
+                "transition": 2,
+                "position": {
+                  "x": -0.22,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#e3e7e6",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-lens-lens-aperture-2",
+          "name": "native operation",
+          "kind": "formation",
+          "position": {
+            "x": 0.22,
+            "y": 0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-lens-aperture-2-s1",
+                "hold": 2.6,
+                "transition": 1.8,
+                "position": {
+                  "x": 0.48400000000000004,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-lens-aperture-2-s2",
+                "hold": 4,
+                "transition": 2,
+                "position": {
+                  "x": 0.22,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-lens-lens-aperture-3",
+          "name": "the refraction",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "vortex",
+            "strength": 0.3,
+            "radius": 0.28,
+            "spin": 0.3
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-lens-aperture-3-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.12,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "vortex",
+                    "strength": 0.3,
+                    "radius": 0.28,
+                    "spin": 0.3
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The aperture",
+          "italic": "two glasses, one bending",
+          "body": "",
+          "x": 0.04,
+          "y": 0.6,
+          "width": 300,
+          "size": 18,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.04,
+        "phiRate": 0.02,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
+      }
+    },
+    {
       "id": "lens-baudrillard",
       "name": "Baudrillard — Simulation and the Account’s Return",
       "character": "A refracting lens: source discipline and native operation overlapping in one aperture.",
@@ -21,43 +366,78 @@
         "panY": 0
       },
       "field": {
-        "background": "#ebe6da",
+        "background": "#1e2124",
         "palette": [
-          "#6a2f2a",
-          "#5c6a74"
+          "#e3e7e6",
+          "#5898a4"
         ],
         "material": "print",
         "params": {
           "count": 62000,
-          "size": 2.7,
-          "opacity": 0.9,
-          "contrast": 0.82,
-          "speed": 0.42,
-          "dispersion": 0.09,
-          "roundness": 0.65,
-          "halo": 0.15
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0.05,
+          "halo": 0.14,
+          "speed": 0.4,
+          "circulation": 0.32,
+          "turbulence": 0.1,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
         }
       },
       "entities": [
         {
-          "id": "lens-baudrillard-src",
+          "id": "ent-lens-lens-baudrillard-1",
           "name": "source discipline",
           "kind": "formation",
           "position": {
-            "x": -0.1,
-            "y": -0.06,
+            "x": -0.12,
+            "y": 0.02,
             "z": 0
           },
           "size": {
-            "x": 1,
-            "y": 1.04
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 0.6,
+          "tint": "#e3e7e6",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -71,35 +451,50 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "lens-baudrillard-src-step0",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-lens-lens-baudrillard-1-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#e3e7e6",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "lens-baudrillard-nat",
+          "id": "ent-lens-lens-baudrillard-2",
           "name": "native operation",
           "kind": "formation",
           "position": {
-            "x": 0.44,
-            "y": -0.02,
+            "x": 0.12,
+            "y": 0.02,
             "z": 0
           },
           "size": {
-            "x": 1,
-            "y": 1.04
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
-          "tint": "#33424e",
-          "tintWeight": 0.6,
+          "tint": "#5898a4",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -113,35 +508,107 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "lens-baudrillard-nat-step0",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-lens-lens-baudrillard-2-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "lens-baudrillard-overlap",
+          "id": "ent-lens-lens-baudrillard-3",
           "name": "the refraction",
           "kind": "formation",
           "position": {
-            "x": 0.17,
-            "y": -0.04,
+            "x": 0,
+            "y": 0.02,
             "z": 0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.12,
+            "y": 0.12
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "vortex",
+            "strength": 0.3,
+            "radius": 0.28,
+            "spin": 0.3
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-lens-baudrillard-3-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.12,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "vortex",
+                    "strength": 0.3,
+                    "radius": 0.28,
+                    "spin": 0.3
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-lens-lens-baudrillard-4",
+          "name": "the simulation loop",
+          "kind": "formation",
+          "position": {
+            "x": -0.12,
+            "y": 0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "loop",
+          "share": 1,
+          "tint": "#e3e7e6",
+          "tintWeight": 0.55,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -153,74 +620,84 @@
           "sequence": {
             "enabled": true,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "lens-baudrillard-overlap-enr0",
-                "text": "a profile affects access",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.1,
-                "position": null,
+                "id": "ent-lens-lens-baudrillard-4-s1",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.12,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "access",
+                "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.4,
-                    "y": 0.4
+                    "x": 0.26,
+                    "y": 0.3
                   },
                   "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.7,
+                  "tint": "#e3e7e6",
+                  "tintWeight": 0.55,
                   "force": {
-                    "kind": "none",
+                    "kind": "attract",
                     "strength": 0,
-                    "radius": 0.27,
+                    "radius": 0.45,
                     "spin": 0
                   }
                 }
               },
               {
-                "id": "lens-baudrillard-overlap-enr1",
-                "text": "access changes conduct",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.1,
-                "position": null,
+                "id": "ent-lens-lens-baudrillard-4-s2",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": {
+                  "x": 0,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "conduct",
+                "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.44,
-                    "y": 0.44
+                    "x": 0.26,
+                    "y": 0.3
                   },
                   "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.8,
+                  "tint": "#e3e7e6",
+                  "tintWeight": 0.7000000000000001,
                   "force": {
-                    "kind": "none",
+                    "kind": "attract",
                     "strength": 0,
-                    "radius": 0.27,
+                    "radius": 0.45,
                     "spin": 0
                   }
                 }
               },
               {
-                "id": "lens-baudrillard-overlap-enr2",
-                "text": "recorded conduct appears to confirm the profile",
-                "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.1,
-                "position": null,
+                "id": "ent-lens-lens-baudrillard-4-s3",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.12,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "profile",
+                "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.5,
-                    "y": 0.5
+                    "x": 0.26,
+                    "y": 0.3
                   },
                   "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.95,
+                  "tint": "#a94138",
+                  "tintWeight": 0.8500000000000001,
                   "force": {
-                    "kind": "none",
+                    "kind": "attract",
                     "strength": 0,
-                    "radius": 0.27,
+                    "radius": 0.45,
                     "spin": 0
                   }
                 }
@@ -231,34 +708,21 @@
       ],
       "text": [
         {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "lens-baudrillard · ARGUED",
-          "title": "Baudrillard — Simulation and the Account’s Return",
-          "italic": "Paraphrased selected Baudrillard passages; Argued from native account/source relations; Offered comparative extensions",
-          "body": "",
-          "x": 0.033,
-          "y": 0.05,
-          "width": 470,
-          "size": 25,
-          "align": "left"
-        },
-        {
-          "id": "body",
+          "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "",
+          "title": "Simulation",
           "italic": "",
-          "body": "An account can change the conditions under which its next statement becomes credible. A profile affects access; access changes conduct; recorded conduct appears to confirm the profile. The profile has acted within its object’s world. Whether it describes that world faithfully remains a further question.",
-          "x": 0.033,
-          "y": 0.44,
-          "width": 620,
-          "size": 15,
+          "body": "",
+          "x": 0.04,
+          "y": 0.6,
+          "width": 300,
+          "size": 18,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "Single formation",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -267,8 +731,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.04,
+        "phiRate": 0.02,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -277,27 +741,29 @@
       },
       "automation": [
         {
-          "id": "lb-loop-drift",
-          "target": "entity:lens-baudrillard-overlap:x",
+          "id": "loop-drift",
+          "enabled": true,
+          "target": "field.params.circulation",
           "type": "lfo",
           "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.03,
-          "max": 0.03,
-          "rate": 0.22,
+          "min": 0.26,
+          "max": 0.48,
+          "rate": 0.07,
           "phase": 0,
+          "blend": "replace",
           "duration": 13,
           "delay": 0,
-          "firedAt": null,
-          "enabled": true
+          "loop": "loop",
+          "firedAt": null
         }
       ],
       "engine": {
-        "pointerMode": "attract",
-        "pointerClick": "vortex",
-        "pointerClickStrength": 2.3,
-        "pointerClickRadius": 0.5
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
       }
     },
     {
@@ -315,43 +781,78 @@
         "panY": 0
       },
       "field": {
-        "background": "#e7e4d8",
+        "background": "#26231f",
         "palette": [
-          "#20262b",
-          "#5c6a74"
+          "#ece7dc",
+          "#8a7a5c"
         ],
         "material": "print",
         "params": {
           "count": 62000,
-          "size": 2.6,
-          "opacity": 0.9,
-          "contrast": 0.82,
-          "speed": 0.32,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0.05,
+          "halo": 0.14,
+          "speed": 0.4,
+          "circulation": 0.32,
+          "turbulence": 0.1,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
           "dispersion": 0.05,
-          "roundness": 0.3,
-          "edgeWeight": 0.22
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
         }
       },
       "entities": [
         {
-          "id": "lens-foucault-src",
+          "id": "ent-lens-lens-foucault-1",
           "name": "source discipline",
           "kind": "formation",
           "position": {
-            "x": -0.1,
-            "y": -0.06,
+            "x": -0.12,
+            "y": 0.02,
             "z": 0
           },
           "size": {
-            "x": 1,
-            "y": 1.04
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 0.6,
+          "tint": "#ece7dc",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -365,35 +866,50 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "lens-foucault-src-step0",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-lens-lens-foucault-1-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#ece7dc",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "lens-foucault-nat",
+          "id": "ent-lens-lens-foucault-2",
           "name": "native operation",
           "kind": "formation",
           "position": {
-            "x": 0.44,
-            "y": -0.02,
+            "x": 0.12,
+            "y": 0.02,
             "z": 0
           },
           "size": {
-            "x": 1,
-            "y": 1.04
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
-          "tint": "#33424e",
-          "tintWeight": 0.6,
+          "tint": "#8a7a5c",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -407,35 +923,107 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "lens-foucault-nat-step0",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-lens-lens-foucault-2-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7a5c",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "lens-foucault-overlap",
+          "id": "ent-lens-lens-foucault-3",
           "name": "the refraction",
           "kind": "formation",
           "position": {
-            "x": 0.17,
-            "y": -0.04,
+            "x": 0,
+            "y": 0.02,
             "z": 0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.12,
+            "y": 0.12
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 1,
+          "tint": "#8a7a5c",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "vortex",
+            "strength": 0.3,
+            "radius": 0.28,
+            "spin": 0.3
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-lens-foucault-3-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.12,
+                    "y": 0.12
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7a5c",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "vortex",
+                    "strength": 0.3,
+                    "radius": 0.28,
+                    "spin": 0.3
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-lens-lens-foucault-4",
+          "name": "the sites of authorised speech",
+          "kind": "formation",
+          "position": {
+            "x": -0.12,
+            "y": 0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "speech",
+          "share": 1,
+          "tint": "#ece7dc",
+          "tintWeight": 0.55,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -447,74 +1035,141 @@
           "sequence": {
             "enabled": true,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "lens-foucault-overlap-enr0",
-                "text": "what can appear as a case",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.1,
-                "position": null,
+                "id": "ent-lens-lens-foucault-4-s1",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.12,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "case",
+                "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.4,
-                    "y": 0.4
+                    "x": 0.26,
+                    "y": 0.3
                   },
                   "rotation": 0,
-                  "tint": "#5c6a74",
+                  "tint": "#ece7dc",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-lens-foucault-4-s2",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": {
+                  "x": 0,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "it",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#ece7dc",
+                  "tintWeight": 0.7000000000000001,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-lens-foucault-4-s3",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": {
+                  "x": 0.12,
+                  "y": 0.02,
+                  "z": 0
+                },
+                "text": "describes",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.8500000000000001,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-lens-lens-foucault-5",
+          "name": "the examined case",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7a5c",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "repel",
+            "strength": 0.35,
+            "radius": 0.28,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-lens-foucault-5-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.1,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7a5c",
                   "tintWeight": 0.7,
                   "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.27,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "lens-foucault-overlap-enr1",
-                "text": "who can speak about it",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.1,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.27,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "lens-foucault-overlap-enr2",
-                "text": "what can be done to the person it describes",
-                "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.1,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.48,
-                    "y": 0.48
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.27,
+                    "kind": "repel",
+                    "strength": 0.35,
+                    "radius": 0.28,
                     "spin": 0
                   }
                 }
@@ -525,29 +1180,16 @@
       ],
       "text": [
         {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "lens-foucault · ARGUED",
-          "title": "Foucault — Knowledge, Power, and the Authority to Return",
-          "italic": "Argued from",
-          "body": "",
-          "x": 0.033,
-          "y": 0.05,
-          "width": 470,
-          "size": 25,
-          "align": "left"
-        },
-        {
-          "id": "body",
+          "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "",
+          "title": "Authority",
           "italic": "",
-          "body": "An account exercises authority when it helps determine what can appear as a case, who can speak about it, and what can be done to the person it describes. This lens follows that operation in the episteme register: the encounter between a practice of knowing and the relations that make its objects actionable — beyond accuracy to the authority acquired through describing.",
-          "x": 0.033,
-          "y": 0.44,
-          "width": 620,
-          "size": 15,
+          "body": "",
+          "x": 0.04,
+          "y": 0.6,
+          "width": 300,
+          "size": 18,
           "align": "left"
         }
       ],
@@ -561,8 +1203,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.04,
+        "phiRate": 0.02,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -571,10 +1213,12 @@
       },
       "automation": [],
       "engine": {
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 2.7,
-        "pointerClickRadius": 0.48
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
       }
     },
     {
@@ -585,51 +1229,85 @@
       "transition": 2.6,
       "view": {
         "mode": "3d",
-        "yaw": 0.5,
-        "pitch": 0.24,
-        "zoom": 0.9,
+        "yaw": 0.25,
+        "pitch": -0.3,
+        "zoom": 0.97,
         "panX": 0,
         "panY": 0
       },
       "field": {
-        "background": "#f0ecdf",
+        "background": "#17141f",
         "palette": [
-          "#33424e",
-          "#3b3050"
+          "#e9e4f0",
+          "#9a7ab0"
         ],
-        "material": "print",
+        "material": "round",
         "params": {
           "count": 62000,
-          "size": 2.9,
-          "opacity": 0.9,
-          "contrast": 0.82,
-          "speed": 0.14,
-          "dispersion": 0.02,
-          "roundness": 0.9,
-          "halo": 0.22,
-          "depth": 0.5
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0.05,
+          "halo": 0.16,
+          "speed": 0.3,
+          "circulation": 0.2,
+          "turbulence": 0.1,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.35,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
         }
       },
       "entities": [
         {
-          "id": "aph-bar-l",
+          "id": "ent-lens-aph-1",
           "name": "approachable limit",
           "kind": "formation",
           "position": {
-            "x": -0.36,
-            "y": -0.06,
+            "x": -0.14,
+            "y": 0.02,
             "z": 0.3
           },
           "size": {
-            "x": 0.09,
-            "y": 1.16
+            "x": 0.26,
+            "y": 0.26
           },
           "rotation": 0,
           "shape": "square",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.55,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -643,35 +1321,50 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "aph-bar-l-step0",
-                "text": "",
-                "shape": "square",
+                "id": "ent-lens-aph-1-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "square",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "aph-bar-r",
+          "id": "ent-lens-aph-2",
           "name": "absolute limit",
           "kind": "formation",
           "position": {
-            "x": 0.64,
-            "y": -0.06,
-            "z": 0.3
+            "x": 0.14,
+            "y": -0.02,
+            "z": -0.4
           },
           "size": {
-            "x": 0.09,
-            "y": 1.16
+            "x": 0.26,
+            "y": 0.26
           },
-          "rotation": 0,
+          "rotation": 45,
           "shape": "square",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 1,
+          "tint": "#9a7ab0",
+          "tintWeight": 0.6,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -685,35 +1378,50 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "aph-bar-r-step0",
-                "text": "",
-                "shape": "square",
+                "id": "ent-lens-aph-2-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "square",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.26
+                  },
+                  "rotation": 45,
+                  "tint": "#9a7ab0",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "aph-field",
+          "id": "ent-lens-aph-3",
           "name": "the investigation between",
           "kind": "formation",
           "position": {
-            "x": 0.14,
-            "y": -0.06,
-            "z": 0
+            "x": 0,
+            "y": 0,
+            "z": -0.05
           },
           "size": {
-            "x": 1.24,
-            "y": 1.24
+            "x": 0.3,
+            "y": 0.3
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
-          "tint": "#20262b",
-          "tintWeight": 0.3,
+          "tint": "#e9e4f0",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -727,35 +1435,50 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "aph-field-step0",
-                "text": "",
-                "shape": "ring",
+                "id": "ent-lens-aph-3-s0",
                 "hold": 3,
                 "transition": 1,
-                "position": null
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#e9e4f0",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
               }
             ]
           }
         },
         {
-          "id": "aph-core",
+          "id": "ent-lens-aph-4",
           "name": "faith continuing through",
           "kind": "formation",
           "position": {
-            "x": 0.14,
-            "y": -0.06,
-            "z": 0.3
+            "x": 0,
+            "y": 0,
+            "z": -0.2
           },
           "size": {
-            "x": 0.22,
-            "y": 0.22
+            "x": 0.1,
+            "y": 0.1
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#7a3b2e",
-          "tintWeight": 0.95,
+          "tint": "#9a7ab0",
+          "tintWeight": 0.85,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -767,113 +1490,199 @@
           "sequence": {
             "enabled": true,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "aph-core-enr0",
-                "text": "The approachable limit is the basis of investigation",
-                "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.3,
+                "id": "ent-lens-aph-4-s1",
+                "hold": 2.6,
+                "transition": 1.8,
                 "position": {
-                  "x": 0.14,
-                  "y": -0.06,
+                  "x": 0,
+                  "y": 0,
                   "z": 0.3
                 },
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.27,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "aph-core-enr1",
-                "text": "the absolute limit is the basis of faith",
+                "text": "",
                 "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": {
-                  "x": 0.14,
-                  "y": -0.06,
-                  "z": -0.4
-                },
                 "objectState": {
                   "size": {
-                    "x": 0.44,
-                    "y": 0.44
+                    "x": 0.1,
+                    "y": 0.1
                   },
                   "rotation": 0,
-                  "tint": "#3b3050",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.27,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "aph-core-enr2",
-                "text": "the limit of investigation is the limit of determination",
-                "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": {
-                  "x": 0.14,
-                  "y": -0.06,
-                  "z": 0.15
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.44,
-                    "y": 0.44
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
+                  "tint": "#9a7ab0",
                   "tintWeight": 0.85,
                   "force": {
-                    "kind": "none",
+                    "kind": "attract",
                     "strength": 0,
-                    "radius": 0.27,
+                    "radius": 0.45,
                     "spin": 0
                   }
                 }
               },
               {
-                "id": "aph-core-enr3",
-                "text": "the limit of faith is never to be determined",
-                "shape": "disc",
-                "hold": 4,
-                "transition": 1.3,
+                "id": "ent-lens-aph-4-s2",
+                "hold": 3,
+                "transition": 2,
                 "position": {
-                  "x": 0.14,
-                  "y": -0.06,
+                  "x": 0,
+                  "y": 0,
                   "z": -0.55
                 },
+                "text": "",
+                "shape": "disc",
                 "objectState": {
                   "size": {
-                    "x": 0.48,
-                    "y": 0.48
+                    "x": 0.1,
+                    "y": 0.1
                   },
                   "rotation": 0,
-                  "tint": "#3b3050",
-                  "tintWeight": 1,
+                  "tint": "#9a7ab0",
+                  "tintWeight": 0.85,
                   "force": {
-                    "kind": "none",
+                    "kind": "attract",
                     "strength": 0,
-                    "radius": 0.27,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-lens-aph-5",
+          "name": "the four lines walking the depths",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 0.3
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "limit",
+          "share": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-lens-aph-5-s1",
+                "hold": 3,
+                "transition": 1.8,
+                "position": {
+                  "x": 0,
+                  "y": 0.02,
+                  "z": 0.3
+                },
+                "text": "investigation",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-aph-5-s2",
+                "hold": 3,
+                "transition": 1.8,
+                "position": {
+                  "x": 0,
+                  "y": 0.02,
+                  "z": -0.4
+                },
+                "text": "faith",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#9a7ab0",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-aph-5-s3",
+                "hold": 3,
+                "transition": 1.8,
+                "position": {
+                  "x": 0,
+                  "y": 0.02,
+                  "z": -0.4
+                },
+                "text": "determination",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#9a7ab0",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-lens-aph-5-s4",
+                "hold": 3,
+                "transition": 1.8,
+                "position": {
+                  "x": 0,
+                  "y": 0.02,
+                  "z": -0.55
+                },
+                "text": "determined",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#9a7ab0",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
                     "spin": 0
                   }
                 }
@@ -884,34 +1693,21 @@
       ],
       "text": [
         {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "aphorism-investigation-and-faith · ARGUED",
-          "title": "Investigation and Faith",
-          "italic": "Returns through A03 to C04 / C48 · carried by the Symbol / Account / Trust whole-field",
-          "body": "",
-          "x": 0.033,
-          "y": 0.05,
-          "width": 470,
-          "size": 25,
-          "align": "left"
-        },
-        {
-          "id": "body",
+          "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "",
+          "title": "The two limits",
           "italic": "",
-          "body": "“The approachable limit is the basis of investigation; the absolute limit is the basis of faith; the limit of investigation is the limit of determination; the limit of faith is never to be determined.”\n\nInvestigation approaches something that can become more determinate. The resulting knowledge changes what can next be asked and done — the positive capacity to enter a question and make a difference within it.",
-          "x": 0.033,
-          "y": 0.4,
-          "width": 620,
-          "size": 15,
+          "body": "",
+          "x": 0.04,
+          "y": 0.6,
+          "width": 300,
+          "size": 18,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "Single formation",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -920,40 +1716,22 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.04,
+        "phiRate": 0.02,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "aph-contemplation",
-          "target": "entity:aph-field:scale",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.015,
-          "max": 0.015,
-          "rate": 0.1,
-          "phase": 0,
-          "duration": 16,
-          "delay": 0,
-          "firedAt": null,
-          "enabled": true
-        }
-      ],
+      "automation": [],
       "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
         "pointerMode": "attract",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.5,
-        "pointerClickRadius": 0.3,
-        "depthPerspective": true,
-        "depthOcclusion": true,
-        "depthTintColor": "#3b3742"
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
       }
     }
   ],

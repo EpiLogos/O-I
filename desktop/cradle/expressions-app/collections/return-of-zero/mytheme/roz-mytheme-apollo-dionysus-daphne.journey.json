@@ -21,51 +21,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
+        "pointerMode": "repel",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.7,
+        "pointerClickStrength": 0.4,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#202839",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#c8d2e0",
+          "#8a97b0",
+          "#d8c8a8",
+          "#5a6a88"
         ],
         "material": "round",
         "params": {
-          "speed": 0.4,
-          "circulation": 0.25,
-          "turbulence": 0.12,
-          "pointerStrength": 0.6,
-          "dispersion": 0.07
+          "speed": 0.35,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e122",
-          "name": "the world — before the view",
+          "id": "apd0-frame",
+          "name": "the framed view — a world given a form it can inhabit",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.32,
+            "x": 0.02,
+            "y": -0.34,
             "z": 0
           },
           "size": {
-            "x": 1.044,
-            "y": 0.737
+            "x": 0.6,
+            "y": 0.28
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.35,
+          "share": 1.4,
+          "tint": "#c8d2e0",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -77,37 +75,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st131",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": ".--------------------------.\n|              .           |\n|                          |\n|      /\\        /\\        |\n|     /  \\  /\\  /  \\       |\n|    /    \\/  \\/    \\      |\n|___/________________\\_____|\n"
+            }
           }
         },
         {
-          "id": "e123",
-          "name": "Apollo's boundary — the communicable image",
+          "id": "apd0-boundary",
+          "name": "the boundary that lets a difference hold",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.18,
+            "x": -0.42,
+            "y": -0.52,
             "z": 0
           },
           "size": {
-            "x": 0.758,
-            "y": 0.614
+            "x": 0.3,
+            "y": 0.3
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
-          "share": 1.8,
-          "tint": "#c9b458",
-          "tintWeight": 0.85,
+          "share": 1.0,
+          "tint": "#8a97b0",
+          "tintWeight": 0.7,
           "locked": false,
           "force": {
             "kind": "none",
@@ -119,37 +114,28 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st132",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         },
         {
-          "id": "e124",
-          "name": "what stands out",
+          "id": "apd0-figure",
+          "name": "something stands out — figure against ground",
           "kind": "formation",
           "position": {
-            "x": -0.2,
-            "y": 0,
+            "x": -0.42,
+            "y": -0.52,
             "z": 0
           },
           "size": {
-            "x": 0.221,
-            "y": 0.204
+            "x": 0.18,
+            "y": 0.18
           },
           "rotation": 0,
           "shape": "triangle",
           "text": "",
-          "share": 1.2,
-          "tint": "#a5623a",
-          "tintWeight": 1,
+          "share": 1.0,
+          "tint": "#d8c8a8",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -159,108 +145,63 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e124-1",
-                "text": "·",
-                "shape": "triangle",
-                "hold": 3.4,
-                "transition": 1.6,
-                "position": {
-                  "x": -0.2,
-                  "y": 0,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e124-2",
-                "text": "·",
-                "shape": "triangle",
-                "hold": 3.6,
-                "transition": 1.6,
-                "position": {
-                  "x": 0.34,
-                  "y": -0.18,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          }
+        },
+        {
+          "id": "apd0-seer",
+          "name": "the seer — the one the view belongs to",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": -0.64,
+            "z": 0
+          },
+          "size": {
+            "x": 0.15,
+            "y": 0.15
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#d8c8a8",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  o\n /|\\\n  |\n / \\\n"
+            }
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#0 · the authored whole; Nietzsche and Gebser in distinct registers",
+          "kicker": "",
           "title": "A world becomes a view",
-          "italic": "Apollo embodies form's gift: the image lets one person show another what has been seen, and gives the seer something definite to revisit and change.",
+          "italic": "Something stands out; a boundary holds it; an image makes it communicable.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "A finite being gives the world a form it can inhabit and communicate: something stands out, a boundary makes it distinct, an image holds it long enough to become intelligible. Apollo names this achievement — showing another what has been seen without occupying the same place, and giving the seer something definite to revisit, question and change. This is Taylor's composed whole; the sequence lives in seeing, participating and answering.",
-          "x": 0.04,
-          "y": 0.55,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 620
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the standing-out and its boundary (#0); the communicable image (#0, #1); the revisitable view (#0, #5→0).",
-          "x": 0.765,
-          "y": 0.55,
-          "width": 300,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -284,14 +225,14 @@
       },
       "automation": [
         {
-          "id": "auto-drift",
-          "target": "field.params.turbulence",
+          "id": "apd-gaze",
+          "target": "field.params.circulation",
           "type": "lfo",
           "wave": "sine",
           "blend": "add",
           "loop": "loop",
-          "min": -0.05,
-          "max": 0.05,
+          "min": -0.04,
+          "max": 0.04,
           "rate": 0.08,
           "phase": 0,
           "duration": 0,
@@ -315,50 +256,88 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 1.5,
-        "pointerClickRadius": 0.5
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#202839",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#c9b458",
-          "#8c3b2e"
+          "#c8d2e0",
+          "#8a97b0",
+          "#d8c8a8",
+          "#5a6a88"
         ],
         "material": "round",
         "params": {
-          "speed": 0.45,
-          "circulation": -0.4,
-          "dispersion": 0.04,
-          "pointerStrength": 0.5
+          "speed": 0.35,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e125",
-          "name": "the enclosure — now claiming completeness",
+          "id": "apd1-persp",
+          "name": "the perspectival construction — order through a situated line of sight",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.42,
+            "x": 0.0,
+            "y": -0.38,
             "z": 0
           },
           "size": {
-            "x": 1.05,
-            "y": 0.78
+            "x": 0.56,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#c8d2e0",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "____________o____________\n \\         |         /\n  \\        |        /\n   \\       |       /\n    \\      |      /\n     \\     |     /\n      \\    |    /\n       \\   |   /\n"
+            }
+          }
+        },
+        {
+          "id": "apd1-sector",
+          "name": "the sector — claiming exclusive validity",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
           },
           "rotation": 0,
           "shape": "square",
           "text": "",
-          "share": 1.4,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
+          "share": 1.0,
+          "tint": "#8a97b0",
+          "tintWeight": 0.75,
           "locked": false,
           "force": {
             "kind": "none",
@@ -370,37 +349,28 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st134",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         },
         {
-          "id": "e126",
-          "name": "the absent Father — surrogate authority, self-exemption",
+          "id": "apd1-father",
+          "name": "the invoked Father — a structure standing where the ground is absent",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.08,
+            "x": -0.5,
+            "y": -0.6,
             "z": 0
           },
           "size": {
-            "x": 0.116,
-            "y": 0.116
+            "x": 0.24,
+            "y": 0.3
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "∅",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.9,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#d8c8a8",
+          "tintWeight": 0.85,
           "locked": false,
           "force": {
             "kind": "none",
@@ -412,127 +382,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st135",
-                "text": "∅",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "     ____\n    /    \\\n   /______\\\n   |  __  |\n   | |  | |\n   | |  | |\n   |_|__|_|\n"
+            }
           }
         },
         {
-          "id": "e127",
-          "name": "what escapes the measure — now read as deficiency",
+          "id": "apd1-bang",
+          "name": "the exempting assertion",
           "kind": "formation",
           "position": {
-            "x": -0.62,
-            "y": -0.4,
+            "x": 0.74,
+            "y": -0.22,
             "z": 0
           },
           "size": {
-            "x": 0.12,
-            "y": 0.12
+            "x": 0.14,
+            "y": 0.14
           },
           "rotation": 0,
           "shape": "text",
-          "text": "·",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e127-1",
-                "text": "·",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": {
-                  "x": -0.5,
-                  "y": -0.3,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.12,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#8c3b2e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e127-2",
-                "text": "x",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": {
-                  "x": -0.66,
-                  "y": -0.44,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.14,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#6b4a44",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e128",
-          "name": "the invested viewer — body, history, language, concern",
-          "kind": "formation",
-          "position": {
-            "x": 0.62,
-            "y": -0.42,
-            "z": 0
-          },
-          "size": {
-            "x": 0.16,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "text": "!",
+          "share": 1.0,
+          "tint": "#d8c8a8",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -544,63 +421,27 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st137",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#1 · Gebser pp.11–21, 255–58 (paraphrased); Taylor's P5 carrier; A20",
-          "title": "The view grows confident of its own completeness",
-          "italic": "Possession begins when the image's valuation governs what its source is allowed to be — the aloof neutrality presents situated authority as though its conditions had vanished.",
+          "kicker": "",
+          "title": "The view grows confident",
+          "italic": "Order through position; the sector claims the whole; the warrant stands empty.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The movement begins when formation grows confident: the view conceals the life from which it was selected, then treats whatever escapes its measure as deficient. Gebser gives perspectivity its achievement — Giotto's depth, Petrarch's landscape, Alberti's construction — and its restriction when one sector claims exclusive validity. Taylor's P5 carrier brings the pressure inside the viewer: body, history,",
-          "x": 0.04,
-          "y": 0.6,
-          "width": 460,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "language and concern affect what becomes salient. The absent Father gives concealment its authorial image — lack numbed, a surrogate invoked as ultimate warrant while the view's own position exempts itself from the order it imposes. A20 receives the transition: possession occurs when the image's valuation governs what its source is allowed to be; the difference appears when the source resists.",
-          "x": 0.72,
-          "y": 0.6,
-          "width": 380,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "grid",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -634,51 +475,89 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 1.2,
-        "pointerClickRadius": 0.4
+        "pointerClickRadius": 0.35,
+        "morphEnabled": true
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#2a0f1e",
         "palette": [
-          "#2b2733",
-          "#5a4a8a",
-          "#c9b458",
-          "#3c6e71"
+          "#c88aa8",
+          "#7a2e4e",
+          "#e8d8c8",
+          "#4a1a30"
         ],
         "material": "round",
         "params": {
-          "speed": 0.85,
-          "circulation": 0.6,
-          "dispersion": 0.2,
-          "turbulence": 0.4,
-          "pointerStrength": 0.7
+          "speed": 0.6,
+          "circulation": -0.25,
+          "dispersion": 0.1,
+          "pointerStrength": 0.5
         }
       },
       "entities": [
         {
-          "id": "e129",
-          "name": "the enclosure opened",
+          "id": "apd2-cup",
+          "name": "the kantharos — shared life, held and poured",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.42,
+            "x": -0.45,
+            "y": -0.5,
             "z": 0
           },
           "size": {
-            "x": 0.307,
-            "y": 0.399
+            "x": 0.2,
+            "y": 0.28
           },
           "rotation": 0,
-          "shape": "text",
+          "shape": "disc",
           "text": "",
-          "share": 1.8,
-          "tint": "#252720",
-          "tintWeight": 1,
+          "share": 1.0,
+          "tint": "#c88aa8",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " \\       /\n  \\_.-._/\n   \\   /\n    \\_/\n    _|_\n   /___\\\n"
+            }
+          }
+        },
+        {
+          "id": "apd2-form",
+          "name": "the bounded form — what dies is the claim to stand complete",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#e8d8c8",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -694,96 +573,91 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "st-e129-1",
-                "text": "·",
+                "id": "apd2-form-st1",
+                "text": "",
                 "shape": "disc",
-                "hold": 2.6,
-                "transition": 1.5,
+                "hold": 3.4,
+                "transition": 1.4,
                 "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.31,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "  o\n /|\\\n  |\n / \\\n"
                   }
                 }
               },
               {
-                "id": "st-e129-2",
-                "text": "❋",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.5,
+                "id": "apd2-form-st2",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.0,
+                "transition": 1.4,
                 "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "o   /     |\n   /  \\  /|\n |   |\\   |\n    /    \\\n"
+                  }
+                },
                 "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#3c6e71",
-                  "tintWeight": 1,
+                  "tint": "#7a2e4e",
+                  "tintWeight": 1.0,
                   "force": {
                     "kind": "none",
                     "strength": 0,
                     "radius": 0.45,
                     "spin": 0
-                  }
+                  },
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.3
+                  },
+                  "rotation": 0
                 }
               },
               {
-                "id": "st-e129-3",
-                "text": "·",
-                "shape": "ring",
-                "hold": 3.2,
-                "transition": 1.5,
+                "id": "apd2-form-st3",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.8,
+                "transition": 1.4,
                 "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#5a4a8a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "  o\n-+|+-\n  |\n / \\\n"
                   }
                 }
               }
-            ]
+            ],
+            "sourcesVersion": 1
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  o\n /|\\\n  |\n / \\\n"
+            }
           }
         },
         {
-          "id": "e130",
-          "name": "Dionysus — dismemberment and death/rebirth of bounded identity",
+          "id": "apd2-enclosure",
+          "name": "the enclosure opened",
           "kind": "formation",
           "position": {
-            "x": 0.58,
-            "y": 0.42,
+            "x": 0.45,
+            "y": -0.36,
             "z": 0
           },
           "size": {
-            "x": 0.3,
-            "y": 0.34
+            "x": 0.5,
+            "y": 0.5
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "ϴ",
-          "share": 1,
-          "tint": "#5a4a8a",
-          "tintWeight": 1,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#c88aa8",
+          "tintWeight": 0.6,
           "locked": false,
           "force": {
             "kind": "none",
@@ -793,39 +667,80 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
             "steps": [
               {
-                "id": "st142",
-                "text": "ϴ",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
+                "id": "apd2-enclosure-st1",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "tintWeight": 0.6,
+                  "tint": "#c88aa8",
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  },
+                  "rotation": 0
+                }
+              },
+              {
+                "id": "apd2-enclosure-st2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.64,
+                    "y": 0.64
+                  },
+                  "tintWeight": 0.4,
+                  "tint": "#c88aa8",
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  },
+                  "rotation": 0
+                }
               }
-            ]
+            ],
+            "sourcesVersion": 1
           }
         },
         {
-          "id": "e131",
-          "name": "Nietzsche §21 — each power expressive through the other",
+          "id": "apd2-music",
+          "name": "the music beneath the words",
           "kind": "formation",
           "position": {
-            "x": -0.66,
-            "y": -0.44,
+            "x": 0.18,
+            "y": -0.74,
             "z": 0
           },
           "size": {
-            "x": 0.22,
-            "y": 0.22
+            "x": 0.13,
+            "y": 0.13
           },
           "rotation": 0,
           "shape": "text",
           "text": "♪",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
+          "share": 1.0,
+          "tint": "#e8d8c8",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -837,100 +752,22 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st143",
-                "text": "♪",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e132",
-          "name": "life returning through reconstitution",
-          "kind": "formation",
-          "position": {
-            "x": -0.62,
-            "y": -0.18,
-            "z": 0
-          },
-          "size": {
-            "x": 0.106,
-            "y": 0.106
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "❋",
-          "share": 1,
-          "tint": "#3c6e71",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st144",
-                "text": "❋",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#2 · Nietzsche Birth of Tragedy §1 (p.21) and §21 (p.167); the central plan's dismemberment",
-          "title": "Dionysus opens the enclosure and returns through form",
-          "italic": "Dionysus names the release through which the view's implication in life becomes available again — within this composition, what dies is the form's claim, and what returns must be communicable enough to answer for.",
+          "kicker": "",
+          "title": "Dionysus opens the enclosure",
+          "italic": "What dies is the claim to stand complete; life returns through a new form.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Participation restores the view to the living relation its self-sufficiency concealed. The central plan gives this release the force of dismemberment and death/rebirth: within this Taylor-authored sequence, what dies is the form's claim to stand complete in itself; what returns must acquire a form through which living relation can continue. Nietzsche supplies the artistic relation: in §1, art develops through the duplexity of the Apollonian",
-          "x": 0.04,
-          "y": 0.6,
-          "width": 460,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "and Dionysian; in §21, Dionysus speaks Apollo's language and Apollo finally speaks Dionysus's. The formed account must let its participation affect what it says; participation must become communicable enough for a particular speaker to answer for it. Yet openness does not settle the question: participation can itself become an overriding image — unity deciding in advance what another being's difference must mean.",
-          "x": 0.72,
-          "y": 0.6,
-          "width": 380,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -944,7 +781,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.2,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -969,92 +806,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "repel",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.5,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#12210f",
         "palette": [
-          "#2b2733",
-          "#3f5a36",
-          "#c9b458",
-          "#5a4a8a"
+          "#9fc48a",
+          "#4a6e3a",
+          "#e8e0c8",
+          "#2e4a24"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": 0.2,
-          "dispersion": 0.08,
-          "pointerStrength": 0.45
+          "speed": 0.3,
+          "circulation": 0.08,
+          "dispersion": 0.06,
+          "pointerStrength": 0.35
         }
       },
       "entities": [
         {
-          "id": "e133",
-          "name": "Daphne — the centre that exceeds what either power makes of her",
+          "id": "apd3-laurel",
+          "name": "the laurel — the transformed tree, recoil and afterlife",
           "kind": "formation",
           "position": {
-            "x": 0.28,
-            "y": 0.08,
+            "x": -0.35,
+            "y": -0.46,
             "z": 0
           },
           "size": {
-            "x": 0.56,
-            "y": 0.18
+            "x": 0.26,
+            "y": 0.36
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "Daphne",
-          "share": 1,
-          "tint": "#3f5a36",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "repel",
-            "strength": 0.55,
-            "radius": 0.36,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st145",
-                "text": "Daphne",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e134",
-          "name": "the transformed tree's recoil — preserved with the seeming assent",
-          "kind": "formation",
-          "position": {
-            "x": -0.3,
-            "y": -0.52,
-            "z": 0
-          },
-          "size": {
-            "x": 0.491,
-            "y": 0.552
-          },
-          "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#3f5a36",
-          "tintWeight": 0.5,
+          "share": 1.4,
+          "tint": "#9fc48a",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1064,192 +858,129 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e134-1",
-                "text": "·",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.28,
-                  "y": 0.08,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#3f5a36",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e134-2",
-                "text": "·",
-                "shape": "ring",
-                "hold": 3.6,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.28,
-                  "y": 0.08,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.55,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#2f4a28",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   *  *  *\n  *  **  *  ,\n   *  *  * ,\n     |    ,\n     |   ,\n     |  ,\n     |\n    _|_\n"
+            }
           }
         },
         {
-          "id": "e135",
-          "name": "Apollo — articulation without final possession",
+          "id": "apd3-centre",
+          "name": "the other centre — existence exceeding what either power makes of it",
           "kind": "formation",
           "position": {
-            "x": -0.64,
-            "y": -0.24,
+            "x": 0.15,
+            "y": -0.62,
             "z": 0
           },
           "size": {
-            "x": 0.116,
-            "y": 0.116
+            "x": 0.2,
+            "y": 0.2
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "A",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e8e0c8",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0.3,
-            "radius": 0.3,
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
             "spin": 0
           },
           "station": null,
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st147",
-                "text": "A",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         },
         {
-          "id": "e136",
-          "name": "Dionysus — openness without dissolving the responder",
+          "id": "apd3-emblem",
+          "name": "the emblem — the image continuing after the living withdrawal",
           "kind": "formation",
           "position": {
-            "x": 0.66,
-            "y": -0.42,
+            "x": 0.5,
+            "y": -0.34,
             "z": 0
           },
           "size": {
-            "x": 0.26,
-            "y": 0.26
+            "x": 0.34,
+            "y": 0.34
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "ϴ",
-          "share": 1,
-          "tint": "#5a4a8a",
-          "tintWeight": 1,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#4a6e3a",
+          "tintWeight": 0.8,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0.3,
-            "radius": 0.3,
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
             "spin": 0
           },
           "station": null,
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st148",
-                "text": "ϴ",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          }
+        },
+        {
+          "id": "apd3-pursuit",
+          "name": "the pursuit — the line that arrives at the tree and stops",
+          "kind": "formation",
+          "position": {
+            "x": -0.04,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "→",
+          "share": 1.0,
+          "tint": "#9fc48a",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#3 · the alterity check (human-amplified: yes); the Ovidian whole kept distinct",
-          "title": "Daphne requires someone to remain other",
-          "italic": "Daphne proves-discloses the difference between failures: appropriation through determination and appropriation through undifferentiation — her separate literary whole bears its own cast, pursuit, transformation and afterlife.",
+          "kicker": "",
+          "title": "Daphne remains other",
+          "italic": "The tree recoils; the laurel continues; neither grasp nor fusion owns her.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Daphne changes what the mutuality must accomplish: a relation can be vivid and shared while still failing to let the other answer in their own right. Apollo cannot make illumination into entitlement; Dionysus cannot make participation permission to absorb. Her office is the particular centre whose existence exceeds what either power makes of it.",
-          "x": 0.04,
-          "y": 0.6,
-          "width": 460,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Her separate literary whole is Ovid's; the movement-35 return keeps the tree's recoil with the narrator's seeming assent, so no easy union or final refusal replaces it. Appropriation after withdrawal: possession failing at one level need not end the image's symbolic continuation. Unity invoked to cancel refusal repeats appropriation by other means. Occurrences: her required otherness (#3); recoil with seeming assent (Mv 35); Dionysus enters through Taylor, not Ovid.",
-          "x": 0.72,
-          "y": 0.6,
-          "width": 380,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -1263,7 +994,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.05,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1280,61 +1011,128 @@
       "duration": 15,
       "transition": 2.2,
       "view": {
-        "mode": "3d",
-        "yaw": 0.4,
-        "pitch": 0.35,
-        "zoom": 0.9,
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
         "panX": 0,
         "panY": 0
       },
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 1.2,
-        "pointerClickRadius": 0.35,
-        "depthPerspective": true,
-        "depthOcclusion": true,
-        "depthTintColor": "#101820"
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.7,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#cfd4d0",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#c9b458",
-          "#3c6e71"
+          "#3a4448",
+          "#6a7a80",
+          "#20282c",
+          "#8a6a3a"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": 0.4,
-          "dispersion": 0.1,
-          "zConfinement": 0.9,
-          "pointerStrength": 0.5
+          "speed": 0.4,
+          "circulation": 0.18,
+          "dispersion": 0.05,
+          "pointerStrength": 0.4
         }
       },
       "entities": [
         {
-          "id": "e137",
-          "name": "the perspectival triangle — 180°",
+          "id": "apd4-rays",
+          "name": "the rays — the view opened to every aspect around it",
           "kind": "formation",
           "position": {
-            "x": -0.4,
-            "y": -0.3,
-            "z": -0.35
+            "x": -0.32,
+            "y": -0.42,
+            "z": 0
           },
           "size": {
-            "x": 0.522,
-            "y": 0.46
+            "x": 0.3,
+            "y": 0.24
           },
           "rotation": 0,
-          "shape": "triangle",
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#3a4448",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  \\  .  |  .  /\n   \\    |    /\n- - -( o )- - -\n   /    |    \\\n  /  .  |  .  \\\n"
+            }
+          }
+        },
+        {
+          "id": "apd4-field",
+          "name": "the contextual field — limits, relations and transitions available together",
+          "kind": "formation",
+          "position": {
+            "x": 0.1,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.8
+          },
+          "rotation": 0,
+          "shape": "ring",
           "text": "",
           "share": 1.2,
-          "tint": "#4a5d7e",
+          "tint": "#6a7a80",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "apd4-rotundum",
+          "name": "the Rotundum — the round that cannot proceed from any limited view",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.66,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#20282c",
           "tintWeight": 0.9,
           "locked": false,
           "force": {
@@ -1347,119 +1145,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st149",
-                "text": "",
-                "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-----.\n  / .---. \\\n | /  o  \\ |\n | \\  '  / |\n  \\ '---' /\n   '-----'\n"
+            }
           }
         },
         {
-          "id": "e138",
-          "name": "opened into the contextual field — 360°",
+          "id": "apd4-360",
+          "name": "contextual inclusion",
           "kind": "formation",
           "position": {
-            "x": 0.22,
+            "x": -0.6,
             "y": -0.16,
             "z": 0
           },
           "size": {
-            "x": 0.83,
-            "y": 0.83
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1.4,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e138-1",
-                "text": "·",
-                "shape": "ring",
-                "hold": 3.6,
-                "transition": 1.8,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e138-2",
-                "text": "·",
-                "shape": "ring",
-                "hold": 4.4,
-                "transition": 1.8,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.95,
-                    "y": 0.95
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e139",
-          "name": "the viewer within the field — fourth-person",
-          "kind": "formation",
-          "position": {
-            "x": 0.22,
-            "y": 0.02,
-            "z": 0.12
-          },
-          "size": {
-            "x": 0.12,
-            "y": 0.12
+            "x": 0.14,
+            "y": 0.14
           },
           "rotation": 0,
           "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#2b2733",
-          "tintWeight": 1,
+          "text": "360°",
+          "share": 1.0,
+          "tint": "#20282c",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1471,37 +1184,28 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st151",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         },
         {
-          "id": "e140",
-          "name": "Gebser's aperspectivity — no amalgamation of structures",
+          "id": "apd4-01",
+          "name": "depth through circumstance",
           "kind": "formation",
           "position": {
-            "x": -0.48,
-            "y": 0.32,
-            "z": 0.3
+            "x": 0.62,
+            "y": -0.14,
+            "z": 0
           },
           "size": {
-            "x": 0.22,
-            "y": 0.22
+            "x": 0.13,
+            "y": 0.13
           },
           "rotation": 0,
           "shape": "text",
-          "text": "∴",
-          "share": 1,
-          "tint": "#3c6e71",
-          "tintWeight": 1,
+          "text": "0/1",
+          "share": 1.0,
+          "tint": "#8a6a3a",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1513,105 +1217,27 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st152",
-                "text": "∴",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e141",
-          "name": "care and telos — being with text and subtext",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.42,
-            "z": 0.18
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "❤",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st153",
-                "text": "❤",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#4 · Gebser pp.1–3, 24–28, 470–86 (paraphrased); Q27 180°→360°; P5 third/fourth-person",
-          "title": "The view becomes transparent to its context",
-          "italic": "The diaphanous form embodies determination visible together with the conditions through which it became a view — promising no exhaustive panorama.",
+          "kicker": "",
+          "title": "Transparent to its context",
+          "italic": "The triangle opens into the field; the knower stands within it.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The resulting form is diaphanous: its determination remains visible together with the conditions through which it has become a view. Gebser's aperspectivity releases perspective from exclusive validity without amalgamating earlier structures; his Picasso/Braque discussion makes time and multiple aspects material to representation. Q27's contextual-field programme gives the movement its 180°→360° expression: the perspectival triangle opens",
-          "x": 0.04,
-          "y": 0.6,
-          "width": 460,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "into a field where positions, counter-positions and transitions are available together — and the knower has a position within that field. Wider collections cannot accomplish this by accumulation; limits, relations and means of transformation have to become intelligible. P5's concern gives transparency a lived direction: equanimity requires acknowledging concern; the pose of having no stake can conceal a governing preference.",
-          "x": 0.72,
-          "y": 0.6,
-          "width": 380,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "ring",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1620,7 +1246,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.1,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1628,23 +1254,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-context",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.2,
-          "max": 0.2,
-          "rate": 0.11,
-          "phase": 0.2,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-apd-5-return",
@@ -1663,48 +1273,47 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.35,
-        "pointerClickRadius": 0.25
+        "pointerClickStrength": 0.7,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#cfd4d0",
         "palette": [
-          "#2b2733",
-          "#c9b458",
-          "#3f5a36",
-          "#5a4a8a"
+          "#3a4448",
+          "#6a7a80",
+          "#20282c",
+          "#8a6a3a"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": 0.35,
-          "dispersion": 0.1,
-          "pointerStrength": 0.3
+          "speed": 0.4,
+          "circulation": 0.18,
+          "dispersion": 0.05,
+          "pointerStrength": 0.4
         }
       },
       "entities": [
         {
-          "id": "e142",
-          "name": "the finite act of seeing — renewed",
+          "id": "apd5-lyre",
+          "name": "the lyre — articulation returned, speaking through the form",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.32,
+            "x": -0.3,
+            "y": -0.48,
             "z": 0
           },
           "size": {
-            "x": 0.737,
-            "y": 0.614
+            "x": 0.26,
+            "y": 0.34
           },
           "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1.6,
-          "tint": "#c9b458",
-          "tintWeight": 0.8,
+          "share": 1.4,
+          "tint": "#20282c",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1716,204 +1325,33 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st154",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " \\_____/\n  \\   /\n   \\ /\n  .-o-.\n  | | |\n  | | |\n   \\|/\n"
+            }
           }
         },
         {
-          "id": "e143",
-          "name": "the other's answer — remaining their own",
+          "id": "apd5-leaf",
+          "name": "the leaf — the answer still alive in the relation",
           "kind": "formation",
           "position": {
-            "x": 0.52,
-            "y": -0.36,
+            "x": 0.14,
+            "y": -0.6,
             "z": 0
           },
           "size": {
             "x": 0.16,
-            "y": 0.16
+            "y": 0.2
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#3f5a36",
-          "tintWeight": 0.95,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st155",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e144",
-          "name": "A20 — the source's continuing capacity to revise the image",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.04,
-            "z": 0
-          },
-          "size": {
-            "x": 0.156,
-            "y": 0.073
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "A20",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st156",
-                "text": "A20",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e145",
-          "name": "A21 — individuation retains the mediating relation",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.44,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "A21",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st157",
-                "text": "A21",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e146",
-          "name": "Draft 3 — recognition recurrent, never completed possession",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "↺",
-          "share": 1,
-          "tint": "#5a4a8a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st158",
-                "text": "↺",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e147",
-          "name": "the definite image offered again — Apollo's articulation returned, bearing its acknowledged relation",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.21
-          },
-          "rotation": 0,
-          "shape": "triangle",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#a5623a",
+          "share": 1.0,
+          "tint": "#8a6a3a",
           "tintWeight": 0.95,
           "locked": false,
           "force": {
@@ -1926,63 +1364,99 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e147",
-                "text": "",
-                "shape": "triangle",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ,--.\n /    \\\n|   |  |\n \\   |'\n  '--'\n"
+            }
+          }
+        },
+        {
+          "id": "apd5-source",
+          "name": "the source still able to answer",
+          "kind": "formation",
+          "position": {
+            "x": 0.08,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.85,
+            "y": 0.85
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#6a7a80",
+          "tintWeight": 0.35,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "apd5-music",
+          "name": "the music beneath the words",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.68,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♪",
+          "share": 1.0,
+          "tint": "#20282c",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#5→0 · A20/A21; Movement 35; Draft 3; the shared Neumann ground",
-          "title": "Form returns with its source still able to answer",
-          "italic": "What returns is a form capable of being changed by the world it discloses — the sequence closes in another finite act of seeing, where the other's answer remains their own.",
+          "kicker": "",
+          "title": "Form returns",
+          "italic": "Articulation again, with its source still able to answer.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The shared Neumann whole grounds the declared A20/A21 relation through differentiation, the image's power and transformed recognition; the composed whole gives that structuration its form–participation–alterity movement. Apollo returns to articulation — a definite image again offered, now bearing an acknowledged relation to the life it expresses and the difference it cannot appropriate. Dionysus remains effective within its communicability; Daphne remains",
-          "x": 0.04,
-          "y": 0.6,
-          "width": 460,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "effective within that participation — another centre can answer without being pre-assigned the answer completing the speaker's image. Draft 3: truth beyond any frame, truth through this particular angle and life; a form once opened can close again, and renewed encounter must affect its valuation. Declared cross-story: Daphne ↔ the Apollo/Dionysus bracket — distinct casts. Occurrences: renewed finite seeing (#0, #5→0); the answer remaining the other's own (#3, #5→0).",
-          "x": 0.72,
-          "y": 0.6,
-          "width": 380,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1991,7 +1465,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.1,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -2002,5 +1476,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+  "updatedAt": "2026-10-07T12:00:00.000Z"
 }

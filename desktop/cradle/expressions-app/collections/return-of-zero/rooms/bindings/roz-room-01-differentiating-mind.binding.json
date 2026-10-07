@@ -82,14 +82,44 @@
  ],
  "assets": [
   {
+   "kind": "ascii",
+   "ref": "bend plates: sheer light → the bend back → the closed loop (movement-07)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "instrument plates: B/A/M functions boxed, reflection dashes, the pole ○ beneath (movement-08)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "pulse plates: fan of alternatives → one course gathered → the act returning as inherited field (movement-09)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "apoha plates: field of non-being → the boxed 1 → the dashed contrast carried (movement-10)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "descent plates: six shelves → māyā's seam → recognition's return arrow (movement-11)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "means plates: poles and bare field → determinate relations → reflection reaching the field (movement-12)",
+   "provenance": "authored"
+  },
+  {
    "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "ref": "geometry: one-dynamism ring with prakāśa/vimarśa triangles, the pole ring, the inherited field disc, selected-one square inside the excluded-field ring, six-disc tattvic descent (gold last), immediacy/internality/world offices",
    "provenance": "authored"
   }
  ],
  "capture": "rooms/roz-room-01-differentiating-mind.cover.png",
  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
+ "status": "authored",
  "notes": [
   "E0 acceptance repair: text/field collision class fixed on all six scenes — formations shifted right-of-centre (GX 0.2), route layer moved to top-left, text column 400→360; cover re-captured at authored count.",
   "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
@@ -107,7 +137,10 @@
   "m10 apoha: the centre steps 'a promise' → 'not prediction' → 'not idle remark' while the excluded alternatives (prediction/hope/idle) dim by degrees — determination by graduated exclusion, the record's own example; shove pointer = the exclusions' edge.",
   "m11 3D (z = the descent of manifestation): the walker descends #0 → #2 → #5→0 through the depth axis while #1/#3/#4 hold their stations — the sixfold as an inhabitable depth; any local unit retains the whole descent (the record's hologram image). Depth LFO = the descent breathes.",
   "m12 the means: 'the means' → 'internal' → 'objective' — the record's two-sided definition delivered in sequence, inside a faint horizon ring (the lived horizon partly transparent to its conditions); transitions lengthen to 1.8 — the station releases slowly into §1.",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The shared chassis and word-walkers are retired; each movement draws its own figure. m07 night: sheer light bends back and closes into the loop — prakāśa and vimarśa one dynamism, drawn twice beside it. m08 the same night held (deliberate rest): the inner instrument boxed B/A/M, reflection dashes above, the pole ○ beneath the frame. m09 dusk and vortex: the fan of vikalpa, saṃkalpa's single gathered course, the pulse returning as inherited field; circulation LFO = the pulse. m10 day arrives with determination: the field of what-is-not, the boxed 1, the dashed contrast carried (the softmax payoff stays withheld for §5, as the record withholds it). m11 the same day held (deliberate rest): six shelves descend, māyā's seam splits the lower run, recognition's arrow returns; beside it the six discs shrink to the gold return. m12 cold morning: poles and bare field, determinate relations drawn in, reflection reaching back through the means; the three offices ring-square-triangle. Stillness pairs: m07–m08 (one night, awareness and its instrument), m10–m11 (one day, determination and its anatomy). Colour arc: night → dusk → day → cold morning — the world determinating. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The shared chassis and word-walkers are retired; each movement draws its own figure. m07 night: sheer light bends back and closes into the loop — prakāśa and vimarśa one dynamism, drawn twice beside it. m08 the same night held (deliberate rest): the inner instrument boxed B/A/M, reflection dashes above, the pole ○ beneath the frame. m09 dusk and vortex: the fan of vikalpa, saṃkalpa's single gathered course, the pulse returning as inherited field; circulation LFO = the pulse. m10 day arrives with determination: the field of what-is-not, the boxed 1, the dashed contrast carried (the softmax payoff stays withheld for §5, as the record withholds it). m11 the same day held (deliberate rest): six shelves descend, māyā's seam splits the lower run, recognition's arrow returns; beside it the six discs shrink to the gold return. m12 cold morning: poles and bare field, determinate relations drawn in, reflection reaching back through the means; the three offices ring-square-triangle. Stillness pairs: m07–m08 (one night, awareness and its instrument), m10–m11 (one day, determination and its anatomy). Colour arc: night → dusk → day → cold morning — the world determinating. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The shared chassis and word-walkers are retired; each movement draws its own figure. m07 night: sheer light bends back and closes into the loop — prakāśa and vimarśa one dynamism, drawn twice beside it. m08 the same night held (deliberate rest): the inner instrument boxed B/A/M, reflection dashes above, the pole ○ beneath the frame. m09 dusk and vortex: the fan of vikalpa, saṃkalpa's single gathered course, the pulse returning as inherited field; circulation LFO = the pulse. m10 day arrives with determination: the field of what-is-not, the boxed 1, the dashed contrast carried (the softmax payoff stays withheld for §5, as the record withholds it). m11 the same day held (deliberate rest): six shelves descend, māyā's seam splits the lower run, recognition's arrow returns; beside it the six discs shrink to the gold return. m12 cold morning: poles and bare field, determinate relations drawn in, reflection reaching back through the means; the three offices ring-square-triangle. Stillness pairs: m07–m08 (one night, awareness and its instrument), m10–m11 (one day, determination and its anatomy). Colour arc: night → dusk → day → cold morning — the world determinating. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations."
  ],
  "enrichment": {
   "date": "2026-10-06",
@@ -118,28 +151,29 @@
   "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
  },
  "glyph_rationales": {
-  "prakāśa": "M07: the luminosity of appearing — awareness as display before it addresses itself",
-  "vimarśa": "M07: the reflexive bend — awareness takes its own manifestation as other enough to encounter; the first differentiation (the step rotates 180°: the bend itself)",
-  "buddhi": "M08: the inner instrument's judgment — determination as an operation available to reflection",
-  "determines": "M08: buddhi's office — 'buddhi determines' in the contracted field",
-  "ahaṃkāra": "M08: appropriation — the identification through which a call becomes grievance or task",
-  "manas": "M08: coordination — the operation that gathers what attention selects",
-  "vikalpa": "M09: the articulation of alternatives — the possibility-space before intention (wide, faint: many courses at once)",
-  "saṃkalpa": "M09: the gathering of relevant differences into an intention definite enough to act upon (tight, dark: one course)",
-  "a promise": "M10: the determinate utterance — its content depends on the alternatives from which it is distinguished",
-  "not prediction": "M10: the first exclusion — calling it a promise distinguishes it from a prediction",
-  "not idle remark": "M10: the exclusion completed — not prediction, not hope, not idle remark; remove the contrasts and the same sounds carry no commitment",
-  "prediction": "M10: an excluded alternative — held faint at the rim (apoha: the positive lives by not-this)",
-  "hope": "M10: an excluded alternative — fainter still",
-  "idle": "M10: an excluded alternative — faintest (the non-selection that lets the name apply)",
-  "#0": "M11: the descent's origin — Paramaśiva/Anuttara, nearest depth (z +0.5)",
-  "#2": "M11: Sadāśiva–Īśvara at mid-descent — the sixfold carried argumentatively",
-  "#5→0": "M11: Pratyabhijñā — recognition at the deepest station; the descent's return",
-  "#1": "M11: Śiva–Śakti — a descent station held at z +0.3",
-  "#3": "M11: Sadvidyā–Māyā — a descent station at z −0.25",
-  "#4": "M11: the kañcukas and contracted apparatus — deepest of the held stations",
-  "the means": "M12: Objective Internality — the constituted means through which a Life inhabits, discriminates and acts",
-  "internal": "M12: internal because knowing and action always occur through a situated mediating field",
-  "objective": "M12: objective because the field has determinate relations, constraints and consequences available to reflection and correction"
+  "the reflexive bend": "M07: the first differentiation — the bend by which luminous awareness takes its own manifestation as other enough to encounter (prakāśa-vimarśa as one non-dual dynamism)",
+  "the one dynamism": "M07: prakāśa and vimarśa are one non-dual dynamism — their distinction arises within the activity, drawn as one ring holding both",
+  "prakāśa — the light": "M07: luminosity — sheer appearing, the straight beam before it bends",
+  "vimarśa — the reflection": "M07: self-recognition — the beam returned to its source, same dynamism faced back",
+  "the inner instrument": "M08: buddhi (judgment), ahaṃkāra (appropriation), manas (coordination) — determinate internal functions, reflectable as contents",
+  "the pole": "M08: the subject as the pole under which the functions and their products appear — never one more function",
+  "the differentiating pulse": "M09: vikalpa and saṃkalpa as one pulse on √kḷp — the field differs, a course gathers, the act changes what the next act inherits",
+  "the inherited field": "M09: memory, language, concern and means — the circumstance active before every condition is separately named, giving alternatives their character",
+  "determination through exclusion": "M10: apoha — a selected 1 intelligible against the field of what it is not; the double negation non-collapsing, the contrast semantically carried",
+  "the selected one": "M10: the achieved term — determinate, boxed, never self-sufficient",
+  "the excluded field": "M10: the constitutive contrast — exclusion that remains operative in the meaning of the term",
+  "the sixfold descent": "M11: thirty-six tattvas carried as six movements — the drawn shelves descend, māyā's seam splits the lower run, recognition's arrow returns",
+  "the tattvic descent": "M11: thirty-six tattvas carried as six movements — the discs shrink down the descent to recognition, gold because it returns the run to its ground",
+  "the mediating means": "M12: objective internality — internal (situated mediating field) and objective (determinate relations available to reflection, comparison, correction)",
+  "subjective immediacy": "M12: the first office — the non-objectifiable pole of the living relation",
+  "objective internality": "M12: the middle office — the constituted means, distinct from the Subject and from the World",
+  "world": "M12: the third office — the world the means discloses and acts within; three offices, one relation (Life / Mind)"
+ },
+ "craft": {
+  "date": "2026-10-07",
+  "actor": "zcode:craft-expressions-l4",
+  "lane": "craft-l4/rooms",
+  "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
+  "gate": "site/tests/expression-richness.mjs"
  }
 }

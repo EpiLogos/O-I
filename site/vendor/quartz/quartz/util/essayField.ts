@@ -194,6 +194,7 @@ function build(files: QuartzPluginData[]): FieldModel {
     else if (n.s === "CONFRONTING-THE-LIMIT-S01") { t = "§0/1 — The Integral Threshold"; coord = "§0/1" }
     else if (n.s === "index") t = "Reading home"
     else if (n.k === "argument" && (m = t.match(/^([AC]\d+′?) — (.+)$/))) { coord = m[1]; t = m[2] }
+    else if (n.k === "argument" && (m = n.s.split("/").pop()!.match(/^([AC]\d+)-prime-(.+)$/))) { coord = m[1] + "′"; t = prettify(m[2]) }
     else if (n.k === "argument" && (m = n.s.split("/").pop()!.match(/^([AC]\d+)-(.+)$/))) { coord = m[1]; t = prettify(m[2]) }
     else if (/^[A-Z0-9-]+$/.test(t) && t.includes("-")) t = prettify(t.toLowerCase())
     n.lab = t; n.coord = coord
@@ -233,12 +234,20 @@ function buildTree(nodes: FNode[], rooms: Record<number, FRoom>): TreeNode {
     const mf = add(rf, mk("folder", "Movements", { reg: "essay", key: "mv" + r, xhide: 1 }))
     for (const n of inRoom.filter((n) => n.k === "movement").sort((a, b) => a.m! - b.m!)) add(mf, leaf(n))
   }
-  const args = add(roomsF, mk("folder", "Arguments", { reg: "essay", key: "args", gloss: "A01–A36 and their concepts" }))
+  const args = add(roomsF, mk("folder", "Arguments", { reg: "essay", key: "args", gloss: "A01–A36 with their conjugate faces A01′–A36′ and their concepts — one A/C field" }))
   const argSub: Record<string, T> = {}
-  const argR = bySlug.get("section-rooms/arguments/README")
-  if (argR) args.ni = argR.i
+  // the A/C root parents the suite: 72 arguments (A and A′) stand in the folder itself
+  const ac = bySlug.get("section-rooms/arguments/conjugate/AC")
+  if (ac) args.ni = ac.i
+  else { const argR = bySlug.get("section-rooms/arguments/README"); if (argR) args.ni = argR.i }
   for (const n of nodes.filter((n) => n.k === "argument" && n.s !== "section-rooms/arguments/README")) {
     const parts = n.s.split("/")
+    if (parts[2] === "conjugate") {
+      // the conjugate faces are arguments, not a side folder; AC.md is the folder's own page
+      if (parts[3] === "AC" || parts[3] === "README") continue
+      add(args, leaf(n))
+      continue
+    }
     let par = args
     if (parts.length > 3) {
       par = argSub[parts[2]] ?? (argSub[parts[2]] = add(args, mk("folder", prettify(parts[2]), { reg: "essay", key: "args-" + parts[2] })))

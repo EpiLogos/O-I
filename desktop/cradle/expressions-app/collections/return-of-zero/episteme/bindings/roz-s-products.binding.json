@@ -1,296 +1,339 @@
 {
- "artifact": "episteme/roz-s-products.journey.json",
- "family": "episteme-s-products",
- "worker": "E3",
- "date": "2026-09-17",
- "profile_lineage": [
-  "roz-corpus-base",
-  "family-product"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
-  "records": [
-   {
-    "record_id": "S",
-    "path": "submission-package/essay/symbolon/episteme/products/S-World-and-Life.md",
-    "sha256": "acf6255a94573e5fab64644a42be3a88a2beae4f09d7110b80185d41fff81649",
-    "sha256_census_receipt": "acf6255a94573e5fab64644a42be3a88a2beae4f09d7110b80185d41fff81649",
-    "hash_note": "matches current bytes"
-   },
-   {
-    "record_id": "S0",
-    "path": "submission-package/essay/symbolon/episteme/products/S0-Central.md",
-    "sha256": "8cfac85fee243e0c7f68c362602fb930d7c935db6672d8d41b091b321100f063",
-    "sha256_census_receipt": "8cfac85fee243e0c7f68c362602fb930d7c935db6672d8d41b091b321100f063",
-    "hash_note": "matches current bytes"
-   },
-   {
-    "record_id": "S1",
-    "path": "submission-package/essay/symbolon/episteme/products/S1-Actuation.md",
-    "sha256": "ef4e2b59acb3f15fe0eda502042c421209086131aa1f49758f731c0d1115b2c7",
-    "sha256_census_receipt": "ef4e2b59acb3f15fe0eda502042c421209086131aa1f49758f731c0d1115b2c7",
-    "hash_note": "matches current bytes"
-   },
-   {
-    "record_id": "S2",
-    "path": "submission-package/essay/symbolon/episteme/products/S2-AIKit.md",
-    "sha256": "2618122e4da9ccfd18dca8095a6e3631d5a8b803790557ea4232c8c5273bc95a",
-    "sha256_census_receipt": "2618122e4da9ccfd18dca8095a6e3631d5a8b803790557ea4232c8c5273bc95a",
-    "hash_note": "matches current bytes"
-   },
-   {
-    "record_id": "S3",
-    "path": "submission-package/essay/symbolon/episteme/products/S3-Software-Factory.md",
-    "sha256": "a0846487951eeb094dec27f7791235de207efbfefd1b137123bb337c038b9f2d",
-    "sha256_census_receipt": "a0846487951eeb094dec27f7791235de207efbfefd1b137123bb337c038b9f2d",
-    "hash_note": "matches current bytes"
-   },
-   {
-    "record_id": "S4",
-    "path": "submission-package/essay/symbolon/episteme/products/S4-Workcell.md",
-    "sha256": "add7ce79a43ab76a76fbdc5ce31c188d430fb5524fdbb7a1e48d1de57037ff7f",
-    "sha256_census_receipt": "add7ce79a43ab76a76fbdc5ce31c188d430fb5524fdbb7a1e48d1de57037ff7f",
-    "hash_note": "matches current bytes"
-   },
-   {
-    "record_id": "S5",
-    "path": "submission-package/essay/symbolon/episteme/products/S5-Quaternal-Logic.md",
-    "sha256": "36a4828c5771769cce062b4490f4a760427082d937817f1a904621a92e1bc5e0",
-    "sha256_census_receipt": "36a4828c5771769cce062b4490f4a760427082d937817f1a904621a92e1bc5e0",
-    "hash_note": "matches current bytes"
-   }
-  ]
- },
- "pointcloud_revision": "f257de5",
- "journey": {
-  "id": "roz-s-products",
-  "name": "Return of Zero — S, World and Life: the product field",
-  "scenes": 7,
-  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
- },
- "scenes": [
-  {
-   "scene_id": "s",
-   "source_ref": "S",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S-World-and-Life.md",
-   "sha256": "acf6255a94573e5fab64644a42be3a88a2beae4f09d7110b80185d41fff81649",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": null,
-    "movement": null,
-    "mef_pair": [],
-    "argument_relations": [],
-    "concept_relations": [],
-    "assigned_pairs": {
-     "S0": "L0×L5′",
-     "S1": "L1×L4′",
-     "S2": "L2×L3′",
-     "S3": "L3×L2′",
-     "S4": "L4×L1′",
-     "S5": "L5×L0′"
+  "artifact": "episteme/roz-s-products.journey.json",
+  "family": "episteme-s-products",
+  "worker": "E3",
+  "date": "2026-09-17",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "family-product"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "census_caveat": "receipt sha256 values predate the 5c22906 content landing; current sha256 computed at dbf3b17",
+    "records": [
+      {
+        "record_id": "S",
+        "path": "submission-package/essay/symbolon/episteme/products/S-World-and-Life.md",
+        "sha256": "acf6255a94573e5fab64644a42be3a88a2beae4f09d7110b80185d41fff81649",
+        "sha256_census_receipt": "acf6255a94573e5fab64644a42be3a88a2beae4f09d7110b80185d41fff81649",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "S0",
+        "path": "submission-package/essay/symbolon/episteme/products/S0-Central.md",
+        "sha256": "8cfac85fee243e0c7f68c362602fb930d7c935db6672d8d41b091b321100f063",
+        "sha256_census_receipt": "8cfac85fee243e0c7f68c362602fb930d7c935db6672d8d41b091b321100f063",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "S1",
+        "path": "submission-package/essay/symbolon/episteme/products/S1-Actuation.md",
+        "sha256": "ef4e2b59acb3f15fe0eda502042c421209086131aa1f49758f731c0d1115b2c7",
+        "sha256_census_receipt": "ef4e2b59acb3f15fe0eda502042c421209086131aa1f49758f731c0d1115b2c7",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "S2",
+        "path": "submission-package/essay/symbolon/episteme/products/S2-AIKit.md",
+        "sha256": "2618122e4da9ccfd18dca8095a6e3631d5a8b803790557ea4232c8c5273bc95a",
+        "sha256_census_receipt": "2618122e4da9ccfd18dca8095a6e3631d5a8b803790557ea4232c8c5273bc95a",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "S3",
+        "path": "submission-package/essay/symbolon/episteme/products/S3-Software-Factory.md",
+        "sha256": "a0846487951eeb094dec27f7791235de207efbfefd1b137123bb337c038b9f2d",
+        "sha256_census_receipt": "a0846487951eeb094dec27f7791235de207efbfefd1b137123bb337c038b9f2d",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "S4",
+        "path": "submission-package/essay/symbolon/episteme/products/S4-Workcell.md",
+        "sha256": "add7ce79a43ab76a76fbdc5ce31c188d430fb5524fdbb7a1e48d1de57037ff7f",
+        "sha256_census_receipt": "add7ce79a43ab76a76fbdc5ce31c188d430fb5524fdbb7a1e48d1de57037ff7f",
+        "hash_note": "matches current bytes"
+      },
+      {
+        "record_id": "S5",
+        "path": "submission-package/essay/symbolon/episteme/products/S5-Quaternal-Logic.md",
+        "sha256": "36a4828c5771769cce062b4490f4a760427082d937817f1a904621a92e1bc5e0",
+        "sha256_census_receipt": "36a4828c5771769cce062b4490f4a760427082d937817f1a904621a92e1bc5e0",
+        "hash_note": "matches current bytes"
+      }
+    ]
+  },
+  "pointcloud_revision": "f257de5",
+  "journey": {
+    "id": "roz-s-products",
+    "name": "Return of Zero — S, World and Life: the product field",
+    "scenes": 7,
+    "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+  },
+  "scenes": [
+    {
+      "scene_id": "s",
+      "source_ref": "S",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S-World-and-Life.md",
+      "sha256": "acf6255a94573e5fab64644a42be3a88a2beae4f09d7110b80185d41fff81649",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": null,
+        "movement": null,
+        "mef_pair": [],
+        "argument_relations": [],
+        "concept_relations": [],
+        "assigned_pairs": {
+          "S0": "L0×L5′",
+          "S1": "L1×L4′",
+          "S2": "L2×L3′",
+          "S3": "L3×L2′",
+          "S4": "L4×L1′",
+          "S5": "L5×L0′"
+        }
+      },
+      "form": "ring envelope + six product discs at hexagon stations",
+      "lens_bodies": "whole-scene pairs layer lists all six assigned pairs verbatim"
+    },
+    {
+      "scene_id": "s0",
+      "source_ref": "S0",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S0-Central.md",
+      "sha256": "8cfac85fee243e0c7f68c362602fb930d7c935db6672d8d41b091b321100f063",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": "S",
+        "movement": "M37",
+        "mef_pair": [
+          "L0 Quaternal",
+          "L5′ Divine Logos"
+        ],
+        "argument_relations": [],
+        "concept_relations": []
+      },
+      "form": "two lens discs joined by a seam bar (paired disclosure)",
+      "lens_heads": [
+        "#1 — L0 Quaternal: ground becomes sayable",
+        "#2 — L5′ Divine Logos: ground lives by disclosure and return"
+      ],
+      "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
+    },
+    {
+      "scene_id": "s1",
+      "source_ref": "S1",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S1-Actuation.md",
+      "sha256": "ef4e2b59acb3f15fe0eda502042c421209086131aa1f49758f731c0d1115b2c7",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": "S",
+        "movement": "M38",
+        "mef_pair": [
+          "L1 Causal",
+          "L4′ Scientific"
+        ],
+        "argument_relations": [],
+        "concept_relations": []
+      },
+      "form": "two lens discs + gather triangle + seam bar",
+      "lens_heads": [
+        "#1 — From freedom into an event — L1 Causal",
+        "#2 — An act becoming knowledge — L4′ Scientific"
+      ],
+      "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
+    },
+    {
+      "scene_id": "s2",
+      "source_ref": "S2",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S2-AIKit.md",
+      "sha256": "2618122e4da9ccfd18dca8095a6e3631d5a8b803790557ea4232c8c5273bc95a",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": "S",
+        "movement": "M39",
+        "mef_pair": [
+          "L2 Logical",
+          "L3′ Chronological"
+        ],
+        "argument_relations": [],
+        "concept_relations": []
+      },
+      "form": "lens square + lens ring + seam bar",
+      "lens_heads": [
+        "#1 — L2 Logical: capacity includes absence, ambiguity and silence",
+        "#2 — L3′ Chronological: powers arise, mature, recede and return"
+      ],
+      "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
+    },
+    {
+      "scene_id": "s3",
+      "source_ref": "S3",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S3-Software-Factory.md",
+      "sha256": "a0846487951eeb094dec27f7791235de207efbfefd1b137123bb337c038b9f2d",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": "S",
+        "movement": "M40",
+        "mef_pair": [
+          "L3 Processual",
+          "L2′ Alchemical-Elemental"
+        ],
+        "argument_relations": [],
+        "concept_relations": []
+      },
+      "form": "lens cymatic + lens square + seam bar",
+      "lens_heads": [
+        "#1 — L3 Processual: desire enters actuality",
+        "#2 — L2′ Alchemical-Elemental: transformation has a material grammar"
+      ],
+      "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
+    },
+    {
+      "scene_id": "s4",
+      "source_ref": "S4",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S4-Workcell.md",
+      "sha256": "add7ce79a43ab76a76fbdc5ce31c188d430fb5524fdbb7a1e48d1de57037ff7f",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": "S",
+        "movement": "M41",
+        "mef_pair": [
+          "L4 Phenomenological",
+          "L1′ Phenomenal"
+        ],
+        "argument_relations": [],
+        "concept_relations": []
+      },
+      "form": "lens ring + lens disc + seam bar",
+      "lens_heads": [
+        "#1 — L4 Phenomenological: thrown into a world",
+        "#2 — L1′ Phenomenal: the aperture of encounter"
+      ],
+      "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
+    },
+    {
+      "scene_id": "s5",
+      "source_ref": "S5",
+      "source_path": "submission-package/essay/symbolon/episteme/products/S5-Quaternal-Logic.md",
+      "sha256": "36a4828c5771769cce062b4490f4a760427082d937817f1a904621a92e1bc5e0",
+      "hash_note": "matches current bytes",
+      "claim_status": "Argued",
+      "relations": {
+        "product_parent": "S",
+        "movement": "M42",
+        "mef_pair": [
+          "L5 Para Vāk",
+          "L0′ Archetypal-Numerical"
+        ],
+        "argument_relations": [],
+        "concept_relations": []
+      },
+      "form": "lens yantra + lens glyph 6 + seam bar",
+      "lens_heads": [
+        "#1 — L5 Para Vāk: articulation from the unconditioned toward manifest distinction",
+        "#2 — L0′ Archetypal-Numerical: one becomes articulated whole"
+      ],
+      "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
     }
-   },
-   "form": "ring envelope + six product discs at hexagon stations",
-   "lens_bodies": "whole-scene pairs layer lists all six assigned pairs verbatim"
+  ],
+  "assets": [
+    {
+      "kind": "glyph",
+      "ref": "inline entity text source (S5's lens glyph 6, the record's own hexad count); cymatic entity on S3's processual lens",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "episteme/roz-s-products.cover.png",
+  "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 7 scenes drafted at count 8000 and read, s0/s2/s4/s5 recaptured after layout revision (/tmp/roz-e3-drafts)",
+  "status": "reviewed",
+  "notes": [
+    "Every product scene holds its whole assigned lens pair as TWO text columns carrying BOTH lens bodies (six terms each with their offices, compressed from the record's own lens sections) — not labels: S0 L0 Quaternal × L5′ Divine Logos; S1 L1 Causal × L4′ Scientific; S2 L2 Logical × L3′ Chronological; S3 L3 Processual × L2′ Alchemical-Elemental; S4 L4 Phenomenological × L1′ Phenomenal; S5 L5 Para Vāk × L0′ Archetypal-Numerical.",
+    "First layout collided lens columns with the governing body and lens formations; revised twice (body to right-top column, formations raised, lens columns to y .57). Verified clear in recaptures.",
+    "Adopted September Scientific sequence (Prompts/Traces/Challenges/Patterns/Discovery/Insight) is what S1's record carries; the June compilation's different sequence is noted in the record and not used.",
+    "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/section-rooms/arguments/products/ — S-World-and-Life, S0–S5):",
+    "s: THE 3D SCENE — the transversal whole: the six product discs distributed through z (+0.34 to −0.42) while the envelope sequences the six names verbatim (Central → Actuation → AIKit → Software Factory → Workcell → Quaternal Logic, AC §3's own disclosures of the means); depth means the whole the six belong to — S is not a seventh product but the field in which they hold together; depthPerspective+occlusion+tint authored.",
+    "s0–s5: each product's centre square sequences its WHOLE ASSIGNED PAIR's two movements, verbatim from the record's own §1/§2 lens-section titles (L0×L5′, L1×L4′, L2×L3′, L3×L2′, L4×L1′, L5×L0′) — both lens bodies carried as staged moves, not labels; second lens accent deeper (the pair completes).",
+    "Pointers carry product character: s vortex (the whole turns), s0 attract gentle (continuity keeps), s1 attract/shove (an act takes position), s2 attract/pulse + potency breathe (capability available), s3 vortex/vortex + transform pulse (the factory's traffic), s4 repel (material resistance answers), s5 vortex/vortex (transcendent relation).",
+    "s0 lens2 (L5′) and s3 lens1 (L3) bodies compressed to ≤70 words — no claim changed ('what has been disclosed' → 'the disclosure', 'the entry of possible form into' → 'possible form entering'); lens columns narrowed (w 160, second column x 0.55) so the pair reads as two plates at 390×844 without overlap; kickers byte-exact (S0 · ARGUED · M37 …).",
+    "Beats: durations 13–15s, transitions 1.8–2.6; 3 automation lanes; ring layout on s, grid on s4, Single formation on the pairs.",
+    "This journey stays the essay's §5 staging; the full-depth 83-member product field is a different lane (LANE-S-PRODUCTS.md).",
+    "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The product field is drawn: the whole is a World ring holding a Life centre and six offices, each wearing its product's accent (gold Central, ember Actuation, teal AIKit, rust Factory, moss Workcell, violet Quaternal), with the offices named in order around the ring; each product scene then draws its whole assigned MEF pair as two glasses and the bond between them, with the pair's two lens lines walking verbatim between the glasses — the lens bodies come off the stage and live in the binding and the field's connections panel, where the full-depth record already holds them. S5 draws its own quaternal figure (square with two counter-turned triangles — no yantra) as its office. The workshop moves through iron dusk (shared by the whole and Central — the journey's first held pair), blue steel, graphite, forge (shared by Factory and Workcell — the second held pair) and violet night. Pointers keep the product character (the whole turns, Central keeps, Actuation and AIKit gather, the Factory pulses, S5 drifts transcendent). Stage text is seven hospitable sign-names and one opening line (13 words); every kicker, route and lens body is off the stage."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-episteme-l2",
+    "lane": "enrich/expressions-20261006",
+    "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "note": "records re-read at fc59a719 — products live under submission-package/essay/section-rooms/arguments/products/ at that revision (bound source_path values keep their dbf3b17 homes under submission-package/essay/symbolon/episteme/products/) | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
   },
-  {
-   "scene_id": "s0",
-   "source_ref": "S0",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S0-Central.md",
-   "sha256": "8cfac85fee243e0c7f68c362602fb930d7c935db6672d8d41b091b321100f063",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": "S",
-    "movement": "M37",
-    "mef_pair": [
-     "L0 Quaternal",
-     "L5′ Divine Logos"
-    ],
-    "argument_relations": [],
-    "concept_relations": []
-   },
-   "form": "two lens discs joined by a seam bar (paired disclosure)",
-   "lens_heads": [
-    "#1 — L0 Quaternal: ground becomes sayable",
-    "#2 — L5′ Divine Logos: ground lives by disclosure and return"
-   ],
-   "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
-  },
-  {
-   "scene_id": "s1",
-   "source_ref": "S1",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S1-Actuation.md",
-   "sha256": "ef4e2b59acb3f15fe0eda502042c421209086131aa1f49758f731c0d1115b2c7",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": "S",
-    "movement": "M38",
-    "mef_pair": [
-     "L1 Causal",
-     "L4′ Scientific"
-    ],
-    "argument_relations": [],
-    "concept_relations": []
-   },
-   "form": "two lens discs + gather triangle + seam bar",
-   "lens_heads": [
-    "#1 — From freedom into an event — L1 Causal",
-    "#2 — An act becoming knowledge — L4′ Scientific"
-   ],
-   "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
-  },
-  {
-   "scene_id": "s2",
-   "source_ref": "S2",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S2-AIKit.md",
-   "sha256": "2618122e4da9ccfd18dca8095a6e3631d5a8b803790557ea4232c8c5273bc95a",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": "S",
-    "movement": "M39",
-    "mef_pair": [
-     "L2 Logical",
-     "L3′ Chronological"
-    ],
-    "argument_relations": [],
-    "concept_relations": []
-   },
-   "form": "lens square + lens ring + seam bar",
-   "lens_heads": [
-    "#1 — L2 Logical: capacity includes absence, ambiguity and silence",
-    "#2 — L3′ Chronological: powers arise, mature, recede and return"
-   ],
-   "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
-  },
-  {
-   "scene_id": "s3",
-   "source_ref": "S3",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S3-Software-Factory.md",
-   "sha256": "a0846487951eeb094dec27f7791235de207efbfefd1b137123bb337c038b9f2d",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": "S",
-    "movement": "M40",
-    "mef_pair": [
-     "L3 Processual",
-     "L2′ Alchemical-Elemental"
-    ],
-    "argument_relations": [],
-    "concept_relations": []
-   },
-   "form": "lens cymatic + lens square + seam bar",
-   "lens_heads": [
-    "#1 — L3 Processual: desire enters actuality",
-    "#2 — L2′ Alchemical-Elemental: transformation has a material grammar"
-   ],
-   "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
-  },
-  {
-   "scene_id": "s4",
-   "source_ref": "S4",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S4-Workcell.md",
-   "sha256": "add7ce79a43ab76a76fbdc5ce31c188d430fb5524fdbb7a1e48d1de57037ff7f",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": "S",
-    "movement": "M41",
-    "mef_pair": [
-     "L4 Phenomenological",
-     "L1′ Phenomenal"
-    ],
-    "argument_relations": [],
-    "concept_relations": []
-   },
-   "form": "lens ring + lens disc + seam bar",
-   "lens_heads": [
-    "#1 — L4 Phenomenological: thrown into a world",
-    "#2 — L1′ Phenomenal: the aperture of encounter"
-   ],
-   "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
-  },
-  {
-   "scene_id": "s5",
-   "source_ref": "S5",
-   "source_path": "submission-package/essay/symbolon/episteme/products/S5-Quaternal-Logic.md",
-   "sha256": "36a4828c5771769cce062b4490f4a760427082d937817f1a904621a92e1bc5e0",
-   "hash_note": "matches current bytes",
-   "claim_status": "Argued",
-   "relations": {
-    "product_parent": "S",
-    "movement": "M42",
-    "mef_pair": [
-     "L5 Para Vāk",
-     "L0′ Archetypal-Numerical"
-    ],
-    "argument_relations": [],
-    "concept_relations": []
-   },
-   "form": "lens yantra + lens glyph 6 + seam bar",
-   "lens_heads": [
-    "#1 — L5 Para Vāk: articulation from the unconditioned toward manifest distinction",
-    "#2 — L0′ Archetypal-Numerical: one becomes articulated whole"
-   ],
-   "lens_bodies": "both held as two scene text columns, compressed from the record's own lens sections; every one of the six lens terms kept with its office"
+  "glyph_rationales": {
+    "6": "S5's own numeral — the senarius carried on the record's Quaternal Logic staging",
+    "Central": "S's first disclosed aspect — meaningful continuity: what is retained, referred to, governed and returned (AC §3; S0)",
+    "Actuation": "S's second aspect — living articulation: how a capacity becomes an event (AC §3; S1)",
+    "AIKit": "S's third aspect — potency: capabilities, contexts, skills, methods and resources (AC §3; S2)",
+    "Workcell": "S's fifth aspect — situated existence: action bound to actual hosts, resources and consequence (AC §3; S4)",
+    "Quaternal Logic": "S's sixth aspect — transcendent relation: local distinctions held related to their wholes (AC §3; S5)",
+    "ground becomes sayable": "L0 Quaternal's movement in S0's assigned pair (record §1)",
+    "ground lives by disclosure and return": "L5′ Divine Logos's movement in S0's pair (record §2)",
+    "from freedom into an event": "L1 Causal's movement in S1's pair (record §1)",
+    "an act becoming knowledge": "L4′ Scientific's movement in S1's pair (record §2)",
+    "capacity includes absence, ambiguity and silence": "L2 Logical's movement in S2's pair (record §1)",
+    "powers arise, mature, recede and return": "L3′ Chronological's movement in S2's pair (record §2)",
+    "desire enters actuality": "L3 Processual's movement in S3's pair (record §1)",
+    "transformation has a material grammar": "L2′ Alchemical-Elemental's movement in S3's pair (record §2)",
+    "thrown into a world": "L4 Phenomenological's movement in S4's pair (record §1)",
+    "the aperture of encounter": "L1′ Phenomenal's movement in S4's pair (record §2)",
+    "articulation from the unconditioned toward manifest distinction": "L5 Para Vāk's movement in S5's pair (record §1)",
+    "one becomes articulated whole": "L0′ Archetypal-Numerical's movement in S5's pair (record §2)",
+    "the World ring": "the World — the whole a Life discloses, ringed and holding its offices",
+    "the Life centre": "the Life — one centre disclosing its World through six offices",
+    "the six offices": "one of the six product offices, wearing its product's accent on the World ring",
+    "S": "the whole field's mark at rest before the offices are named in order",
+    "the Central office": "Central — meaningful continuity: the product's own office at the centre of its scene",
+    "L0 Quaternal": "L0 Quaternal — the first glass of S0's paired disclosure",
+    "L5′ Divine Logos": "L5′ Divine Logos — the second glass of S0's paired disclosure",
+    "the pairing held as one disclosure": "the whole assigned pair — both lens bodies held as one disclosure, not two labels",
+    "ground": "the pair's first lens line at rest before the two lines walk",
+    "the Actuation office": "Actuation — living articulation: the product's own office at the centre of its scene",
+    "L1 Causal": "L1 Causal — the first glass of S1's paired disclosure",
+    "L4′ Scientific": "L4′ Scientific — the second glass of S1's paired disclosure",
+    "freedom": "the pair's first lens line at rest before the two lines walk",
+    "the AIKit office": "AIKit — potency: the product's own office at the centre of its scene",
+    "L2 Logical": "L2 Logical — the first glass of S2's paired disclosure",
+    "L3′ Chronological": "L3′ Chronological — the second glass of S2's paired disclosure",
+    "capacity": "the pair's first lens line at rest before the two lines walk",
+    "the Software Factory office": "Software Factory — transformation: the product's own office at the centre of its scene",
+    "L3 Processual": "L3 Processual — the first glass of S3's paired disclosure",
+    "L2′ Alchemical-Elemental": "L2′ Alchemical-Elemental — the second glass of S3's paired disclosure",
+    "desire": "the pair's first lens line at rest before the two lines walk",
+    "the Workcell office": "Workcell — situated existence: the product's own office at the centre of its scene",
+    "L4 Phenomenological": "L4 Phenomenological — the first glass of S4's paired disclosure",
+    "L1′ Phenomenal": "L1′ Phenomenal — the second glass of S4's paired disclosure",
+    "thrown": "the pair's first lens line at rest before the two lines walk",
+    "the Quaternal Logic office": "Quaternal Logic — Transcendent Relation: the product's own office at the centre of its scene",
+    "L5 Para Vāk": "L5 Para Vāk — the first glass of S5's paired disclosure",
+    "L0′ Archetypal-Numerical": "L0′ Archetypal-Numerical — the second glass of S5's paired disclosure",
+    "word": "the pair's first lens line at rest before the two lines walk",
+    "the quaternal figure": "the quaternal square — S5's own figure, the four of Quaternal Logic drawn",
+    "Factory": "S's fourth aspect — transformation: an inherited state becomes another tested state (AC §3; S3)",
+    "Quaternal": "S's sixth aspect — transcendent relation: local distinctions held related to their wholes (AC §3; S5)",
+    "sayable": "L0 Quaternal's movement in S0's assigned pair (record §1)",
+    "return": "L5′ Divine Logos's movement in S0's pair (record §2)",
+    "event": "L1 Causal's movement in S1's pair (record §1)",
+    "knowledge": "L4′ Scientific's movement in S1's pair (record §2)",
+    "silence": "L2 Logical's movement in S2's pair (record §1)",
+    "actuality": "L3 Processual's movement in S3's pair (record §1)",
+    "grammar": "L2′ Alchemical-Elemental's movement in S3's pair (record §2)",
+    "world": "L4 Phenomenological's movement in S4's pair (record §1)",
+    "encounter": "L1′ Phenomenal's movement in S4's pair (record §2)",
+    "distinction": "L5 Para Vāk's movement in S5's pair (record §1)",
+    "whole": "L0′ Archetypal-Numerical's movement in S5's pair (record §2)"
   }
- ],
- "assets": [
-  {
-   "kind": "glyph",
-   "ref": "inline entity text source (S5's lens glyph 6, the record's own hexad count); cymatic entity on S3's processual lens",
-   "provenance": "authored"
-  }
- ],
- "capture": "episteme/roz-s-products.cover.png",
- "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000, first scene); all 7 scenes drafted at count 8000 and read, s0/s2/s4/s5 recaptured after layout revision (/tmp/roz-e3-drafts)",
- "status": "reviewed",
- "notes": [
-  "Every product scene holds its whole assigned lens pair as TWO text columns carrying BOTH lens bodies (six terms each with their offices, compressed from the record's own lens sections) — not labels: S0 L0 Quaternal × L5′ Divine Logos; S1 L1 Causal × L4′ Scientific; S2 L2 Logical × L3′ Chronological; S3 L3 Processual × L2′ Alchemical-Elemental; S4 L4 Phenomenological × L1′ Phenomenal; S5 L5 Para Vāk × L0′ Archetypal-Numerical.",
-  "First layout collided lens columns with the governing body and lens formations; revised twice (body to right-top column, formations raised, lens columns to y .57). Verified clear in recaptures.",
-  "Adopted September Scientific sequence (Prompts/Traces/Challenges/Patterns/Discovery/Insight) is what S1's record carries; the June compilation's different sequence is noted in the record and not used.",
-  "Enrichment moves 2026-10-06 (records re-read at fc59a719 under submission-package/essay/section-rooms/arguments/products/ — S-World-and-Life, S0–S5):",
-  "s: THE 3D SCENE — the transversal whole: the six product discs distributed through z (+0.34 to −0.42) while the envelope sequences the six names verbatim (Central → Actuation → AIKit → Software Factory → Workcell → Quaternal Logic, AC §3's own disclosures of the means); depth means the whole the six belong to — S is not a seventh product but the field in which they hold together; depthPerspective+occlusion+tint authored.",
-  "s0–s5: each product's centre square sequences its WHOLE ASSIGNED PAIR's two movements, verbatim from the record's own §1/§2 lens-section titles (L0×L5′, L1×L4′, L2×L3′, L3×L2′, L4×L1′, L5×L0′) — both lens bodies carried as staged moves, not labels; second lens accent deeper (the pair completes).",
-  "Pointers carry product character: s vortex (the whole turns), s0 attract gentle (continuity keeps), s1 attract/shove (an act takes position), s2 attract/pulse + potency breathe (capability available), s3 vortex/vortex + transform pulse (the factory's traffic), s4 repel (material resistance answers), s5 vortex/vortex (transcendent relation).",
-  "s0 lens2 (L5′) and s3 lens1 (L3) bodies compressed to ≤70 words — no claim changed ('what has been disclosed' → 'the disclosure', 'the entry of possible form into' → 'possible form entering'); lens columns narrowed (w 160, second column x 0.55) so the pair reads as two plates at 390×844 without overlap; kickers byte-exact (S0 · ARGUED · M37 …).",
-  "Beats: durations 13–15s, transitions 1.8–2.6; 3 automation lanes; ring layout on s, grid on s4, Single formation on the pairs.",
-  "This journey stays the essay's §5 staging; the full-depth 83-member product field is a different lane (LANE-S-PRODUCTS.md)."
- ],
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-episteme-l2",
-  "lane": "enrich/expressions-20261006",
-  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "note": "records re-read at fc59a719 — products live under submission-package/essay/section-rooms/arguments/products/ at that revision (bound source_path values keep their dbf3b17 homes under submission-package/essay/symbolon/episteme/products/) | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
- },
- "glyph_rationales": {
-  "6": "S5's own numeral — the senarius carried on the record's Quaternal Logic staging",
-  "Central": "S's first disclosed aspect — meaningful continuity: what is retained, referred to, governed and returned (AC §3; S0)",
-  "Actuation": "S's second aspect — living articulation: how a capacity becomes an event (AC §3; S1)",
-  "AIKit": "S's third aspect — potency: capabilities, contexts, skills, methods and resources (AC §3; S2)",
-  "Software Factory": "S's fourth aspect — transformation: an inherited state becomes another tested state (AC §3; S3)",
-  "Workcell": "S's fifth aspect — situated existence: action bound to actual hosts, resources and consequence (AC §3; S4)",
-  "Quaternal Logic": "S's sixth aspect — transcendent relation: local distinctions held related to their wholes (AC §3; S5)",
-  "ground becomes sayable": "L0 Quaternal's movement in S0's assigned pair (record §1)",
-  "ground lives by disclosure and return": "L5′ Divine Logos's movement in S0's pair (record §2)",
-  "from freedom into an event": "L1 Causal's movement in S1's pair (record §1)",
-  "an act becoming knowledge": "L4′ Scientific's movement in S1's pair (record §2)",
-  "capacity includes absence, ambiguity and silence": "L2 Logical's movement in S2's pair (record §1)",
-  "powers arise, mature, recede and return": "L3′ Chronological's movement in S2's pair (record §2)",
-  "desire enters actuality": "L3 Processual's movement in S3's pair (record §1)",
-  "transformation has a material grammar": "L2′ Alchemical-Elemental's movement in S3's pair (record §2)",
-  "thrown into a world": "L4 Phenomenological's movement in S4's pair (record §1)",
-  "the aperture of encounter": "L1′ Phenomenal's movement in S4's pair (record §2)",
-  "articulation from the unconditioned toward manifest distinction": "L5 Para Vāk's movement in S5's pair (record §1)",
-  "one becomes articulated whole": "L0′ Archetypal-Numerical's movement in S5's pair (record §2)"
- }
 }

@@ -1,1794 +1,1680 @@
 {
-  "schema": "oi.journey",
-  "version": 1,
-  "id": "roz-room-02-return-of-zero",
-  "name": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
-  "description": "Differentiation structurally retains a zero, and mathematics supplies exact forms through which absence becomes operative. Six movements as addressable scenes in one shared section-room grammar. Binds to section-rooms/02-return-of-zero/ at Antykathera-Essay-Work dbf3b17.",
-  "loop": true,
-  "scenes": [
-    {
-      "id": "movement-13",
-      "name": "§1 · #0 — A Sign Migrates Between Worlds",
-      "character": "§1 · #0 — A Sign Migrates Between Worlds (Derived).",
-      "duration": 14,
-      "transition": 1.5,
-      "view": {
-        "mode": "3d",
-        "yaw": 0.35,
-        "pitch": 0.26,
-        "zoom": 0.95,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#f4f2eb",
-        "palette": [
-          "#252720",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.45,
-          "circulation": 0.4,
-          "turbulence": 0.1,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.04,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.5,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-01x",
-          "name": "Traversal — A Sign Migrates Between Worlds",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "·",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-01x-s1",
-                "hold": 2.4,
-                "transition": 1.1,
-                "position": {
-                  "x": -0.3,
-                  "y": 0,
-                  "z": 0.45
-                },
-                "text": "·",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-01x-s2",
-                "hold": 2.4,
-                "transition": 1.1,
-                "position": {
-                  "x": -0.05,
-                  "y": 0.03,
-                  "z": 0.15
-                },
-                "text": "·",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-01x-s3",
-                "hold": 2.4,
-                "transition": 1.1,
-                "position": {
-                  "x": 0.2,
-                  "y": -0.02,
-                  "z": -0.15
-                },
-                "text": "·",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-01x-s4",
-                "hold": 2.4,
-                "transition": 1.1,
-                "position": {
-                  "x": 0.45,
-                  "y": 0.02,
-                  "z": -0.45
-                },
-                "text": "·",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-01x-s5",
-                "hold": 3.2,
-                "transition": 1.5,
-                "position": {
-                  "x": 0.62,
-                  "y": 0.06,
-                  "z": -0.7
-                },
-                "text": "·",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.25,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-r02-world-1",
-          "name": "a world of reception — Babylonian place-holding",
-          "kind": "formation",
-          "position": {
-            "x": -0.3,
-            "y": 0,
-            "z": 0.45
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0.25,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        },
-        {
-          "id": "ent-r02-world-2",
-          "name": "a world of reception — Indian development",
-          "kind": "formation",
-          "position": {
-            "x": -0.05,
-            "y": 0.03,
-            "z": 0.15
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0.3,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        },
-        {
-          "id": "ent-r02-world-3",
-          "name": "a world of reception — Arabic transmission",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": -0.02,
-            "z": -0.15
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0.35,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        },
-        {
-          "id": "ent-r02-world-4",
-          "name": "a world of reception — European adoption",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": 0.02,
-            "z": -0.45
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0.4,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 13 OF 48 · §1 · #0 · ROOM 02-RETURN-OF-ZERO",
-          "title": "A Sign Migrates Between Worlds",
-          "italic": "Derived",
-          "body": "Zero converges several historically distinct inventions: the blank place, placeholder, numeral, arithmetic element, origin, empty set, and sign of nothing.\n← previous · M12 Objective Internality   ·   next → M14 Śūnya Becomes Operational",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M13 → A10 · A15 / C03 · C52 — Encounter Name/Count/Account; zero-history Episteme",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "route-drift",
-          "enabled": true,
-          "target": "field.params.depth",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.35,
-          "max": 0.6,
-          "rate": 0.08,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 14,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.5,
-        "pointerClickRadius": 0.4,
-        "volumeEnabled": true,
-        "volumeProfile": "round",
-        "depthPerspective": true,
-        "depthOcclusion": true,
-        "depthTintColor": "#20242c"
-      }
-    },
-    {
-      "id": "movement-14",
-      "name": "§1 · #1 — Śūnya Becomes Operational",
-      "character": "§1 · #1 — Śūnya Becomes Operational (Derived (historical/mathematical); Argued (Indian mathematical-metaphysical braid)).",
-      "duration": 13,
-      "transition": 1.4,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#f4f2eb",
-        "palette": [
-          "#252720",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.6,
-          "circulation": 1.3,
-          "turbulence": 0.12,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.05,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-021",
-          "name": "0 — Śūnya Becomes Operational",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "0",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-021-s1",
-                "hold": 3,
-                "transition": 1.2,
-                "position": null,
-                "text": "a+0=a",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.72,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.45,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-021-s2",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "text": "a·0=0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.72,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-r02-absorb",
-          "name": "differences the product cannot recover",
-          "kind": "formation",
-          "position": {
-            "x": 0.34,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.9,
-            "y": 0.9
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#3d5a80",
-          "tintWeight": 0.35,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 14 OF 48 · §1 · #1 · ROOM 02-RETURN-OF-ZERO",
-          "title": "Śūnya Becomes Operational",
-          "italic": "Derived (historical/mathematical); Argued (Indian mathematical-metaphysical braid)",
-          "body": "The decisive mathematical turn occurs when śūnya is no longer only an empty place but something through which arithmetic can pass.\n← previous · M13 A Sign Migrates Between Worlds   ·   next → M15 The Empty Set Generates One",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M14 → A10 · A23 / C03 · C48 · C52 — Count + trust-under-limit",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "rule-pulse",
-          "enabled": true,
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.9,
-          "max": 1.7,
-          "rate": 0.1,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 13,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "vortex",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
-      }
-    },
-    {
-      "id": "movement-15",
-      "name": "§1 · #2 — The Empty Set Generates One",
-      "character": "§1 · #2 — The Empty Set Generates One (Derived).",
-      "duration": 13,
-      "transition": 1.5,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#f4f2eb",
-        "palette": [
-          "#252720",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.55,
-          "circulation": 0.9,
-          "turbulence": 0.1,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.05,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-023",
-          "name": "Traversal — The Empty Set Generates One",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "∅",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-023-s1",
-                "hold": 2.6,
-                "transition": 1.1,
-                "position": null,
-                "text": "∅",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.35,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-023-s2",
-                "hold": 2.6,
-                "transition": 1.1,
-                "position": null,
-                "text": "{∅}",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-023-s3",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "text": "{∅,{∅}}",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.72,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 15 OF 48 · §1 · #2 · ROOM 02-RETURN-OF-ZERO",
-          "title": "The Empty Set Generates One",
-          "italic": "Derived",
-          "body": "The von Neumann construction gives a precise formal neighbour for the essay's zero/one relation: 0 = ∅, 1 = {∅}, n+1 = n∪{n}. One is the first successor of zero; no second primitive numerical object is required.\n← previous · M14 Śūnya Becomes Operational   ·   next → M16 The Crossed Zero",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M15 → A10 · A11 · A14 / C49 · C52 · C64 — formal-neighbour Matheme; no retrospective proof by set theory",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "generation-breathe",
-          "enabled": true,
-          "target": "field.params.dispersion",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.04,
-          "max": 0.1,
-          "rate": 0.09,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 13,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 1.5,
-        "pointerClickRadius": 0.4
-      }
-    },
-    {
-      "id": "movement-16",
-      "name": "§1 · #3 — The Crossed Zero",
-      "character": "§1 · #3 — The Crossed Zero (Offered).",
-      "duration": 14,
-      "transition": 1.6,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#f4f2eb",
-        "palette": [
-          "#252720",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.5,
-          "circulation": 0.5,
-          "turbulence": 0.12,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.06,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-028",
-          "name": "The crossed zero — one job",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "Ø",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-028-s1",
-                "hold": 3,
-                "transition": 1.4,
-                "position": null,
-                "text": "0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.4,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-028-s2",
-                "hold": 3.6,
-                "transition": 1.6,
-                "position": null,
-                "text": "Ø",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 16 OF 48 · §1 · #3 · ROOM 02-RETURN-OF-ZERO",
-          "title": "The Crossed Zero",
-          "italic": "Offered",
-          "body": "Ø is the first occlusion in the essay's native recognition-matheme: the mediating stroke is present, but fused into the zero it crosses.\n← previous · M15 The Empty Set Generates One   ·   next → M17 Zero Keeps One Foot Outside Mathematics",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M16 → A10 · A18 / C21 · C52 · C61 — Symbol/Account/Trust + crossed-zero Matheme",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "stroke-holds",
-          "enabled": true,
-          "target": "field.params.speed",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.35,
-          "max": 0.7,
-          "rate": 0.07,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 14,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "repel",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.7,
-        "pointerClickRadius": 0.45
-      }
-    },
-    {
-      "id": "movement-17",
-      "name": "§1 · #4 — Zero Keeps One Foot Outside Mathematics",
-      "character": "§1 · #4 — Zero Keeps One Foot Outside Mathematics (Argued).",
-      "duration": 14,
-      "transition": 1.5,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#f4f2eb",
-        "palette": [
-          "#252720",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 0.6,
-          "turbulence": 0.24,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.09,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-02a",
-          "name": "The exceptional return",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "1/0",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-02a-s1",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "text": "1/0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.45,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-02a-s2",
-                "hold": 2.6,
-                "transition": 1.2,
-                "position": null,
-                "text": "0·q=1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.72,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-02a-s3",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "text": "∞",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 17 OF 48 · §1 · #4 · ROOM 02-RETURN-OF-ZERO",
-          "title": "Zero Keeps One Foot Outside Mathematics",
-          "italic": "Argued",
-          "body": "Division by zero is the point at which a formal system must disclose itself.\n← previous · M16 The Crossed Zero   ·   next → M18 The Loan Returns",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M17 → A10 · A18 · A23 / C21 · C48 · C52 · C61 — cross-register return with explicit warrant boundaries",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "exception-jolt",
-          "enabled": true,
-          "target": "field.params.turbulence",
-          "type": "lfo",
-          "wave": "saw",
-          "min": 0.14,
-          "max": 0.32,
-          "rate": 0.13,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 14,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 2,
-        "pointerClickRadius": 0.4
-      }
-    },
-    {
-      "id": "movement-18",
-      "name": "§1 · #5→0 — The Loan Returns",
-      "character": "§1 · #5→0 — The Loan Returns (Argued).",
-      "duration": 16,
-      "transition": 1.9,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#f4f2eb",
-        "palette": [
-          "#252720",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.7,
-          "circulation": 1.7,
-          "turbulence": 0.14,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.05,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-02c",
-          "name": "0/1 — ground becoming legible through a mark",
-          "kind": "formation",
-          "position": {
-            "x": -0.18,
-            "y": 0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.5,
-            "y": 0.55
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "0/1",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "repel",
-            "strength": 0.6,
-            "radius": 0.4,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "step-02d",
-                "text": "0/1",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-02e",
-          "name": "1/0 — the mark returning toward its ground",
-          "kind": "formation",
-          "position": {
-            "x": 0.82,
-            "y": 0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.5,
-            "y": 0.55
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "1/0",
-          "share": 1,
-          "tint": "#3d5a80",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "repel",
-            "strength": 0.6,
-            "radius": 0.4,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "step-02f",
-                "text": "1/0",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-r02-mediant",
-          "name": "the mediant walker — (a+c)/(b+d) inserted between neighbours",
-          "kind": "formation",
-          "position": {
-            "x": 0.32,
-            "y": 0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.55,
-            "y": 0.55
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "1/1",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0.8,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0.5,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-r02-mediant-s1",
-                "hold": 2.6,
-                "transition": 1.2,
-                "position": {
-                  "x": 0.32,
-                  "y": 0.12,
-                  "z": 0
-                },
-                "text": "1/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-r02-mediant-s2",
-                "hold": 2.4,
-                "transition": 1.2,
-                "position": {
-                  "x": 0.07,
-                  "y": 0.12,
-                  "z": 0
-                },
-                "text": "1/2",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-r02-mediant-s3",
-                "hold": 2.4,
-                "transition": 1.2,
-                "position": {
-                  "x": 0.57,
-                  "y": 0.12,
-                  "z": 0
-                },
-                "text": "2/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-r02-mediant-s4",
-                "hold": 3.2,
-                "transition": 1.5,
-                "position": {
-                  "x": 0.32,
-                  "y": -0.12,
-                  "z": 0
-                },
-                "text": "0/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 18 OF 48 · §1 · #5→0 · ROOM 02-RETURN-OF-ZERO",
-          "title": "The Loan Returns",
-          "italic": "Argued",
-          "body": "The formal-limit opening borrowed zero as a sign for the subject that cannot be counted as one more object. §1 returns the loan with mathematical interest: the notation is now earned as the essay's own relational notation, 0/1 ↔ 1/0.\n← previous · M17 Zero Keeps One Foot Outside Mathematics   ·   next → M19 Difference Cannot Be Escaped",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 320,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M18 → A11 · A15 · A23 / C48 · C49 — Symbol/Account/Trust + Apportionment/Economy",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 300,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "line",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.12,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "generative-spiral",
-          "enabled": true,
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 1.2,
-          "max": 2.2,
-          "rate": 0.08,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 16,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "vortex",
-        "pointerClick": "vortex",
-        "pointerClickStrength": 1.2,
-        "pointerClickRadius": 0.45
-      }
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-room-02-return-of-zero",
+ "name": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+ "description": "Differentiation structurally retains a zero, and mathematics supplies exact forms through which absence becomes operative. Six movements as addressable scenes in one shared section-room grammar. Binds to section-rooms/02-return-of-zero/ at Antykathera-Essay-Work dbf3b17.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "movement-13",
+   "name": "§1 · #0 — A Sign Migrates Between Worlds",
+   "character": "§1 · #0 — A Sign Migrates Between Worlds (Derived).",
+   "duration": 14,
+   "transition": 1.4,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#ded2bc",
+    "palette": [
+     "#2a2118",
+     "#7a4a2a"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "sizeBias": 1.6,
+     "opacity": 0.92,
+     "roundness": 0.95,
+     "softness": 0.15,
+     "irregularity": 0.35,
+     "elongation": 0.04,
+     "orientation": 0,
+     "contrast": 0.93,
+     "densityScale": 1,
+     "densityPhase": 0.3,
+     "edgeWeight": 0,
+     "halo": 0.13,
+     "speed": 0.46,
+     "circulation": 0.5,
+     "turbulence": 0.12,
+     "turbulenceScale": 1.2,
+     "recovery": 1.1,
+     "dispersion": 0.05,
+     "pointerStrength": 0.8,
+     "pointerRadius": 0.23,
+     "pointerFalloff": 2,
+     "depth": 0.14,
+     "grain": 0.035,
+     "snapRigidity": 1,
+     "densityTether": 1,
+     "curlDepth": 0.2,
+     "vortexRadius": 0.4,
+     "gravityX": 0,
+     "gravityY": 0,
+     "gravityZ": 0,
+     "quadraticDrag": 0.2,
+     "thermalJitter": 0,
+     "speedLimit": 3,
+     "zConfinement": 1,
+     "timeScale": 1,
+     "gravitySoftening": 0.1,
+     "gravityFalloff": 2,
+     "swirlRadius": 0.4,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
     }
-  ],
-  "updatedAt": "2026-09-17T05:34:06.821Z"
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "fontWeight": 900,
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 0.8,
+    "pointerClickRadius": 0.4
+   },
+   "entities": [
+    {
+     "id": "m13-migration",
+     "name": "the migration of the sign",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 2.4,
+      "y": 0.9
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 3,
+     "tint": "#2a2118",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "sourcesVersion": 1,
+      "steps": [
+       {
+        "id": "m13-migration-st-1",
+        "text": "",
+        "name": "Babylonian: the blank place kept by context",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": " ▹ ▹   ▹"
+         }
+        },
+        "hold": 3,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m13-migration-st-2",
+        "text": "",
+        "name": "Indian: the dot becomes a numeral",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  ·"
+         }
+        },
+        "hold": 2.6,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m13-migration-st-3",
+        "text": "",
+        "name": "Arabic transmission: the sign crosses scripts",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  ٠ → 0"
+         }
+        },
+        "hold": 2.6,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m13-migration-st-4",
+        "text": "",
+        "name": "European adoption: the origin on the line",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": " ────┼────\n     0"
+         }
+        },
+        "hold": 3.4,
+        "transition": 1.6,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " ▹ ▹   ▹"
+      }
+     }
+    },
+    {
+     "id": "m13-origin",
+     "name": "the origin",
+     "kind": "formation",
+     "position": {
+      "x": 0.8,
+      "y": 0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#7a4a2a",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m13-originst-5",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "movement-13-stage",
+     "kicker": "",
+     "title": "A sign migrates",
+     "italic": "Blank place, numeral, origin — kept, marked, transmitted, adopted.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.62,
+     "width": 330,
+     "size": 20,
+     "align": "left",
+     "visible": true
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "movement-14",
+   "name": "§1 · #1 — Śūnya Becomes Operational",
+   "character": "§1 · #1 — Śūnya Becomes Operational (Derived (historical/mathematical); Argued (Indian mathematical-metaphysical braid)).",
+   "duration": 13,
+   "transition": 1.4,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#ded2bc",
+    "palette": [
+     "#2a2118",
+     "#7a4a2a"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "sizeBias": 1.6,
+     "opacity": 0.92,
+     "roundness": 0.95,
+     "softness": 0.15,
+     "irregularity": 0.35,
+     "elongation": 0.04,
+     "orientation": 0,
+     "contrast": 0.93,
+     "densityScale": 1,
+     "densityPhase": 0.3,
+     "edgeWeight": 0,
+     "halo": 0.13,
+     "speed": 0.46,
+     "circulation": 0.5,
+     "turbulence": 0.12,
+     "turbulenceScale": 1.2,
+     "recovery": 1.1,
+     "dispersion": 0.05,
+     "pointerStrength": 0.8,
+     "pointerRadius": 0.23,
+     "pointerFalloff": 2,
+     "depth": 0.14,
+     "grain": 0.035,
+     "snapRigidity": 1,
+     "densityTether": 1,
+     "curlDepth": 0.2,
+     "vortexRadius": 0.4,
+     "gravityX": 0,
+     "gravityY": 0,
+     "gravityZ": 0,
+     "quadraticDrag": 0.2,
+     "thermalJitter": 0,
+     "speedLimit": 3,
+     "zConfinement": 1,
+     "timeScale": 1,
+     "gravitySoftening": 0.1,
+     "gravityFalloff": 2,
+     "swirlRadius": 0.4,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "fontWeight": 900,
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 0.8,
+    "pointerClickRadius": 0.4
+   },
+   "entities": [
+    {
+     "id": "m14-rules",
+     "name": "the three operations",
+     "kind": "formation",
+     "position": {
+      "x": 0.33,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 2.3,
+      "y": 0.95
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 3,
+     "tint": "#2a2118",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "sourcesVersion": 1,
+      "steps": [
+       {
+        "id": "m14-rules-st-6",
+        "text": "",
+        "name": "additive identity: the determination unchanged",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  a + 0 = a"
+         }
+        },
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m14-rules-st-7",
+        "text": "",
+        "name": "multiplicative absorber: every magnitude returns to zero",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  a + 0 = a\n  a · 0 = 0"
+         }
+        },
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m14-rules-st-8",
+        "text": "",
+        "name": "the divisor: the pressure-point at the edge",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "┌───────────┐\n│ a + 0 = a │\n│ a · 0 = 0 │\n│ a/0 ──────┼─▶\n└───────────┘"
+         }
+        },
+        "hold": 3.4,
+        "transition": 1.6,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  a + 0 = a"
+      }
+     }
+    },
+    {
+     "id": "m14-algebra",
+     "name": "the containing algebra",
+     "kind": "formation",
+     "position": {
+      "x": 0.78,
+      "y": 0.32,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#7a4a2a",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m14-algebrast-9",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "movement-14-stage",
+     "kicker": "",
+     "title": "Śūnya becomes operational",
+     "italic": "It leaves a determination unchanged, absorbs every magnitude, and sits at the edge.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.62,
+     "width": 330,
+     "size": 20,
+     "align": "left",
+     "visible": true
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "movement-15",
+   "name": "§1 · #2 — The Empty Set Generates One",
+   "character": "§1 · #2 — The Empty Set Generates One (Derived).",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#f2efe4",
+    "palette": [
+     "#252720",
+     "#3d5a80"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "sizeBias": 1.6,
+     "opacity": 0.92,
+     "roundness": 0.95,
+     "softness": 0.15,
+     "irregularity": 0.35,
+     "elongation": 0.04,
+     "orientation": 0,
+     "contrast": 0.93,
+     "densityScale": 1,
+     "densityPhase": 0.3,
+     "edgeWeight": 0,
+     "halo": 0.13,
+     "speed": 0.5,
+     "circulation": 0.5,
+     "turbulence": 0.15,
+     "turbulenceScale": 1.2,
+     "recovery": 1.1,
+     "dispersion": 0.05,
+     "pointerStrength": 0.8,
+     "pointerRadius": 0.23,
+     "pointerFalloff": 2,
+     "depth": 0.12,
+     "grain": 0.035,
+     "snapRigidity": 1,
+     "densityTether": 1,
+     "curlDepth": 0.2,
+     "vortexRadius": 0.4,
+     "gravityX": 0,
+     "gravityY": 0,
+     "gravityZ": 0,
+     "quadraticDrag": 0.2,
+     "thermalJitter": 0,
+     "speedLimit": 3,
+     "zConfinement": 1,
+     "timeScale": 1,
+     "gravitySoftening": 0.1,
+     "gravityFalloff": 2,
+     "swirlRadius": 0.4,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "fontWeight": 900,
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 0.8,
+    "pointerClickRadius": 0.4
+   },
+   "entities": [
+    {
+     "id": "m15-vonnum",
+     "name": "the von Neumann chain",
+     "kind": "formation",
+     "position": {
+      "x": 0.33,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 2.3,
+      "y": 0.9
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 3,
+     "tint": "#252720",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "sourcesVersion": 1,
+      "steps": [
+       {
+        "id": "m15-vonnum-st-a",
+        "text": "",
+        "name": "zero is the empty set",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  0 = ∅"
+         }
+        },
+        "hold": 2.6,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m15-vonnum-st-b",
+        "text": "",
+        "name": "one is the set of zero",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  0 = ∅\n  1 = {∅}"
+         }
+        },
+        "hold": 2.6,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m15-vonnum-st-c",
+        "text": "",
+        "name": "each successor gathers the prior ordinal",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  ∅  {∅}  {∅,{∅}}\n  n+1 = n ∪ {n}"
+         }
+        },
+        "hold": 3.4,
+        "transition": 1.6,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  0 = ∅"
+      }
+     }
+    },
+    {
+     "id": "m15-ordinals",
+     "name": "the ordinals",
+     "kind": "formation",
+     "position": {
+      "x": 0.78,
+      "y": 0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#252720",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m15-ordinalsst-d",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "m15-ordinals-2",
+     "name": "the ordinals",
+     "kind": "formation",
+     "position": {
+      "x": 0.88,
+      "y": 0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3d5a80",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m15-ordinals-2st-e",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "movement-15-stage",
+     "kicker": "",
+     "title": "The empty set generates one",
+     "italic": "From nothing, the successor gathers each prior ordinal as part of its successor.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.62,
+     "width": 330,
+     "size": 20,
+     "align": "left",
+     "visible": true
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "movement-16",
+   "name": "§1 · #3 — The Crossed Zero",
+   "character": "§1 · #3 — The Crossed Zero (Offered).",
+   "duration": 14,
+   "transition": 1.6,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#1c1a22",
+    "palette": [
+     "#eee9d9",
+     "#a94138"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "sizeBias": 1.6,
+     "opacity": 0.92,
+     "roundness": 0.95,
+     "softness": 0.15,
+     "irregularity": 0.35,
+     "elongation": 0.04,
+     "orientation": 0,
+     "contrast": 0.93,
+     "densityScale": 1,
+     "densityPhase": 0.3,
+     "edgeWeight": 0,
+     "halo": 0.13,
+     "speed": 0.42,
+     "circulation": 0.4,
+     "turbulence": 0.1,
+     "turbulenceScale": 1.2,
+     "recovery": 1.1,
+     "dispersion": 0.04,
+     "pointerStrength": 0.8,
+     "pointerRadius": 0.23,
+     "pointerFalloff": 2,
+     "depth": 0.2,
+     "grain": 0.035,
+     "snapRigidity": 1,
+     "densityTether": 1,
+     "curlDepth": 0.2,
+     "vortexRadius": 0.4,
+     "gravityX": 0,
+     "gravityY": 0,
+     "gravityZ": 0,
+     "quadraticDrag": 0.2,
+     "thermalJitter": 0,
+     "speedLimit": 3,
+     "zConfinement": 1,
+     "timeScale": 1,
+     "gravitySoftening": 0.1,
+     "gravityFalloff": 2,
+     "swirlRadius": 0.4,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "fontWeight": 900,
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 0.8,
+    "pointerClickRadius": 0.4
+   },
+   "entities": [
+    {
+     "id": "m16-crossed",
+     "name": "the crossed zero",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": 0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 2.2,
+      "y": 0.9
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 3,
+     "tint": "#eee9d9",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "sourcesVersion": 1,
+      "steps": [
+       {
+        "id": "m16-crossed-st-f",
+        "text": "",
+        "name": "the bare zero",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  ◯"
+         }
+        },
+        "hold": 2.4,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m16-crossed-st-g",
+        "text": "",
+        "name": "the stroke fused with the zero it crosses",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  Ø"
+         }
+        },
+        "hold": 3,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m16-crossed-st-h",
+        "text": "",
+        "name": "the recognition series inscribed as horizon",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": " 0→Ø→X→Ø/X→(0/Ø)/(1/X)→1↩0/1"
+         }
+        },
+        "hold": 3.6,
+        "transition": 1.8,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  ◯"
+      }
+     }
+    },
+    {
+     "id": "m16-stroke",
+     "name": "the mediating stroke",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": 0.02,
+      "z": 0.05
+     },
+     "size": {
+      "x": 0.7,
+      "y": 0.055
+     },
+     "rotation": 32,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#a94138",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m16-strokest-i",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "m16-mark",
+     "name": "the determinate mark",
+     "kind": "formation",
+     "position": {
+      "x": 0.52,
+      "y": 0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.12,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#eee9d9",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m16-markst-j",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "m16-zerospace",
+     "name": "the zero-space",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": 0.02,
+      "z": -0.05
+     },
+     "size": {
+      "x": 0.5,
+      "y": 0.5
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#a94138",
+     "tintWeight": 0.2,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m16-zerospacest-k",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "movement-16-stage",
+     "kicker": "",
+     "title": "The crossed zero",
+     "italic": "The mediating stroke fused with the zero it crosses; uncrossing is not erasing.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.62,
+     "width": 330,
+     "size": 20,
+     "align": "left",
+     "visible": true
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [
+    {
+     "id": "stroke-edge",
+     "enabled": true,
+     "target": "field.params.turbulence",
+     "type": "lfo",
+     "wave": "saw",
+     "min": 0.08,
+     "max": 0.18,
+     "rate": 0.12,
+     "phase": 0,
+     "blend": "replace",
+     "duration": 14,
+     "delay": 0,
+     "loop": "loop",
+     "firedAt": null
+    }
+   ]
+  },
+  {
+   "id": "movement-17",
+   "name": "§1 · #4 — Zero Keeps One Foot Outside Mathematics",
+   "character": "§1 · #4 — Zero Keeps One Foot Outside Mathematics (Argued).",
+   "duration": 14,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#1c1a22",
+    "palette": [
+     "#eee9d9",
+     "#a94138"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "sizeBias": 1.6,
+     "opacity": 0.92,
+     "roundness": 0.95,
+     "softness": 0.15,
+     "irregularity": 0.35,
+     "elongation": 0.04,
+     "orientation": 0,
+     "contrast": 0.93,
+     "densityScale": 1,
+     "densityPhase": 0.3,
+     "edgeWeight": 0,
+     "halo": 0.13,
+     "speed": 0.42,
+     "circulation": 0.4,
+     "turbulence": 0.1,
+     "turbulenceScale": 1.2,
+     "recovery": 1.1,
+     "dispersion": 0.04,
+     "pointerStrength": 0.8,
+     "pointerRadius": 0.23,
+     "pointerFalloff": 2,
+     "depth": 0.2,
+     "grain": 0.035,
+     "snapRigidity": 1,
+     "densityTether": 1,
+     "curlDepth": 0.2,
+     "vortexRadius": 0.4,
+     "gravityX": 0,
+     "gravityY": 0,
+     "gravityZ": 0,
+     "quadraticDrag": 0.2,
+     "thermalJitter": 0,
+     "speedLimit": 3,
+     "zConfinement": 1,
+     "timeScale": 1,
+     "gravitySoftening": 0.1,
+     "gravityFalloff": 2,
+     "swirlRadius": 0.4,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "fontWeight": 900,
+    "pointerMode": "attract",
+    "pointerClick": "pulse",
+    "pointerClickStrength": 0.8,
+    "pointerClickRadius": 0.4
+   },
+   "entities": [
+    {
+     "id": "m17-division",
+     "name": "division by zero",
+     "kind": "formation",
+     "position": {
+      "x": 0.33,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 2.3,
+      "y": 0.95
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 3,
+     "tint": "#eee9d9",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "sourcesVersion": 1,
+      "steps": [
+       {
+        "id": "m17-division-st-l",
+        "text": "",
+        "name": "no element multiplied by zero returns one",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  1/0 = x\n  0·x = 1\n  0·x = 0"
+         }
+        },
+        "hold": 3,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m17-division-st-m",
+        "text": "",
+        "name": "the wall: the system must disclose itself",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "┌────────┐\n│ 1/0 ───┼─▸\n└────────┘"
+         }
+        },
+        "hold": 2.8,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m17-division-st-n",
+        "text": "",
+        "name": "the line completed by a declared point",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": " ────┬────●\n     0    ∞"
+         }
+        },
+        "hold": 3.4,
+        "transition": 1.6,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  1/0 = x\n  0·x = 1\n  0·x = 0"
+      }
+     }
+    },
+    {
+     "id": "m17-sphere",
+     "name": "the sphere closes the plane",
+     "kind": "formation",
+     "position": {
+      "x": 0.79,
+      "y": 0.32,
+      "z": 0
+     },
+     "size": {
+      "x": 0.32,
+      "y": 0.32
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#eee9d9",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m17-spherest-o",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "movement-17-stage",
+     "kicker": "",
+     "title": "One foot outside",
+     "italic": "No element multiplied by zero returns one; each completion declares its structure.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.62,
+     "width": 330,
+     "size": 20,
+     "align": "left",
+     "visible": true
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "movement-18",
+   "name": "§1 · #5→0 — The Loan Returns",
+   "character": "§1 · #5→0 — The Loan Returns (Argued).",
+   "duration": 16,
+   "transition": 2,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#171310",
+    "palette": [
+     "#e9ddc8",
+     "#c2a852"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "sizeBias": 1.6,
+     "opacity": 0.92,
+     "roundness": 0.95,
+     "softness": 0.15,
+     "irregularity": 0.35,
+     "elongation": 0.04,
+     "orientation": 0,
+     "contrast": 0.93,
+     "densityScale": 1,
+     "densityPhase": 0.3,
+     "edgeWeight": 0,
+     "halo": 0.13,
+     "speed": 0.3,
+     "circulation": 0.3,
+     "turbulence": 0.06,
+     "turbulenceScale": 1.2,
+     "recovery": 1.1,
+     "dispersion": 0.05,
+     "pointerStrength": 0.8,
+     "pointerRadius": 0.23,
+     "pointerFalloff": 2,
+     "depth": 0.25,
+     "grain": 0.035,
+     "snapRigidity": 1,
+     "densityTether": 1,
+     "curlDepth": 0.2,
+     "vortexRadius": 0.4,
+     "gravityX": 0,
+     "gravityY": 0,
+     "gravityZ": 0,
+     "quadraticDrag": 0.2,
+     "thermalJitter": 0,
+     "speedLimit": 3,
+     "zConfinement": 1,
+     "timeScale": 1,
+     "gravitySoftening": 0.1,
+     "gravityFalloff": 2,
+     "swirlRadius": 0.4,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "fontWeight": 900,
+    "pointerMode": "attract",
+    "pointerClick": "implode",
+    "pointerClickStrength": 1,
+    "pointerClickRadius": 0.4
+   },
+   "entities": [
+    {
+     "id": "m18-loan",
+     "name": "the earned pair",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 2.4,
+      "y": 0.95
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 3,
+     "tint": "#e9ddc8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "sourcesVersion": 1,
+      "steps": [
+       {
+        "id": "m18-loan-st-p",
+        "text": "",
+        "name": "0/1 ↔ 1/0 — the essay's own relational notation",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  0/1  ↔  1/0"
+         }
+        },
+        "hold": 3.2,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m18-loan-st-q",
+        "text": "",
+        "name": "the mediant rises between retained endpoints",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  0/1     1/0\n     ╲   ╱\n      1/1"
+         }
+        },
+        "hold": 3,
+        "transition": 1.3,
+        "position": null
+       },
+       {
+        "id": "m18-loan-st-r",
+        "text": "",
+        "name": "relations ramify between the retained endpoints",
+        "shape": "disc",
+        "source": {
+         "kind": "ascii",
+         "ascii": {
+          "text": "  0/1           1/0\n     ╲       ╱\n       1/1\n      ╱   ╲\n   1/2     2/1"
+         }
+        },
+        "hold": 3.8,
+        "transition": 1.8,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  0/1  ↔  1/0"
+      }
+     }
+    },
+    {
+     "id": "m18-slash",
+     "name": "the slash",
+     "kind": "formation",
+     "position": {
+      "x": 0.82,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.09,
+      "y": 0.4
+     },
+     "rotation": 25,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#c2a852",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m18-slashst-s",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "m18-endpoints",
+     "name": "the retained endpoints",
+     "kind": "formation",
+     "position": {
+      "x": 0.82,
+      "y": 0.3,
+      "z": -0.05
+     },
+     "size": {
+      "x": 0.52,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#c2a852",
+     "tintWeight": 0.25,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "m18-endpointsst-t",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "movement-18-stage",
+     "kicker": "",
+     "title": "The loan returns",
+     "italic": "0/1 the condition made definite; 1/0 the definite returning; the slash the act.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.62,
+     "width": 330,
+     "size": 20,
+     "align": "left",
+     "visible": true
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [
+    {
+     "id": "return-breath",
+     "enabled": true,
+     "target": "field.params.dispersion",
+     "type": "lfo",
+     "wave": "sine",
+     "min": 0.03,
+     "max": 0.09,
+     "rate": 0.07,
+     "phase": 0,
+     "blend": "replace",
+     "duration": 16,
+     "delay": 0,
+     "loop": "loop",
+     "firedAt": null
+    }
+   ]
+  }
+ ],
+ "updatedAt": "2026-10-07T12:18:20.848Z"
 }

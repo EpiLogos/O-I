@@ -43,7 +43,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 		<header className="oi-panel-head"><strong>Agents in {project??"Central root"}</strong><button type="button" className="oi-action" disabled={state.busy} onClick={()=>void refresh()}>Read native roster</button></header>
 		<p className="oi-note">A reusable Agent is an accepted native definition. Temporary task roles and runtime sessions stay separate. Preparing a session neither starts a harness nor grants execution authority.</p>
 		{state.profiles.length>0&&<div role="group" aria-label="Native Agent roster">{state.profiles.map(item=><button key={item.profile.ref} type="button" className="oi-row" disabled={state.busy||state.unknown==="prepare"} onClick={()=>void controller.select(item.profile.ref)}>
-			<span>{item.profile.name??item.profile.agent_ref}</span><span className="oi-note">{item.accepted?"Accepted definition":"Proposal — not accepted"}</span>
+			<span>{item.profile.name??item.profile.agent_ref}{" "}</span><span className="oi-note">{item.accepted?"Accepted definition":"Proposal — not accepted"}</span>
 		</button>)}</div>}
 		{!review&&<fieldset disabled={state.busy||!!state.unknown}>
 			<label className="oi-field">Agent name<input className="oi-input" aria-label="Agent name" value={draft.name} maxLength={256} onChange={e=>controller.edit({name:e.target.value})}/></label>
@@ -73,6 +73,12 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 				<p className="oi-note">Exact effective bytes are checked at preparation and sent to the parent session. Brokered children require separate admission.</p>
 			</fieldset>
 			<CharacterSection value={draft.characterRef} onChange={characterRef=>controller.edit({characterRef})}/>
+			<fieldset className="oi-section" disabled={state.busy||!!state.unknown} aria-label="Self-definition sources">
+				<legend>Self-definition — authored sources</legend>
+				<label className="oi-field">Self source ref<input className="oi-input" aria-label="Self source ref" value={draft.selfDefinition?.selfSourceRef??""} maxLength={1024} onChange={e=>controller.edit({selfDefinition:{selfSourceRef:e.target.value,logosRef:draft.selfDefinition?.logosRef??""}})}/></label>
+				<label className="oi-field">Relational Logos ref<input className="oi-input" aria-label="Relational Logos ref" value={draft.selfDefinition?.logosRef??""} maxLength={1024} onChange={e=>controller.edit({selfDefinition:{selfSourceRef:draft.selfDefinition?.selfSourceRef??"",logosRef:e.target.value}})}/></label>
+				<p className="oi-note">Central source refs; exact bytes are pinned and human-accepted. Optional — pin both refs or neither. The source temperament stands apart from the visual character above.</p>
+			</fieldset>
 			<button type="button" className="oi-action oi-action-primary" onClick={()=>void saveAndStart()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save and start Direct work</button>
 			<button type="button" className="oi-action" onClick={()=>void controller.propose()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save as native proposal only</button>
 			<p className="oi-note">Save and start runs the native save (CAS), acceptance, world-readiness check and session preparation in order, then opens the conversation. Each stage&apos;s real outcome is shown; a failure after the save keeps the source and names the failing stage.</p>
@@ -82,6 +88,20 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 			<pre className="oi-note" style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{review.profile.intent_provenance?.intent_expression??review.profile.purpose}</pre>
 			<p className="oi-note">Scope <code>{review.scope_ref}</code> · source <code>{review.profile.ref}</code> · revision <code>{review.profile.revision}</code></p>
 			{review.profile.skill_set_refs&&review.profile.skill_set_refs.length>0&&<p className="oi-note">SkillSets: {review.profile.skill_set_refs.join(", ")}</p>}
+			{review.self_definition&&<section aria-label="Operative self-definition text" className="oi-section">
+				<h4>Operative text — the exact accepted source</h4>
+				{(["source","relational_logos"] as const).map(pin=>{
+					const reading=review.self_definition?.[pin];
+					if(!reading?.reference)return null;
+					return <details key={pin} open={pin==="source"}>
+						<summary>{pin==="source"?"Self definition":"Relational Logos"} — <code>{reading.reference}</code></summary>
+						{reading.resolved===true&&typeof reading.text==="string"
+							?<pre data-operative-text={pin} style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{reading.text}</pre>
+							:<p className="oi-refusal" data-attention="true" data-self-source-unresolved={pin}>{reading.reason??"The pinned source text did not resolve; no text is shown in its place."}</p>}
+					</details>;
+				})}
+				{review.self_definition.self_sources_resolved===false&&<p className="oi-refusal">The pinned self-definition sources did not all resolve; this Agent is not running on its intended exact ground.</p>}
+			</section>}
 			{!review.accepted&&<CharacterEditor current={review.profile.expressive_character_ref} onSave={controller.setCharacter} disabled={state.busy||!!state.unknown}/>}
 			<details><summary>Show raw — exact source basis and delivery limits</summary><p><code>{review.content_digest}</code></p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(review.profile,null,2)}</pre><p>Selected Skill content is checked and delivered to the native parent session. Child activation requires its own admission and is not implied.</p></details>
 			{review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref} standing={prepared?"prepared":"accepted"} editableCharacter onCharacterChanged={()=>void controller.select(review.profile.ref)}

@@ -1,1931 +1,1907 @@
 {
-  "schema": "oi.journey",
-  "version": 1,
-  "id": "roz-mytheme-stained-glass-refraction",
-  "name": "Stained Glass — Originating Light, Spectrum, Panes, Seams, and Returning Recognition",
-  "description": "The authored optical movement: light entering a made aperture, the implicated spectrum, panes and seams as refractive apparatus, the changing projection disclosing the construction, and recognition returning to the aperture.",
-  "loop": true,
-  "scenes": [
-    {
-      "id": "m-gla-0-aperture",
-      "name": "Light entering a made aperture",
-      "character": "Sun, aperture, glass, seams, room and viewer belong to one event; what is prior in being is later in recognition.",
-      "duration": 13,
-      "transition": 1.4,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.35,
-        "pointerClickRadius": 0.3
-      },
-      "field": {
-        "background": "#141118",
-        "palette": [
-          "#c9a227",
-          "#141118",
-          "#4a5d7e",
-          "#a5623a",
-          "#3c6e71"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.3,
-          "circulation": 0.1,
-          "dispersion": 0.05,
-          "pointerStrength": 0.3
-        }
-      },
-      "entities": [
-        {
-          "id": "e534",
-          "name": "the originating light — priority over the projected image",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.07,
-            "z": 0
-          },
-          "size": {
-            "x": 0.184,
-            "y": 0.184
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "☀",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e534-1",
-                "text": "☀",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.4,
-                "position": {
-                  "x": -0.55,
-                  "y": -0.07,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e534-2",
-                "text": "☀",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.4,
-                "position": {
-                  "x": -0.22,
-                  "y": -0.24,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e535",
-          "name": "the window — panes and lead as a made aperture",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.32,
-            "z": 0
-          },
-          "size": {
-            "x": 0.614,
-            "y": 0.798
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.55,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st578",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e536",
-          "name": "the cast image — pratibimba in the room where someone encounters it",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.05,
-            "z": 0
-          },
-          "size": {
-            "x": 0.6,
-            "y": 0.6
-          },
-          "rotation": 0,
-          "shape": "yantra",
-          "text": "",
-          "share": 1.4,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st579",
-                "text": "",
-                "shape": "yantra",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e537",
-          "name": "Bimba / pratibimba — the Original prior in being, later in recognition",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "B/p",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e537-1",
-                "text": "B/p",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e537-2",
-                "text": "p→B",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#0 · Q27's two contributions (human-amplified: yes)",
-          "title": "Light entering a made aperture",
-          "italic": "The whole embodies constructing from diaphaneity: composing a work so its originating relation becomes perceptible through the differences of its materials.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Light enters a room through a window assembled from differently coloured panes. The panes give it determinate passages; the lead holds their boundaries; an image falls into the interior where someone can encounter it. The visible colour carries the work of relations the colour alone cannot display completely. This is Frank Taylor's authored Mytheme of constructing from diaphaneity — no",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "historical window or sacred programme reconstructed. The originating light has priority over the projected image, yet the viewer encounters the image first and follows its differences back: what is prior in being can be later in recognition. Bimba names the Original order; pratibimba names its determinate display; neither viewer nor maker supplies the Original by finishing the picture.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the light, aperture and cast image (#0, transformed at #4); the encounter-first asymmetry (#0, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-gla-1-spectrum",
-      "name": "The spectrum implicated in the light",
-      "character": "QL figures the full ordered spectrum immanent to the light; the pane gives a difference a passage — it does not first create the capacity for difference.",
-      "duration": 12,
-      "transition": 1.3,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 0.5,
-        "pointerClickRadius": 0.3
-      },
-      "field": {
-        "background": "#16141c",
-        "palette": [
-          "#c9a227",
-          "#141118",
-          "#4a5d7e",
-          "#a5623a",
-          "#3c6e71",
-          "#8c3b2e"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.35,
-          "circulation": 0.14,
-          "dispersion": 0.05,
-          "pointerStrength": 0.35
-        }
-      },
-      "entities": [
-        {
-          "id": "e538",
-          "name": "the white light carrying plenitude — the possibility of differentiated colour",
-          "kind": "formation",
-          "position": {
-            "x": -0.4,
-            "y": -0.32,
-            "z": 0
-          },
-          "size": {
-            "x": 0.43,
-            "y": 0.43
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.75,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e538-1",
-                "text": "",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e2d0",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e538-2",
-                "text": "",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e538-3",
-                "text": "",
-                "shape": "disc",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#3c6e71",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e538-4",
-                "text": "",
-                "shape": "disc",
-                "hold": 3.2,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e539",
-          "name": "the ordered spectrum — QL as harmonic articulation of the source",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": 0.1,
-            "z": 0
-          },
-          "size": {
-            "x": 1,
-            "y": 0.9
-          },
-          "rotation": 0,
-          "shape": "cymatic",
-          "text": "",
-          "share": 1.6,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st582",
-                "text": "",
-                "shape": "cymatic",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e540",
-          "name": "no pane numbered, traditioned or coloured by decree",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.26,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "∅#",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e540-1",
-                "text": "∅#",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e540-2",
-                "text": "QL",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#1 · the corrected Q27 assignment; the native theorem spine",
-          "title": "The spectrum implicated in the light",
-          "italic": "The assignment demonstrates the immanence: QL belongs to the originating light as its harmonic articulation — spectral language attributes no optics to a Śaiva author, and no pane receives a permanent number.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The white light carries plenitude: its apparent unity holds the possibility of differentiated colour together with the relations through which the colours belong to one field. Within Taylor's optic this full ordered spectrum figures QL — immanent to the originating light as its harmonic articulation. The pane gives a difference a passage; it does not first create the capacity for difference in a contentless source.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The native theorem spine grounds the relation: the parent phases bearing the positional field in inverse orientations, the First Spanda's source-to-expression and return-to-recognition joined through their interference term. The optical whole makes that fullness and return visible, leaving the equations' derivation in the theorem field. QL's sixfold body and eight-determination traversal remain distinct from the number of panes: none requires a pane to receive a permanent number, tradition or colour.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the plenitude and its spectrum (#1, differentiated at #2); the First Spanda's interference term (#1); the pane-count independence (#1, #2).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "ring",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-spectrum",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.08,
-          "max": 0.08,
-          "rate": 0.2,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-gla-2-seams",
-      "name": "Colour acquires a passage; the joins stay visible",
-      "character": "MEF figures the panes, media, angles, densities and joins; the lead carries provenance, discontinuity, translation limits, contradiction, changes of register.",
-      "duration": 14,
-      "transition": 1.5,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 0.8,
-        "pointerClickRadius": 0.4
-      },
-      "field": {
-        "background": "#121016",
-        "palette": [
-          "#c9a227",
-          "#141118",
-          "#4a5d7e",
-          "#a5623a",
-          "#3c6e71",
-          "#8c3b2e"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.3,
-          "circulation": 0.08,
-          "dispersion": 0.04,
-          "pointerStrength": 0.45
-        }
-      },
-      "entities": [
-        {
-          "id": "e541",
-          "name": "panes — transmission and obstruction, not an opaque mosaic",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.55,
-            "z": 0
-          },
-          "size": {
-            "x": 0.532,
-            "y": 0.62
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.45,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st584",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e542",
-          "name": "the lead cames — holding neighbours in relation while marking where one passage ends",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.41,
-            "z": 0
-          },
-          "size": {
-            "x": 0.469,
-            "y": 0.599
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e542-1",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.1
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e542-2",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e543",
-          "name": "MEF — the refractive operation of declared media, angles, transformations, exclusions",
-          "kind": "formation",
-          "position": {
-            "x": 0.62,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.44,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "MEF",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st586",
-                "text": "MEF",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e544",
-          "name": "the correction — the lead to the apparatus; QL to the light; MEF not an outside authority",
-          "kind": "formation",
-          "position": {
-            "x": -0.62,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≠",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e544-1",
-                "text": "≠",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e544-2",
-                "text": "/",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.3,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.48,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#2 · Q27:2937–2950 governing the assignments (human-amplified: yes); C39",
-          "title": "Colour acquires a passage; the joins stay visible",
-          "italic": "The seams embody method: choosing and joining materials already determines how the source can become visible — a source enters because its operation changes what the whole can disclose.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Each pane has a material, density, colour and angle: placement permits some transmission, bends or colours what passes, leaves something obstructed. Removing every difference in pursuit of neutrality would also remove the transformations through which the composition becomes articulate. The original quilt distinguishes the window from an opaque mosaic: the mosaic arranges fragments into a surface image; the window works through transmission and obstruction as well as arrangement.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The lead cames carry the joins — holding neighbouring panes in relation while marking where one passage ends and another begins; in the epistemic construction the seams retain provenance, discontinuity, translation limits, contradiction and changes of register. These figure MEF, whose office C39 defines: a lens changes a question, a permissible inference or an act of judgment while keeping its conditions inspectable.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the pane placements (#2); the lead's held joins (#2, reused at #4's comparison); the corrected apparatus/light assignment (#2, carried through #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "grid",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-gla-3-projection",
-      "name": "The image appears; changing light discloses the construction",
-      "character": "The situated projection implicates its viewer; as sun, pane, angle, room and viewer change, the display changes — a later view reveals what an earlier arrangement withheld.",
-      "duration": 12,
-      "transition": 1.3,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.45,
-        "pointerClickRadius": 0.3
-      },
-      "field": {
-        "background": "#1a1418",
-        "palette": [
-          "#c9a227",
-          "#141118",
-          "#4a5d7e",
-          "#a5623a",
-          "#3c6e71",
-          "#8c3b2e"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.4,
-          "circulation": 0.18,
-          "dispersion": 0.07,
-          "pointerStrength": 0.4
-        }
-      },
-      "entities": [
-        {
-          "id": "e545",
-          "name": "the changing projection",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.32,
-            "z": 0
-          },
-          "size": {
-            "x": 0.307,
-            "y": 0.399
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "",
-          "share": 1.8,
-          "tint": "#252720",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e545-1",
-                "text": "",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e545-2",
-                "text": "",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.55,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#7a2e1d",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e545-3",
-                "text": "",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#3c6e71",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e546",
-          "name": "the invested viewer — body, position, attention, concern entering what is seen",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.16,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st592",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e547",
-          "name": "the 180°→360° contextual turn — positions and transitions held together",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "360°",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e547-1",
-                "text": "180°",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e547-2",
-                "text": "360°",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e548",
-          "name": "the atlas complement — charts and transitions retain what light-through-glass cannot do",
-          "kind": "formation",
-          "position": {
-            "x": -0.6,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "Atlas",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st594",
-                "text": "Atlas",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#3–#4 · P5's invested reading; Gebser pp.1–3, 11–21, 255–58; A04; A16/A22; Symbolon Dynamics",
-          "title": "The image appears; changing light discloses the construction",
-          "italic": "Recognition proceeds through exact differences among the projections towards the order they disclose — neither averaging differences nor adding them into a final picture.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The coloured display is produced through the relation of light and made aperture, encountered from a position. Looking only at the glass misses the event of transmission; looking only at the image conceals the glass, its joins and placement. The situated image is pratibimba; its danger begins when availability becomes a claim to possess the source. The viewer is implicated: body, position, attention and concern enter what is seen.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "changes: a later display makes visible a region previously obscured. The order recognisable across the transformations belongs to Bimba/QL; the appearances remain pratibimbas. The 180°→360° movement names the contextual turn — positions ceasing to claim isolated completeness as joint conditions become available. The atlas carries the complementary discipline: a chart-transition is not light passing through glass; each whole retains the operation the other cannot perform.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the changing sun and revealed region (#4); the implicated viewer (#3, #4); the atlas/window distinction (#4, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-projection",
-          "target": "field.params.dispersion",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.04,
-          "max": 0.04,
-          "rate": 0.24,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-gla-5-return",
-      "name": "Recognition returns to the aperture",
-      "character": "A seam examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment. The luminous image and its historical limits.",
-      "duration": 15,
-      "transition": 2.0,
-      "view": {
-        "mode": "3d",
-        "yaw": 0.3,
-        "pitch": 0.35,
-        "zoom": 0.95,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.55,
-        "pointerClickRadius": 0.35,
-        "depthOcclusion": true,
-        "depthTintColor": "#0a0810",
-        "volumeEnabled": true
-      },
-      "field": {
-        "background": "#10121a",
-        "palette": [
-          "#c9a227",
-          "#141118",
-          "#4a5d7e",
-          "#a5623a",
-          "#3c6e71",
-          "#8c3b2e"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.4,
-          "circulation": 0.2,
-          "dispersion": 0.06,
-          "zConfinement": 0.85,
-          "pointerStrength": 0.5
-        }
-      },
-      "entities": [
-        {
-          "id": "e549",
-          "name": "the window — its determinacy retained, recognition giving it return",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.6,
-            "z": -0.4
-          },
-          "size": {
-            "x": 0.489,
-            "y": 0.62
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e549-1",
-                "text": "",
-                "shape": "square",
-                "hold": 3.2,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e549-2",
-                "text": "",
-                "shape": "square",
-                "hold": 3.6,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#5d7396",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e550",
-          "name": "Dyczkowski's limits — the lattice window; the mirror losing the external object; vimarśa's self-apprehending power",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.45,
-            "z": 0.0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "¶",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st596",
-                "text": "¶",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e551",
-          "name": "Bohm — resonant-with, not extraction; no optical proof",
-          "kind": "formation",
-          "position": {
-            "x": -0.6,
-            "y": -0.45,
-            "z": 0.2
-          },
-          "size": {
-            "x": 0.34,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "◉◉",
-          "share": 1,
-          "tint": "#3c6e71",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st597",
-                "text": "◉◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e552",
-          "name": "C09/C37/C39 and M05/M30/M36 — the declared returns",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": -0.45,
-            "z": 0.35
-          },
-          "size": {
-            "x": 0.34,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "M05",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e552-1",
-                "text": "M05",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e552-2",
-                "text": "C38",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#5→0 · the source boundaries; the declared returns to C09, C37, C39, M05, M30, M36",
-          "title": "Recognition returns to the aperture",
-          "italic": "The whole returns-to its movements without substituting the image for derivations, warrants or tests: an essay section can carry the whole relational movement from its own angle — QL's native recursion supplying the capacity.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The viewer returns to the window with a changed understanding: what first appeared as a self-contained pattern now discloses the source, selected passages and boundaries of its appearing. A seam can be examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The Original remains prior: within a declared Context Frame the achieved map can serve as local Bimba while remaining pratibimba to wider sources; returned evidence can correct that local Bimba itself. Dyczkowski's lattice-window image gives an account of light appearing diverse through limiting conditions; the mirror analogy loses the external object; an inert mirror can display without knowing — Vimarśa names the self-apprehending power. Bohm is Resonant with, not extraction.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the examined seam and reread source (#2, #5→0); the local-Bimba office (#4, #5→0); the declared movement returns (#5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "ring",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-return",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": 0.35,
-          "max": 0.65,
-          "rate": 0.22,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-mytheme-stained-glass-refraction",
+ "name": "Stained Glass — Originating Light, Spectrum, Panes, Seams, and Returning Recognition",
+ "description": "The authored optical movement: light entering a made aperture, the implicated spectrum, panes and seams as refractive apparatus, the changing projection disclosing the construction, and recognition returning to the aperture.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "m-gla-0-aperture",
+   "name": "Light entering a made aperture",
+   "character": "Sun, aperture, glass, seams, room and viewer belong to one event; what is prior in being is later in recognition.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#0f0d13",
+    "palette": [
+     "#e8ddc0",
+     "#4a5d7e",
+     "#8c3b2e",
+     "#c9a227"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.45,
+     "circulation": 0.35,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
     }
-  ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+   },
+   "entities": [
+    {
+     "id": "g0-sun",
+     "name": "the originating light — the sun outside the made aperture",
+     "kind": "formation",
+     "position": {
+      "x": -0.42,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.11
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e8ddc0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g0-sun-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "     \\  '  /\n   '  .---.  '\n  -- (     ) --\n   '  `---'  '\n     /  '  \\"
+      }
+     }
+    },
+    {
+     "id": "g0-window",
+     "name": "the rose window — panes and lead as a made aperture",
+     "kind": "formation",
+     "position": {
+      "x": -0.28,
+      "y": -0.32,
+      "z": 0
+     },
+     "size": {
+      "x": 0.28,
+      "y": 0.28
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g0-window-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "       _.-=-=--._\n     ,'  \\  |  /  ',\n    /  \\   \\|/   /  \\\n   ;   _.-( O )-._   ;\n    \\  /   /|\\   \\  /\n     ',  /  |  \\  ,'\n       '-+-+-+-'\n      ||   ||   ||\n      ||   ||   ||"
+      }
+     }
+    },
+    {
+     "id": "g0-shaft",
+     "name": "the light shaft — determinate transmission across the room",
+     "kind": "formation",
+     "position": {
+      "x": -0.02,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.07,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e8ddc0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g0-shaft-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "\\\n \\\\\n  \\\\\n   \\\\\n    \\\\"
+      }
+     }
+    },
+    {
+     "id": "g0-image",
+     "name": "the cast image — pratibimba in the room",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.2
+     },
+     "rotation": 0.5,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#a5623a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g0-image-sq0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g0-viewer",
+     "name": "the viewer — the one who encounters the image first",
+     "kind": "formation",
+     "position": {
+      "x": 0.12,
+      "y": -0.36,
+      "z": 0
+     },
+     "size": {
+      "x": 0.07,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#d8cfb8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g0-viewer-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   o\n  /|\\\n   |\n  / \\"
+      }
+     }
+    },
+    {
+     "id": "g0-bp",
+     "name": "Bimba / pratibimba — the Original prior in being, later met",
+     "kind": "formation",
+     "position": {
+      "x": 0.47,
+      "y": -0.13,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "B/p",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g0-bp-sq0",
+        "text": "",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "Light entering a made aperture",
+     "italic": "Sun, glass, seams, room and viewer belong to one event.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-gla-1-spectrum",
+   "name": "The spectrum implicated in the light",
+   "character": "QL figures the full ordered spectrum immanent to the light; the pane gives a difference a passage — it does not first create the capacity for difference.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#0f0d13",
+    "palette": [
+     "#e8ddc0",
+     "#4a5d7e",
+     "#8c3b2e",
+     "#c9a227"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.45,
+     "circulation": 0.35,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "g1-white",
+     "name": "the white light — apparent unity holding differentiated colour",
+     "kind": "formation",
+     "position": {
+      "x": -0.4,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.19
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#f0ead6",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-white-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "    . * . * .\n  *    ___    *\n  .  .'   '.  .\n *  |   +   |  *\n  .  '.   .'  .\n  *    ---    *\n    ' * ' * '"
+      }
+     }
+    },
+    {
+     "id": "g1-prism",
+     "name": "the pane's office — a difference given a passage",
+     "kind": "formation",
+     "position": {
+      "x": -0.08,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-prism-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "          /\\\n         /  \\\n  ------<    >---- - - -\n          \\  / ----- - -\n           \\/ ---- - -"
+      }
+     }
+    },
+    {
+     "id": "g1-c0",
+     "name": "a local colour — one of the sixfold body; no decree",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#a33b2a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-c0-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g1-c1",
+     "name": "a local colour — one of the sixfold body; no decree",
+     "kind": "formation",
+     "position": {
+      "x": 0.18,
+      "y": -0.25,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9722c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-c1-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g1-c2",
+     "name": "a local colour — one of the sixfold body; no decree",
+     "kind": "formation",
+     "position": {
+      "x": 0.26,
+      "y": -0.235,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-c2-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g1-c3",
+     "name": "a local colour — one of the sixfold body; no decree",
+     "kind": "formation",
+     "position": {
+      "x": 0.33,
+      "y": -0.225,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5a7a3a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-c3-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g1-c4",
+     "name": "a local colour — one of the sixfold body; no decree",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3c6e9e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-c4-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g1-c5",
+     "name": "a local colour — one of the sixfold body; no decree",
+     "kind": "formation",
+     "position": {
+      "x": 0.47,
+      "y": -0.215,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#6a4a7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g1-c5-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The spectrum implicated in the light",
+     "italic": "The pane gives a difference a passage; it does not first create the capacity for difference.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-gla-2-seams",
+   "name": "Colour acquires a passage; the joins stay visible",
+   "character": "MEF figures the panes, media, angles, densities and joins; the lead carries provenance, discontinuity, translation limits, contradiction, changes of register.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#ece5d2",
+    "palette": [
+     "#3a3550",
+     "#8c3b2e",
+     "#3c6e71",
+     "#b0803a"
+    ],
+    "material": "round",
+    "params": {
+     "count": 56000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.9,
+     "speed": 0.4,
+     "circulation": 0.3,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "g2-grid",
+     "name": "the pane grid — transmission and obstruction, not an opaque mosaic",
+     "kind": "formation",
+     "position": {
+      "x": -0.18,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3a3550",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g2-grid-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  ______________\n |      |       |\n | ///  |  \\\\\\  |\n |______|_______|\n |      |       |\n | \\\\\\  |  ///  |\n |______|_______|"
+      }
+     }
+    },
+    {
+     "id": "g2-lead",
+     "name": "the lead cames — neighbours held in relation",
+     "kind": "formation",
+     "position": {
+      "x": -0.18,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.38,
+      "y": 0.32
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#b0803a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g2-lead-sq0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g2-mosaic",
+     "name": "the opaque mosaic — fragments arranged into a surface",
+     "kind": "formation",
+     "position": {
+      "x": 0.28,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#26222e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g2-mosaic-sq0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g2-bent",
+     "name": "the bent passage — colour with change, not neutrality",
+     "kind": "formation",
+     "position": {
+      "x": -0.18,
+      "y": -0.5,
+      "z": 0
+     },
+     "size": {
+      "x": 0.18,
+      "y": 0.07
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#8c3b2e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g2-bent-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "______\n      \\\n       \\_____"
+      }
+     }
+    },
+    {
+     "id": "g2-mef",
+     "name": "the refractive apparatus — media, angles, joins declared",
+     "kind": "formation",
+     "position": {
+      "x": 0.32,
+      "y": -0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.28,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "MEF",
+     "share": 1,
+     "tint": "#8c3b2e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g2-mef-sq0",
+        "text": "",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "Colour acquires a passage; the joins stay visible",
+     "italic": "Removing every difference would also remove the transformations through which the whole becomes articulate.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-gla-3-projection",
+   "name": "The image appears; changing light discloses the construction",
+   "character": "The situated projection implicates its viewer; as sun, pane, angle, room and viewer change, the display changes — a later view reveals what an earlier arrangement withheld.",
+   "duration": 14,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#221019",
+    "palette": [
+     "#c9a227",
+     "#a5623a",
+     "#4a5d7e",
+     "#d8cfb8"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.4,
+     "circulation": 0.3,
+     "dispersion": 0.07,
+     "turbulence": 0.15,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "g3-sun",
+     "name": "the changed sun — the display changes with its conditions",
+     "kind": "formation",
+     "position": {
+      "x": -0.1,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.08
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e8ddc0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "steps": [
+       {
+        "id": "g3-sun-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3.4,
+        "transition": 2.4,
+        "position": {
+         "x": -0.1,
+         "y": -0.04,
+         "z": 0
+        }
+       },
+       {
+        "id": "g3-sun-sq1",
+        "text": "",
+        "shape": "disc",
+        "hold": 3.4,
+        "transition": 2.4,
+        "position": {
+         "x": 0.24,
+         "y": -0.02,
+         "z": 0
+        }
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "     \\  '  /\n   '  .---.  '\n  -- (     ) --\n   '  `---'  '\n     /  '  \\"
+      }
+     }
+    },
+    {
+     "id": "g3-window",
+     "name": "the window — the constructed opening, held with what it makes possible",
+     "kind": "formation",
+     "position": {
+      "x": -0.38,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g3-window-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "       _.-=-=--._\n     ,'  \\  |  /  ',\n    /  \\   \\|/   /  \\\n   ;   _.-( O )-._   ;\n    \\  /   /|\\   \\  /\n     ',  /  |  \\  ,'\n       '-+-+-+-'\n      ||   ||   ||\n      ||   ||   ||"
+      }
+     }
+    },
+    {
+     "id": "g3-image",
+     "name": "the changing projection — a region previously obscured",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.19
+     },
+     "rotation": 0.5,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "steps": [
+       {
+        "id": "g3-image-sq0",
+        "text": "",
+        "shape": "square",
+        "hold": 3.4,
+        "transition": 2.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.24,
+          "y": 0.19
+         },
+         "rotation": 0.5,
+         "tint": "#c9a227",
+         "tintWeight": 1,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "g3-image-sq1",
+        "text": "",
+        "shape": "square",
+        "hold": 3.4,
+        "transition": 2.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.33,
+          "y": 0.26
+         },
+         "rotation": 0.5,
+         "tint": "#8c3b2e",
+         "tintWeight": 1,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "g3-viewer",
+     "name": "the invested viewer — body, position, attention, concern",
+     "kind": "formation",
+     "position": {
+      "x": 0.13,
+      "y": -0.38,
+      "z": 0
+     },
+     "size": {
+      "x": 0.07,
+      "y": 0.13
+     },
+     "rotation": 0.25,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#d8cfb8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g3-viewer-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   o\n  /|\\\n   |\n  / \\"
+      }
+     }
+    },
+    {
+     "id": "g3-ring",
+     "name": "the contextual turn — one field, more than one perspective",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.42,
+      "y": 0.36
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g3-ring-sq0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "g3-atlas",
+     "name": "the atlas complement — a chart-transition is not light through glass",
+     "kind": "formation",
+     "position": {
+      "x": -0.16,
+      "y": -0.52,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g3-atlas-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " +----+---+\n |    |   |\n |    +---|\n +----|   |\n      +---+\n    ------->"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The image appears; changing light discloses the construction",
+     "italic": "As sun, pane and viewer change, the display changes; a later view reveals what the first withheld.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-gla-5-return",
+   "name": "Recognition returns to the aperture",
+   "character": "A seam examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment. The luminous image and its historical limits.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#221019",
+    "palette": [
+     "#c9a227",
+     "#a5623a",
+     "#4a5d7e",
+     "#d8cfb8"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.4,
+     "circulation": 0.3,
+     "dispersion": 0.07,
+     "turbulence": 0.15,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "g5-window",
+     "name": "the rose window, returned to — determinacy kept, understanding changed",
+     "kind": "formation",
+     "position": {
+      "x": -0.05,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.28,
+      "y": 0.28
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g5-window-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "       _.-=-=--._\n     ,'  \\  |  /  ',\n    /  \\   \\|/   /  \\\n   ;   _.-( O )-._   ;\n    \\  /   /|\\   \\  /\n     ',  /  |  \\  ,'\n       '-+-+-+-'\n      ||   ||   ||\n      ||   ||   ||"
+      }
+     }
+    },
+    {
+     "id": "g5-ring",
+     "name": "the enfolding ring — implicate and explicate, resonant-with",
+     "kind": "formation",
+     "position": {
+      "x": -0.05,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.4,
+      "y": 0.36
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 0.55,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "steps": [
+       {
+        "id": "g5-ring-sq0",
+        "text": "",
+        "shape": "ring",
+        "hold": 2.8,
+        "transition": 2.2,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.4,
+          "y": 0.36
+         },
+         "rotation": 0,
+         "tint": "#c9a227",
+         "tintWeight": 0.55,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "g5-ring-sq1",
+        "text": "",
+        "shape": "ring",
+        "hold": 2.8,
+        "transition": 2.2,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.3,
+          "y": 0.27
+         },
+         "rotation": 0,
+         "tint": "#c9a227",
+         "tintWeight": 0.9,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "g5-viewer",
+     "name": "the returned viewer — a seam examined, a source reread",
+     "kind": "formation",
+     "position": {
+      "x": 0.12,
+      "y": -0.4,
+      "z": 0
+     },
+     "size": {
+      "x": 0.08,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#d8cfb8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g5-viewer-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   o\n  /|\\\n   |\n  / \\"
+      }
+     }
+    },
+    {
+     "id": "g5-lattice",
+     "name": "the lattice window — light appearing diverse through limiting conditions",
+     "kind": "formation",
+     "position": {
+      "x": -0.44,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.11
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3c6e71",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g5-lattice-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " |_|_|_|_|\n |_|_|_|_|\n |_|_|_|_|"
+      }
+     }
+    },
+    {
+     "id": "g5-mirror",
+     "name": "the inert mirror — displays without knowing",
+     "kind": "formation",
+     "position": {
+      "x": 0.42,
+      "y": -0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#d8cfb8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g5-mirror-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " /======/\n(        )\n \\======\\ "
+      }
+     }
+    },
+    {
+     "id": "g5-ret",
+     "name": "the return — recognition comes back through what it disclosed",
+     "kind": "formation",
+     "position": {
+      "x": 0.44,
+      "y": -0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 0.12,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "↺",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "g5-ret-sq0",
+        "text": "",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "Recognition returns to the aperture",
+     "italic": "A seam examined, a source reread; what is prior in being remains prior.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  }
+ ],
+ "updatedAt": "2026-10-06T12:00:00.000Z"
 }
